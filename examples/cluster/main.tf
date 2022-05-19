@@ -15,13 +15,24 @@ variable "region_names" {
 }
 
 resource "cockroach_cluster" "cockroach" {
-    name           = "cockroach-cluster"
-    cloud_provider = "CLOUD_PROVIDER_GCP"
-    spec = {
+    name           = "cockroach-serverless"
+    cloud_provider = "GCP"
+    create_spec = {
     serverless = {
-        regions = ["us-east1"]
-        spend_limit = 0
-        }
+         regions = ["us-east1"]
+         spend_limit = 1
     }
+#    dedicated: {
+#      region_nodes = {
+#        "ap-south-1": 3
+#      }
+#      hardware = {
+#        storage_gib = 15
+#        machine_spec = {
+#          machine_type = "m5.large"
+#        }
+#      }
+#    }
+   }
 }
 

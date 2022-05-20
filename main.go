@@ -5,7 +5,7 @@ import (
 	"flag"
 	"log"
 
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-provider-scaffolding-framework/internal/provider"
 )
 
@@ -34,14 +34,14 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "set to true to run the provider with support for debuggers like delve")
 	flag.Parse()
 
-	opts := tfsdk.ServeOpts{
+	opts := providerserver.ServeOpts{
 		Debug: debug,
 
 		// TODO: Update this string with the published name of your provider.
-		Name: "cockroachlabs.com/prod/cockroach-cloud",
+		Address: "cockroachlabs.com/prod/cockroach-cloud",
 	}
 
-	err := tfsdk.Serve(context.Background(), provider.New(version), opts)
+	err := providerserver.Serve(context.Background(), provider.New(version), opts)
 
 	if err != nil {
 		log.Fatal(err.Error())

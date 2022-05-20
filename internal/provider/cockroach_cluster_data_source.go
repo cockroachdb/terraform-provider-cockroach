@@ -42,6 +42,10 @@ func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 				Type:     types.StringType,
 				Required: true,
 			},
+			"account_id": {
+				Computed: true,
+				Type:     types.StringType,
+			},
 			"config": {
 				Optional: true,
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
@@ -166,19 +170,19 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	}
 
 	cluster.Name = types.String{Value: cockroachCluster.Name}
-	cluster.Provider = CloudProvider(cockroachCluster.CloudProvider)
+	cluster.CloudProvider = ApiCloudProvider(cockroachCluster.CloudProvider)
 	cluster.State = types.String{Value: string(cockroachCluster.State)}
 	cluster.CockroachVersion = types.String{Value: cockroachCluster.CockroachVersion}
 	cluster.Plan = types.String{Value: string(cockroachCluster.Plan)}
 	cluster.OperationStatus = types.String{Value: string(cockroachCluster.OperationStatus)}
 	if cockroachCluster.Config.Serverless != nil {
-		cluster.Config.Serverless = ServerlessClusterConfig{
+		cluster.Config.Serverless = &ServerlessClusterConfig{
 			SpendLimit: types.Int64{Value: int64(cockroachCluster.Config.Serverless.SpendLimit)},
 			RoutingId:  types.String{Value: cockroachCluster.Config.Serverless.RoutingId},
 		}
 	}
 	if cockroachCluster.Config.Dedicated != nil {
-		cluster.Config.Dedicated = DedicatedHardwareConfig{
+		cluster.Config.Dedicated = &DedicatedHardwareConfig{
 			MachineType:    types.String{Value: cockroachCluster.Config.Dedicated.MachineType},
 			NumVirtualCpus: types.Int64{Value: int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)},
 			StorageGib:     types.Int64{Value: int64(cockroachCluster.Config.Dedicated.StorageGib)},

@@ -5,27 +5,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type User struct {
-	Name string `tfsdk:"name"`
-}
-
-type SqlUser struct {
-	User     User   `tfsdk:"user"`
-	Password string `tfsdk:"password"`
-}
-
-type SqlUserPassword struct {
-	Password string `tfsdk:"password"`
-}
-
-type SqlUserName struct {
-	Name string `tfsdk:"name"`
-}
-
-type SqlUsersResponse struct {
-	SqlUsersName []SqlUserName `tfsdk:"users"`
-}
-
 type ClusterState types.String
 
 // ApiCloudProvider  - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.
@@ -135,13 +114,15 @@ type UpdateClusterSpecification struct {
 	Serverless *ServerlessClusterUpdateSpecification `tfsdk:"serverless"`
 }
 
-type Credential struct {
-	APIKey string
+// SQLUserSpecification struct for SQLUserSpecification.
+type SQLUserSpecification struct {
+	Id       types.String `tfsdk:"id"`
+	Name     types.String `tfsdk:"name"`
+	Password types.String `tfsdk:"password"`
 }
 
-type ClusterCertificate struct {
-	FileName      string
-	CaCertificate string
+type SQLUser struct {
+	Name types.String `tfsdk:"name"`
 }
 
 type APIErrorMessage struct {

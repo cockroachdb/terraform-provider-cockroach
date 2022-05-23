@@ -79,7 +79,8 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 
 func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
 	return map[string]tfsdk.ResourceType{
-		"cockroach_cluster": clusterResourceType{},
+		"cockroach_cluster":  clusterResourceType{},
+		"cockroach_sql_user": sqlUserResourceType{},
 	}, nil
 }
 

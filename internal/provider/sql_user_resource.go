@@ -62,11 +62,20 @@ func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
+	_, httpResp, err := s.provider.service.GetCluster(ctx, sqlUserSpec.Id.Value)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error getting the cluster",
+			fmt.Sprintf("Could not get the cluster, unexpected error: %v %v "+err.Error(), httpResp),
+		)
+		return
+	}
+
 	var sqlUserRequest client.CreateSQLUserRequest
 	sqlUserRequest.Name = sqlUserSpec.Name.Value
 	sqlUserRequest.Password = sqlUserSpec.Password.Value
 
-	_, httpResp, err := s.provider.service.CreateSQLUser(ctx, sqlUserSpec.Id.Value, &sqlUserRequest)
+	_, httpResp, err = s.provider.service.CreateSQLUser(ctx, sqlUserSpec.Id.Value, &sqlUserRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating sql user",
@@ -147,7 +156,6 @@ func (s sqlUserResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.AddWarning("this is error loading cluster ", "")
 		return
 	}
 

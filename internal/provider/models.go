@@ -161,6 +161,16 @@ type CockroachClusterData struct {
 	Regions          []Region         `tfsdk:"regions"`
 }
 
+// AllowlistEntry struct for AllowlistEntry.
+type AllowlistEntry struct {
+	Id       types.String `tfsdk:"id"`
+	CidrIp   types.String `tfsdk:"cidr_ip"`
+	CidrMask types.Int64  `tfsdk:"cidr_mask"`
+	Ui       types.Bool   `tfsdk:"ui"`
+	Sql      types.Bool   `tfsdk:"sql"`
+	Name     types.String `tfsdk:"name"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

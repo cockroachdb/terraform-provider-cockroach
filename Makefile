@@ -4,7 +4,7 @@ NAMESPACE=hashicorp
 NAME=cockroach
 BINARY=terraform-provider-${NAME}
 VERSION=0.3.2
-OS_ARCH=$(uname -m)
+OS_ARCH=darwin_amd64
 
 default: install
 

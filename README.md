@@ -1,5 +1,5 @@
 # pre-Alpha
-This is still under initial development, suitable only for experimental use.
+**This is still under initial development, suitable only for experimental use.**
 
 
 # Terraform provider for CockroachDB Cloud

@@ -3,6 +3,7 @@ package provider
 import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"time"
 )
 
 type ClusterState types.String
@@ -10,11 +11,10 @@ type ClusterState types.String
 // ApiCloudProvider  - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.
 type ApiCloudProvider string
 
-// List of api.CloudProvider.
 const (
-	APICLOUDPROVIDER_CLOUD_PROVIDER_UNSPECIFIED ApiCloudProvider = "CLOUD_PROVIDER_UNSPECIFIED"
-	APICLOUDPROVIDER_GCP                        ApiCloudProvider = "GCP"
-	APICLOUDPROVIDER_AWS                        ApiCloudProvider = "AWS"
+	CLUSTERSTATETYPE_CREATED         string = "CREATED"
+	CLUSTERSTATETYPE_CREATION_FAILED string = "CREATION_FAILED"
+	CREATE_TIMEOUT                          = 60 * time.Minute
 )
 
 // ClusterConfig struct for ClusterConfig.
@@ -132,19 +132,20 @@ type APIErrorMessage struct {
 }
 
 type CockroachCluster struct {
-	ID               types.String                `tfsdk:"id"`
-	Name             types.String                `tfsdk:"name"`
-	CloudProvider    ApiCloudProvider            `tfsdk:"cloud_provider"`
-	AccountId        types.String                `tfsdk:"account_id"`
-	CreateSpec       *CreateClusterSpecification `tfsdk:"create_spec"`
-	UpdateSpec       *UpdateClusterSpecification `tfsdk:"update_spec"`
-	Config           *ClusterConfig              `tfsdk:"config"`
-	Regions          []Region                    `tfsdk:"regions"`
-	CockroachVersion types.String                `tfsdk:"cockroach_version"`
-	Plan             types.String                `tfsdk:"plan"`
-	State            types.String                `tfsdk:"state"`
-	CreatorId        types.String                `tfsdk:"creator_id"`
-	OperationStatus  types.String                `tfsdk:"operation_status"`
+	ID                  types.String                `tfsdk:"id"`
+	Name                types.String                `tfsdk:"name"`
+	CloudProvider       ApiCloudProvider            `tfsdk:"cloud_provider"`
+	AccountId           types.String                `tfsdk:"account_id"`
+	CreateSpec          *CreateClusterSpecification `tfsdk:"create_spec"`
+	UpdateSpec          *UpdateClusterSpecification `tfsdk:"update_spec"`
+	Config              *ClusterConfig              `tfsdk:"config"`
+	Regions             []Region                    `tfsdk:"regions"`
+	CockroachVersion    types.String                `tfsdk:"cockroach_version"`
+	Plan                types.String                `tfsdk:"plan"`
+	State               types.String                `tfsdk:"state"`
+	CreatorId           types.String                `tfsdk:"creator_id"`
+	OperationStatus     types.String                `tfsdk:"operation_status"`
+	WaitForClusterReady types.Bool                  `tfsdk:"wait_for_cluster_ready"`
 }
 
 type CockroachClusterData struct {

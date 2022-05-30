@@ -3,14 +3,13 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
-
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
-
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"net/http"
 )
 
 type clusterResourceType struct{}
@@ -179,10 +178,16 @@ func (r clusterResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 							"spend_limit": {
 								Computed: true,
 								Type:     types.Int64Type,
+								PlanModifiers: tfsdk.AttributePlanModifiers{
+									tfsdk.UseStateForUnknown(),
+								},
 							},
 							"routing_id": {
 								Computed: true,
 								Type:     types.StringType,
+								PlanModifiers: tfsdk.AttributePlanModifiers{
+									tfsdk.UseStateForUnknown(),
+								},
 							},
 						}),
 					},
@@ -261,6 +266,10 @@ func (r clusterResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 					tfsdk.UseStateForUnknown(),
 				},
 			},
+			"wait_for_cluster_ready": {
+				Type:     types.BoolType,
+				Optional: true,
+			},
 		},
 	}, nil
 }
@@ -286,9 +295,9 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	var newCluster CockroachCluster
+	var plan CockroachCluster
 
-	diags := req.Config.Get(ctx, &newCluster)
+	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
@@ -296,37 +305,45 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 
 	clusterSpec := client.NewCreateClusterSpecification()
-	if newCluster.CreateSpec.Serverless != nil {
+	if plan.CreateSpec == nil {
+		resp.Diagnostics.AddError(
+			"Error creating cluster",
+			fmt.Sprintf("Could not create cluster as create_spec can not be nil"),
+		)
+		return
+	}
+
+	if plan.CreateSpec.Serverless != nil {
 		var regions []string
-		for _, region := range newCluster.CreateSpec.Serverless.Regions {
+		for _, region := range plan.CreateSpec.Serverless.Regions {
 			regions = append(regions, region.Value)
 		}
-		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(newCluster.CreateSpec.Serverless.SpendLimit.Value))
+		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.CreateSpec.Serverless.SpendLimit.Value))
 		clusterSpec.SetServerless(*serverless)
-	} else if newCluster.CreateSpec.Dedicated != nil {
+	} else if plan.CreateSpec.Dedicated != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
-		if newCluster.CreateSpec.Dedicated.RegionNodes != nil {
-			regionNodes := newCluster.CreateSpec.Dedicated.RegionNodes
+		if plan.CreateSpec.Dedicated.RegionNodes != nil {
+			regionNodes := plan.CreateSpec.Dedicated.RegionNodes
 			dedicated.RegionNodes = *regionNodes
 		}
-		if newCluster.CreateSpec.Dedicated.Hardware != nil {
+		if plan.CreateSpec.Dedicated.Hardware != nil {
 			hardware := client.DedicatedHardwareCreateSpecification{}
-			if newCluster.CreateSpec.Dedicated.Hardware.MachineSpec != nil {
+			if plan.CreateSpec.Dedicated.Hardware.MachineSpec != nil {
 				machineSpec := client.DedicatedMachineTypeSpecification{}
-				if !newCluster.CreateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Null {
-					cpus := int32(newCluster.CreateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Value)
+				if !plan.CreateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Null {
+					cpus := int32(plan.CreateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Value)
 					machineSpec.NumVirtualCpus = &cpus
 				}
-				if !newCluster.CreateSpec.Dedicated.Hardware.MachineSpec.MachineType.Null {
-					machineType := newCluster.CreateSpec.Dedicated.Hardware.MachineSpec.MachineType.Value
+				if !plan.CreateSpec.Dedicated.Hardware.MachineSpec.MachineType.Null {
+					machineType := plan.CreateSpec.Dedicated.Hardware.MachineSpec.MachineType.Value
 					machineSpec.MachineType = &machineType
 				}
 				hardware.MachineSpec = machineSpec
-				if !newCluster.CreateSpec.Dedicated.Hardware.StorageGib.Null {
-					hardware.StorageGib = int32(newCluster.CreateSpec.Dedicated.Hardware.StorageGib.Value)
+				if !plan.CreateSpec.Dedicated.Hardware.StorageGib.Null {
+					hardware.StorageGib = int32(plan.CreateSpec.Dedicated.Hardware.StorageGib.Value)
 				}
-				if !newCluster.CreateSpec.Dedicated.Hardware.DiskIops.Null {
-					diskiops := int32(newCluster.CreateSpec.Dedicated.Hardware.DiskIops.Value)
+				if !plan.CreateSpec.Dedicated.Hardware.DiskIops.Null {
+					diskiops := int32(plan.CreateSpec.Dedicated.Hardware.DiskIops.Value)
 					hardware.DiskIops = &diskiops
 				}
 			}
@@ -334,7 +351,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
-	clusterReq := client.NewCreateClusterRequest(newCluster.Name.Value, client.ApiCloudProvider(newCluster.CloudProvider), *clusterSpec)
+	clusterReq := client.NewCreateClusterRequest(plan.Name.Value, client.ApiCloudProvider(plan.CloudProvider), *clusterSpec)
 	clusterObj, clResp, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -344,9 +361,29 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	state := loadClusterToTerraformState(clusterObj)
-	state.CreateSpec = newCluster.CreateSpec
-	diags = resp.State.Set(ctx, state)
+	if !plan.WaitForClusterReady.Null && plan.WaitForClusterReady.Value {
+		err := resource.RetryContext(ctx, CREATE_TIMEOUT,
+			waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"cluster ready timeout",
+				fmt.Sprintf("cluster is not ready: %v %v "+err.Error(), clResp),
+			)
+			return
+		}
+	}
+
+	clusterObj, clResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error getting cluster",
+			fmt.Sprintf("Could not getting cluster, unexpected error: %v %v "+err.Error(), clResp),
+		)
+		return
+	}
+
+	loadClusterToTerraformState(clusterObj, &plan)
+	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -386,8 +423,8 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 			"")
 	}
 
-	state := loadClusterToTerraformState(clusterObj)
-	diags = resp.State.Set(ctx, state)
+	loadClusterToTerraformState(clusterObj, &cluster)
+	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -457,12 +494,29 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 			return
 		}
 
-		newState := loadClusterToTerraformState(clusterObj)
-		newState.UpdateSpec = plan.UpdateSpec
+		if !plan.WaitForClusterReady.Null && plan.WaitForClusterReady.Value {
+			err := resource.RetryContext(ctx, CREATE_TIMEOUT,
+				waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"cluster ready timeout",
+					fmt.Sprintf("cluster is not ready: %v %v "+err.Error()),
+				)
+				return
+			}
+		}
 
-		resp.State.RemoveResource(ctx)
+		clusterObj, apiResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
+				fmt.Sprintf("Could not update clusterID %v", apiResp),
+			)
+			return
+		}
+		
 		// Set state
-		diags = resp.State.Set(ctx, newState)
+		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -498,4 +552,58 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 
 func (r clusterResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+}
+
+func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster) {
+	var rgs []Region
+	for _, x := range clusterObj.Regions {
+		rg := Region{
+			Name:      types.String{Value: x.Name},
+			SqlDns:    types.String{Value: x.SqlDns},
+			UiDns:     types.String{Value: x.UiDns},
+			NodeCount: types.Int64{Value: int64(x.NodeCount)},
+		}
+		rgs = append(rgs, rg)
+	}
+
+	state.ID = types.String{Value: clusterObj.Id}
+	state.CockroachVersion = types.String{Value: clusterObj.CockroachVersion}
+	state.Plan = types.String{Value: string(clusterObj.Plan)}
+	state.AccountId = types.String{Value: *clusterObj.AccountId}
+	state.State = types.String{Value: string(clusterObj.State)}
+	state.CreatorId = types.String{Value: clusterObj.CreatorId}
+	state.OperationStatus = types.String{Value: string(clusterObj.OperationStatus)}
+	state.Regions = rgs
+	state.Config = &ClusterConfig{}
+
+	if clusterObj.Config.Serverless != nil {
+		state.Config.Serverless = &ServerlessClusterConfig{
+			SpendLimit: types.Int64{Value: int64(clusterObj.Config.Serverless.SpendLimit)},
+			RoutingId:  types.String{Value: clusterObj.Config.Serverless.RoutingId},
+		}
+	} else if clusterObj.Config.Dedicated != nil {
+		state.Config.Dedicated = &DedicatedHardwareConfig{
+			MachineType:    types.String{Value: clusterObj.Config.Dedicated.MachineType},
+			NumVirtualCpus: types.Int64{Value: int64(clusterObj.Config.Dedicated.NumVirtualCpus)},
+			StorageGib:     types.Int64{Value: int64(clusterObj.Config.Dedicated.StorageGib)},
+			MemoryGib:      types.Float64{Value: float64(clusterObj.Config.Dedicated.MemoryGib)},
+			DiskIops:       types.Int64{Value: int64(clusterObj.Config.Dedicated.DiskIops)},
+		}
+	}
+}
+
+func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service) resource.RetryFunc {
+	return func() *resource.RetryError {
+		clusterObj, httpResp, err := cl.GetCluster(ctx, id)
+		if err != nil {
+			resource.NonRetryableError(fmt.Errorf("error getting cluster %v %v", err, httpResp))
+		}
+		if string(clusterObj.State) == CLUSTERSTATETYPE_CREATED {
+			return nil
+		}
+		if string(clusterObj.State) == CLUSTERSTATETYPE_CREATION_FAILED {
+			resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
+		}
+		return resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
+	}
 }

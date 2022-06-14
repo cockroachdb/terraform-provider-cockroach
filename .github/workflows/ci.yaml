@@ -1,0 +1,56 @@
+name: Cockroach Terraform Provider CI
+on:
+  pull_request:
+    branches:
+      - 'master'
+
+jobs:
+
+  # pre job run golangci-lint
+  go-lint:
+    name: 'Golint'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.46
+          working-directory: .
+          args: --timeout=5m
+
+  # pre job to run the unit tests
+  unitTest:
+    name: UnitTest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - name: Unit
+        # update this path when test-cases are added
+        run: make test/units
+
+  # pre job to build terraform-provider on every pull request
+  pre-build:
+    name: build-terraform-provider
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Build terraform-provider
+        run: make install

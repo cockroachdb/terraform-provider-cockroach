@@ -14,7 +14,7 @@ import (
 
 type clusterResourceType struct{}
 
-func (r clusterResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Cluster Resource",
 		Attributes: map[string]tfsdk.Attribute{
@@ -274,7 +274,7 @@ func (r clusterResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 	}, nil
 }
 
-func (t clusterResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (r clusterResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
 	return clusterResource{
@@ -308,7 +308,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if plan.CreateSpec == nil {
 		resp.Diagnostics.AddError(
 			"Error creating cluster",
-			fmt.Sprintf("Could not create cluster as create_spec can not be nil"),
+			"Could not create cluster as create_spec can not be nil",
 		)
 		return
 	}
@@ -410,7 +410,7 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 	clusterID := cluster.ID.Value
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
-	if httpResp.StatusCode != http.StatusOK && httpResp.StatusCode == http.StatusNotFound {
+	if httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"cluster not found",
 			fmt.Sprintf("cluster with clusterID %s is not found", clusterID))
@@ -506,7 +506,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 			}
 		}
 
-		clusterObj, apiResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
+		_, apiResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
@@ -514,7 +514,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 			)
 			return
 		}
-		
+
 		// Set state
 		diags = resp.State.Set(ctx, plan)
 		resp.Diagnostics.Append(diags...)

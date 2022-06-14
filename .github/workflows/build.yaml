@@ -2,7 +2,7 @@ name: Cockroach Terraform Provider Post Build
 on:
   push:
     branches:
-      - 'master'
+      - 'main'
     tags:
       - 'v*.*.*'
 

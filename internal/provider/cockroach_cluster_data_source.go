@@ -154,6 +154,13 @@ type clusterDataSource struct {
 
 func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
 	var cluster CockroachClusterData
+	diags := req.Config.Get(ctx, &cluster)
+
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		resp.Diagnostics.AddWarning("error loading the cluster ", "")
+		return
+	}
 
 	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.Value)
 	if httpResp.StatusCode == http.StatusNotFound {
@@ -200,6 +207,6 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 		cluster.Regions = append(cluster.Regions, reg)
 	}
 
-	diags := resp.State.Set(ctx, cluster)
+	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
 }

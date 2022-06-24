@@ -1,0 +1,21 @@
+name: Cockroach Terraform Provider Post Build
+on:
+  push:
+    branches:
+      - 'main'
+    tags:
+      - 'v*.*.*'
+
+jobs:
+
+  # Post job to build terraform-provider on merge to master
+  post-build:
+    name: build-terraform-provider
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Build terraform-provider
+        run: make install
+

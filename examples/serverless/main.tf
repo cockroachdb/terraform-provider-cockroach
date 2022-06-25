@@ -19,6 +19,11 @@ resource "cockroach_cluster" "cockroach" {
          spend_limit = 1
     }
    }
+#   update_spec = {
+#     serverless = {
+#       spend_limit = 1
+#     }
+#   }
 }
 
 resource "cockroach_sql_user" "cockroach" {

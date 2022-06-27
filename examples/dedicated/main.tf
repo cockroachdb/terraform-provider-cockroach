@@ -26,6 +26,19 @@ resource "cockroach_cluster" "cockroach" {
       }
     }
    }
+#   update_spec = {
+#     dedicated: {
+#       region_nodes = {
+#         "ap-south-1": 3
+#       }
+#       hardware = {
+#         storage_gib = 25
+#         machine_spec = {
+#           machine_type = "m5.large"
+#         }
+#       }
+#     }
+#   }
 }
  resource "cockroach_allow_list" "cockroach" {
     name = "default-allow-list"

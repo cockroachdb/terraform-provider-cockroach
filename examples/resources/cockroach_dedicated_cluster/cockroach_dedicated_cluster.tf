@@ -15,4 +15,3 @@ resource "cockroach_cluster" "cockroach" {
     }
    }
 }
-

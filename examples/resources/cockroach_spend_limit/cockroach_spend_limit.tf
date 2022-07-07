@@ -3,8 +3,7 @@ variable cluster_id {
 }
 
 resource "cockroach_cluster" "cockroach" {
-    name = var.cluster_id
-    cloud_provider = "AWS"
+    id = var.cluster_id
     update_spec = {
         serverless = {
             spend_limit = 2

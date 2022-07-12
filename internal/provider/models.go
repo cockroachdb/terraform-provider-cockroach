@@ -12,6 +12,7 @@ type ClusterState types.String
 type ApiCloudProvider string
 
 const (
+	CockroachAPIKey                  string = "COCKROACH_API_KEY"
 	CLUSTERSTATETYPE_CREATED         string = "CREATED"
 	CLUSTERSTATETYPE_CREATION_FAILED string = "CREATION_FAILED"
 	CREATE_TIMEOUT                          = 60 * time.Minute

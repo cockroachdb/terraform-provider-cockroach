@@ -56,7 +56,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	if config.ApiKey.Null {
-		apiKey = os.Getenv("COCKROACH_API_KEY")
+		apiKey = os.Getenv(CockroachAPIKey)
 	} else {
 		apiKey = config.ApiKey.Value
 	}

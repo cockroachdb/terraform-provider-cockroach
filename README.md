@@ -24,3 +24,21 @@
 6. Run `terraform plan` to see what will be done (without actually doing it)
 7. Run `terraform apply` to go ahead and do it
 8. (optionally) Run `terraform destroy` to undo these changes
+
+
+### Acceptance Tests
+
+The acceptance tests includes creating/deleting every resource we support creating.
+- Serverless cluster
+- Dedicated cluster
+- SQL users
+- Network allow list in dedicated clusters
+
+**Pre-requisite**: User needs cockroach cloud account and an API key with admin permissions to run the acceptance tests.
+
+**Running Acceptance Tests Locally**
+
+1. Export the `COCKROACH_API_KEY` env variable with the API key you have created.
+2. Run the following command: `TF_ACC=1 go test -v ./internal/provider/... --timeout=120m`
+
+**Note**: We run acceptance tests in parallel mode, and it would take approx 30 minutes to complete.

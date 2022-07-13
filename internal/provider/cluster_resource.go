@@ -50,6 +50,7 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"cockroach_version": {
 				Type:     types.StringType,
 				Computed: true,
+				Optional: true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.UseStateForUnknown(),
 				},
@@ -339,6 +340,9 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.CreateSpec.Dedicated != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
+		if !plan.CockroachVersion.Null {
+			dedicated.CockroachVersion = &plan.CockroachVersion.Value
+		}
 		if plan.CreateSpec.Dedicated.RegionNodes != nil {
 			regionNodes := plan.CreateSpec.Dedicated.RegionNodes
 			dedicated.RegionNodes = *regionNodes

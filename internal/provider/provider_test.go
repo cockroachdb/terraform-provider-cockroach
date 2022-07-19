@@ -36,6 +36,7 @@ var cl *client.Client
 func init() {
 	apikey := os.Getenv(CockroachAPIKey)
 	cfg := client.NewConfiguration(apikey)
+	cfg.UserAgent = UserAgent
 	cl = client.NewClient(cfg)
 	testAccProvider = New("test")()
 

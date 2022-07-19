@@ -87,6 +87,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	cfg := client.NewConfiguration(apiKey)
+	cfg.UserAgent = UserAgent
 	cl := client.NewClient(cfg)
 	p.service = client.NewService(cl)
 

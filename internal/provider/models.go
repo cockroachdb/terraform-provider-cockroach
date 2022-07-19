@@ -29,6 +29,7 @@ type ApiCloudProvider string
 
 const (
 	CockroachAPIKey                  string = "COCKROACH_API_KEY"
+	UserAgent                        string = "terraform-provider-cockroach"
 	CLUSTERSTATETYPE_CREATED         string = "CREATED"
 	CLUSTERSTATETYPE_CREATION_FAILED string = "CREATION_FAILED"
 	CREATE_TIMEOUT                          = 60 * time.Minute

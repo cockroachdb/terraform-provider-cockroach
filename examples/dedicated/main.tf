@@ -1,3 +1,66 @@
+variable "cluster_name" {
+  type = string
+  nullable = false
+}
+
+variable "sql_user_name" {
+  type = string
+  nullable = false
+  default = "maxroach"
+}
+
+variable "sql_user_password" {
+  type = string
+  nullable = false
+  sensitive = true
+}
+
+variable "cloud_provider" {
+  type = string
+  nullable = false
+  default = "GCP"
+}
+
+variable "cloud_provider_region" {
+  type = list(string)
+  nullable = false
+  default = ["us-east1"]
+}
+
+variable "cluster_nodes" {
+  type = number
+  nullable = false
+  default = 1
+}
+
+variable "storage_gib" {
+  type = number
+  nullable = false
+  default = 15
+}
+
+variable "machine_type" {
+  type = string
+  nullable = false
+  default = "n1-standard-2"
+}
+
+variable allow_list_name {
+  type = string
+  nullable = false
+  default = "default-allow-list"
+}
+
+variable cidr_ip {
+  type = string
+  nullable = false
+}
+
+variable cidr_mask {
+  type = number
+  nullable = false
+}
+
 terraform {
   required_providers {
     cockroach = {
@@ -10,48 +73,38 @@ provider "cockroach" {
 }
 
 resource "cockroach_cluster" "cockroach" {
-    name           = "cockroach-dedicated"
-    cloud_provider = "AWS"
-    wait_for_cluster_ready = true
-    create_spec = {
+  name           = var.cluster_name
+  cloud_provider = var.cloud_provider
+  wait_for_cluster_ready = true
+  create_spec = {
     dedicated: {
-      region_nodes = {
-        "ap-south-1": 1
-      }
+      region_nodes = merge(
+        {
+          for k in var.cloud_provider_region: k => "${var.cluster_nodes}"
+        }
+      )
       hardware = {
-        storage_gib = 15
+        storage_gib = var.storage_gib
         machine_spec = {
-          machine_type = "m5.large"
+          machine_type = var.machine_type
         }
       }
     }
-   }
-#   update_spec = {
-#     dedicated: {
-#       region_nodes = {
-#         "ap-south-1": 3
-#       }
-#       hardware = {
-#         storage_gib = 25
-#         machine_spec = {
-#           machine_type = "m5.large"
-#         }
-#       }
-#     }
-#   }
+  }
 }
- resource "cockroach_allow_list" "cockroach" {
-    name = "default-allow-list"
-    cidr_ip = "192.168.3.2"
-    cidr_mask = 32
-    ui = true
-    sql = true
-    id = cockroach_cluster.cockroach.id
+
+resource "cockroach_allow_list" "cockroach" {
+  name = var.allow_list_name
+  cidr_ip = var.cidr_ip
+  cidr_mask = var.cidr_mask
+  ui = true
+  sql = true
+  id = cockroach_cluster.cockroach.id
 }
 
 resource "cockroach_sql_user" "cockroach" {
-  name = "default-user"
-  password = "default@123456"
+  name = var.sql_user_name
+  password = var.sql_user_password
   id = cockroach_cluster.cockroach.id
 }
 

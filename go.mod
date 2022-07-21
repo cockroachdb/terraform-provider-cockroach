@@ -1,4 +1,4 @@
-module github.com/hashicorp/terraform-provider-scaffolding-framework
+module github.com/cockroachdb/terraform-provider-cockroach
 
 go 1.17
 

@@ -1,15 +1,32 @@
+/*
+Copyright 2022 The Cockroach Authors
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 package provider
 
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"net/http"
 )
 
 type clusterResourceType struct{}
@@ -33,6 +50,7 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"cockroach_version": {
 				Type:     types.StringType,
 				Computed: true,
+				Optional: true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.UseStateForUnknown(),
 				},
@@ -322,6 +340,9 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.CreateSpec.Dedicated != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
+		if !plan.CockroachVersion.Null {
+			dedicated.CockroachVersion = &plan.CockroachVersion.Value
+		}
 		if plan.CreateSpec.Dedicated.RegionNodes != nil {
 			regionNodes := plan.CreateSpec.Dedicated.RegionNodes
 			dedicated.RegionNodes = *regionNodes

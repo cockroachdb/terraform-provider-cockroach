@@ -35,10 +35,10 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
 
 ## Run the Serverless Example
 
-1. In a terminal go to the `examples/serverless` directory.
+1. In a terminal go to the `examples/workflows/cockroach_serverless_cluster` directory.
 
     ~~~ shell 
-    cd examples/serverless
+    cd examples/workflows/cockroach_serverless_cluster
     ~~~
 
 1. The provider requires an API key set in an environment variable named `COCKROACH_API_KEY`. Copy the [API key](https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management#api-access) from the CockroachDB Cloud console and create the `COCKROACH_API_KEY` environment variable.
@@ -94,10 +94,10 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
     
 ## Run the Dedicated Example
 
-1. In a terminal go to the `examples/serverless` directory.
+1. In a terminal go to the `examples/workflows/cockroach_dedicated_cluster` directory.
 
     ~~~ shell 
-    cd examples/serverless
+    cd examples/workflows/cockroach_dedicated_cluster
     ~~~
 
 1. The provider requires an API key set in an environment variable named `COCKROACH_API_KEY`. Copy the [API key](https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management#api-access) from the CockroachDB Cloud console and create the `COCKROACH_API_KEY` environment variable.

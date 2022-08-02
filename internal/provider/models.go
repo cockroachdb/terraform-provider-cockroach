@@ -176,7 +176,7 @@ type CockroachClusterData struct {
 	State            types.String     `tfsdk:"state"`
 	CreatorId        types.String     `tfsdk:"creator_id"`
 	OperationStatus  types.String     `tfsdk:"operation_status"`
-	Config           ClusterConfig    `tfsdk:"config"`
+	Config           *ClusterConfig   `tfsdk:"config"`
 	Regions          []Region         `tfsdk:"regions"`
 }
 

@@ -22,6 +22,7 @@ Cluster Resource
 
 ### Optional
 
+- `cockroach_version` (String)
 - `create_spec` (Attributes) (see [below for nested schema](#nestedatt--create_spec))
 - `update_spec` (Attributes) (see [below for nested schema](#nestedatt--update_spec))
 - `wait_for_cluster_ready` (Boolean)
@@ -29,7 +30,6 @@ Cluster Resource
 ### Read-Only
 
 - `account_id` (String)
-- `cockroach_version` (String)
 - `config` (Attributes) (see [below for nested schema](#nestedatt--config))
 - `creator_id` (String)
 - `id` (String) The ID of this resource.

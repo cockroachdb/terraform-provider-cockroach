@@ -73,7 +73,7 @@ func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 								Type:     types.Int64Type,
 							},
 							"routing_id": {
-								Type:     types.ListType{ElemType: types.StringType},
+								Type:     types.StringType,
 								Computed: true,
 							},
 						}),
@@ -198,18 +198,22 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	cluster.Plan = types.String{Value: string(cockroachCluster.Plan)}
 	cluster.OperationStatus = types.String{Value: string(cockroachCluster.OperationStatus)}
 	if cockroachCluster.Config.Serverless != nil {
-		cluster.Config.Serverless = &ServerlessClusterConfig{
-			SpendLimit: types.Int64{Value: int64(cockroachCluster.Config.Serverless.SpendLimit)},
-			RoutingId:  types.String{Value: cockroachCluster.Config.Serverless.RoutingId},
+		cluster.Config = &ClusterConfig{
+			Serverless: &ServerlessClusterConfig{
+				SpendLimit: types.Int64{Value: int64(cockroachCluster.Config.Serverless.SpendLimit)},
+				RoutingId:  types.String{Value: cockroachCluster.Config.Serverless.RoutingId},
+			},
 		}
 	}
 	if cockroachCluster.Config.Dedicated != nil {
-		cluster.Config.Dedicated = &DedicatedHardwareConfig{
-			MachineType:    types.String{Value: cockroachCluster.Config.Dedicated.MachineType},
-			NumVirtualCpus: types.Int64{Value: int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)},
-			StorageGib:     types.Int64{Value: int64(cockroachCluster.Config.Dedicated.StorageGib)},
-			MemoryGib:      types.Float64{Value: float64(cockroachCluster.Config.Dedicated.MemoryGib)},
-			DiskIops:       types.Int64{Value: int64(cockroachCluster.Config.Dedicated.DiskIops)},
+		cluster.Config = &ClusterConfig{
+			Dedicated: &DedicatedHardwareConfig{
+				MachineType:    types.String{Value: cockroachCluster.Config.Dedicated.MachineType},
+				NumVirtualCpus: types.Int64{Value: int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)},
+				StorageGib:     types.Int64{Value: int64(cockroachCluster.Config.Dedicated.StorageGib)},
+				MemoryGib:      types.Float64{Value: float64(cockroachCluster.Config.Dedicated.MemoryGib)},
+				DiskIops:       types.Int64{Value: int64(cockroachCluster.Config.Dedicated.DiskIops)},
+			},
 		}
 	}
 

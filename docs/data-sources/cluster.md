@@ -18,6 +18,7 @@ clusterSourceType Data Source
 ### Required
 
 - `cloud_provider` (String)
+- `id` (String) The ID of this resource.
 
 ### Optional
 
@@ -28,7 +29,6 @@ clusterSourceType Data Source
 - `account_id` (String)
 - `cockroach_version` (String)
 - `creator_id` (String)
-- `id` (String) The ID of this resource.
 - `name` (String) Name of cluster
 - `operation_status` (String)
 - `plan` (String)
@@ -60,7 +60,7 @@ Optional:
 
 Optional:
 
-- `routing_id` (List of String)
+- `routing_id` (String)
 - `spend_limit` (Number)
 
 

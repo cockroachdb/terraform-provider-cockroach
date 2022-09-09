@@ -5,7 +5,7 @@
 - [More information about CockroachDB](https://www.cockroachlabs.com/)
 - [More information about Terraform](https://terraform.io)
 
-For information on developing `terraform-proivder-cockroach` see [DEVELOPMENT.md](DEVELOPMENT.md).
+For information on developing `terraform-provider-cockroach` see [DEVELOPMENT.md](DEVELOPMENT.md).
 
 **Note: This is a preview release, suitable only for experimental use.**
 

@@ -64,9 +64,12 @@ variable cidr_mask {
 terraform {
   required_providers {
     cockroach = {
-      source = "registry.terraform.io/hashicorp/cockroach"
+      source = "cockroachdb/cockroach"
     }
   }
+}
+provider "cockroach" {
+  # Configuration options
 }
 provider "cockroach" {
 # export COCKROACH_API_KEY with the cockroach cloud API Key

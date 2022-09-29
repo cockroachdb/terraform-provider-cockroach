@@ -3,7 +3,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=hashicorp
 NAME=cockroach
 BINARY=terraform-provider-${NAME}
-VERSION=0.3.2
+VERSION=0.1.1
 OS_ARCH=darwin_amd64
 
 default: install

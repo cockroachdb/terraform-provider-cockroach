@@ -36,7 +36,7 @@ variable "cloud_provider_region" {
 terraform {
   required_providers {
     cockroach = {
-      source = "registry.terraform.io/hashicorp/cockroach"
+      source = "cockroachdb/cockroach"
     }
   }
 }

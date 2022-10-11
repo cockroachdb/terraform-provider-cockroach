@@ -45,6 +45,8 @@ github.com/cncf/xds/go v0.0.0-20210922020428-25de7278fc84/go.mod h1:eXthEFrGJvWH
 github.com/cncf/xds/go v0.0.0-20211011173535-cb28da3451f1/go.mod h1:eXthEFrGJvWHgFFCl3hGmgk+/aYT6PnTQLykKQRLhEs=
 github.com/cockroachdb/cockroach-cloud-sdk-go v0.2.0 h1:y+sh6+bcpdGC8nbkobrZBg9kNpyZS7sskJOSU3lbVZI=
 github.com/cockroachdb/cockroach-cloud-sdk-go v0.2.0/go.mod h1:zVVtMKMcPkwrYgrZ/hv73HiGSsWId3BorWlSpRWc7tM=
+github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.1 h1:PaqggGcqDV8/T9AQMXzSC+xjhtLo92eDpqLi76yIeNg=
+github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.1/go.mod h1:zVVtMKMcPkwrYgrZ/hv73HiGSsWId3BorWlSpRWc7tM=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

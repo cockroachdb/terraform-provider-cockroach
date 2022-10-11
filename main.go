@@ -51,10 +51,8 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Debug: debug,
-
-		// TODO: Update this string with the published name of your provider.
-		Address: "cockroachlabs.com/prod/cockroach-cloud",
+		Debug:   debug,
+		Address: "registry.terraform.io/providers/cockroachdb/cockroach",
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)

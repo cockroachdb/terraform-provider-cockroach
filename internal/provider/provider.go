@@ -98,7 +98,7 @@ func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceT
 	return map[string]tfsdk.ResourceType{
 		"cockroach_cluster":    clusterResourceType{},
 		"cockroach_sql_user":   sqlUserResourceType{},
-		"cockroach_allow_list": networkResourceType{},
+		"cockroach_allow_list": allowListResourceType{},
 	}, nil
 }
 

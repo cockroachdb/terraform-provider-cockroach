@@ -27,9 +27,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-type networkResourceType struct{}
+type allowListResourceType struct{}
 
-func (n networkResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (n allowListResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Allow list of IP range",
 		Attributes: map[string]tfsdk.Attribute{
@@ -61,19 +61,19 @@ func (n networkResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 	}, nil
 }
 
-func (n networkResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (n allowListResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
-	return networkResource{
+	return allowListResource{
 		provider: provider,
 	}, diags
 }
 
-type networkResource struct {
+type allowListResource struct {
 	provider provider
 }
 
-func (n networkResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !n.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -134,7 +134,7 @@ func (n networkResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 }
 
-func (n networkResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (n allowListResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !n.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -152,7 +152,7 @@ func (n networkResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 	}
 }
 
-func (n networkResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Get plan values
 	var plan AllowlistEntry
 	diags := req.Plan.Get(ctx, &plan)
@@ -181,12 +181,10 @@ func (n networkResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	entryCIDRIp := plan.CidrIp.Value
 	entryCIDRMask := int32(plan.CidrMask.Value)
 
-	existingAllowList := client.AllowlistEntry{
-		CidrIp:   state.CidrIp.Value,
-		CidrMask: int32(state.CidrMask.Value),
-		Ui:       state.Ui.Value,
-		Sql:      state.Sql.Value,
-		Name:     &state.Name.Value,
+	existingAllowList := client.AllowlistEntry1{
+		Ui:   state.Ui.Value,
+		Sql:  state.Sql.Value,
+		Name: &state.Name.Value,
 	}
 
 	_, httpResp, err := n.provider.service.UpdateAllowlistEntry(ctx, clusterId, entryCIDRIp, entryCIDRMask,
@@ -206,7 +204,7 @@ func (n networkResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	}
 }
 
-func (n networkResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (n allowListResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	var state AllowlistEntry
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -227,6 +225,6 @@ func (n networkResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	resp.State.RemoveResource(ctx)
 }
 
-func (n networkResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (n allowListResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }

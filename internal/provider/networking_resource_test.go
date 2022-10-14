@@ -95,20 +95,14 @@ func testAccNetworkingRulesResource(name, cidrIp, cidrMask string) string {
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
     cloud_provider = "AWS"
-    wait_for_cluster_ready = true
-    create_spec = {
-    dedicated: {
-      region_nodes = {
-        "ap-south-1": 1
-      }
-      hardware = {
-        storage_gib = 15
-        machine_spec = {
-          machine_type = "m5.large"
-        }
-      }
+    dedicated = {
+	  storage_gib = 15
+	  machine_type = "m5.large"
     }
-   }
+	regions = [{
+		name: "ap-south-1"
+		node_count: 1
+	}]
 }
  resource "cockroach_allow_list" "network_list" {
     name = "%s"

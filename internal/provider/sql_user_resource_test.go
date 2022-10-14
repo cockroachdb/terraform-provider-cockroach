@@ -89,13 +89,12 @@ func testAccSqlUserResource(name, password string) string {
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    wait_for_cluster_ready = true
-    create_spec = {
     serverless = {
-         regions = ["us-east1"]
-         spend_limit = 1
+        spend_limit = 1
     }
-   }
+	regions = [{
+		name = "us-east1"
+	}]
 }
 
 resource "cockroach_sql_user" "sqluser" {

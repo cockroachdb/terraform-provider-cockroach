@@ -127,8 +127,8 @@ func (n endpointServiceResource) Create(ctx context.Context, req tfsdk.CreateRes
 	_, httpResp, err = n.provider.service.AddEndpointService(ctx, plan.Id.Value, &endpointService)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error adding allowed IP range",
-			fmt.Sprintf("Could not add allowed IP range, unexpected error: %v %v "+err.Error(), httpResp),
+			"Error enabling private endpoint services",
+			fmt.Sprintf("Could not enable private endpoint services, unexpected error: %v %v "+err.Error(), httpResp),
 		)
 		return
 	}

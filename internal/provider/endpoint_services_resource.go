@@ -20,16 +20,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-type endpointServiceResourceType struct{}
+type endpointServicesResourceType struct{}
 
-func (n endpointServiceResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (n endpointServicesResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Private endpoint service",
 		Attributes: map[string]tfsdk.Attribute{
@@ -37,56 +36,69 @@ func (n endpointServiceResourceType) GetSchema(ctx context.Context) (tfsdk.Schem
 				Required: true,
 				Type:     types.StringType,
 			},
-			"region_name": {
-				Required: true,
-				Type:     types.StringType,
-			},
-			"cloud_provider": {
-				Required: true,
-				Type:     types.Int64Type,
-			},
-			"status": {
-				Type:     types.StringType,
+			"services": {
 				Computed: true,
-				// TODO: what is this?
+				//
+				// TODO: is this needed?
+				//
 				// PlanModifiers: tfsdk.AttributePlanModifiers{
 				// 	tfsdk.UseStateForUnknown(),
-				// }
-			},
-			"aws": {
-				Computed: true,
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"service_name": {
-						Computed: true,
+				// },
+				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
+					"region_name": {
+						Required: true,
 						Type:     types.StringType,
 					},
-					"service_id": {
-						Computed: true,
+					"cloud_provider": {
+						Required: true,
+						Type:     types.Int64Type,
+					},
+					"status": {
 						Type:     types.StringType,
-					},
-					"availability_zone_ids": {
 						Computed: true,
-						Type:     types.ListType{ElemType: types.StringType},
+						//
+						// TODO: is this needed?
+						//
+						// PlanModifiers: tfsdk.AttributePlanModifiers{
+						// 	tfsdk.UseStateForUnknown(),
+						// }
 					},
-				}),
+					"aws": {
+						Computed: true,
+						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+							"service_name": {
+								Computed: true,
+								Type:     types.StringType,
+							},
+							"service_id": {
+								Computed: true,
+								Type:     types.StringType,
+							},
+							"availability_zone_ids": {
+								Computed: true,
+								Type:     types.ListType{ElemType: types.StringType},
+							},
+						}),
+					},
+				}, tfsdk.ListNestedAttributesOptions{}),
 			},
 		},
 	}, nil
 }
 
-func (n endpointServiceResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (n endpointServicesResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
-	return endpointServiceResource{
+	return endpointServicesResource{
 		provider: provider,
 	}, diags
 }
 
-type endpointServiceResource struct {
+type endpointServicesResource struct {
 	provider provider
 }
 
-func (n endpointServiceResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !n.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -95,7 +107,7 @@ func (n endpointServiceResource) Create(ctx context.Context, req tfsdk.CreateRes
 		return
 	}
 
-	var plan EndpointService
+	var plan PrivateEndpointServices
 	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
@@ -120,11 +132,8 @@ func (n endpointServiceResource) Create(ctx context.Context, req tfsdk.CreateRes
 		return
 	}
 
-	var endpointServices = client.PrivateEndpointService{
-		Id: plan.Id.Value,
-	}
-
-	_, httpResp, err = n.provider.service.AddEndpointService(ctx, plan.Id.Value, &endpointService)
+	var emptyBody map[string]interface{}
+	_, httpResp, err = n.provider.service.CreatePrivateEndpointServices(ctx, plan.Id.Value, &emptyBody)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -140,7 +149,7 @@ func (n endpointServiceResource) Create(ctx context.Context, req tfsdk.CreateRes
 	}
 }
 
-func (n endpointServiceResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (n endpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !n.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -149,7 +158,7 @@ func (n endpointServiceResource) Read(ctx context.Context, req tfsdk.ReadResourc
 		return
 	}
 
-	var plan EndpointService
+	var plan PrivateEndpointServices
 	diags := req.State.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
@@ -158,14 +167,14 @@ func (n endpointServiceResource) Read(ctx context.Context, req tfsdk.ReadResourc
 	}
 }
 
-func (n endpointServiceResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (n endpointServicesResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// no-op - Endpoint services cannot be updated
 }
 
-func (n endpointServiceResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (n endpointServicesResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// no-op - Endpoint services cannot be deleted
 }
 
-func (n endpointServiceResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (n endpointServicesResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }

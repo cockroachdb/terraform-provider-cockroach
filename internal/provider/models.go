@@ -199,12 +199,17 @@ type AWSPrivateLinkServiceDetail struct {
 }
 
 // EndpointService struct for EndpointService.
-type EndpointService struct {
-	Id            types.String                `tfsdk:"id"`
+type PrivateEndpointService struct {
 	RegionName    types.String                `tfsdk:"region_name"`
 	CloudProvider ApiCloudProvider            `tfsdk:"cloud_provider"`
 	Status        types.String                `tfsdk:"status"`
 	Aws           AWSPrivateLinkServiceDetail `tfsdk:"aws_privatelink_service_detail"`
+}
+
+// EndpointServices struct for EndpointServices.
+type PrivateEndpointServices struct {
+	Id       types.String             `tfsdk:"id"`
+	Services []PrivateEndpointService `tfsdk:"endpoint_services"`
 }
 
 func (e *APIErrorMessage) String() string {

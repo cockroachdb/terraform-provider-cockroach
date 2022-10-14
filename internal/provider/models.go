@@ -198,7 +198,7 @@ type AWSPrivateLinkServiceDetail struct {
 	AvailabilityZoneIds []types.String `tfsdk:"availability_zone_ids"`
 }
 
-// EndpointService struct for EndpointService.
+// PrivateEndpointService struct for PrivateEndpointService.
 type PrivateEndpointService struct {
 	RegionName    types.String                `tfsdk:"region_name"`
 	CloudProvider ApiCloudProvider            `tfsdk:"cloud_provider"`
@@ -206,7 +206,7 @@ type PrivateEndpointService struct {
 	Aws           AWSPrivateLinkServiceDetail `tfsdk:"aws_privatelink_service_detail"`
 }
 
-// EndpointServices struct for EndpointServices.
+// PrivateEndpointServices struct for PrivateEndpointServices.
 type PrivateEndpointServices struct {
 	Id       types.String             `tfsdk:"id"`
 	Services []PrivateEndpointService `tfsdk:"endpoint_services"`

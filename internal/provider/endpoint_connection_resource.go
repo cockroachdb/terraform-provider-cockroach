@@ -26,9 +26,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-type endpointServicesResourceType struct{}
+type endpointConnectionResourceType struct{}
 
-func (n endpointServicesResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (n endpointConnectionResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Private endpoint service",
 		Attributes: map[string]tfsdk.Attribute{
@@ -36,71 +36,30 @@ func (n endpointServicesResourceType) GetSchema(ctx context.Context) (tfsdk.Sche
 				Required: true,
 				Type:     types.StringType,
 			},
-			"services": {
-				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
-				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
-					"region_name": {
-						Required: true,
-						Type:     types.StringType,
-					},
-					"cloud_provider": {
-						Required: true,
-						Type:     types.Int64Type,
-					},
-					"status": {
-						Type:     types.StringType,
-						Computed: true,
-					},
-					"aws": {
-						Computed: true,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
-						//
-						// TODO: can we use AWSPrivateLinkServiceDetail here instead of
-						// explicitly repeating it
-						//
-						// For example:
-						//
-						// Attributes: AWSPrivateLinkServiceDetail
-						//
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"service_name": {
-								Computed: true,
-								Type:     types.StringType,
-							},
-							"service_id": {
-								Computed: true,
-								Type:     types.StringType,
-							},
-							"availability_zone_ids": {
-								Computed: true,
-								Type:     types.ListType{ElemType: types.StringType},
-							},
-						}),
-					},
-				}, tfsdk.ListNestedAttributesOptions{}),
+	
+
+
+
+
+			
 			},
 		},
 	}, nil
 }
 
-func (n endpointServicesResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (n endpointConnectionResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
-	return endpointServicesResource{
+	return endpointConnectionResource{
 		provider: provider,
 	}, diags
 }
 
-type endpointServicesResource struct {
+type endpointConnectionResource struct {
 	provider provider
 }
 
-func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (n endpointConnectionResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !n.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -109,7 +68,7 @@ func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateRe
 		return
 	}
 
-	var plan PrivateEndpointServices
+	var plan PrivateEndpointConnection
 	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
@@ -135,7 +94,7 @@ func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateRe
 	}
 
 	var emptyBody map[string]interface{}
-	_, httpResp, err = n.provider.service.CreatePrivateEndpointServices(ctx, plan.Id.Value, &emptyBody)
+	_, httpResp, err = n.provider.service.CreatePrivateEndpointConnection(ctx, plan.Id.Value, &emptyBody)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -151,7 +110,7 @@ func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateRe
 	}
 }
 
-func (n endpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (n endpointConnectionResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !n.provider.configured {
 		resp.Diagnostics.AddError(
 			"Provider not configured",
@@ -160,7 +119,7 @@ func (n endpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResour
 		return
 	}
 
-	var plan PrivateEndpointServices
+	var plan PrivateEndpointConnection
 	diags := req.State.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
@@ -169,14 +128,14 @@ func (n endpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResour
 	}
 }
 
-func (n endpointServicesResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (n endpointConnectionResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// no-op - Endpoint services cannot be updated
 }
 
-func (n endpointServicesResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (n endpointConnectionResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// no-op - Endpoint services cannot be deleted
 }
 
-func (n endpointServicesResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (n endpointConnectionResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }

@@ -107,13 +107,12 @@ func testAccServerlessClusterResource(name string) string {
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    wait_for_cluster_ready = true
-    create_spec = {
     serverless = {
-         regions = ["us-east1"]
-         spend_limit = 1
+        spend_limit = 1
     }
-   }
+	regions = [{
+		name = "us-east1"
+	}]
 }
 `, name)
 }
@@ -123,20 +122,14 @@ func testAccDedicatedClusterResource(name string) string {
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
     cloud_provider = "AWS"
-    wait_for_cluster_ready = true
-    create_spec = {
-    dedicated: {
-      region_nodes = {
-        "ap-south-1": 1
-      }
-      hardware = {
-        storage_gib = 15
-        machine_spec = {
-          machine_type = "m5.large"
-        }
-      }
+    dedicated = {
+	  storage_gib = 15
+	  machine_type = "m5.large"
     }
-   }
+	regions = [{
+		name: "ap-south-1"
+		node_count: 1
+	}]
 }
 `, name)
 }

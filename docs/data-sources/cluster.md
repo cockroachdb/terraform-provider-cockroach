@@ -17,52 +17,32 @@ clusterSourceType Data Source
 
 ### Required
 
-- `cloud_provider` (String)
 - `id` (String) The ID of this resource.
-
-### Optional
-
-- `config` (Attributes) (see [below for nested schema](#nestedatt--config))
 
 ### Read-Only
 
 - `account_id` (String)
+- `cloud_provider` (String)
 - `cockroach_version` (String)
 - `creator_id` (String)
+- `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `name` (String) Name of cluster
 - `operation_status` (String)
 - `plan` (String)
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
+- `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String)
 
-<a id="nestedatt--config"></a>
-### Nested Schema for `config`
+<a id="nestedatt--dedicated"></a>
+### Nested Schema for `dedicated`
 
-Optional:
-
-- `dedicated` (Attributes) (see [below for nested schema](#nestedatt--config--dedicated))
-- `serverless` (Attributes) (see [below for nested schema](#nestedatt--config--serverless))
-
-<a id="nestedatt--config--dedicated"></a>
-### Nested Schema for `config.dedicated`
-
-Optional:
+Read-Only:
 
 - `disk_iops` (Number)
 - `machine_type` (String)
 - `memory_gib` (Number)
 - `num_virtual_cpus` (Number)
 - `storage_gib` (Number)
-
-
-<a id="nestedatt--config--serverless"></a>
-### Nested Schema for `config.serverless`
-
-Optional:
-
-- `routing_id` (String)
-- `spend_limit` (Number)
-
 
 
 <a id="nestedatt--regions"></a>
@@ -74,5 +54,14 @@ Read-Only:
 - `node_count` (Number)
 - `sql_dns` (String)
 - `ui_dns` (String)
+
+
+<a id="nestedatt--serverless"></a>
+### Nested Schema for `serverless`
+
+Read-Only:
+
+- `routing_id` (String)
+- `spend_limit` (Number)
 
 

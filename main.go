@@ -52,7 +52,7 @@ func main() {
 
 	opts := providerserver.ServeOpts{
 		Debug:   debug,
-		Address: "registry.terraform.io/providers/cockroachdb/cockroach",
+		Address: "registry.terraform.io/cockroachdb/cockroach",
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)

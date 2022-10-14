@@ -18,8 +18,9 @@ package provider
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type ClusterState types.String
@@ -35,12 +36,6 @@ const (
 	CREATE_TIMEOUT                          = 60 * time.Minute
 )
 
-// ClusterConfig struct for ClusterConfig.
-type ClusterConfig struct {
-	Dedicated  *DedicatedHardwareConfig `tfsdk:"dedicated"`
-	Serverless *ServerlessClusterConfig `tfsdk:"serverless"`
-}
-
 type Region struct {
 	Name      types.String `tfsdk:"name"`
 	SqlDns    types.String `tfsdk:"sql_dns"`
@@ -48,7 +43,7 @@ type Region struct {
 	NodeCount types.Int64  `tfsdk:"node_count"`
 }
 
-type DedicatedHardwareConfig struct {
+type DedicatedClusterConfig struct {
 	MachineType    types.String  `tfsdk:"machine_type"`
 	NumVirtualCpus types.Int64   `tfsdk:"num_virtual_cpus"`
 	StorageGib     types.Int64   `tfsdk:"storage_gib"`
@@ -61,75 +56,12 @@ type ServerlessClusterConfig struct {
 	RoutingId  types.String `tfsdk:"routing_id"`
 }
 
-// CreateClusterSpecification struct for CreateClusterSpecification.
-type CreateClusterSpecification struct {
-	Dedicated  *DedicatedClusterCreateSpecification  `tfsdk:"dedicated"`
-	Serverless *ServerlessClusterCreateSpecification `tfsdk:"serverless"`
-}
-
-// ServerlessClusterCreateSpecification struct for ServerlessClusterCreateSpecification.
-type ServerlessClusterCreateSpecification struct {
-	// Region values should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS.
-	Regions    []types.String `tfsdk:"regions"`
-	SpendLimit types.Int64    `tfsdk:"spend_limit"`
-}
-
-// DedicatedClusterCreateSpecification struct for DedicatedClusterCreateSpecification.
-type DedicatedClusterCreateSpecification struct {
-	// Region keys should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. Values represent the node count.
-	RegionNodes *map[string]int32                     `tfsdk:"region_nodes"`
-	Hardware    *DedicatedHardwareCreateSpecification `tfsdk:"hardware"`
-	// The CockroachDB version for the cluster. The current version is used if omitted.
-	CockroachVersion types.String `tfsdk:"cockroach_version"`
-}
-
-// DedicatedHardwareCreateSpecification struct for DedicatedHardwareCreateSpecification.
-type DedicatedHardwareCreateSpecification struct {
-	MachineSpec *DedicatedMachineTypeSpecification `tfsdk:"machine_spec"`
-	// StorageGiB is the number of storage GiB per node in the cluster. Zero indicates default to the lowest storage GiB available given machine specs.
-	StorageGib types.Int64 `tfsdk:"storage_gib"`
-	// DiskIOPs is the number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default. Only available for AWS clusters.
-	DiskIops types.Int64 `tfsdk:"disk_iops"`
-}
-
 // DedicatedMachineTypeSpecification struct for DedicatedMachineTypeSpecification.
 type DedicatedMachineTypeSpecification struct {
 	// MachineType is the machine type identifier within the given cloud provider, ex. m5.xlarge, n2-standard-4.
 	MachineType types.String `tfsdk:"machine_type"`
 	// NumVirtualCPUs may be used to automatically select a machine type according to the desired number of vCPUs.
 	NumVirtualCpus types.Int64 `tfsdk:"num_virtual_cpus"`
-}
-
-type ServerlessClusterSpec struct {
-	Regions    []types.String `tfsdk:"regions"`
-	SpendLimit types.Int64    `tfsdk:"spend_limit"`
-}
-
-// ServerlessClusterUpdateSpecification struct for ServerlessClusterUpdateSpecification.
-type ServerlessClusterUpdateSpecification struct {
-	SpendLimit types.Int64 `tfsdk:"spend_limit"`
-}
-
-// DedicatedClusterUpdateSpecification struct for DedicatedClusterUpdateSpecification.
-type DedicatedClusterUpdateSpecification struct {
-	// Region keys should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. Values represent the node count.
-	RegionNodes *map[string]int32                     `tfsdk:"region_nodes"`
-	Hardware    *DedicatedHardwareUpdateSpecification `tfsdk:"hardware"`
-}
-
-// DedicatedHardwareUpdateSpecification struct for DedicatedHardwareUpdateSpecification.
-type DedicatedHardwareUpdateSpecification struct {
-	MachineSpec *DedicatedMachineTypeSpecification `tfsdk:"machine_spec"`
-	// StorageGiB is the number of storage GiB per node in the cluster.
-	StorageGib types.Int64 `tfsdk:"storage_gib"`
-	// DiskIOPs is the number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default. Only available for AWS clusters.
-	DiskIops types.Int64 `tfsdk:"disk_iops"`
-}
-
-// UpdateClusterSpecification struct for UpdateClusterSpecification.
-type UpdateClusterSpecification struct {
-	Dedicated  *DedicatedClusterUpdateSpecification  `tfsdk:"dedicated"`
-	Serverless *ServerlessClusterUpdateSpecification `tfsdk:"serverless"`
 }
 
 // SQLUserSpecification struct for SQLUserSpecification.
@@ -150,34 +82,19 @@ type APIErrorMessage struct {
 }
 
 type CockroachCluster struct {
-	ID                  types.String                `tfsdk:"id"`
-	Name                types.String                `tfsdk:"name"`
-	CloudProvider       ApiCloudProvider            `tfsdk:"cloud_provider"`
-	AccountId           types.String                `tfsdk:"account_id"`
-	CreateSpec          *CreateClusterSpecification `tfsdk:"create_spec"`
-	UpdateSpec          *UpdateClusterSpecification `tfsdk:"update_spec"`
-	Config              *ClusterConfig              `tfsdk:"config"`
-	Regions             []Region                    `tfsdk:"regions"`
-	CockroachVersion    types.String                `tfsdk:"cockroach_version"`
-	Plan                types.String                `tfsdk:"plan"`
-	State               types.String                `tfsdk:"state"`
-	CreatorId           types.String                `tfsdk:"creator_id"`
-	OperationStatus     types.String                `tfsdk:"operation_status"`
-	WaitForClusterReady types.Bool                  `tfsdk:"wait_for_cluster_ready"`
-}
-
-type CockroachClusterData struct {
-	ID               types.String     `tfsdk:"id"`
-	Name             types.String     `tfsdk:"name"`
-	CloudProvider    ApiCloudProvider `tfsdk:"cloud_provider"`
-	AccountId        types.String     `tfsdk:"account_id"`
-	CockroachVersion types.String     `tfsdk:"cockroach_version"`
-	Plan             types.String     `tfsdk:"plan"`
-	State            types.String     `tfsdk:"state"`
-	CreatorId        types.String     `tfsdk:"creator_id"`
-	OperationStatus  types.String     `tfsdk:"operation_status"`
-	Config           *ClusterConfig   `tfsdk:"config"`
-	Regions          []Region         `tfsdk:"regions"`
+	ID                  types.String             `tfsdk:"id"`
+	Name                types.String             `tfsdk:"name"`
+	CloudProvider       ApiCloudProvider         `tfsdk:"cloud_provider"`
+	AccountId           types.String             `tfsdk:"account_id"`
+	DedicatedConfig     *DedicatedClusterConfig  `tfsdk:"dedicated"`
+	ServerlessConfig    *ServerlessClusterConfig `tfsdk:"serverless"`
+	Regions             []Region                 `tfsdk:"regions"`
+	CockroachVersion    types.String             `tfsdk:"cockroach_version"`
+	Plan                types.String             `tfsdk:"plan"`
+	State               types.String             `tfsdk:"state"`
+	CreatorId           types.String             `tfsdk:"creator_id"`
+	OperationStatus     types.String             `tfsdk:"operation_status"`
+	WaitForClusterReady types.Bool               `tfsdk:"wait_for_cluster_ready"`
 }
 
 // AllowlistEntry struct for AllowlistEntry.

@@ -1,36 +1,36 @@
 variable "cluster_name" {
-  type = string
+  type     = string
   nullable = false
 }
 
 variable "sql_user_name" {
-  type = string
+  type     = string
   nullable = false
-  default = "maxroach"
+  default  = "maxroach"
 }
 
 variable "sql_user_password" {
-  type = string
-  nullable = false
+  type      = string
+  nullable  = false
   sensitive = true
 }
 
 variable "serverless_spend_limit" {
-  type = number
+  type     = number
   nullable = false
-  default = 0
+  default  = 0
 }
 
 variable "cloud_provider" {
-  type = string
+  type     = string
   nullable = false
-  default = "GCP"
+  default  = "GCP"
 }
 
 variable "cloud_provider_region" {
-  type = list
+  type     = list(any)
   nullable = false
-  default = ["us-east1"]
+  default  = ["us-east1"]
 }
 
 terraform {
@@ -41,24 +41,26 @@ terraform {
   }
 }
 provider "cockroach" {
-# export COCKROACH_API_KEY with the cockroach cloud API Key
+  # export COCKROACH_API_KEY with the cockroach cloud API Key
 }
 
 resource "cockroach_cluster" "cockroach" {
-    name           = var.cluster_name
-    cloud_provider = var.cloud_provider
-    wait_for_cluster_ready = true
-    create_spec = {
-      serverless = {
-         regions = var.cloud_provider_region
-         spend_limit = var.serverless_spend_limit
-         }
+  name                   = var.cluster_name
+  cloud_provider         = var.cloud_provider
+  wait_for_cluster_ready = true
+  serverless = {
+    spend_limit = var.serverless_spend_limit
+  }
+  regions = [
+    {
+      name = var.cloud_provider_region[0]
     }
+  ]
 }
 
 resource "cockroach_sql_user" "cockroach" {
-  name = var.sql_user_name
+  name     = var.sql_user_name
   password = var.sql_user_password
-  id = cockroach_cluster.cockroach.id
+  id       = cockroach_cluster.cockroach.id
 }
 

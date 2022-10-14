@@ -18,8 +18,9 @@ package provider
 
 import (
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 	"time"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type ClusterState types.String
@@ -188,6 +189,22 @@ type AllowlistEntry struct {
 	Ui       types.Bool   `tfsdk:"ui"`
 	Sql      types.Bool   `tfsdk:"sql"`
 	Name     types.String `tfsdk:"name"`
+}
+
+// AWSPrivateLinkServiceDetail struct for AWSPrivateLinkServiceDetail
+type AWSPrivateLinkServiceDetail struct {
+	ServiceName         types.String   `tfsdk:"service_name"`
+	ServiceId           types.String   `tfsdk:"service_id"`
+	AvailabilityZoneIds []types.String `tfsdk:"availability_zone_ids"`
+}
+
+// EndpointService struct for EndpointService.
+type EndpointService struct {
+	Id            types.String                `tfsdk:"id"`
+	RegionName    types.String                `tfsdk:"region_name"`
+	CloudProvider ApiCloudProvider            `tfsdk:"cloud_provider"`
+	Status        types.String                `tfsdk:"status"`
+	Aws           AWSPrivateLinkServiceDetail `tfsdk:"aws_privatelink_service_detail"`
 }
 
 func (e *APIErrorMessage) String() string {

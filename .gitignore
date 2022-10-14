@@ -40,3 +40,9 @@ terraform.rc
 .idea/
 .vscode/
 
+# Docs generator
+tfplugindocs
+
+# MacOS
+.DS_Store
+

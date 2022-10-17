@@ -191,7 +191,7 @@ type AllowlistEntry struct {
 	Name     types.String `tfsdk:"name"`
 }
 
-// AWSPrivateLinkServiceDetail struct for AWSPrivateLinkServiceDetail
+// AWSPrivateLinkServiceDetail struct for AWSPrivateLinkServiceDetail.
 type AWSPrivateLinkServiceDetail struct {
 	ServiceName         types.String   `tfsdk:"service_name"`
 	ServiceId           types.String   `tfsdk:"service_id"`
@@ -210,6 +210,16 @@ type PrivateEndpointService struct {
 type PrivateEndpointServices struct {
 	Id       types.String             `tfsdk:"id"`
 	Services []PrivateEndpointService `tfsdk:"endpoint_services"`
+}
+
+// AwsPrivateEndpointConnection struct for AwsPrivateEndpointConnection.
+type AwsPrivateEndpointConnection struct {
+	Id            types.String     `tfsdk:"id"`
+	RegionName    types.String     `tfsdk:"region_name"`
+	CloudProvider ApiCloudProvider `tfsdk:"cloud_provider"`
+	Status        types.String     `tfsdk:"status"` // could this be the enum status type
+	EndpointId    types.String     `tfsdk:"endpoint_id"`
+	ServiceId     types.String     `tfsdk:"service_id"`
 }
 
 func (e *APIErrorMessage) String() string {

@@ -45,12 +45,12 @@ func (n awsEndpointConnectionResourceType) GetSchema(ctx context.Context) (tfsdk
 				Required: true,
 				Type:     types.Int64Type,
 			},
-			"status": {
-				Type:     types.StringType,
-				Computed: true,
-			},
 			"endpoint_id": {
-				Computed: true,
+				Required: true,
+				Type:     types.StringType,
+			},
+			"status": {
+				Required: true,
 				Type:     types.StringType,
 			},
 			"service_id": {

@@ -72,9 +72,10 @@ resource "cockroach_cluster" "dedicated" {
 }
  resource "cockroach_aws_endpoint_connection" "connection" {
     id = cockroach_cluster.dedicated.id
+	cloud_provider = "AWS"
+	region = "us-east-1"
 	endpoint_id = cockroach_aws_endpoint_connection.endpoint_id
-	service_id = cockroach_aws_endpoint_connection.service_id
-	status = cockroach_aws_endpoint_connection.status
+	status = "ENDPOINT_AVAILABLE"
 }
 `, clusterName)
 }

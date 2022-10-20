@@ -23,8 +23,10 @@ import (
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccServerlessClusterResource(t *testing.T) {
@@ -132,4 +134,57 @@ resource "cockroach_cluster" "dedicated" {
 	}]
 }
 `, name)
+}
+
+func TestSortRegionsByPlan(t *testing.T) {
+	t.Run("Plan matches cluster", func(t *testing.T) {
+		clusterObj := &client.Cluster{Regions: []client.Region{
+			{Name: "us-central1"},
+			{Name: "us-east1"},
+			{Name: "us-west2"},
+		}}
+		plan := &CockroachCluster{
+			Regions: []Region{
+				{Name: types.String{false, false, "us-west2"}},
+				{Name: types.String{false, false, "us-central1"}},
+				{Name: types.String{false, false, "us-east1"}},
+			},
+		}
+		sortRegionsByPlan(clusterObj, plan)
+		for i, region := range clusterObj.Regions {
+			require.Equal(t, plan.Regions[i].Name.Value, region.Name)
+		}
+	})
+
+	t.Run("More regions in cluster than plan", func(t *testing.T) {
+		clusterObj := &client.Cluster{Regions: []client.Region{
+			{Name: "us-central1"},
+			{Name: "us-east1"},
+			{Name: "us-west2"},
+		}}
+		plan := &CockroachCluster{
+			Regions: []Region{
+				{Name: types.String{false, false, "us-west2"}},
+				{Name: types.String{false, false, "us-central1"}},
+			},
+		}
+		// We really just want to make sure it doesn't panic here.
+		sortRegionsByPlan(clusterObj, plan)
+	})
+
+	t.Run("More regions in plan than cluster", func(t *testing.T) {
+		clusterObj := &client.Cluster{Regions: []client.Region{
+			{Name: "us-central1"},
+			{Name: "us-east1"},
+		}}
+		plan := &CockroachCluster{
+			Regions: []Region{
+				{Name: types.String{false, false, "us-west2"}},
+				{Name: types.String{false, false, "us-central1"}},
+				{Name: types.String{false, false, "us-east1"}},
+			},
+		}
+		// We really just want to make sure it doesn't panic here.
+		sortRegionsByPlan(clusterObj, plan)
+	})
 }

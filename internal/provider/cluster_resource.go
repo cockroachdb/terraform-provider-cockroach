@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -309,7 +310,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	loadClusterToTerraformState(clusterObj, &plan)
+	loadClusterToTerraformState(clusterObj, &plan, nil)
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -350,7 +351,7 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 			"")
 	}
 
-	loadClusterToTerraformState(clusterObj, &cluster)
+	loadClusterToTerraformState(clusterObj, &cluster, nil)
 	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -439,7 +440,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	}
 
 	// Set state
-	loadClusterToTerraformState(clusterObj, &state)
+	loadClusterToTerraformState(clusterObj, &state, nil)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -477,7 +478,22 @@ func (r clusterResource) ImportState(ctx context.Context, req tfsdk.ImportResour
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
-func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster) {
+// Since the API response will always sort regions by name, we need to
+// resort the list, so it matches up with the plan. If the response and
+// plan regions don't match up, the sort won't work right, but we can
+// ignore it. Terraform will handle it.
+func sortRegionsByPlan(clusterObj *client.Cluster, plan *CockroachCluster) {
+	regionOrdinals := make(map[string]int, len(clusterObj.Regions))
+	for i, region := range plan.Regions {
+		regionOrdinals[region.Name.Value] = i
+	}
+	sort.Slice(clusterObj.Regions, func(i, j int) bool {
+		return regionOrdinals[clusterObj.Regions[i].Name] < regionOrdinals[clusterObj.Regions[j].Name]
+	})
+}
+
+func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster) {
+	sortRegionsByPlan(clusterObj, plan)
 	var rgs []Region
 	for _, x := range clusterObj.Regions {
 		rg := Region{

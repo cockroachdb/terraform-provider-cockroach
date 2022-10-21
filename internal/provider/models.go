@@ -25,6 +25,7 @@ import (
 
 const (
 	CockroachAPIKey                  string = "COCKROACH_API_KEY"
+	APIServerURLKey                  string = "COCKROACH_SERVER"
 	UserAgent                        string = "terraform-provider-cockroach"
 	CLUSTERSTATETYPE_CREATED         string = "CREATED"
 	CLUSTERSTATETYPE_CREATION_FAILED string = "CREATION_FAILED"

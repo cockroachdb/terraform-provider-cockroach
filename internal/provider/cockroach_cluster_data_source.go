@@ -39,6 +39,9 @@ func (t clusterDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 				MarkdownDescription: "Name of cluster",
 				Type:                types.StringType,
 				Computed:            true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 			},
 			"cockroach_version": {
 				Type:     types.StringType,
@@ -47,10 +50,16 @@ func (t clusterDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 			"plan": {
 				Type:     types.StringType,
 				Computed: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 			},
 			"cloud_provider": {
 				Type:     types.StringType,
 				Computed: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 			},
 			"account_id": {
 				Computed: true,
@@ -66,6 +75,9 @@ func (t clusterDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 					"routing_id": {
 						Type:     types.StringType,
 						Computed: true,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 				}),
 			},
@@ -122,6 +134,9 @@ func (t clusterDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 			"creator_id": {
 				Type:     types.StringType,
 				Computed: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 			},
 			"operation_status": {
 				Type:     types.StringType,

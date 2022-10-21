@@ -32,7 +32,7 @@ import (
 func TestAccServerlessClusterResource(t *testing.T) {
 	t.Parallel()
 	var (
-		clusterName  = fmt.Sprintf("crdb-serverless-%s", GenerateRandomString(4))
+		clusterName  = fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
 		resourceName = "cockroach_cluster.serverless"
 		cluster      client.Cluster
 	)
@@ -57,7 +57,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 func TestAccDedicatedClusterResource(t *testing.T) {
 	t.Parallel()
 	var (
-		clusterName  = fmt.Sprintf("crdb-dedicated-%s", GenerateRandomString(4))
+		clusterName  = fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
 		resourceName = "cockroach_cluster.dedicated"
 		cluster      client.Cluster
 	)

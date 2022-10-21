@@ -90,7 +90,7 @@ func testAccNetworkingRuleExists(resourceName, clusterResourceName string) resou
 }
 
 func testAccNetworkingRulesResource(name, cidrIp, cidrMask string) string {
-	networkClusterName := fmt.Sprintf("crdb-networking-%s", GenerateRandomString(4))
+	networkClusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"

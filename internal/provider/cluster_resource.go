@@ -47,6 +47,9 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				MarkdownDescription: "Name of cluster",
 				Type:                types.StringType,
 				Required:            true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"cockroach_version": {
 				Type:     types.StringType,
@@ -73,13 +76,22 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"cloud_provider": {
 				Type:     types.StringType,
 				Required: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"serverless": {
 				Optional: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"spend_limit": {
 						Optional: true,
 						Type:     types.Int64Type,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 					"routing_id": {
 						Computed: true,
@@ -92,11 +104,17 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			},
 			"dedicated": {
 				Optional: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"storage_gib": {
 						Type:     types.Int64Type,
 						Optional: true,
 						Computed: true,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 					"disk_iops": {
 						Type:     types.Int64Type,
@@ -310,7 +328,8 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	loadClusterToTerraformState(clusterObj, &plan, nil)
+	var state CockroachCluster
+	loadClusterToTerraformState(clusterObj, &state, &plan)
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -483,6 +502,9 @@ func (r clusterResource) ImportState(ctx context.Context, req tfsdk.ImportResour
 // plan regions don't match up, the sort won't work right, but we can
 // ignore it. Terraform will handle it.
 func sortRegionsByPlan(clusterObj *client.Cluster, plan *CockroachCluster) {
+	if clusterObj == nil || plan == nil {
+		return
+	}
 	regionOrdinals := make(map[string]int, len(clusterObj.Regions))
 	for i, region := range plan.Regions {
 		regionOrdinals[region.Name.Value] = i

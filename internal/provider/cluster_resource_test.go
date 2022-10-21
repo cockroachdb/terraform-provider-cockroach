@@ -145,9 +145,9 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}}
 		plan := &CockroachCluster{
 			Regions: []Region{
-				{Name: types.String{false, false, "us-west2"}},
-				{Name: types.String{false, false, "us-central1"}},
-				{Name: types.String{false, false, "us-east1"}},
+				{Name: types.String{Value: "us-west2"}},
+				{Name: types.String{Value: "us-central1"}},
+				{Name: types.String{Value: "us-east1"}},
 			},
 		}
 		sortRegionsByPlan(clusterObj, plan)
@@ -164,8 +164,8 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}}
 		plan := &CockroachCluster{
 			Regions: []Region{
-				{Name: types.String{false, false, "us-west2"}},
-				{Name: types.String{false, false, "us-central1"}},
+				{Name: types.String{Value: "us-west2"}},
+				{Name: types.String{Value: "us-central1"}},
 			},
 		}
 		// We really just want to make sure it doesn't panic here.
@@ -179,9 +179,9 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}}
 		plan := &CockroachCluster{
 			Regions: []Region{
-				{Name: types.String{false, false, "us-west2"}},
-				{Name: types.String{false, false, "us-central1"}},
-				{Name: types.String{false, false, "us-east1"}},
+				{Name: types.String{Value: "us-west2"}},
+				{Name: types.String{Value: "us-central1"}},
+				{Name: types.String{Value: "us-east1"}},
 			},
 		}
 		// We really just want to make sure it doesn't panic here.

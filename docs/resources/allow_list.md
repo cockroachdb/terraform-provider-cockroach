@@ -19,12 +19,15 @@ Allow list of IP range
 
 - `cidr_ip` (String)
 - `cidr_mask` (Number)
-- `id` (String) The ID of this resource.
 - `sql` (Boolean)
 - `ui` (Boolean)
 
 ### Optional
 
 - `name` (String)
+
+### Read-Only
+
+- `id` (String) The ID of this resource.
 
 

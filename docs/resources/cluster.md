@@ -42,7 +42,13 @@ Cluster Resource
 Required:
 
 - `name` (String)
+
+Optional:
+
 - `node_count` (Number)
+
+Read-Only:
+
 - `sql_dns` (String)
 - `ui_dns` (String)
 
@@ -54,9 +60,12 @@ Optional:
 
 - `disk_iops` (Number)
 - `machine_type` (String)
-- `memory_gib` (Number)
 - `num_virtual_cpus` (Number)
 - `storage_gib` (Number)
+
+Read-Only:
+
+- `memory_gib` (Number)
 
 
 <a id="nestedatt--serverless"></a>
@@ -64,7 +73,10 @@ Optional:
 
 Optional:
 
-- `routing_id` (String)
 - `spend_limit` (Number)
+
+Read-Only:
+
+- `routing_id` (String)
 
 

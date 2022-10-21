@@ -113,7 +113,7 @@ resource "cockroach_cluster" "serverless" {
         spend_limit = 1
     }
 	regions = [{
-		name = "us-east1"
+		name = "us-central1"
 	}]
 }
 `, name)

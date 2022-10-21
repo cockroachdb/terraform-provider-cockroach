@@ -330,7 +330,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 
 	var state CockroachCluster
 	loadClusterToTerraformState(clusterObj, &state, &plan)
-	diags = resp.State.Set(ctx, plan)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -354,6 +354,9 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		return
 	}
 
+	if cluster.ID.Null {
+		return
+	}
 	clusterID := cluster.ID.Value
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
@@ -477,6 +480,9 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	}
 
 	// Get cluster ID from state
+	if state.ID.Null {
+		return
+	}
 	clusterID := state.ID.Value
 
 	// Delete order by calling API
@@ -528,6 +534,8 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	}
 
 	state.ID = types.String{Value: clusterObj.Id}
+	state.Name = types.String{Value: clusterObj.Name}
+	state.CloudProvider = types.String{Value: string(clusterObj.CloudProvider)}
 	state.CockroachVersion = types.String{Value: clusterObj.CockroachVersion}
 	state.Plan = types.String{Value: string(clusterObj.Plan)}
 	state.AccountId = types.String{Value: *clusterObj.AccountId}

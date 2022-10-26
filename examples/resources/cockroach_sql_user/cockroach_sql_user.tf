@@ -7,7 +7,7 @@ variable "sql_user_password" {
 }
 
 resource "cockroach_sql_user" "cockroach" {
-  name     = "example-sql-user"
-  password = var.sql_user_password
-  id       = var.cluster_id
+  name       = "example-sql-user"
+  password   = var.sql_user_password
+  cluster_id = var.cluster_id
 }

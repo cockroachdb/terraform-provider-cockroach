@@ -68,10 +68,11 @@ func testAccSqlUserExists(resourceName, clusterResourceName string) resource.Tes
 			return fmt.Errorf("no ID is set")
 		}
 
-		id := clusterRs.Primary.Attributes["id"]
+		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
-		if clusterResp, _, err := p.service.ListSQLUsers(context.TODO(), id, &listUserOptions); err == nil {
+		clusterResp, _, err := p.service.ListSQLUsers(context.TODO(), clusterID, &listUserOptions)
+		if err == nil {
 			for _, user := range clusterResp.Users {
 				if user.GetName() == rs.Primary.Attributes["name"] {
 					return nil
@@ -79,7 +80,7 @@ func testAccSqlUserExists(resourceName, clusterResourceName string) resource.Tes
 			}
 		}
 
-		return fmt.Errorf("cluster(%s:%s) does not exist", rs.Primary.Attributes["id"], rs.Primary.ID)
+		return fmt.Errorf("user %s does not exist", rs.Primary.ID)
 	}
 }
 
@@ -100,7 +101,7 @@ resource "cockroach_cluster" "serverless" {
 resource "cockroach_sql_user" "sqluser" {
   name = "%s"
   password = "%s"
-  id = cockroach_cluster.serverless.id
+  cluster_id = cockroach_cluster.serverless.id
 }
 `, clusterName, name, password)
 }

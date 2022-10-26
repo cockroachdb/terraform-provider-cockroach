@@ -19,21 +19,27 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type sqlUserResourceType struct{}
 
-func (s sqlUserResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+// clusterID:name
+const sqlUserIDFmt = "%s:%s"
+const sqlUserNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
+
+var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegex, sqlUserNameRegex))
+
+func (s sqlUserResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "SQL user and password",
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
+			"cluster_id": {
 				Required: true,
 				Type:     types.StringType,
 			},
@@ -46,11 +52,18 @@ func (s sqlUserResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.
 				Type:      types.StringType,
 				Sensitive: true,
 			},
+			"id": {
+				Computed: true,
+				Type:     types.StringType,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
+			},
 		},
 	}, nil
 }
 
-func (s sqlUserResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (s sqlUserResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
 	return sqlUserResource{
@@ -68,19 +81,24 @@ func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	var sqlUserSpec SQLUserSpecification
+	var sqlUserSpec SQLUser
 	diags := req.Config.Get(ctx, &sqlUserSpec)
 	resp.Diagnostics.Append(diags...)
+	// Create a unique ID (required by terraform framework) by combining
+	// the cluster ID and username.
+	sqlUserSpec.ID = types.String{
+		Value: fmt.Sprintf(sqlUserIDFmt, sqlUserSpec.ClusterId.Value, sqlUserSpec.Name.Value),
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, httpResp, err := s.provider.service.GetCluster(ctx, sqlUserSpec.Id.Value)
+	_, _, err := s.provider.service.GetCluster(ctx, sqlUserSpec.ClusterId.Value)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting the cluster",
-			fmt.Sprintf("Could not get the cluster, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not get the cluster, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -89,11 +107,11 @@ func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	sqlUserRequest.Name = sqlUserSpec.Name.Value
 	sqlUserRequest.Password = sqlUserSpec.Password.Value
 
-	_, httpResp, err = s.provider.service.CreateSQLUser(ctx, sqlUserSpec.Id.Value, &sqlUserRequest)
+	_, _, err = s.provider.service.CreateSQLUser(ctx, sqlUserSpec.ClusterId.Value, &sqlUserRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating sql user",
-			fmt.Sprintf("Could not create sql user, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not create sql user, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -111,18 +129,39 @@ func (s sqlUserResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		return
 	}
 
-	var sqlUser SQLUserSpecification
-	diags := req.State.Get(ctx, &sqlUser)
+	var state SQLUser
+	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Since the state may have come from an import, we need to retrieve
+	// the actual user list and make sure this one is in there.
+	apiResp, _, err := s.provider.service.ListSQLUsers(ctx, state.ClusterId.Value, &client.ListSQLUsersOptions{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Couldn't retrieve SQL users",
+			fmt.Sprintf("Unexpected error retrieving SQL users: %v", err.Error()),
+		)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	for _, user := range apiResp.GetUsers() {
+		if user.GetName() == state.Name.Value {
+			return
+		}
+	}
+	resp.Diagnostics.AddError(
+		"Couldn't find user.",
+		fmt.Sprintf("This cluster doesn't have a SQL user named '%v'", state.Name.Value),
+	)
 }
 
 func (s sqlUserResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
 	// Get plan values
-	var plan SQLUserSpecification
+	var plan SQLUser
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -130,27 +169,27 @@ func (s sqlUserResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	}
 
 	// Get current state
-	var state SQLUserSpecification
+	var state SQLUser
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if plan.Name != state.Name || plan.Id != state.Id {
+	if plan.Name != state.Name || plan.ClusterId != state.ClusterId {
 		resp.Diagnostics.AddError(
-			"can not change an anything apart from the password",
-			"You can only change password of the sql user. Thanks!",
+			"Invalid update",
+			"Currently, only the password of a SQL user can be updated.",
 		)
 		return
 	}
 
 	updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.Value}
-	_, httpResp, err := s.provider.service.UpdateSQLUserPassword(ctx, plan.Id.Value, plan.Name.Value, &updateReq)
+	_, _, err := s.provider.service.UpdateSQLUserPassword(ctx, plan.ClusterId.Value, plan.Name.Value, &updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating sql user password",
-			fmt.Sprintf("Could not update sql user password, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not update sql user password, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -163,18 +202,18 @@ func (s sqlUserResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 }
 
 func (s sqlUserResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
-	var state SQLUserSpecification
+	var state SQLUser
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, httpResp, err := s.provider.service.DeleteSQLUser(ctx, state.Id.Value, state.Name.Value)
+	_, _, err := s.provider.service.DeleteSQLUser(ctx, state.ClusterId.Value, state.Name.Value)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting sql user",
-			fmt.Sprintf("Could not delete sql user, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not delete sql user, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -184,5 +223,22 @@ func (s sqlUserResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 }
 
 func (s sqlUserResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+	// Since a SQL user is uniquely identified by two fields, the cluster ID
+	// and the name, we serialize them both into the ID field. To make import
+	// work, we need to deserialize an ID back into name and cluster ID.
+	matches := sqlUserIDRegex.FindStringSubmatch(req.ID)
+	if len(matches) != 3 {
+		resp.Diagnostics.AddError(
+			"Invalid SQL user ID format",
+			`When importing a SQL user, the ID field should follow the format "<cluster ID>:<SQL user name>")`)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	sqlUser := SQLUser{
+		ClusterId: types.String{Value: matches[1]},
+		Name:      types.String{Value: matches[2]},
+		ID:        types.String{Value: req.ID},
+	}
+	resp.Diagnostics = resp.State.Set(ctx, &sqlUser)
 }

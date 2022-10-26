@@ -19,155 +19,64 @@ Cluster Resource
 
 - `cloud_provider` (String)
 - `name` (String) Name of cluster
+- `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 
 ### Optional
 
 - `cockroach_version` (String)
-- `create_spec` (Attributes) (see [below for nested schema](#nestedatt--create_spec))
-- `update_spec` (Attributes) (see [below for nested schema](#nestedatt--update_spec))
-- `wait_for_cluster_ready` (Boolean)
+- `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
+- `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 
 ### Read-Only
 
 - `account_id` (String)
-- `config` (Attributes) (see [below for nested schema](#nestedatt--config))
 - `creator_id` (String)
 - `id` (String) The ID of this resource.
 - `operation_status` (String)
 - `plan` (String)
-- `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `state` (String)
-
-<a id="nestedatt--create_spec"></a>
-### Nested Schema for `create_spec`
-
-Optional:
-
-- `dedicated` (Attributes) (see [below for nested schema](#nestedatt--create_spec--dedicated))
-- `serverless` (Attributes) (see [below for nested schema](#nestedatt--create_spec--serverless))
-
-<a id="nestedatt--create_spec--dedicated"></a>
-### Nested Schema for `create_spec.dedicated`
-
-Optional:
-
-- `cockroach_version` (String)
-- `hardware` (Attributes) (see [below for nested schema](#nestedatt--create_spec--dedicated--hardware))
-- `region_nodes` (Map of Number)
-
-<a id="nestedatt--create_spec--dedicated--hardware"></a>
-### Nested Schema for `create_spec.dedicated.hardware`
-
-Optional:
-
-- `disk_iops` (Number)
-- `machine_spec` (Attributes) (see [below for nested schema](#nestedatt--create_spec--dedicated--hardware--machine_spec))
-- `storage_gib` (Number)
-
-<a id="nestedatt--create_spec--dedicated--hardware--machine_spec"></a>
-### Nested Schema for `create_spec.dedicated.hardware.storage_gib`
-
-Optional:
-
-- `machine_type` (String)
-- `num_virtual_cpus` (Number)
-
-
-
-
-<a id="nestedatt--create_spec--serverless"></a>
-### Nested Schema for `create_spec.serverless`
-
-Optional:
-
-- `regions` (List of String)
-- `spend_limit` (Number)
-
-
-
-<a id="nestedatt--update_spec"></a>
-### Nested Schema for `update_spec`
-
-Optional:
-
-- `dedicated` (Attributes) (see [below for nested schema](#nestedatt--update_spec--dedicated))
-- `serverless` (Attributes) (see [below for nested schema](#nestedatt--update_spec--serverless))
-
-<a id="nestedatt--update_spec--dedicated"></a>
-### Nested Schema for `update_spec.dedicated`
-
-Optional:
-
-- `hardware` (Attributes) (see [below for nested schema](#nestedatt--update_spec--dedicated--hardware))
-- `region_nodes` (Map of Number)
-
-<a id="nestedatt--update_spec--dedicated--hardware"></a>
-### Nested Schema for `update_spec.dedicated.hardware`
-
-Optional:
-
-- `disk_iops` (Number)
-- `machine_spec` (Attributes) (see [below for nested schema](#nestedatt--update_spec--dedicated--hardware--machine_spec))
-- `storage_gib` (Number)
-
-<a id="nestedatt--update_spec--dedicated--hardware--machine_spec"></a>
-### Nested Schema for `update_spec.dedicated.hardware.storage_gib`
-
-Optional:
-
-- `machine_type` (String)
-- `num_virtual_cpus` (Number)
-
-
-
-
-<a id="nestedatt--update_spec--serverless"></a>
-### Nested Schema for `update_spec.serverless`
-
-Optional:
-
-- `spend_limit` (Number)
-
-
-
-<a id="nestedatt--config"></a>
-### Nested Schema for `config`
-
-Read-Only:
-
-- `dedicated` (Attributes) (see [below for nested schema](#nestedatt--config--dedicated))
-- `serverless` (Attributes) (see [below for nested schema](#nestedatt--config--serverless))
-
-<a id="nestedatt--config--dedicated"></a>
-### Nested Schema for `config.dedicated`
-
-Read-Only:
-
-- `disk_iops` (Number)
-- `machine_type` (String)
-- `memory_gib` (Number)
-- `num_virtual_cpus` (Number)
-- `storage_gib` (Number)
-
-
-<a id="nestedatt--config--serverless"></a>
-### Nested Schema for `config.serverless`
-
-Read-Only:
-
-- `routing_id` (String)
-- `spend_limit` (Number)
-
-
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`
 
-Read-Only:
+Required:
 
 - `name` (String)
+
+Optional:
+
 - `node_count` (Number)
+
+Read-Only:
+
 - `sql_dns` (String)
 - `ui_dns` (String)
+
+
+<a id="nestedatt--dedicated"></a>
+### Nested Schema for `dedicated`
+
+Optional:
+
+- `disk_iops` (Number)
+- `machine_type` (String)
+- `num_virtual_cpus` (Number)
+- `storage_gib` (Number)
+
+Read-Only:
+
+- `memory_gib` (Number)
+
+
+<a id="nestedatt--serverless"></a>
+### Nested Schema for `serverless`
+
+Optional:
+
+- `spend_limit` (Number)
+
+Read-Only:
+
+- `routing_id` (String)
 
 

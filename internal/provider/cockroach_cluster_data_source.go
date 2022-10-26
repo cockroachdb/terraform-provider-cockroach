@@ -28,7 +28,7 @@ import (
 
 type clusterDataSourceType struct{}
 
-func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (t clusterDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
@@ -39,13 +39,13 @@ func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 				MarkdownDescription: "Name of cluster",
 				Type:                types.StringType,
 				Computed:            true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 			},
 			"cockroach_version": {
 				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 			"plan": {
 				Type:     types.StringType,
@@ -56,52 +56,53 @@ func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 			},
 			"cloud_provider": {
 				Type:     types.StringType,
-				Required: true,
+				Computed: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
 			},
 			"account_id": {
 				Computed: true,
 				Type:     types.StringType,
 			},
-			"config": {
-				Optional: true,
+			"serverless": {
+				Computed: true,
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"serverless": {
+					"spend_limit": {
 						Computed: true,
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"spend_limit": {
-								Computed: true,
-								Type:     types.Int64Type,
-							},
-							"routing_id": {
-								Type:     types.StringType,
-								Computed: true,
-							},
-						}),
+						Type:     types.Int64Type,
 					},
-					"dedicated": {
+					"routing_id": {
+						Type:     types.StringType,
 						Computed: true,
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"machine_type": {
-								Type:     types.StringType,
-								Computed: true,
-							},
-							"num_virtual_cpus": {
-								Type:     types.Int64Type,
-								Computed: true,
-							},
-							"storage_gib": {
-								Type:     types.Int64Type,
-								Computed: true,
-							},
-							"memory_gib": {
-								Type:     types.Float64Type,
-								Computed: true,
-							},
-							"disk_iops": {
-								Type:     types.Int64Type,
-								Computed: true,
-							},
-						}),
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
+					},
+				}),
+			},
+			"dedicated": {
+				Computed: true,
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"machine_type": {
+						Type:     types.StringType,
+						Computed: true,
+					},
+					"num_virtual_cpus": {
+						Type:     types.Int64Type,
+						Computed: true,
+					},
+					"storage_gib": {
+						Type:     types.Int64Type,
+						Computed: true,
+					},
+					"memory_gib": {
+						Type:     types.Float64Type,
+						Computed: true,
+					},
+					"disk_iops": {
+						Type:     types.Int64Type,
+						Computed: true,
 					},
 				}),
 			},
@@ -129,9 +130,6 @@ func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 			"state": {
 				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 			"creator_id": {
 				Type:     types.StringType,
@@ -143,20 +141,13 @@ func (t clusterDataSourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 			"operation_status": {
 				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 		},
-		Blocks:              nil,
-		Version:             0,
-		DeprecationMessage:  "",
-		Description:         "",
 		MarkdownDescription: "clusterSourceType Data Source",
 	}, nil
 }
 
-func (t clusterDataSourceType) NewDataSource(ctx context.Context, in tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
+func (t clusterDataSourceType) NewDataSource(_ context.Context, in tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
 	return clusterDataSource{
@@ -169,7 +160,7 @@ type clusterDataSource struct {
 }
 
 func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
-	var cluster CockroachClusterData
+	var cluster CockroachCluster
 	diags := req.Config.Get(ctx, &cluster)
 
 	resp.Diagnostics.Append(diags...)
@@ -192,28 +183,24 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	}
 
 	cluster.Name = types.String{Value: cockroachCluster.Name}
-	cluster.CloudProvider = ApiCloudProvider(cockroachCluster.CloudProvider)
+	cluster.CloudProvider = types.String{Value: string(cockroachCluster.CloudProvider)}
 	cluster.State = types.String{Value: string(cockroachCluster.State)}
 	cluster.CockroachVersion = types.String{Value: cockroachCluster.CockroachVersion}
 	cluster.Plan = types.String{Value: string(cockroachCluster.Plan)}
 	cluster.OperationStatus = types.String{Value: string(cockroachCluster.OperationStatus)}
 	if cockroachCluster.Config.Serverless != nil {
-		cluster.Config = &ClusterConfig{
-			Serverless: &ServerlessClusterConfig{
-				SpendLimit: types.Int64{Value: int64(cockroachCluster.Config.Serverless.SpendLimit)},
-				RoutingId:  types.String{Value: cockroachCluster.Config.Serverless.RoutingId},
-			},
+		cluster.ServerlessConfig = &ServerlessClusterConfig{
+			SpendLimit: types.Int64{Value: int64(cockroachCluster.Config.Serverless.SpendLimit)},
+			RoutingId:  types.String{Value: cockroachCluster.Config.Serverless.RoutingId},
 		}
 	}
 	if cockroachCluster.Config.Dedicated != nil {
-		cluster.Config = &ClusterConfig{
-			Dedicated: &DedicatedHardwareConfig{
-				MachineType:    types.String{Value: cockroachCluster.Config.Dedicated.MachineType},
-				NumVirtualCpus: types.Int64{Value: int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)},
-				StorageGib:     types.Int64{Value: int64(cockroachCluster.Config.Dedicated.StorageGib)},
-				MemoryGib:      types.Float64{Value: float64(cockroachCluster.Config.Dedicated.MemoryGib)},
-				DiskIops:       types.Int64{Value: int64(cockroachCluster.Config.Dedicated.DiskIops)},
-			},
+		cluster.DedicatedConfig = &DedicatedClusterConfig{
+			MachineType:    types.String{Value: cockroachCluster.Config.Dedicated.MachineType},
+			NumVirtualCpus: types.Int64{Value: int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)},
+			StorageGib:     types.Int64{Value: int64(cockroachCluster.Config.Dedicated.StorageGib)},
+			MemoryGib:      types.Float64{Value: float64(cockroachCluster.Config.Dedicated.MemoryGib)},
+			DiskIops:       types.Int64{Value: int64(cockroachCluster.Config.Dedicated.DiskIops)},
 		}
 	}
 

@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -46,6 +47,9 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				MarkdownDescription: "Name of cluster",
 				Type:                types.StringType,
 				Required:            true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"cockroach_version": {
 				Type:     types.StringType,
@@ -72,194 +76,110 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"cloud_provider": {
 				Type:     types.StringType,
 				Required: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
-			"create_spec": {
+			"serverless": {
 				Optional: true,
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"serverless": {
-						Optional: true,
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"spend_limit": {
-								Optional: true,
-								Type:     types.Int64Type,
-							},
-							"regions": {
-								Type:     types.ListType{ElemType: types.StringType},
-								Optional: true,
-							},
-						}),
-					},
-					"dedicated": {
-						Optional: true,
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"region_nodes": {
-								Type: types.MapType{
-									ElemType: types.Int64Type,
-								},
-								Optional: true,
-							},
-							"cockroach_version": {
-								Type:     types.StringType,
-								Optional: true,
-							},
-							"hardware": {
-								Optional: true,
-								Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-									"storage_gib": {
-										Type:     types.Int64Type,
-										Optional: true,
-									},
-									"disk_iops": {
-										Type:     types.Int64Type,
-										Optional: true,
-									},
-									"machine_spec": {
-										Optional: true,
-										Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-											"machine_type": {
-												Type:     types.StringType,
-												Optional: true,
-											},
-											"num_virtual_cpus": {
-												Type:     types.Int64Type,
-												Optional: true,
-											},
-										}),
-									},
-								}),
-							},
-						}),
-					},
-				}),
-			},
-			"update_spec": {
-				Optional: true,
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"serverless": {
-						Optional: true,
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"spend_limit": {
-								Optional: true,
-								Type:     types.Int64Type,
-							},
-						}),
-					},
-					"dedicated": {
-						Optional: true,
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"region_nodes": {
-								Type:     types.MapType{ElemType: types.Int64Type},
-								Optional: true,
-							},
-							"hardware": {
-								Optional: true,
-								Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-									"storage_gib": {
-										Type:     types.Int64Type,
-										Optional: true,
-									},
-									"disk_iops": {
-										Type:     types.Int64Type,
-										Optional: true,
-									},
-									"machine_spec": {
-										Optional: true,
-										Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-											"machine_type": {
-												Type:     types.StringType,
-												Optional: true,
-											},
-											"num_virtual_cpus": {
-												Type:     types.Int64Type,
-												Optional: true,
-											},
-										}),
-									},
-								}),
-							},
-						}),
-					},
-				}),
-			},
-			"config": {
-				Computed: true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.UseStateForUnknown(),
 				},
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"serverless": {
-						Computed: true,
+					"spend_limit": {
+						Optional: true,
+						Type:     types.Int64Type,
 						PlanModifiers: tfsdk.AttributePlanModifiers{
 							tfsdk.UseStateForUnknown(),
 						},
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"spend_limit": {
-								Computed: true,
-								Type:     types.Int64Type,
-								PlanModifiers: tfsdk.AttributePlanModifiers{
-									tfsdk.UseStateForUnknown(),
-								},
-							},
-							"routing_id": {
-								Computed: true,
-								Type:     types.StringType,
-								PlanModifiers: tfsdk.AttributePlanModifiers{
-									tfsdk.UseStateForUnknown(),
-								},
-							},
-						}),
 					},
-					"dedicated": {
+					"routing_id": {
+						Computed: true,
+						Type:     types.StringType,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
+					},
+				}),
+			},
+			"dedicated": {
+				Optional: true,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
+				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
+					"storage_gib": {
+						Type:     types.Int64Type,
+						Optional: true,
 						Computed: true,
 						PlanModifiers: tfsdk.AttributePlanModifiers{
 							tfsdk.UseStateForUnknown(),
 						},
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"machine_type": {
-								Computed: true,
-								Type:     types.StringType,
-							},
-							"num_virtual_cpus": {
-								Computed: true,
-								Type:     types.Int64Type,
-							},
-							"storage_gib": {
-								Computed: true,
-								Type:     types.Int64Type,
-							},
-							"memory_gib": {
-								Computed: true,
-								Type:     types.Float64Type,
-							},
-							"disk_iops": {
-								Computed: true,
-								Type:     types.Int64Type,
-							},
-						}),
+					},
+					"disk_iops": {
+						Type:     types.Int64Type,
+						Optional: true,
+						Computed: true,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
+					},
+					"memory_gib": {
+						Computed: true,
+						Type:     types.Float64Type,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
+					},
+					"machine_type": {
+						Type:     types.StringType,
+						Optional: true,
+						Computed: true,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
+					},
+					"num_virtual_cpus": {
+						Optional: true,
+						Computed: true,
+						Type:     types.Int64Type,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 				}),
 			},
 			"regions": {
-				Computed: true,
+				Required: true,
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.UseStateForUnknown(),
 				},
 				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
 					"name": {
-						Computed: true,
+						Required: true,
 						Type:     types.StringType,
 					},
 					"sql_dns": {
 						Computed: true,
 						Type:     types.StringType,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 					"ui_dns": {
 						Computed: true,
 						Type:     types.StringType,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 					"node_count": {
+						Optional: true,
 						Computed: true,
 						Type:     types.Int64Type,
+						PlanModifiers: tfsdk.AttributePlanModifiers{
+							tfsdk.UseStateForUnknown(),
+						},
 					},
 				}, tfsdk.ListNestedAttributesOptions{}),
 			},
@@ -283,10 +203,6 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.UseStateForUnknown(),
 				},
-			},
-			"wait_for_cluster_ready": {
-				Type:     types.BoolType,
-				Optional: true,
 			},
 		},
 	}, nil
@@ -323,56 +239,67 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 
 	clusterSpec := client.NewCreateClusterSpecification()
-	if plan.CreateSpec == nil {
+
+	if (plan.ServerlessConfig == nil && plan.DedicatedConfig == nil) ||
+		(plan.ServerlessConfig != nil && plan.DedicatedConfig != nil) {
 		resp.Diagnostics.AddError(
-			"Error creating cluster",
-			"Could not create cluster as create_spec can not be nil",
+			"Invalid cluster configuration",
+			"You must set either 'dedicated' or 'serverless', but not both.",
 		)
-		return
 	}
 
-	if plan.CreateSpec.Serverless != nil {
+	if plan.ServerlessConfig != nil {
 		var regions []string
-		for _, region := range plan.CreateSpec.Serverless.Regions {
-			regions = append(regions, region.Value)
+		for _, region := range plan.Regions {
+			regions = append(regions, region.Name.Value)
 		}
-		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.CreateSpec.Serverless.SpendLimit.Value))
+		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.ServerlessConfig.SpendLimit.Value))
 		clusterSpec.SetServerless(*serverless)
-	} else if plan.CreateSpec.Dedicated != nil {
+	} else if plan.DedicatedConfig != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
 		if !plan.CockroachVersion.Null {
 			dedicated.CockroachVersion = &plan.CockroachVersion.Value
 		}
-		if plan.CreateSpec.Dedicated.RegionNodes != nil {
-			regionNodes := plan.CreateSpec.Dedicated.RegionNodes
-			dedicated.RegionNodes = *regionNodes
+		if plan.Regions != nil {
+			regionNodes := make(map[string]int32, len(plan.Regions))
+			for _, region := range plan.Regions {
+				regionNodes[region.Name.Value] = int32(region.NodeCount.Value)
+			}
+			dedicated.RegionNodes = regionNodes
 		}
-		if plan.CreateSpec.Dedicated.Hardware != nil {
+		if plan.DedicatedConfig != nil {
 			hardware := client.DedicatedHardwareCreateSpecification{}
-			if plan.CreateSpec.Dedicated.Hardware.MachineSpec != nil {
-				machineSpec := client.DedicatedMachineTypeSpecification{}
-				if !plan.CreateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Null {
-					cpus := int32(plan.CreateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Value)
-					machineSpec.NumVirtualCpus = &cpus
-				}
-				if !plan.CreateSpec.Dedicated.Hardware.MachineSpec.MachineType.Null {
-					machineType := plan.CreateSpec.Dedicated.Hardware.MachineSpec.MachineType.Value
-					machineSpec.MachineType = &machineType
-				}
-				hardware.MachineSpec = machineSpec
-				if !plan.CreateSpec.Dedicated.Hardware.StorageGib.Null {
-					hardware.StorageGib = int32(plan.CreateSpec.Dedicated.Hardware.StorageGib.Value)
-				}
-				if !plan.CreateSpec.Dedicated.Hardware.DiskIops.Null {
-					diskiops := int32(plan.CreateSpec.Dedicated.Hardware.DiskIops.Value)
-					hardware.DiskIops = &diskiops
-				}
+			machineSpec := client.DedicatedMachineTypeSpecification{}
+			if !plan.DedicatedConfig.NumVirtualCpus.Null {
+				cpus := int32(plan.DedicatedConfig.NumVirtualCpus.Value)
+				machineSpec.NumVirtualCpus = &cpus
+			} else if !plan.DedicatedConfig.MachineType.Null {
+				machineType := plan.DedicatedConfig.MachineType.Value
+				machineSpec.MachineType = &machineType
+			} else {
+				resp.Diagnostics.AddError(
+					"Invalid dedicated cluster configuration",
+					"A dedicated cluster needs either num_virtual_cpus or machine_type to be set.",
+				)
+			}
+			hardware.MachineSpec = machineSpec
+			if !plan.DedicatedConfig.StorageGib.Null {
+				hardware.StorageGib = int32(plan.DedicatedConfig.StorageGib.Value)
+			}
+			if !plan.DedicatedConfig.DiskIops.Null {
+				diskiops := int32(plan.DedicatedConfig.DiskIops.Value)
+				hardware.DiskIops = &diskiops
 			}
 			dedicated.Hardware = hardware
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
-	clusterReq := client.NewCreateClusterRequest(plan.Name.Value, client.ApiCloudProvider(plan.CloudProvider), *clusterSpec)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	clusterReq := client.NewCreateClusterRequest(plan.Name.Value, client.ApiCloudProvider(plan.CloudProvider.Value), *clusterSpec)
 	clusterObj, clResp, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -382,16 +309,14 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	if !plan.WaitForClusterReady.Null && plan.WaitForClusterReady.Value {
-		err := resource.RetryContext(ctx, CREATE_TIMEOUT,
-			waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"cluster ready timeout",
-				fmt.Sprintf("cluster is not ready: %v %v "+err.Error(), clResp),
-			)
-			return
-		}
+	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"cluster ready timeout",
+			fmt.Sprintf("cluster is not ready: %v %v "+err.Error(), clResp),
+		)
+		return
 	}
 
 	clusterObj, clResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
@@ -403,8 +328,9 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	loadClusterToTerraformState(clusterObj, &plan)
-	diags = resp.State.Set(ctx, plan)
+	var state CockroachCluster
+	loadClusterToTerraformState(clusterObj, &state, &plan)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -428,6 +354,9 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		return
 	}
 
+	if cluster.ID.Null {
+		return
+	}
 	clusterID := cluster.ID.Value
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
@@ -444,7 +373,7 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 			"")
 	}
 
-	loadClusterToTerraformState(clusterObj, &cluster)
+	loadClusterToTerraformState(clusterObj, &cluster, nil)
 	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -470,78 +399,74 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		return
 	}
 
-	if plan.UpdateSpec != nil {
-		clusterReq := client.NewUpdateClusterSpecification()
-		if plan.UpdateSpec.Serverless != nil {
-			serverless := client.NewServerlessClusterUpdateSpecification(int32(plan.UpdateSpec.Serverless.SpendLimit.Value))
-			clusterReq.SetServerless(*serverless)
-		} else if plan.UpdateSpec.Dedicated != nil {
-			dedicated := client.NewDedicatedClusterUpdateSpecification()
-			if plan.UpdateSpec.Dedicated.RegionNodes != nil {
-				dedicated.RegionNodes = plan.UpdateSpec.Dedicated.RegionNodes
+	clusterReq := client.NewUpdateClusterSpecification()
+	if plan.ServerlessConfig != nil {
+		serverless := client.NewServerlessClusterUpdateSpecification(int32(plan.ServerlessConfig.SpendLimit.Value))
+		clusterReq.SetServerless(*serverless)
+	} else if plan.DedicatedConfig != nil {
+		dedicated := client.NewDedicatedClusterUpdateSpecification()
+		if plan.Regions != nil {
+			regionNodes := make(map[string]int32, len(plan.Regions))
+			for _, region := range plan.Regions {
+				regionNodes[region.Name.Value] = int32(region.NodeCount.Value)
 			}
-			if plan.UpdateSpec.Dedicated.Hardware != nil {
-				dedicated.Hardware = client.NewDedicatedHardwareUpdateSpecification()
-				if !plan.UpdateSpec.Dedicated.Hardware.StorageGib.Null {
-					storage := int32(plan.UpdateSpec.Dedicated.Hardware.StorageGib.Value)
-					dedicated.Hardware.StorageGib = &storage
-				}
-				if !plan.UpdateSpec.Dedicated.Hardware.DiskIops.Null {
-					diskiops := int32(plan.UpdateSpec.Dedicated.Hardware.DiskIops.Value)
-					dedicated.Hardware.DiskIops = &diskiops
-				}
-				if plan.UpdateSpec.Dedicated.Hardware.MachineSpec != nil {
-					machineSpec := client.DedicatedMachineTypeSpecification{}
-					if !plan.UpdateSpec.Dedicated.Hardware.MachineSpec.MachineType.Null {
-						machineSpec.MachineType = &plan.UpdateSpec.Dedicated.Hardware.MachineSpec.MachineType.Value
-					}
-					if !plan.UpdateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Null {
-						cpus := int32(plan.UpdateSpec.Dedicated.Hardware.MachineSpec.NumVirtualCpus.Value)
-						machineSpec.NumVirtualCpus = &cpus
-					}
-					dedicated.Hardware.MachineSpec = &machineSpec
-				}
-			}
-
-			clusterReq.SetDedicated(*dedicated)
+			dedicated.RegionNodes = &regionNodes
 		}
-
-		clusterObj, apiResp, err := r.provider.service.UpdateCluster(ctx, state.ID.Value, clusterReq, &client.UpdateClusterOptions{})
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
-				fmt.Sprintf("Could not update clusterID %v", apiResp),
-			)
-			return
+		dedicated.Hardware = client.NewDedicatedHardwareUpdateSpecification()
+		if !plan.DedicatedConfig.StorageGib.Null {
+			storage := int32(plan.DedicatedConfig.StorageGib.Value)
+			dedicated.Hardware.StorageGib = &storage
 		}
-
-		if !plan.WaitForClusterReady.Null && plan.WaitForClusterReady.Value {
-			err := resource.RetryContext(ctx, CREATE_TIMEOUT,
-				waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"cluster ready timeout",
-					fmt.Sprintf("cluster is not ready: %v %v "+err.Error()),
-				)
-				return
-			}
+		if !plan.DedicatedConfig.DiskIops.Null {
+			diskiops := int32(plan.DedicatedConfig.DiskIops.Value)
+			dedicated.Hardware.DiskIops = &diskiops
 		}
-
-		_, apiResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
-				fmt.Sprintf("Could not update clusterID %v", apiResp),
-			)
-			return
+		machineSpec := client.DedicatedMachineTypeSpecification{}
+		if !plan.DedicatedConfig.MachineType.Null {
+			machineSpec.MachineType = &plan.DedicatedConfig.MachineType.Value
+		} else if !plan.DedicatedConfig.NumVirtualCpus.Null {
+			cpus := int32(plan.DedicatedConfig.NumVirtualCpus.Value)
+			machineSpec.NumVirtualCpus = &cpus
 		}
+		dedicated.Hardware.MachineSpec = &machineSpec
 
-		// Set state
-		diags = resp.State.Set(ctx, plan)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		clusterReq.SetDedicated(*dedicated)
+	}
+
+	clusterObj, apiResp, err := r.provider.service.UpdateCluster(ctx, state.ID.Value, clusterReq, &client.UpdateClusterOptions{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
+			fmt.Sprintf("Could not update clusterID %v", apiResp),
+		)
+		return
+	}
+
+	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"cluster ready timeout",
+			fmt.Sprintf("cluster is not ready: %v %v "+err.Error()),
+		)
+		return
+	}
+
+	clusterObj, apiResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
+			fmt.Sprintf("Could not update clusterID %v", apiResp),
+		)
+		return
+	}
+
+	// Set state
+	loadClusterToTerraformState(clusterObj, &state, nil)
+	diags = resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 }
 
@@ -555,6 +480,9 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	}
 
 	// Get cluster ID from state
+	if state.ID.Null {
+		return
+	}
 	clusterID := state.ID.Value
 
 	// Delete order by calling API
@@ -575,7 +503,25 @@ func (r clusterResource) ImportState(ctx context.Context, req tfsdk.ImportResour
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
-func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster) {
+// Since the API response will always sort regions by name, we need to
+// resort the list, so it matches up with the plan. If the response and
+// plan regions don't match up, the sort won't work right, but we can
+// ignore it. Terraform will handle it.
+func sortRegionsByPlan(clusterObj *client.Cluster, plan *CockroachCluster) {
+	if clusterObj == nil || plan == nil {
+		return
+	}
+	regionOrdinals := make(map[string]int, len(clusterObj.Regions))
+	for i, region := range plan.Regions {
+		regionOrdinals[region.Name.Value] = i
+	}
+	sort.Slice(clusterObj.Regions, func(i, j int) bool {
+		return regionOrdinals[clusterObj.Regions[i].Name] < regionOrdinals[clusterObj.Regions[j].Name]
+	})
+}
+
+func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster) {
+	sortRegionsByPlan(clusterObj, plan)
 	var rgs []Region
 	for _, x := range clusterObj.Regions {
 		rg := Region{
@@ -588,6 +534,8 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	}
 
 	state.ID = types.String{Value: clusterObj.Id}
+	state.Name = types.String{Value: clusterObj.Name}
+	state.CloudProvider = types.String{Value: string(clusterObj.CloudProvider)}
 	state.CockroachVersion = types.String{Value: clusterObj.CockroachVersion}
 	state.Plan = types.String{Value: string(clusterObj.Plan)}
 	state.AccountId = types.String{Value: *clusterObj.AccountId}
@@ -595,15 +543,14 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	state.CreatorId = types.String{Value: clusterObj.CreatorId}
 	state.OperationStatus = types.String{Value: string(clusterObj.OperationStatus)}
 	state.Regions = rgs
-	state.Config = &ClusterConfig{}
 
 	if clusterObj.Config.Serverless != nil {
-		state.Config.Serverless = &ServerlessClusterConfig{
+		state.ServerlessConfig = &ServerlessClusterConfig{
 			SpendLimit: types.Int64{Value: int64(clusterObj.Config.Serverless.SpendLimit)},
 			RoutingId:  types.String{Value: clusterObj.Config.Serverless.RoutingId},
 		}
 	} else if clusterObj.Config.Dedicated != nil {
-		state.Config.Dedicated = &DedicatedHardwareConfig{
+		state.DedicatedConfig = &DedicatedClusterConfig{
 			MachineType:    types.String{Value: clusterObj.Config.Dedicated.MachineType},
 			NumVirtualCpus: types.Int64{Value: int64(clusterObj.Config.Dedicated.NumVirtualCpus)},
 			StorageGib:     types.Int64{Value: int64(clusterObj.Config.Dedicated.StorageGib)},

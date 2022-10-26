@@ -1,9 +1,9 @@
 TEST?=$$(go list ./... | grep -v 'vendor')
 HOSTNAME=registry.terraform.io
-NAMESPACE=hashicorp
+NAMESPACE=cockroachdb
 NAME=cockroach
 BINARY=terraform-provider-${NAME}
-VERSION=0.1.1
+VERSION=0.2.0
 OS_ARCH=darwin_amd64
 
 default: install

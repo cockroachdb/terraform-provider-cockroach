@@ -84,18 +84,17 @@ func testAccSqlUserExists(resourceName, clusterResourceName string) resource.Tes
 }
 
 func testAccSqlUserResource(name, password string) string {
-	clusterName := fmt.Sprintf("crdb-sql-user-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("tftest-sql-user-%s", GenerateRandomString(4))
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    wait_for_cluster_ready = true
-    create_spec = {
     serverless = {
-         regions = ["us-east1"]
-         spend_limit = 1
+        spend_limit = 1
     }
-   }
+	regions = [{
+		name = "us-central1"
+	}]
 }
 
 resource "cockroach_sql_user" "sqluser" {

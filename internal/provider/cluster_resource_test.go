@@ -23,14 +23,16 @@ import (
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/stretchr/testify/require"
 )
 
 func TestAccServerlessClusterResource(t *testing.T) {
 	t.Parallel()
 	var (
-		clusterName  = fmt.Sprintf("crdb-serverless-%s", GenerateRandomString(4))
+		clusterName  = fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
 		resourceName = "cockroach_cluster.serverless"
 		cluster      client.Cluster
 	)
@@ -55,7 +57,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 func TestAccDedicatedClusterResource(t *testing.T) {
 	t.Parallel()
 	var (
-		clusterName  = fmt.Sprintf("crdb-dedicated-%s", GenerateRandomString(4))
+		clusterName  = fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
 		resourceName = "cockroach_cluster.dedicated"
 		cluster      client.Cluster
 	)
@@ -107,13 +109,12 @@ func testAccServerlessClusterResource(name string) string {
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    wait_for_cluster_ready = true
-    create_spec = {
     serverless = {
-         regions = ["us-east1"]
-         spend_limit = 1
+        spend_limit = 1
     }
-   }
+	regions = [{
+		name = "us-central1"
+	}]
 }
 `, name)
 }
@@ -123,20 +124,67 @@ func testAccDedicatedClusterResource(name string) string {
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
     cloud_provider = "AWS"
-    wait_for_cluster_ready = true
-    create_spec = {
-    dedicated: {
-      region_nodes = {
-        "ap-south-1": 1
-      }
-      hardware = {
-        storage_gib = 15
-        machine_spec = {
-          machine_type = "m5.large"
-        }
-      }
+    dedicated = {
+	  storage_gib = 15
+	  machine_type = "m5.large"
     }
-   }
+	regions = [{
+		name: "ap-south-1"
+		node_count: 1
+	}]
 }
 `, name)
+}
+
+func TestSortRegionsByPlan(t *testing.T) {
+	t.Run("Plan matches cluster", func(t *testing.T) {
+		clusterObj := &client.Cluster{Regions: []client.Region{
+			{Name: "us-central1"},
+			{Name: "us-east1"},
+			{Name: "us-west2"},
+		}}
+		plan := &CockroachCluster{
+			Regions: []Region{
+				{Name: types.String{Value: "us-west2"}},
+				{Name: types.String{Value: "us-central1"}},
+				{Name: types.String{Value: "us-east1"}},
+			},
+		}
+		sortRegionsByPlan(clusterObj, plan)
+		for i, region := range clusterObj.Regions {
+			require.Equal(t, plan.Regions[i].Name.Value, region.Name)
+		}
+	})
+
+	t.Run("More regions in cluster than plan", func(t *testing.T) {
+		clusterObj := &client.Cluster{Regions: []client.Region{
+			{Name: "us-central1"},
+			{Name: "us-east1"},
+			{Name: "us-west2"},
+		}}
+		plan := &CockroachCluster{
+			Regions: []Region{
+				{Name: types.String{Value: "us-west2"}},
+				{Name: types.String{Value: "us-central1"}},
+			},
+		}
+		// We really just want to make sure it doesn't panic here.
+		sortRegionsByPlan(clusterObj, plan)
+	})
+
+	t.Run("More regions in plan than cluster", func(t *testing.T) {
+		clusterObj := &client.Cluster{Regions: []client.Region{
+			{Name: "us-central1"},
+			{Name: "us-east1"},
+		}}
+		plan := &CockroachCluster{
+			Regions: []Region{
+				{Name: types.String{Value: "us-west2"}},
+				{Name: types.String{Value: "us-central1"}},
+				{Name: types.String{Value: "us-east1"}},
+			},
+		}
+		// We really just want to make sure it doesn't panic here.
+		sortRegionsByPlan(clusterObj, plan)
+	})
 }

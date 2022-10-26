@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
@@ -63,10 +64,7 @@ type sqlUserResource struct {
 
 func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !s.provider.configured {
-		resp.Diagnostics.AddError(
-			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
+		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
 
@@ -109,10 +107,7 @@ func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 
 func (s sqlUserResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !s.provider.configured {
-		resp.Diagnostics.AddError(
-			"provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
+		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
 

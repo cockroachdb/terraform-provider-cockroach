@@ -75,10 +75,7 @@ type allowListResource struct {
 
 func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !n.provider.configured {
-		resp.Diagnostics.AddError(
-			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
+		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
 
@@ -136,10 +133,7 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 
 func (n allowListResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !n.provider.configured {
-		resp.Diagnostics.AddError(
-			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
+		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
 

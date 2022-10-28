@@ -216,6 +216,7 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 	clusterId := plan.ClusterId.Value
 	entryCIDRIp := plan.CidrIp.Value
 	entryCIDRMask := int32(plan.CidrMask.Value)
+	plan.ID.Value = fmt.Sprintf(allowListIDFmt, clusterId, entryCIDRIp, entryCIDRMask)
 
 	existingAllowList := client.AllowlistEntry1{
 		Ui:   state.Ui.Value,

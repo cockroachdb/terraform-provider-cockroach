@@ -120,32 +120,20 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 						Type:     types.Int64Type,
 						Optional: true,
 						Computed: true,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
 					},
 					"memory_gib": {
 						Computed: true,
 						Type:     types.Float64Type,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
 					},
 					"machine_type": {
 						Type:     types.StringType,
 						Optional: true,
 						Computed: true,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
 					},
 					"num_virtual_cpus": {
 						Optional: true,
 						Computed: true,
 						Type:     types.Int64Type,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
 					},
 				}),
 			},
@@ -162,16 +150,10 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 					"sql_dns": {
 						Computed: true,
 						Type:     types.StringType,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
 					},
 					"ui_dns": {
 						Computed: true,
 						Type:     types.StringType,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
-						},
 					},
 					"node_count": {
 						Optional: true,
@@ -186,9 +168,6 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"state": {
 				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 			"creator_id": {
 				Type:     types.StringType,
@@ -200,9 +179,6 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"operation_status": {
 				Type:     types.StringType,
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
 		},
 	}, nil
@@ -367,7 +343,9 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 			"")
 	}
 
-	loadClusterToTerraformState(clusterObj, &cluster, nil)
+	// We actually want to use the current state as the plan here,
+	// since we're trying to see if it changed.
+	loadClusterToTerraformState(clusterObj, &cluster, &cluster)
 	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -456,7 +434,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	}
 
 	// Set state
-	loadClusterToTerraformState(clusterObj, &state, nil)
+	loadClusterToTerraformState(clusterObj, &state, &plan)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -532,7 +510,11 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	state.CloudProvider = types.String{Value: string(clusterObj.CloudProvider)}
 	state.CockroachVersion = types.String{Value: clusterObj.CockroachVersion}
 	state.Plan = types.String{Value: string(clusterObj.Plan)}
-	state.AccountId = types.String{Value: *clusterObj.AccountId}
+	if clusterObj.AccountId == nil {
+		state.AccountId.Null = true
+	} else {
+		state.AccountId = types.String{Value: *clusterObj.AccountId}
+	}
 	state.State = types.String{Value: string(clusterObj.State)}
 	state.CreatorId = types.String{Value: clusterObj.CreatorId}
 	state.OperationStatus = types.String{Value: string(clusterObj.OperationStatus)}

@@ -165,15 +165,23 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.AddWarning("error loading the cluster ", "")
+		resp.Diagnostics.AddWarning("Error loading the cluster", "")
+		return
+	}
+
+	if cluster.ID.Null {
+		resp.Diagnostics.AddError(
+			"ID can't be null",
+			"The ID field is null, but it never should be. Please double check the value!",
+		)
 		return
 	}
 
 	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.Value)
 	if httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
-			"cluster not found",
-			fmt.Sprintf("cluster with clusterID %s is not found", cluster.ID.Value))
+			"Cluster not found",
+			fmt.Sprintf("Couldn't find a cluster with ID %s", cluster.ID.Value))
 		return
 	}
 	if err != nil {

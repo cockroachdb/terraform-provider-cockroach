@@ -28,6 +28,9 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 )
 
+// NewService overrides the client method for testing.
+var NewService = client.NewService
+
 // provider satisfies the tfsdk.Provider interface and usually is included
 // with all Resource and DataSource implementations.
 type provider struct {
@@ -92,7 +95,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 	cfg.UserAgent = UserAgent
 	cl := client.NewClient(cfg)
-	p.service = client.NewService(cl)
+	p.service = NewService(cl)
 
 	p.configured = true
 }

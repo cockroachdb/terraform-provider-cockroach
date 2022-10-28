@@ -47,10 +47,16 @@ func (n allowListResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 			"cidr_ip": {
 				Required: true,
 				Type:     types.StringType,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"cidr_mask": {
 				Required: true,
 				Type:     types.Int64Type,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"ui": {
 				Required: true,

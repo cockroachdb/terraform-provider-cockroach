@@ -74,18 +74,19 @@ func testAccNetworkingRuleExists(resourceName, clusterResourceName string) resou
 			return fmt.Errorf("no ID is set")
 		}
 
-		id := clusterRs.Primary.Attributes["id"]
+		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
-		if clusterResp, _, err := p.service.ListAllowlistEntries(context.TODO(), id, &networkRule); err == nil {
+		if clusterResp, _, err := p.service.ListAllowlistEntries(context.TODO(), clusterID, &networkRule); err == nil {
 			for _, rule := range clusterResp.Allowlist {
-				if rule.GetName() == rs.Primary.Attributes["name"] {
+				if rule.GetCidrIp() == rs.Primary.Attributes["cidr_ip"] &&
+					fmt.Sprint(rule.GetCidrMask()) == rs.Primary.Attributes["cidr_mask"] {
 					return nil
 				}
 			}
 		}
 
-		return fmt.Errorf("cluster(%s:%s) does not exist", rs.Primary.Attributes["id"], rs.Primary.ID)
+		return fmt.Errorf("entry(%s) does not exist", rs.Primary.ID)
 	}
 }
 
@@ -110,7 +111,7 @@ resource "cockroach_cluster" "dedicated" {
     cidr_mask = %s
     ui = true
     sql = true
-    id = cockroach_cluster.dedicated.id
+    cluster_id = cockroach_cluster.dedicated.id
 }
 `, networkClusterName, name, cidrIp, cidrMask)
 }

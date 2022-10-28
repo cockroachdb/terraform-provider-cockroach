@@ -52,15 +52,11 @@ type ServerlessClusterConfig struct {
 	RoutingId  types.String `tfsdk:"routing_id"`
 }
 
-// SQLUserSpecification struct for SQLUserSpecification.
-type SQLUserSpecification struct {
-	Id       types.String `tfsdk:"id"`
-	Name     types.String `tfsdk:"name"`
-	Password types.String `tfsdk:"password"`
-}
-
 type SQLUser struct {
-	Name types.String `tfsdk:"name"`
+	ClusterId types.String `tfsdk:"cluster_id"`
+	Name      types.String `tfsdk:"name"`
+	Password  types.String `tfsdk:"password"`
+	ID        types.String `tfsdk:"id"`
 }
 
 type APIErrorMessage struct {
@@ -86,12 +82,13 @@ type CockroachCluster struct {
 
 // AllowlistEntry struct for AllowlistEntry.
 type AllowlistEntry struct {
-	Id       types.String `tfsdk:"id"`
-	CidrIp   types.String `tfsdk:"cidr_ip"`
-	CidrMask types.Int64  `tfsdk:"cidr_mask"`
-	Ui       types.Bool   `tfsdk:"ui"`
-	Sql      types.Bool   `tfsdk:"sql"`
-	Name     types.String `tfsdk:"name"`
+	ClusterId types.String `tfsdk:"cluster_id"`
+	CidrIp    types.String `tfsdk:"cidr_ip"`
+	CidrMask  types.Int64  `tfsdk:"cidr_mask"`
+	Ui        types.Bool   `tfsdk:"ui"`
+	Sql       types.Bool   `tfsdk:"sql"`
+	Name      types.String `tfsdk:"name"`
+	ID        types.String `tfsdk:"id"`
 }
 
 func (e *APIErrorMessage) String() string {

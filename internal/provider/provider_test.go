@@ -36,10 +36,12 @@ var cl *client.Client
 func init() {
 	apikey := os.Getenv(CockroachAPIKey)
 	cfg := client.NewConfiguration(apikey)
+	if server := os.Getenv(APIServerURLKey); server != "" {
+		cfg.ServerURL = server
+	}
 	cfg.UserAgent = UserAgent
 	cl = client.NewClient(cfg)
 	testAccProvider = New("test")()
-
 }
 
 // testAccProtoV6ProviderFactories are used to instantiate a provider during

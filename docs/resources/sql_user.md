@@ -17,11 +17,8 @@ SQL user and password
 
 ### Required
 
+- `cluster_id` (String)
 - `name` (String)
 - `password` (String, Sensitive)
-
-### Read-Only
-
-- `id` (String) The ID of this resource.
 
 

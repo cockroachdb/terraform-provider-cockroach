@@ -19,21 +19,28 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 type allowListResourceType struct{}
 
-func (n allowListResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
+// clusterID:ip/mask
+const allowListIDFmt = "%s:%s/%d"
+const allowlistEntryRegex = `(([0-9]{1,3}\.){3}[0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])`
+
+var allowlistIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):%s$", uuidRegex, allowlistEntryRegex))
+
+func (n allowListResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "Allow list of IP range",
 		Attributes: map[string]tfsdk.Attribute{
-			"id": {
+			"cluster_id": {
 				Required: true,
 				Type:     types.StringType,
 			},
@@ -57,11 +64,18 @@ func (n allowListResourceType) GetSchema(ctx context.Context) (tfsdk.Schema, dia
 				Optional: true,
 				Type:     types.StringType,
 			},
+			"id": {
+				Computed: true,
+				Type:     types.StringType,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.UseStateForUnknown(),
+				},
+			},
 		},
 	}, nil
 }
 
-func (n allowListResourceType) NewResource(ctx context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (n allowListResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
 	return allowListResource{
@@ -75,26 +89,28 @@ type allowListResource struct {
 
 func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !n.provider.configured {
-		resp.Diagnostics.AddError(
-			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
+		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
 
-	var plan AllowlistEntry
-	diags := req.Config.Get(ctx, &plan)
+	var entry AllowlistEntry
+	diags := req.Config.Get(ctx, &entry)
 	resp.Diagnostics.Append(diags...)
+	// Create a unique ID (required by terraform framework) by combining
+	// the cluster ID and full CIDR address.
+	entry.ID = types.String{
+		Value: fmt.Sprintf(allowListIDFmt, entry.ClusterId.Value, entry.CidrIp.Value, entry.CidrMask.Value),
+	}
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	cluster, httpResp, err := n.provider.service.GetCluster(ctx, plan.Id.Value)
+	cluster, _, err := n.provider.service.GetCluster(ctx, entry.ClusterId.Value)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting the cluster",
-			fmt.Sprintf("Could not get the cluster, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not get the cluster, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -102,32 +118,32 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 	if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
 			"Could not add network allow list in serverless cluster",
-			fmt.Sprintf("Network allow list is a feature of dedicated cluster, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Network allow list is a feature of dedicated cluster, unexpected error: %v", err.Error()),
 		)
 		return
 	}
 
 	var allowList = client.AllowlistEntry{
-		CidrIp:   plan.CidrIp.Value,
-		CidrMask: int32(plan.CidrMask.Value),
-		Ui:       plan.Ui.Value,
-		Sql:      plan.Sql.Value,
+		CidrIp:   entry.CidrIp.Value,
+		CidrMask: int32(entry.CidrMask.Value),
+		Ui:       entry.Ui.Value,
+		Sql:      entry.Sql.Value,
 	}
 
-	if !plan.Name.Null {
-		allowList.Name = &plan.Name.Value
+	if !entry.Name.Null {
+		allowList.Name = &entry.Name.Value
 	}
 
-	_, httpResp, err = n.provider.service.AddAllowlistEntry(ctx, plan.Id.Value, &allowList)
+	_, _, err = n.provider.service.AddAllowlistEntry(ctx, entry.ClusterId.Value, &allowList)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error adding allowed IP range",
-			fmt.Sprintf("Could not add allowed IP range, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not add allowed IP range, unexpected error: %v", err.Error()),
 		)
 		return
 	}
 
-	diags = resp.State.Set(ctx, plan)
+	diags = resp.State.Set(ctx, entry)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -136,20 +152,40 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 
 func (n allowListResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !n.provider.configured {
-		resp.Diagnostics.AddError(
-			"Provider not configured",
-			"The provider hasn't been configured before apply, likely because it depends on an unknown value from another resource. This leads to weird stuff happening, so we'd prefer if you didn't do that. Thanks!",
-		)
+		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
 
-	var plan AllowlistEntry
-	diags := req.State.Get(ctx, &plan)
+	var state AllowlistEntry
+	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Since the state may have come from an import, we need to retrieve
+	// the actual entry list and make sure this one is in there.
+	apiResp, _, err := n.provider.service.ListAllowlistEntries(ctx, state.ClusterId.Value, &client.ListAllowlistEntriesOptions{})
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Couldn't retrieve allowlist entries",
+			fmt.Sprintf("Unexpected error retrieving allowlist entries: %v", err.Error()),
+		)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	for _, entry := range apiResp.GetAllowlist() {
+		if entry.GetCidrIp() == state.CidrIp.Value ||
+			int64(entry.GetCidrMask()) == state.CidrMask.Value {
+			return
+		}
+	}
+	resp.Diagnostics.AddError(
+		"Couldn't find entry.",
+		fmt.Sprintf("This cluster's allowlist doesn't contain %s/%d", state.CidrIp.Value, state.CidrMask.Value),
+	)
 }
 
 func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
@@ -169,7 +205,7 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 		return
 	}
 
-	if state.Id != plan.Id {
+	if state.ClusterId != plan.ClusterId {
 		resp.Diagnostics.AddError(
 			"can not change cluster id in the network allow list",
 			"You can only change network allow list. Thanks!",
@@ -177,7 +213,7 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 		return
 	}
 
-	clusterId := plan.Id.Value
+	clusterId := plan.ClusterId.Value
 	entryCIDRIp := plan.CidrIp.Value
 	entryCIDRMask := int32(plan.CidrMask.Value)
 
@@ -187,12 +223,12 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 		Name: &state.Name.Value,
 	}
 
-	_, httpResp, err := n.provider.service.UpdateAllowlistEntry(ctx, clusterId, entryCIDRIp, entryCIDRMask,
+	_, _, err := n.provider.service.UpdateAllowlistEntry(ctx, clusterId, entryCIDRIp, entryCIDRMask,
 		&existingAllowList, &client.UpdateAllowlistEntryOptions{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating network allow list",
-			fmt.Sprintf("Could not update network allow list, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not update network allow list, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -212,11 +248,11 @@ func (n allowListResource) Delete(ctx context.Context, req tfsdk.DeleteResourceR
 		return
 	}
 
-	_, httpResp, err := n.provider.service.DeleteAllowlistEntry(ctx, state.Id.Value, state.CidrIp.Value, int32(state.CidrMask.Value))
+	_, _, err := n.provider.service.DeleteAllowlistEntry(ctx, state.ClusterId.Value, state.CidrIp.Value, int32(state.CidrMask.Value))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting network allow list",
-			fmt.Sprintf("Could not delete network allow list, unexpected error: %v %v "+err.Error(), httpResp),
+			fmt.Sprintf("Could not delete network allow list, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -226,5 +262,23 @@ func (n allowListResource) Delete(ctx context.Context, req tfsdk.DeleteResourceR
 }
 
 func (n allowListResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+	// Since an allowlist entry is uniquely identified by three fields: the cluster ID,
+	// CIDR IP, and CIDR mask, and we serialize them all into the ID field. To make import
+	// work, we need to deserialize an ID back into its components.
+	var mask int
+	matches := allowlistIDRegex.FindStringSubmatch(req.ID)
+	if len(matches) != 5 {
+		resp.Diagnostics.AddError(
+			"Invalid allowlist entry ID format",
+			`When importing an allowlist entry, the ID field should follow the format "<cluster ID>:<CIDR IP>/<CIDR mask>")`)
+	}
+	// We can swallow this error because it's already been regex-validated.
+	mask, _ = strconv.Atoi(matches[4])
+	entry := AllowlistEntry{
+		ClusterId: types.String{Value: matches[1]},
+		CidrIp:    types.String{Value: matches[2]},
+		CidrMask:  types.Int64{Value: int64(mask)},
+		ID:        types.String{Value: req.ID},
+	}
+	resp.Diagnostics = resp.State.Set(ctx, &entry)
 }

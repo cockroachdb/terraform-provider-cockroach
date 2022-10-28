@@ -54,7 +54,7 @@ resource "cockroach_cluster" "cockroach" {
 }
 
 resource "cockroach_sql_user" "cockroach" {
-  name     = var.sql_user_name
-  password = var.sql_user_password
-  id       = cockroach_cluster.cockroach.id
+  name       = var.sql_user_name
+  password   = var.sql_user_password
+  cluster_id = cockroach_cluster.cockroach.id
 }

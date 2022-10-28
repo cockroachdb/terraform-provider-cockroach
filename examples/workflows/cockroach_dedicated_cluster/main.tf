@@ -88,18 +88,18 @@ resource "cockroach_cluster" "cockroach" {
 }
 
 resource "cockroach_allow_list" "cockroach" {
-  name      = var.allow_list_name
-  cidr_ip   = var.cidr_ip
-  cidr_mask = var.cidr_mask
-  ui        = true
-  sql       = true
-  id        = cockroach_cluster.cockroach.id
+  name       = var.allow_list_name
+  cidr_ip    = var.cidr_ip
+  cidr_mask  = var.cidr_mask
+  ui         = true
+  sql        = true
+  cluster_id = cockroach_cluster.cockroach.id
 }
 
 resource "cockroach_sql_user" "cockroach" {
-  name     = var.sql_user_name
-  password = var.sql_user_password
-  id       = cockroach_cluster.cockroach.id
+  name       = var.sql_user_name
+  password   = var.sql_user_password
+  cluster_id = cockroach_cluster.cockroach.id
 }
 
 data "cockroach_cluster" "cockroach" {

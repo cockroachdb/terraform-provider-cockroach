@@ -20,30 +20,86 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
+	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"github.com/stretchr/testify/require"
 )
 
+// TestAccClusterResource attempts to create, check, and destroy
+// a real cluster and allowlist entry. It will be skipped if TF_ACC isn't set.
 func TestAccServerlessClusterResource(t *testing.T) {
 	t.Parallel()
+	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
+	testServerlessClusterResource(t, clusterName, false)
+}
+
+// TestIntegrationServerlessClusterResource attempts to create, check, and destroy
+// a cluster, but uses a mocked API service.
+func TestIntegrationServerlessClusterResource(t *testing.T) {
+	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
+	clusterID := "cluster-id"
+	os.Setenv("COCKROACH_API_KEY", "fake")
+	defer os.Unsetenv("COCKROACH_API_KEY")
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: "v22.1.0",
+		Plan:             "SERVERLESS",
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				SpendLimit: 1,
+				RoutingId:  "routing-id",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(&cluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(4)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	testServerlessClusterResource(t, clusterName, true)
+}
+
+func testServerlessClusterResource(t *testing.T, clusterName string, useMock bool) {
 	var (
-		clusterName  = fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
 		resourceName = "cockroach_cluster.serverless"
 		cluster      client.Cluster
 	)
+
 	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccServerlessClusterResource(clusterName),
+				Config: getTestServerlessClusterResourceConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCockroachClusterExists(resourceName, &cluster),
+					testCheckCockroachClusterExists(resourceName, &cluster),
 					resource.TestCheckResourceAttr(resourceName, "name", clusterName),
 					resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
 					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
@@ -56,19 +112,70 @@ func TestAccServerlessClusterResource(t *testing.T) {
 
 func TestAccDedicatedClusterResource(t *testing.T) {
 	t.Parallel()
+	clusterName := fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
+	testDedicatedClusterResource(t, clusterName, false)
+}
+
+func TestIntegrationDedicatedClusterResource(t *testing.T) {
+	clusterName := fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
+	clusterID := "cluster-id"
+	os.Setenv("COCKROACH_API_KEY", "fake")
+	defer os.Unsetenv("COCKROACH_API_KEY")
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: "v22.1.0",
+		Plan:             "DEDICATED",
+		CloudProvider:    "AWS",
+		State:            "CREATED",
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				MachineType:    "m5.large",
+				NumVirtualCpus: 2,
+				StorageGib:     15,
+				MemoryGib:      8,
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name:      "ap-south-1",
+				NodeCount: 1,
+			},
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(&cluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(4)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	testDedicatedClusterResource(t, clusterName, true)
+}
+
+func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool) {
 	var (
-		clusterName  = fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
 		resourceName = "cockroach_cluster.dedicated"
 		cluster      client.Cluster
 	)
+
 	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccDedicatedClusterResource(clusterName),
+				Config: getTestDedicatedClusterResourceConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckCockroachClusterExists(resourceName, &cluster),
+					testCheckCockroachClusterExists(resourceName, &cluster),
 					resource.TestCheckResourceAttr(resourceName, "name", clusterName),
 					resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
 					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
@@ -79,10 +186,10 @@ func TestAccDedicatedClusterResource(t *testing.T) {
 	})
 }
 
-func testAccCheckCockroachClusterExists(resourceName string, cluster *client.Cluster) resource.TestCheckFunc {
+func testCheckCockroachClusterExists(resourceName string, cluster *client.Cluster) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p, _ := convertProviderType(testAccProvider)
-		p.service = client.NewService(cl)
+		p.service = NewService(cl)
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("not found: %s", resourceName)
@@ -104,7 +211,7 @@ func testAccCheckCockroachClusterExists(resourceName string, cluster *client.Clu
 	}
 }
 
-func testAccServerlessClusterResource(name string) string {
+func getTestServerlessClusterResourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
@@ -119,7 +226,7 @@ resource "cockroach_cluster" "serverless" {
 `, name)
 }
 
-func testAccDedicatedClusterResource(name string) string {
+func getTestDedicatedClusterResourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"

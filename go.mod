@@ -1,9 +1,10 @@
 module github.com/cockroachdb/terraform-provider-cockroach
 
-go 1.17
+go 1.18
 
 require (
 	github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.1
+	github.com/golang/mock v1.6.0
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
 	github.com/hashicorp/terraform-plugin-framework v0.8.0
 	github.com/hashicorp/terraform-plugin-go v0.9.0

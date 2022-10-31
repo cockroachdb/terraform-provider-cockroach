@@ -24,9 +24,9 @@ jobs:
           working-directory: .
           args: --timeout=5m
 
-  # pre job to run the acceptance tests
-  acceptance-test:
-    name: acceptance-test
+  # pre job to run tests
+  integration-test:
+    name: integration-test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -38,12 +38,10 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.17
+          go-version: 1.18
 
       - name: Tests
-        run: make testacc
-        env:
-          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+        run: make test
 
   # pre job to build terraform-provider on every pull request
   pre-build:
@@ -52,6 +50,11 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
+
+      - name: Setup Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.18
 
       - name: Build terraform-provider
         run: make install

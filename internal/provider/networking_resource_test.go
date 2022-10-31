@@ -20,31 +20,99 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
+	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-func TestAccNetworkingRulesResource(t *testing.T) {
+// TestAccAllowlistEntryResource attempts to create, check, and destroy
+// a real cluster and allowlist entry. It will be skipped if TF_ACC isn't set.
+func TestAccAllowlistEntryResource(t *testing.T) {
 	t.Parallel()
-	var (
-		clusterResourceName = "cockroach_cluster.dedicated"
-		resourceName        = "cockroach_allow_list.network_list"
-		networkRuleName     = "default-allow-list"
-		cidrIP              = "192.168.3.2"
-		cidrMask            = "32"
-	)
+	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+	entryName := "default-allow-list"
+	entry := client.AllowlistEntry{
+		Name:     &entryName,
+		CidrIp:   "192.168.3.2",
+		CidrMask: 32,
+		Sql:      true,
+		Ui:       true,
+	}
+	testAllowlistEntryResource(t, clusterName, entry, false)
+}
+
+// TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
+// a cluster and allowlist entry, but uses a mocked API service.
+func TestIntegrationAllowlistEntryResource(t *testing.T) {
+	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+	clusterID := "cluster-id"
+	name := "default-allow-list"
+	entry := client.AllowlistEntry{
+		Name:     &name,
+		CidrIp:   "192.168.3.2",
+		CidrMask: 32,
+		Sql:      true,
+		Ui:       true,
+	}
+	os.Setenv("COCKROACH_API_KEY", "fake")
+	defer os.Unsetenv("COCKROACH_API_KEY")
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+	cluster := client.Cluster{
+		Name:          clusterName,
+		Id:            "cluster-id",
+		CloudProvider: "AWS",
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				StorageGib:  15,
+				MachineType: "m5.large",
+			},
+		},
+		State: "CREATED",
+		Regions: []client.Region{
+			{
+				Name:      "ap-south-1",
+				NodeCount: 1,
+			},
+		},
+	}
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(&cluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(4)
+	s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
+	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Times(2).Return(
+		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{entry}}, nil, nil)
+	s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	testAllowlistEntryResource(t, clusterName, entry, true)
+}
+
+func testAllowlistEntryResource(t *testing.T, clusterName string, entry client.AllowlistEntry, useMock bool) {
+	clusterResourceName := "cockroach_cluster.dedicated"
+	resourceName := "cockroach_allow_list.network_list"
 	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNetworkingRulesResource(networkRuleName, cidrIP, cidrMask),
+				Config: getTestAllowlistEntryResourceConfig(clusterName, *entry.Name, entry.CidrIp, fmt.Sprint(entry.CidrMask)),
 				Check: resource.ComposeTestCheckFunc(
-					testAccNetworkingRuleExists(resourceName, clusterResourceName),
-					resource.TestCheckResourceAttr(resourceName, "name", networkRuleName),
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", *entry.Name),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
 					resource.TestCheckResourceAttrSet(resourceName, "ui"),
@@ -55,11 +123,11 @@ func TestAccNetworkingRulesResource(t *testing.T) {
 	})
 }
 
-func testAccNetworkingRuleExists(resourceName, clusterResourceName string) resource.TestCheckFunc {
+func testAllowlistEntryExists(resourceName, clusterResourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		var networkRule client.ListAllowlistEntriesOptions
 		p, _ := convertProviderType(testAccProvider)
-		p.service = client.NewService(cl)
+		p.service = NewService(cl)
 
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -90,8 +158,7 @@ func testAccNetworkingRuleExists(resourceName, clusterResourceName string) resou
 	}
 }
 
-func testAccNetworkingRulesResource(name, cidrIp, cidrMask string) string {
-	networkClusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+func getTestAllowlistEntryResourceConfig(clusterName, entryName, cidrIp, cidrMask string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -113,5 +180,5 @@ resource "cockroach_cluster" "dedicated" {
     sql = true
     cluster_id = cockroach_cluster.dedicated.id
 }
-`, networkClusterName, name, cidrIp, cidrMask)
+`, clusterName, entryName, cidrIp, cidrMask)
 }

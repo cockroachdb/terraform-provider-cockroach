@@ -273,11 +273,11 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 
 	clusterReq := client.NewCreateClusterRequest(plan.Name.Value, client.ApiCloudProvider(plan.CloudProvider.Value), *clusterSpec)
-	clusterObj, clResp, err := r.provider.service.CreateCluster(ctx, clusterReq)
+	clusterObj, _, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating cluster",
-			fmt.Sprintf("Could not create cluster, unexpected error: %v %v "+err.Error(), clResp),
+			fmt.Sprintf("Could not create cluster, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -287,16 +287,16 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"cluster ready timeout",
-			fmt.Sprintf("cluster is not ready: %v %v "+err.Error(), clResp),
+			fmt.Sprintf("cluster is not ready: %v", err.Error()),
 		)
 		return
 	}
 
-	clusterObj, clResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
+	clusterObj, _, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
-			fmt.Sprintf("Could not getting cluster, unexpected error: %v %v "+err.Error(), clResp),
+			fmt.Sprintf("Could not getting cluster, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -330,17 +330,17 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 	clusterID := cluster.ID.Value
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
-	if httpResp.StatusCode == http.StatusNotFound {
-		resp.Diagnostics.AddError(
-			"cluster not found",
-			fmt.Sprintf("cluster with clusterID %s is not found", clusterID))
-		return
-	}
-
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"error in getting cluster",
-			"")
+		if httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddError(
+				"Cluster not found",
+				fmt.Sprintf("Cluster with clusterID %s is not found", clusterID))
+		} else {
+			resp.Diagnostics.AddError(
+				"Error getting cluster info",
+				fmt.Sprintf("Unexpected error retrieving cluster info: %v", err.Error()))
+		}
+		return
 	}
 
 	// We actually want to use the current state as the plan here,
@@ -458,12 +458,16 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	clusterID := state.ID.Value
 
 	// Delete order by calling API
-	_, _, err := r.provider.service.DeleteCluster(ctx, clusterID)
+	_, httpResp, err := r.provider.service.DeleteCluster(ctx, clusterID)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error deleting order",
-			"Could not delete clusterID "+clusterID+": "+err.Error(),
-		)
+		if httpResp.StatusCode == http.StatusNotFound {
+			// Cluster is already gone. Swallow the error.
+		} else {
+			resp.Diagnostics.AddError(
+				"Error deleting order",
+				"Could not delete clusterID "+clusterID+": "+err.Error(),
+			)
+		}
 		return
 	}
 
@@ -540,13 +544,17 @@ func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service
 	return func() *resource.RetryError {
 		clusterObj, httpResp, err := cl.GetCluster(ctx, id)
 		if err != nil {
-			resource.NonRetryableError(fmt.Errorf("error getting cluster %v %v", err, httpResp))
+			if httpResp.StatusCode < http.StatusInternalServerError {
+				return resource.NonRetryableError(fmt.Errorf("error getting cluster %v", err))
+			} else {
+				return resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
+			}
 		}
 		if string(clusterObj.State) == CLUSTERSTATETYPE_CREATED {
 			return nil
 		}
 		if string(clusterObj.State) == CLUSTERSTATETYPE_CREATION_FAILED {
-			resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
+			return resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
 		return resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
 	}

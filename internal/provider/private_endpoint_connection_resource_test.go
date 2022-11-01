@@ -28,19 +28,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccAllowlistEntryResource attempts to create, check, and destroy
-// a real cluster and endpoint services. It will be skipped if TF_ACC isn't set.
-func TestAccPrivateEndpointServicesResource(t *testing.T) {
+func TestAccPrivateEndpointConnectionResource(t *testing.T) {
+	t.Skip("Skipping until we can either integrate the AWS provider " +
+		"or import a permanent test fixture.")
 	t.Parallel()
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(3))
-	testPrivateEndpointServicesResource(t, clusterName, false)
+	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
+	testPrivateEndpointConnectionResource(t, clusterName, false)
 }
 
-// TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
-// a cluster and endpoint services, but uses a mocked API service.
-func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(3))
+func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
+	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
 	clusterID := "cluster-id"
+	endpointID := "endpoint-id"
 	os.Setenv("COCKROACH_API_KEY", "fake")
 	defer os.Unsetenv("COCKROACH_API_KEY")
 
@@ -51,7 +50,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	})()
 	cluster := client.Cluster{
 		Name:          clusterName,
-		Id:            "cluster-id",
+		Id:            clusterID,
 		CloudProvider: "AWS",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
@@ -62,7 +61,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 		State: "CREATED",
 		Regions: []client.Region{
 			{
-				Name:      "ap-south-1",
+				Name:      "us-east-1",
 				NodeCount: 1,
 			},
 		},
@@ -70,7 +69,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	services := &client.PrivateEndpointServices{
 		Services: []client.PrivateEndpointService{
 			{
-				RegionName:    "ap-south-1",
+				RegionName:    "us-east-1",
 				CloudProvider: "AWS",
 				Status:        client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE,
 				Aws: client.AWSPrivateLinkServiceDetail{
@@ -81,39 +80,74 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			},
 		},
 	}
+	connection := client.AwsEndpointConnection{
+		RegionName:    "us-east-1",
+		CloudProvider: "AWS",
+		Status:        client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE,
+		EndpointId:    endpointID,
+		ServiceId:     "service-id",
+	}
+	connections := &client.AwsEndpointConnections{
+		Connections: []client.AwsEndpointConnection{connection},
+	}
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
+		Times(4)
 	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID, gomock.Any()).
 		Return(services, nil, nil)
 	s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
 		Return(services, nil, nil).
 		Times(2)
+	available := client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE
+	s.EXPECT().SetAwsEndpointConnectionState(
+		gomock.Any(),
+		clusterID,
+		endpointID,
+		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
+			Status: &available,
+		}).
+		Return(&connection, nil, nil)
+	s.EXPECT().ListAwsEndpointConnections(gomock.Any(), clusterID).
+		Return(connections, nil, nil).
+		Times(2)
+	rejected := client.AWSENDPOINTCONNECTIONSTATUS_REJECTED
+	s.EXPECT().SetAwsEndpointConnectionState(
+		gomock.Any(),
+		clusterID,
+		endpointID,
+		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
+			Status: &rejected,
+		}).
+		Return(&connection, nil, nil)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testPrivateEndpointServicesResource(t, clusterName, true)
+	testPrivateEndpointConnectionResource(t, clusterName, true)
 }
 
-func testPrivateEndpointServicesResource(t *testing.T, clusterName string, useMock bool) {
+func testPrivateEndpointConnectionResource(t *testing.T, clusterName string, useMock bool) {
+	resourceName := "cockroach_private_endpoint_connection.connection"
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestPrivateEndpointServicesResourceConfig(clusterName),
+				Config: getTestPrivateEndpointConnectionResourceConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("cockroach_cluster.dedicated", "name", clusterName),
-					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", "1"),
+					resource.TestCheckResourceAttr(resourceName, "endpoint_id", "endpoint-id"),
+					resource.TestCheckResourceAttr(resourceName, "service_id", "service-id"),
+					resource.TestCheckResourceAttr(resourceName, "cluster_id", "cluster-id"),
+					resource.TestCheckResourceAttr(resourceName, "region_name", "us-east-1"),
+					resource.TestCheckResourceAttr(resourceName, "cloud_provider", "AWS"),
 				),
 			},
 		},
 	})
 }
 
-func getTestPrivateEndpointServicesResourceConfig(clusterName string) string {
+func getTestPrivateEndpointConnectionResourceConfig(clusterName string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -123,12 +157,17 @@ resource "cockroach_cluster" "dedicated" {
 	  machine_type = "m5.large"
     }
 	regions = [{
-		name: "ap-south-1"
+		name: "us-east-1"
 		node_count: 1
 	}]
 }
 resource "cockroach_private_endpoint_services" "services" {
     cluster_id = cockroach_cluster.dedicated.id
+}
+
+resource "cockroach_private_endpoint_connection" "connection" {
+    cluster_id = cockroach_cluster.dedicated.id
+	endpoint_id = "endpoint-id"
 }
 `, clusterName)
 }

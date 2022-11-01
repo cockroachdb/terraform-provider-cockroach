@@ -146,8 +146,9 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 		)
 		return
 	}
+	var services client.PrivateEndpointServices
 	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
-		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, n.provider.service))
+		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, n.provider.service, &services))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -155,19 +156,11 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 		)
 		return
 	}
-	services, _, err := n.provider.service.ListPrivateEndpointServices(ctx, cluster.Id)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error listing private endpoint services",
-			fmt.Sprintf("Unexpected error listing private endpoint services: %v", err.Error()),
-		)
-		return
-	}
 
 	var state PrivateEndpointServices
 	state.ClusterID = config.ClusterID
 	state.ID = config.ClusterID
-	loadEndpointServicesIntoTerraformState(services, &state)
+	loadEndpointServicesIntoTerraformState(&services, &state)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -237,9 +230,9 @@ func (n privateEndpointServicesResource) ImportState(ctx context.Context, req tf
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("cluster_id"), req, resp)
 }
 
-func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, cl client.Service) resource.RetryFunc {
+func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, cl client.Service, services *client.PrivateEndpointServices) resource.RetryFunc {
 	return func() *resource.RetryError {
-		services, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
+		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
 				return resource.NonRetryableError(fmt.Errorf("error getting endpoint services %v", err))
@@ -247,6 +240,7 @@ func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, c
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
 			}
 		}
+		*services = *apiServices
 		var creating bool
 		// If there's at least one still creating, keep checking.
 		// If any have failed or have any other non-available status, something went wrong.

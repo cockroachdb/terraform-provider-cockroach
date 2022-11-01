@@ -80,7 +80,7 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
+		Times(3)
 	s.EXPECT().CreateSQLUser(
 		gomock.Any(),
 		clusterID,

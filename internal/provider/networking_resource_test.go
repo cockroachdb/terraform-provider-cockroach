@@ -90,7 +90,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
+		Times(3)
 	s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
 	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Times(2).Return(
 		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{entry}}, nil, nil)

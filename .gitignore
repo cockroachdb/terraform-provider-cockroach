@@ -40,3 +40,5 @@ terraform.rc
 .idea/
 .vscode/
 
+# Local binary
+terraform-provider-cockroach

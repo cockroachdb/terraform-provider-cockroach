@@ -30,15 +30,15 @@ import (
 
 // TestAccAllowlistEntryResource attempts to create, check, and destroy
 // a real cluster and endpoint services. It will be skipped if TF_ACC isn't set.
-func TestAccEndpointServicesResource(t *testing.T) {
+func TestAccPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(3))
-	testEndpointServicesResource(t, clusterName, false)
+	testPrivateEndpointServicesResource(t, clusterName, false)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
 // a cluster and endpoint services, but uses a mocked API service.
-func TestIntegrationEndpointServicesResource(t *testing.T) {
+func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(3))
 	clusterID := "cluster-id"
 	os.Setenv("COCKROACH_API_KEY", "fake")
@@ -93,27 +93,27 @@ func TestIntegrationEndpointServicesResource(t *testing.T) {
 		Times(3)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testEndpointServicesResource(t, clusterName, true)
+	testPrivateEndpointServicesResource(t, clusterName, true)
 }
 
-func testEndpointServicesResource(t *testing.T, clusterName string, useMock bool) {
+func testPrivateEndpointServicesResource(t *testing.T, clusterName string, useMock bool) {
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestEndpointServicesResourceConfig(clusterName),
+				Config: getTestPrivateEndpointServicesResourceConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("cockroach_cluster.dedicated", "name", clusterName),
-					resource.TestCheckResourceAttr("cockroach_endpoint_services.services", "services.#", "1"),
+					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", "1"),
 				),
 			},
 		},
 	})
 }
 
-func getTestEndpointServicesResourceConfig(clusterName string) string {
+func getTestPrivateEndpointServicesResourceConfig(clusterName string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -127,7 +127,7 @@ resource "cockroach_cluster" "dedicated" {
 		node_count: 1
 	}]
 }
-resource "cockroach_endpoint_services" "services" {
+resource "cockroach_private_endpoint_services" "services" {
     cluster_id = cockroach_cluster.dedicated.id
 }
 `, clusterName)

@@ -29,9 +29,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-type endpointServicesResourceType struct{}
+type privateEndpointServicesResourceType struct{}
 
-func (n endpointServicesResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
+func (n privateEndpointServicesResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)",
 		Attributes: map[string]tfsdk.Attribute{
@@ -95,19 +95,19 @@ func (n endpointServicesResourceType) GetSchema(_ context.Context) (tfsdk.Schema
 	}, nil
 }
 
-func (n endpointServicesResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
+func (n privateEndpointServicesResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
 	provider, diags := convertProviderType(in)
 
-	return endpointServicesResource{
+	return privateEndpointServicesResource{
 		provider: provider,
 	}, diags
 }
 
-type endpointServicesResource struct {
+type privateEndpointServicesResource struct {
 	provider provider
 }
 
-func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
+func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
 	if !n.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -172,7 +172,7 @@ func (n endpointServicesResource) Create(ctx context.Context, req tfsdk.CreateRe
 	resp.Diagnostics.Append(diags...)
 }
 
-func (n endpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
+func (n privateEndpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
 	if !n.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -218,14 +218,14 @@ func loadEndpointServicesIntoTerraformState(apiServices *client.PrivateEndpointS
 	}
 }
 
-func (n endpointServicesResource) Update(_ context.Context, _ tfsdk.UpdateResourceRequest, _ *tfsdk.UpdateResourceResponse) {
+func (n privateEndpointServicesResource) Update(_ context.Context, _ tfsdk.UpdateResourceRequest, _ *tfsdk.UpdateResourceResponse) {
 	// no-op - Endpoint services cannot be updated
 
 	// The only non-computed field is the cluster ID, which requires replace,
 	// so no extra warning is necessary here.
 }
 
-func (n endpointServicesResource) Delete(_ context.Context, _ tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (n privateEndpointServicesResource) Delete(_ context.Context, _ tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
 	// no-op - Endpoint services cannot be deleted
 	resp.Diagnostics.AddWarning("Cannot remove endpoint services",
 		"Endpoint Services resources can't be deleted once established."+
@@ -233,7 +233,7 @@ func (n endpointServicesResource) Delete(_ context.Context, _ tfsdk.DeleteResour
 	)
 }
 
-func (n endpointServicesResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (n privateEndpointServicesResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("cluster_id"), req, resp)
 }
 

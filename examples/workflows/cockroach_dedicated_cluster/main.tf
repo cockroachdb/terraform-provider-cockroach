@@ -102,7 +102,7 @@ resource "cockroach_sql_user" "cockroach" {
   cluster_id = cockroach_cluster.cockroach.id
 }
 
-resource "cockroach_endpoint_services" "cockroach" {
+resource "cockroach_private_endpoint_services" "cockroach" {
   cluster_id = cockroach_cluster.cockroach.id
 }
 

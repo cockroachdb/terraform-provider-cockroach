@@ -91,6 +91,28 @@ type AllowlistEntry struct {
 	ID        types.String `tfsdk:"id"`
 }
 
+// PrivateLinkServiceAWSDetail struct for PrivateLinkServiceAWSDetail.
+type PrivateLinkServiceAWSDetail struct {
+	ServiceName         types.String   `tfsdk:"service_name"`
+	ServiceId           types.String   `tfsdk:"service_id"`
+	AvailabilityZoneIds []types.String `tfsdk:"availability_zone_ids"`
+}
+
+// PrivateEndpointService struct for PrivateEndpointService.
+type PrivateEndpointService struct {
+	RegionName    types.String                `tfsdk:"region_name"`
+	CloudProvider types.String                `tfsdk:"cloud_provider"`
+	Status        types.String                `tfsdk:"status"`
+	Aws           PrivateLinkServiceAWSDetail `tfsdk:"aws"`
+}
+
+// PrivateEndpointServices struct for PrivateEndpointServices.
+type PrivateEndpointServices struct {
+	ClusterID types.String             `tfsdk:"cluster_id"`
+	Services  []PrivateEndpointService `tfsdk:"services"`
+	ID        types.String             `tfsdk:"id"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

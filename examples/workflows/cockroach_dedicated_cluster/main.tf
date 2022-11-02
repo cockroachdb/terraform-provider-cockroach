@@ -102,6 +102,10 @@ resource "cockroach_sql_user" "cockroach" {
   cluster_id = cockroach_cluster.cockroach.id
 }
 
+resource "cockroach_private_endpoint_services" "cockroach" {
+  cluster_id = cockroach_cluster.cockroach.id
+}
+
 data "cockroach_cluster" "cockroach" {
   id = cockroach_cluster.cockroach.id
 }

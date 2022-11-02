@@ -21,4 +21,8 @@ SQL user and password
 - `name` (String)
 - `password` (String, Sensitive)
 
+### Read-Only
+
+- `id` (String) The ID of this resource.
+
 

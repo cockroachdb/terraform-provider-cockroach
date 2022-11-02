@@ -135,9 +135,17 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 			"Private endpoint services are only available for dedicated clusters.",
 		)
 		return
+	} else if cluster.CloudProvider != client.APICLOUDPROVIDER_AWS {
+		resp.Diagnostics.AddError(
+			"Incompatible cluster cloud provider",
+			"Private endpoint services are only available for AWS clusters.",
+		)
+		return
 	}
 
 	body := make(map[string]interface{}, 0)
+	// If private endpoint services already exist for this cluster,
+	// this is a no-op. The API will gracefully return the existing services.
 	_, _, err = n.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.Value, &body)
 	if err != nil {
 		resp.Diagnostics.AddError(

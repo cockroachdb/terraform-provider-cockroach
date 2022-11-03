@@ -29,6 +29,13 @@ func formatAPIErrorMessage(err error) string {
 		if status, ok := apiErr.Model().(client.Status); ok {
 			return status.GetMessage()
 		}
+		// If the error doesn't have all the fields we expect in a Status,
+		// it'll be unmarshalled into a map instead.
+		if model, ok := apiErr.Model().(map[string]interface{}); ok {
+			if message, ok := model["message"]; ok {
+				return message.(string)
+			}
+		}
 	}
 	return err.Error()
 }

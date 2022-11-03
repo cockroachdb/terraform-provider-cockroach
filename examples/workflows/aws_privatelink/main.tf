@@ -9,6 +9,10 @@ variable "sql_user_name" {
   default  = "maxroach"
 }
 
+# Remember that even variables marked sensitive will show up
+# in the Terraform state file. Always follow best practices
+# when managing sensitive info.
+# https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables#sensitive-values-in-state
 variable "sql_user_password" {
   type      = string
   nullable  = false
@@ -21,7 +25,7 @@ variable "aws_region" {
   default  = "us-east-1"
 }
 
-variable "cluster_nodes" {
+variable "cluster_node_count" {
   type     = number
   nullable = false
   default  = 1
@@ -36,7 +40,7 @@ variable "storage_gib" {
 variable "machine_type" {
   type     = string
   nullable = false
-  default  = "n1-standard-2"
+  default  = "m5.large"
 }
 
 variable "subnets" {
@@ -80,7 +84,7 @@ provider "aws" {
   region = var.aws_region
 }
 
-resource "cockroach_cluster" "cockroach" {
+resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = "AWS"
   dedicated = {
@@ -89,21 +93,21 @@ resource "cockroach_cluster" "cockroach" {
   }
   regions = [{
     name       = var.aws_region
-    node_count = var.cluster_nodes
+    node_count = var.cluster_node_count
   }]
 }
 
-resource "cockroach_sql_user" "cockroach" {
+resource "cockroach_sql_user" "example" {
   name       = var.sql_user_name
   password   = var.sql_user_password
-  cluster_id = cockroach_cluster.cockroach.id
+  cluster_id = cockroach_cluster.example.id
 }
 
-resource "cockroach_private_endpoint_services" "cockroach" {
-  cluster_id = cockroach_cluster.cockroach.id
+resource "cockroach_private_endpoint_services" "example" {
+  cluster_id = cockroach_cluster.example.id
 }
 
-resource "aws_vpc" "cockroach" {
+resource "aws_vpc" "example" {
   cidr_block           = var.vpc_cidr_block
   enable_dns_support   = true
   enable_dns_hostnames = true
@@ -112,10 +116,10 @@ resource "aws_vpc" "cockroach" {
   }
 }
 
-resource "aws_security_group" "cockroach" {
+resource "aws_security_group" "example" {
   name        = "cockroach"
   description = "Allow inbound access to CockroachDB from EC2"
-  vpc_id      = aws_vpc.cockroach.id
+  vpc_id      = aws_vpc.example.id
 
   ingress {
     description = "CockroachDB"
@@ -129,22 +133,22 @@ resource "aws_security_group" "cockroach" {
   }
 }
 
-resource "aws_subnet" "cockroach" {
+resource "aws_subnet" "example" {
   for_each = var.subnets
 
-  vpc_id     = aws_vpc.cockroach.id
+  vpc_id     = aws_vpc.example.id
   cidr_block = each.value
   tags = {
     Name = each.key
   }
 }
 
-resource "aws_vpc_endpoint" "cockroach" {
-  vpc_id             = aws_vpc.cockroach.id
-  service_name       = cockroach_private_endpoint_services.cockroach.services[0].aws.service_name
+resource "aws_vpc_endpoint" "example" {
+  vpc_id             = aws_vpc.example.id
+  service_name       = cockroach_private_endpoint_services.example.services[0].aws.service_name
   vpc_endpoint_type  = "Interface"
-  security_group_ids = [aws_security_group.cockroach.id]
-  subnet_ids         = [for s in aws_subnet.cockroach : s.id]
+  security_group_ids = [aws_security_group.example.id]
+  subnet_ids         = [for s in aws_subnet.example : s.id]
 
   # This flag can only be set after the connection has been accepted by creating
   # the cockroach_private_endpoint_connection resource.
@@ -156,7 +160,7 @@ resource "aws_vpc_endpoint" "cockroach" {
   }
 }
 
-resource "cockroach_private_endpoint_connection" "cockroach" {
-  cluster_id  = cockroach_cluster.cockroach.id
-  endpoint_id = aws_vpc_endpoint.cockroach.id
+resource "cockroach_private_endpoint_connection" "example" {
+  cluster_id  = cockroach_cluster.example.id
+  endpoint_id = aws_vpc_endpoint.example.id
 }

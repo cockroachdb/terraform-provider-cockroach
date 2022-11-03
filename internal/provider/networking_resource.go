@@ -190,8 +190,9 @@ func (n allowListResource) Read(ctx context.Context, req tfsdk.ReadResourceReque
 	}
 	resp.Diagnostics.AddError(
 		"Couldn't find entry.",
-		fmt.Sprintf("This cluster's allowlist doesn't contain %s/%d", state.CidrIp.Value, state.CidrMask.Value),
+		fmt.Sprintf("This cluster's allowlist doesn't contain %s/%d. Removing from state.", state.CidrIp.Value, state.CidrMask.Value),
 	)
+	resp.State.RemoveResource(ctx)
 }
 
 func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {

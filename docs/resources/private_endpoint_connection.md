@@ -23,7 +23,7 @@ AWS PrivateLink Endpoint Connection
 ### Read-Only
 
 - `cloud_provider` (String)
-- `id` (String) Required by Terraform. Will always equal endpoint_id.
+- `id` (String) Used with `terrform import`. Format is "<cluster ID>:<endpoint ID>"
 - `region_name` (String)
 - `service_id` (String)
 

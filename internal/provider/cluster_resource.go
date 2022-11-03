@@ -81,11 +81,12 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				},
 				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
 					"spend_limit": {
-						Optional: true,
+						Required: true,
 						Type:     types.Int64Type,
 						PlanModifiers: tfsdk.AttributePlanModifiers{
 							tfsdk.UseStateForUnknown(),
 						},
+						MarkdownDescription: "Spend limit in US cents",
 					},
 					"routing_id": {
 						Computed: true,

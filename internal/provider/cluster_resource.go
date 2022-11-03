@@ -47,9 +47,6 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 				MarkdownDescription: "Name of cluster",
 				Type:                types.StringType,
 				Required:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
-				},
 			},
 			"cockroach_version": {
 				Type:     types.StringType,
@@ -76,9 +73,6 @@ func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"cloud_provider": {
 				Type:     types.StringType,
 				Required: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
-				},
 			},
 			"serverless": {
 				Optional: true,
@@ -325,7 +319,8 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		if httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddError(
 				"Cluster not found",
-				fmt.Sprintf("Cluster with clusterID %s is not found", clusterID))
+				fmt.Sprintf("Cluster with clusterID %s is not found. Deleting from state.", clusterID))
+			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(
 				"Error getting cluster info",
@@ -359,6 +354,19 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	if plan.Name != state.Name {
+		resp.Diagnostics.AddError("Cannot update cluster name",
+			"To prevent accidental deletion of data, renaming clusters isn't allowed. "+
+				"Please explicitly destroy this cluster before changing its name.")
+		return
+	}
+	if plan.CloudProvider != state.CloudProvider {
+		resp.Diagnostics.AddError("Cannot update cluster cloud provider",
+			"To prevent accidental deletion of data, changing a cluster's cloud provider "+
+				"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
 		return
 	}
 

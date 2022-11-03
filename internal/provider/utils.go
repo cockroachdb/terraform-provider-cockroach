@@ -1,6 +1,11 @@
 package provider
 
-import "github.com/hashicorp/terraform-plugin-framework/diag"
+import (
+	"errors"
+
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+)
 
 func addConfigureProviderErr(diagnostics *diag.Diagnostics) {
 	diagnostics.AddError(
@@ -16,6 +21,16 @@ func HookGlobal[T any](ptr *T, val T) func() {
 	orig := *ptr
 	*ptr = val
 	return func() { *ptr = orig }
+}
+
+func formatAPIErrorMessage(err error) string {
+	apiErr := client.Error{}
+	if ok := errors.As(err, &apiErr); ok {
+		if status, ok := apiErr.Model().(client.Status); ok {
+			return status.GetMessage()
+		}
+	}
+	return err.Error()
 }
 
 const uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"

@@ -43,6 +43,9 @@ func (n allowListResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.
 			"cluster_id": {
 				Required: true,
 				Type:     types.StringType,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"cidr_ip": {
 				Required: true,
@@ -116,7 +119,7 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting the cluster",
-			fmt.Sprintf("Could not get the cluster, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not get the cluster: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -124,7 +127,7 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 	if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
 			"Could not add network allow list in serverless cluster",
-			fmt.Sprintf("Network allow list is a feature of dedicated cluster, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Network allow list is a feature of dedicated cluster: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -144,7 +147,7 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error adding allowed IP range",
-			fmt.Sprintf("Could not add allowed IP range, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not add allowed IP range: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -176,7 +179,7 @@ func (n allowListResource) Read(ctx context.Context, req tfsdk.ReadResourceReque
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Couldn't retrieve allowlist entries",
-			fmt.Sprintf("Unexpected error retrieving allowlist entries: %v", err.Error()),
+			fmt.Sprintf("Unexpected error retrieving allowlist entries: %s", formatAPIErrorMessage(err)),
 		)
 	}
 	if resp.Diagnostics.HasError() {
@@ -234,7 +237,7 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating network allow list",
-			fmt.Sprintf("Could not update network allow list, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not update network allow list: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -258,7 +261,7 @@ func (n allowListResource) Delete(ctx context.Context, req tfsdk.DeleteResourceR
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting network allow list",
-			fmt.Sprintf("Could not delete network allow list, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not delete network allow list: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}

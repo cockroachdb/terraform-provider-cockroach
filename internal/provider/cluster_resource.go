@@ -283,20 +283,11 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 
 	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
-		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
+		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"cluster ready timeout",
 			fmt.Sprintf("cluster is not ready: %v", err.Error()),
-		)
-		return
-	}
-
-	clusterObj, _, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error getting cluster",
-			fmt.Sprintf("Could not getting cluster, unexpected error: %v", err.Error()),
 		)
 		return
 	}
@@ -415,20 +406,11 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	}
 
 	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
-		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service))
+		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"cluster ready timeout",
 			fmt.Sprintf("cluster is not ready: %v %v "+err.Error()),
-		)
-		return
-	}
-
-	clusterObj, apiResp, err = r.provider.service.GetCluster(ctx, clusterObj.Id)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
-			fmt.Sprintf("Could not update clusterID %v", apiResp),
 		)
 		return
 	}
@@ -540,9 +522,11 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	}
 }
 
-func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service) resource.RetryFunc {
+func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) resource.RetryFunc {
 	return func() *resource.RetryError {
-		clusterObj, httpResp, err := cl.GetCluster(ctx, id)
+		var httpResp *http.Response
+		var err error
+		cluster, httpResp, err = cl.GetCluster(ctx, id)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
 				return resource.NonRetryableError(fmt.Errorf("error getting cluster %v", err))
@@ -550,10 +534,10 @@ func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
 			}
 		}
-		if string(clusterObj.State) == CLUSTERSTATETYPE_CREATED {
+		if string(cluster.State) == CLUSTERSTATETYPE_CREATED {
 			return nil
 		}
-		if string(clusterObj.State) == CLUSTERSTATETYPE_CREATION_FAILED {
+		if string(cluster.State) == CLUSTERSTATETYPE_CREATION_FAILED {
 			return resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
 		return resource.RetryableError(fmt.Errorf("cluster is not ready yet"))

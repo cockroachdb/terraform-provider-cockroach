@@ -124,7 +124,7 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
-			fmt.Sprintf("Could not retrieve cluster info: %v", err.Error()),
+			fmt.Sprintf("Could not retrieve cluster info: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -150,7 +150,7 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
-			fmt.Sprintf("Could not enable private endpoint services: %v", err.Error()),
+			fmt.Sprintf("Could not enable private endpoint services: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -160,7 +160,7 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
-			fmt.Sprintf("Could not enable private endpoint services: %v", err.Error()),
+			fmt.Sprintf("Could not enable private endpoint services: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -188,7 +188,7 @@ func (n privateEndpointServicesResource) Read(ctx context.Context, req tfsdk.Rea
 	apiResp, _, err := n.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.Value)
 	if err != nil {
 		resp.Diagnostics.AddError("Couldn't retrieve endpoint services",
-			fmt.Sprintf("Error retrieving endpoint services: %v", err.Error()))
+			fmt.Sprintf("Error retrieving endpoint services: %s", formatAPIErrorMessage(err)))
 		return
 	}
 	loadEndpointServicesIntoTerraformState(apiResp, &state)
@@ -243,7 +243,7 @@ func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, c
 		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
-				return resource.NonRetryableError(fmt.Errorf("error getting endpoint services %v", err))
+				return resource.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
 			} else {
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
 			}

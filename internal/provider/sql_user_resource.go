@@ -42,10 +42,16 @@ func (s sqlUserResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Di
 			"cluster_id": {
 				Required: true,
 				Type:     types.StringType,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"name": {
 				Required: true,
 				Type:     types.StringType,
+				PlanModifiers: tfsdk.AttributePlanModifiers{
+					tfsdk.RequiresReplace(),
+				},
 			},
 			"password": {
 				Required:  true,
@@ -98,7 +104,7 @@ func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting the cluster",
-			fmt.Sprintf("Could not get the cluster, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not get the cluster: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -111,7 +117,7 @@ func (s sqlUserResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating sql user",
-			fmt.Sprintf("Could not create sql user, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not create sql user: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -142,7 +148,7 @@ func (s sqlUserResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Couldn't retrieve SQL users",
-			fmt.Sprintf("Unexpected error retrieving SQL users: %v", err.Error()),
+			fmt.Sprintf("Unexpected error retrieving SQL users: %s", formatAPIErrorMessage(err)),
 		)
 	}
 	if resp.Diagnostics.HasError() {
@@ -176,20 +182,12 @@ func (s sqlUserResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		return
 	}
 
-	if plan.Name != state.Name || plan.ClusterId != state.ClusterId {
-		resp.Diagnostics.AddError(
-			"Invalid update",
-			"Currently, only the password of a SQL user can be updated.",
-		)
-		return
-	}
-
 	updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.Value}
 	_, _, err := s.provider.service.UpdateSQLUserPassword(ctx, plan.ClusterId.Value, plan.Name.Value, &updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating sql user password",
-			fmt.Sprintf("Could not update sql user password, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not update sql user password: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -213,7 +211,7 @@ func (s sqlUserResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting sql user",
-			fmt.Sprintf("Could not delete sql user, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not delete sql user: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}

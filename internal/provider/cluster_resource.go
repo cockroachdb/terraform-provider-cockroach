@@ -277,7 +277,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating cluster",
-			fmt.Sprintf("Could not create cluster, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not create cluster: %v", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -287,7 +287,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"cluster ready timeout",
-			fmt.Sprintf("cluster is not ready: %v", err.Error()),
+			fmt.Sprintf("cluster is not ready: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -329,7 +329,7 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		} else {
 			resp.Diagnostics.AddError(
 				"Error getting cluster info",
-				fmt.Sprintf("Unexpected error retrieving cluster info: %v", err.Error()))
+				fmt.Sprintf("Unexpected error retrieving cluster info: %s", formatAPIErrorMessage(err)))
 		}
 		return
 	}
@@ -396,11 +396,11 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		clusterReq.SetDedicated(*dedicated)
 	}
 
-	clusterObj, apiResp, err := r.provider.service.UpdateCluster(ctx, state.ID.Value, clusterReq, &client.UpdateClusterOptions{})
+	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.Value, clusterReq, &client.UpdateClusterOptions{})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating cluster %v"+plan.ID.Value+": "+err.Error(),
-			fmt.Sprintf("Could not update clusterID %v", apiResp),
+			"Error updating cluster",
+			fmt.Sprintf("Could not update cluster: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -446,8 +446,8 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 			// Cluster is already gone. Swallow the error.
 		} else {
 			resp.Diagnostics.AddError(
-				"Error deleting order",
-				"Could not delete clusterID "+clusterID+": "+err.Error(),
+				"Error deleting cluster",
+				fmt.Sprintf("Could not delete cluster: %s", formatAPIErrorMessage(err)),
 			)
 		}
 		return
@@ -529,7 +529,7 @@ func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service
 		cluster, httpResp, err = cl.GetCluster(ctx, id)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
-				return resource.NonRetryableError(fmt.Errorf("error getting cluster %v", err))
+				return resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
 			} else {
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
 			}

@@ -116,7 +116,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
-			fmt.Sprintf("Could not retrieve cluster info: %v", err.Error()),
+			fmt.Sprintf("Could not retrieve cluster info: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -144,7 +144,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error establishing AWS Endpoint Connection",
-			fmt.Sprintf("Could not establish AWS Endpoint Connection, unexpected error: %v", err.Error()),
+			fmt.Sprintf("Could not establish AWS Endpoint Connection: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -161,7 +161,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
-			fmt.Sprintf("Could not enable private endpoint services: %v", err.Error()),
+			fmt.Sprintf("Could not enable private endpoint services: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -189,7 +189,7 @@ func (r privateEndpointConnectionResource) Read(ctx context.Context, req tfsdk.R
 	connections, _, err := r.provider.service.ListAwsEndpointConnections(ctx, state.ClusterID.Value)
 	if err != nil {
 		diags.AddError("Unable to get endpoint connection status",
-			fmt.Sprintf("Unexpected error retrieving endpoint status: %v", err.Error()))
+			fmt.Sprintf("Unexpected error retrieving endpoint status: %s", formatAPIErrorMessage(err)))
 		return
 	}
 	for _, connection := range connections.GetConnections() {
@@ -240,7 +240,7 @@ func (r privateEndpointConnectionResource) Delete(ctx context.Context, req tfsdk
 		})
 	if err != nil && httpResp.StatusCode != http.StatusNotFound {
 		diags.AddError("Couldn't delete connection",
-			fmt.Sprintf("Unexpected error occurred while setting connection status: %v", err.Error()))
+			fmt.Sprintf("Unexpected error occurred while setting connection status: %s", formatAPIErrorMessage(err)))
 		return
 	}
 
@@ -274,7 +274,7 @@ func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpoi
 		connections, httpResp, err := cl.ListAwsEndpointConnections(ctx, clusterID)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
-				return resource.NonRetryableError(fmt.Errorf("error getting endpoint connections %v", err))
+				return resource.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
 			} else {
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))
 			}

@@ -70,8 +70,13 @@ provider "cockroach" {
 }
 
 provider "aws" {
-  # see https://registry.terraform.io/providers/hashicorp/aws/latest/docs
-  # for configuration steps
+  # See https://registry.terraform.io/providers/hashicorp/aws/latest/docs
+  # for configuration steps.
+
+  # Please don't use a variable for region in production! The AWS provider won't
+  # be able to find any resources if this value changes and you'll get
+  # into a weird state. Be sure to run `terraform destroy` before changing
+  # this value.
   region = var.aws_region
 }
 
@@ -83,7 +88,7 @@ resource "cockroach_cluster" "cockroach" {
     machine_type = var.machine_type
   }
   regions = [{
-    name = var.aws_region
+    name       = var.aws_region
     node_count = var.cluster_nodes
   }]
 }
@@ -135,12 +140,17 @@ resource "aws_subnet" "cockroach" {
 }
 
 resource "aws_vpc_endpoint" "cockroach" {
-  vpc_id              = aws_vpc.cockroach.id
-  service_name        = cockroach_private_endpoint_services.cockroach.services[0].aws.service_name
-  vpc_endpoint_type   = "Interface"
-  security_group_ids  = [aws_security_group.cockroach.id]
-  subnet_ids          = [for s in aws_subnet.cockroach : s.id]
-  #private_dns_enabled = true
+  vpc_id             = aws_vpc.cockroach.id
+  service_name       = cockroach_private_endpoint_services.cockroach.services[0].aws.service_name
+  vpc_endpoint_type  = "Interface"
+  security_group_ids = [aws_security_group.cockroach.id]
+  subnet_ids         = [for s in aws_subnet.cockroach : s.id]
+
+  # This flag can only be set after the connection has been accepted by creating
+  # the cockroach_private_endpoint_connection resource.
+  #
+  # private_dns_enabled = true
+
   tags = {
     Name = "cockroach vpc"
   }

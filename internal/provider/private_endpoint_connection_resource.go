@@ -20,25 +20,30 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 type privateEndpointConnectionResourceType struct{}
+
+// clusterID:endpointID
+const privateEndpointConnectionIDFmt = "%s:%s"
+
+var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegex))
 
 func (r privateEndpointConnectionResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
 		MarkdownDescription: "AWS PrivateLink Endpoint Connection",
 		Attributes: map[string]tfsdk.Attribute{
 			"id": {
-				Computed:    true,
-				Type:        types.StringType,
-				Description: "Required by Terraform. Will always equal endpoint_id.",
+				Computed:            true,
+				Type:                types.StringType,
+				MarkdownDescription: "Used with `terrform import`. Format is \"<cluster ID>:<endpoint ID>\"",
 				PlanModifiers: tfsdk.AttributePlanModifiers{
 					tfsdk.UseStateForUnknown(),
 				},
@@ -238,7 +243,24 @@ func (r privateEndpointConnectionResource) Delete(ctx context.Context, req tfsdk
 }
 
 func (r privateEndpointConnectionResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("endpoint_id"), req, resp)
+	// Since an endpoint connection is uniquely identified by two fields, the cluster ID
+	// and the endpoint ID, we serialize them both into the ID field. To make import
+	// work, we need to deserialize an ID back into endpoint ID and cluster ID.
+	matches := privateEndpointConnectionIDRegex.FindStringSubmatch(req.ID)
+	if len(matches) != 3 {
+		resp.Diagnostics.AddError(
+			"Invalid private endpoint connection ID format",
+			`When importing a private endpoint connection, the ID field should follow the format "<cluster ID>:<endpoint ID>")`)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	connection := PrivateEndpointConnection{
+		ClusterID:  types.String{Value: matches[1]},
+		EndpointID: types.String{Value: matches[2]},
+		ID:         types.String{Value: req.ID},
+	}
+	resp.Diagnostics = resp.State.Set(ctx, &connection)
 }
 
 func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpointID string, cl client.Service, connection *client.AwsEndpointConnection) resource.RetryFunc {

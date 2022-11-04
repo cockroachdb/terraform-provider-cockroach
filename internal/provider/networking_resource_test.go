@@ -60,8 +60,9 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		Sql:      true,
 		Ui:       true,
 	}
-	os.Setenv("COCKROACH_API_KEY", "fake")
-	defer os.Unsetenv("COCKROACH_API_KEY")
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
 
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)

@@ -40,8 +40,9 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
 	clusterID := "cluster-id"
 	endpointID := "endpoint-id"
-	os.Setenv("COCKROACH_API_KEY", "fake")
-	defer os.Unsetenv("COCKROACH_API_KEY")
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
 
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)

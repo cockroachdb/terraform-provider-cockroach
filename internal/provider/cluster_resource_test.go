@@ -46,8 +46,9 @@ func TestAccServerlessClusterResource(t *testing.T) {
 func TestIntegrationServerlessClusterResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
 	clusterID := "cluster-id"
-	os.Setenv("COCKROACH_API_KEY", "fake")
-	defer os.Unsetenv("COCKROACH_API_KEY")
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
 
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)
@@ -122,8 +123,9 @@ func TestAccDedicatedClusterResource(t *testing.T) {
 func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
 	clusterID := "cluster-id"
-	os.Setenv("COCKROACH_API_KEY", "fake")
-	defer os.Unsetenv("COCKROACH_API_KEY")
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
 
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)

@@ -32,14 +32,14 @@ import (
 // a real cluster and endpoint services. It will be skipped if TF_ACC isn't set.
 func TestAccPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(3))
+	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
 	testPrivateEndpointServicesResource(t, clusterName, false)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
 // a cluster and endpoint services, but uses a mocked API service.
 func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(3))
+	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
 	clusterID := "cluster-id"
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

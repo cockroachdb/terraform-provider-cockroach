@@ -318,9 +318,9 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		if httpResp.StatusCode == http.StatusNotFound {
-			resp.Diagnostics.AddError(
+			resp.Diagnostics.AddWarning(
 				"Cluster not found",
-				fmt.Sprintf("Cluster with clusterID %s is not found. Deleting from state.", clusterID))
+				fmt.Sprintf("Cluster with clusterID %s is not found. Removing from state.", clusterID))
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(

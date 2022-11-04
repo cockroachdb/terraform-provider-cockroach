@@ -188,10 +188,16 @@ func (n allowListResource) Read(ctx context.Context, req tfsdk.ReadResourceReque
 	for _, entry := range apiResp.GetAllowlist() {
 		if entry.GetCidrIp() == state.CidrIp.Value ||
 			int64(entry.GetCidrMask()) == state.CidrMask.Value {
+			// Update flags in case they've changed externally.
+			state.Sql.Value = entry.GetSql()
+			state.Ui.Value = entry.GetUi()
+			state.Name.Value = entry.GetName()
+			diags = resp.State.Set(ctx, &state)
+			resp.Diagnostics.Append(diags...)
 			return
 		}
 	}
-	resp.Diagnostics.AddError(
+	resp.Diagnostics.AddWarning(
 		"Couldn't find entry.",
 		fmt.Sprintf("This cluster's allowlist doesn't contain %s/%d. Removing from state.", state.CidrIp.Value, state.CidrMask.Value),
 	)

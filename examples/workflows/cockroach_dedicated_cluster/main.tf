@@ -60,13 +60,13 @@ variable "allow_list_name" {
 variable "cidr_ip" {
   type     = string
   nullable = false
-  default = "0.0.0.0"
+  default  = "0.0.0.0"
 }
 
 variable "cidr_mask" {
   type     = number
   nullable = false
-  default = 0
+  default  = 0
 }
 
 terraform {

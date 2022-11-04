@@ -55,7 +55,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		return s
 	})()
 
-	cluster := client.Cluster{
+	finalCluster := client.Cluster{
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.1.0",
@@ -74,11 +74,13 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 		},
 	}
+	initialCluster := finalCluster
+	initialCluster.State = client.CLUSTERSTATETYPE_CREATING
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
-		Return(&cluster, nil, nil)
+		Return(&initialCluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(3)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
@@ -104,6 +106,7 @@ func testServerlessClusterResource(t *testing.T, clusterName string, useMock boo
 					resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
 					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
 					resource.TestCheckResourceAttr(resourceName, "plan", "SERVERLESS"),
+					resource.TestCheckResourceAttr(resourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
 				),
 			},
 		},

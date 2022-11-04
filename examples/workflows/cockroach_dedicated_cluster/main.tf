@@ -9,6 +9,10 @@ variable "sql_user_name" {
   default  = "maxroach"
 }
 
+# Remember that even variables marked sensitive will show up
+# in the Terraform state file. Always follow best practices
+# when managing sensitive info.
+# https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables#sensitive-values-in-state
 variable "sql_user_password" {
   type      = string
   nullable  = false
@@ -21,13 +25,13 @@ variable "cloud_provider" {
   default  = "GCP"
 }
 
-variable "cloud_provider_region" {
+variable "cloud_provider_regions" {
   type     = list(string)
   nullable = false
   default  = ["us-east1"]
 }
 
-variable "cluster_nodes" {
+variable "cluster_node_count" {
   type     = number
   nullable = false
   default  = 1
@@ -51,14 +55,18 @@ variable "allow_list_name" {
   default  = "default-allow-list"
 }
 
+# A production cluster should be locked down with a more
+# targeted allowlist or VPC peering.
 variable "cidr_ip" {
   type     = string
   nullable = false
+  default = "0.0.0.0"
 }
 
 variable "cidr_mask" {
   type     = number
   nullable = false
+  default = 0
 }
 
 terraform {
@@ -72,7 +80,7 @@ provider "cockroach" {
   # export COCKROACH_API_KEY with the cockroach cloud API Key
 }
 
-resource "cockroach_cluster" "cockroach" {
+resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = var.cloud_provider
   dedicated = {
@@ -80,32 +88,32 @@ resource "cockroach_cluster" "cockroach" {
     machine_type = var.machine_type
   }
   regions = [
-    for r in var.cloud_provider_region : {
+    for r in var.cloud_provider_regions : {
       name       = r,
-      node_count = var.cluster_nodes
+      node_count = var.cluster_node_count
     }
   ]
 }
 
-resource "cockroach_allow_list" "cockroach" {
+resource "cockroach_allow_list" "example" {
   name       = var.allow_list_name
   cidr_ip    = var.cidr_ip
   cidr_mask  = var.cidr_mask
   ui         = true
   sql        = true
-  cluster_id = cockroach_cluster.cockroach.id
+  cluster_id = cockroach_cluster.example.id
 }
 
-resource "cockroach_sql_user" "cockroach" {
+resource "cockroach_sql_user" "example" {
   name       = var.sql_user_name
   password   = var.sql_user_password
-  cluster_id = cockroach_cluster.cockroach.id
+  cluster_id = cockroach_cluster.example.id
 }
 
-data "cockroach_cluster" "cockroach" {
-  id = cockroach_cluster.cockroach.id
+data "cockroach_cluster" "example" {
+  id = cockroach_cluster.example.id
 }
 
 output "cluster" {
-  value = data.cockroach_cluster.cockroach
+  value = data.cockroach_cluster.example
 }

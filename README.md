@@ -82,6 +82,10 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
 
 ## Run the Dedicated Example
 
+> Running this example will incur charges to your CockroachDB account.
+> It defaults to a minimal hardware spec, but please remember to run
+> `terraform destroy` when you're done if you don't need to keep your cluster.
+
 1. In a terminal clone the `terraform-provider-cockroach` repository:
 
     ~~~ shell

@@ -200,8 +200,8 @@ func (r privateEndpointConnectionResource) Read(ctx context.Context, req tfsdk.R
 			return
 		}
 	}
-	resp.Diagnostics.AddError("Couldn't find connection",
-		"Endpoint services connection couldn't be located. Removing from state.")
+	resp.Diagnostics.AddWarning("Couldn't find connection",
+		"Endpoint connection couldn't be located. Removing from state.")
 	resp.State.RemoveResource(ctx)
 }
 

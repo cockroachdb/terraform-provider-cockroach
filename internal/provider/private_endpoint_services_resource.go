@@ -185,10 +185,16 @@ func (n privateEndpointServicesResource) Read(ctx context.Context, req tfsdk.Rea
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	apiResp, _, err := n.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.Value)
+	apiResp, httpResp, err := n.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.Value)
 	if err != nil {
-		resp.Diagnostics.AddError("Couldn't retrieve endpoint services",
-			fmt.Sprintf("Error retrieving endpoint services: %s", formatAPIErrorMessage(err)))
+		if httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddWarning("Couldn't find endpoint services",
+				"Couldn't find endpoint services, which usually means the cluster has been deleted. Removing from state.")
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.Diagnostics.AddError("Couldn't retrieve endpoint services",
+				fmt.Sprintf("Error retrieving endpoint services: %s", formatAPIErrorMessage(err)))
+		}
 		return
 	}
 	loadEndpointServicesIntoTerraformState(apiResp, &state)

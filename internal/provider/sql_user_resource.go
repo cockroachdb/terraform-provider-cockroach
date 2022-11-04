@@ -159,7 +159,7 @@ func (s sqlUserResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 			return
 		}
 	}
-	resp.Diagnostics.AddError(
+	resp.Diagnostics.AddWarning(
 		"Couldn't find user.",
 		fmt.Sprintf("This cluster doesn't have a SQL user named '%v'. Removing from state.", state.Name.Value),
 	)

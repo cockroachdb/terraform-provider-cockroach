@@ -67,18 +67,26 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			},
 		},
 	}
+	finalService := client.PrivateEndpointService{
+		RegionName:    "ap-south-1",
+		CloudProvider: "AWS",
+		Status:        client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE,
+		Aws: client.AWSPrivateLinkServiceDetail{
+			ServiceName:         "finalService-name",
+			ServiceId:           "finalService-id",
+			AvailabilityZoneIds: []string{},
+		},
+	}
+	initialService := finalService
+	initialService.Status = client.PRIVATEENDPOINTSERVICESTATUS_CREATING
 	services := &client.PrivateEndpointServices{
 		Services: []client.PrivateEndpointService{
-			{
-				RegionName:    "ap-south-1",
-				CloudProvider: "AWS",
-				Status:        client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE,
-				Aws: client.AWSPrivateLinkServiceDetail{
-					ServiceName:         "service-name",
-					ServiceId:           "service-id",
-					AvailabilityZoneIds: []string{},
-				},
-			},
+			finalService,
+		},
+	}
+	initialServices := &client.PrivateEndpointServices{
+		Services: []client.PrivateEndpointService{
+			initialService,
 		},
 	}
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
@@ -87,7 +95,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(3)
 	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID, gomock.Any()).
-		Return(services, nil, nil)
+		Return(initialServices, nil, nil)
 	s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
 		Return(services, nil, nil).
 		Times(2)
@@ -107,6 +115,7 @@ func testPrivateEndpointServicesResource(t *testing.T, clusterName string, useMo
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("cockroach_cluster.dedicated", "name", clusterName),
 					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", "1"),
+					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.0.status", string(client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE)),
 				),
 			},
 		},

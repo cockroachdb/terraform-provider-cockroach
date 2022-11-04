@@ -533,9 +533,8 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 
 func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) resource.RetryFunc {
 	return func() *resource.RetryError {
-		var httpResp *http.Response
-		var err error
-		cluster, httpResp, err = cl.GetCluster(ctx, id)
+		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
+		*cluster = *apiCluster
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
 				return resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))

@@ -71,9 +71,9 @@ Read-Only:
 <a id="nestedatt--serverless"></a>
 ### Nested Schema for `serverless`
 
-Optional:
+Required:
 
-- `spend_limit` (Number)
+- `spend_limit` (Number) Spend limit in US cents
 
 Read-Only:
 

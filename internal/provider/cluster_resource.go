@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"regexp"
 	"sort"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -470,6 +471,25 @@ func (r clusterResource) ImportState(ctx context.Context, req tfsdk.ImportResour
 	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
 }
 
+// versionRE is the regexp that is used to verify that a version string is
+// of the form "vMAJOR.MINOR.PATCH[-PRERELEASE][+METADATA]". This
+// conforms to https://semver.org/spec/v2.0.0.html
+var versionRE = regexp.MustCompile(
+	`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z-.]+)?(\+[0-9A-Za-z-.]+|)?$`,
+	// ^major           ^minor           ^patch         ^preRelease       ^metadata
+)
+
+func simplifyClusterVersion(version string) string {
+	parts := versionRE.FindStringSubmatch(version)
+	if parts == nil {
+		return version
+	}
+	if parts[4] != "" {
+		return "preview"
+	}
+	return fmt.Sprintf("v%s.%s", parts[1], parts[2])
+}
+
 // Since the API response will always sort regions by name, we need to
 // resort the list, so it matches up with the plan. If the response and
 // plan regions don't match up, the sort won't work right, but we can
@@ -503,7 +523,7 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	state.ID = types.String{Value: clusterObj.Id}
 	state.Name = types.String{Value: clusterObj.Name}
 	state.CloudProvider = types.String{Value: string(clusterObj.CloudProvider)}
-	state.CockroachVersion = types.String{Value: clusterObj.CockroachVersion}
+	state.CockroachVersion = types.String{Value: simplifyClusterVersion(clusterObj.CockroachVersion)}
 	state.Plan = types.String{Value: string(clusterObj.Plan)}
 	if clusterObj.AccountId == nil {
 		state.AccountId.Null = true

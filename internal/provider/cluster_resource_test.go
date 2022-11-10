@@ -138,11 +138,11 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Name:             clusterName,
 		CockroachVersion: "v22.1.0",
 		Plan:             "DEDICATED",
-		CloudProvider:    "AWS",
+		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
-				MachineType:    "m5.large",
+				MachineType:    "n1-standard-2",
 				NumVirtualCpus: 2,
 				StorageGib:     15,
 				MemoryGib:      8,
@@ -150,7 +150,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "ap-south-1",
+				Name:      "us-central1",
 				NodeCount: 1,
 			},
 		},
@@ -235,13 +235,14 @@ func getTestDedicatedClusterResourceConfig(name string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
-    cloud_provider = "AWS"
+    cloud_provider = "GCP"
+    cockroach_version = "v22.1"
     dedicated = {
 	  storage_gib = 15
-	  machine_type = "m5.large"
+	  machine_type = "n1-standard-2"
     }
 	regions = [{
-		name: "ap-south-1"
+		name: "us-central1"
 		node_count: 1
 	}]
 }

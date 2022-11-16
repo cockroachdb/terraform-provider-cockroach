@@ -18,18 +18,14 @@ package provider
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 const (
-	CockroachAPIKey                  string = "COCKROACH_API_KEY"
-	APIServerURLKey                  string = "COCKROACH_SERVER"
-	UserAgent                        string = "terraform-provider-cockroach"
-	CLUSTERSTATETYPE_CREATED         string = "CREATED"
-	CLUSTERSTATETYPE_CREATION_FAILED string = "CREATION_FAILED"
-	CREATE_TIMEOUT                          = 60 * time.Minute
+	CockroachAPIKey string = "COCKROACH_API_KEY"
+	APIServerURLKey string = "COCKROACH_SERVER"
+	UserAgent       string = "terraform-provider-cockroach"
 )
 
 type Region struct {

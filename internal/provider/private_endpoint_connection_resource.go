@@ -35,7 +35,7 @@ type privateEndpointConnectionResourceType struct{}
 const (
 	// clusterID:endpointID
 	privateEndpointConnectionIDFmt  = "%s:%s"
-	endpointConnectionCreateTimeout = time.Minute * 5
+	endpointConnectionCreateTimeout = time.Minute * 10
 )
 
 var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegex))

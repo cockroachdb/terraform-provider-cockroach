@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -31,8 +32,11 @@ import (
 
 type privateEndpointConnectionResourceType struct{}
 
-// clusterID:endpointID
-const privateEndpointConnectionIDFmt = "%s:%s"
+const (
+	// clusterID:endpointID
+	privateEndpointConnectionIDFmt  = "%s:%s"
+	endpointConnectionCreateTimeout = time.Minute * 5
+)
 
 var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegex))
 
@@ -156,7 +160,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	}
 
 	var connection client.AwsEndpointConnection
-	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+	err = resource.RetryContext(ctx, endpointConnectionCreateTimeout,
 		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.Value, r.provider.service, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -279,21 +283,20 @@ func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpoi
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))
 			}
 		}
-		var found bool
+
 		for _, *connection = range connections.GetConnections() {
 			if connection.GetEndpointId() == endpointID {
-				if connection.GetStatus() == client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE {
+				switch status := connection.GetStatus(); status {
+				case client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE:
 					return nil
-				} else if connection.GetStatus() != client.AWSENDPOINTCONNECTIONSTATUS_PENDING {
-					return resource.NonRetryableError(fmt.Errorf("endpoint connection failed"))
+				case client.AWSENDPOINTCONNECTIONSTATUS_PENDING,
+					client.AWSENDPOINTCONNECTIONSTATUS_PENDING_ACCEPTANCE:
+					return resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
+				default:
+					return resource.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))
 				}
-				found = true
-				break
 			}
 		}
-		if !found {
-			return resource.NonRetryableError(fmt.Errorf("endpoint connection failed"))
-		}
-		return resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
+		return resource.NonRetryableError(fmt.Errorf("endpoint connection lost, presumed failed"))
 	}
 }

@@ -128,13 +128,13 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster type",
-			"Private endpoint services are only available for dedicated clusters.",
+			"Private endpoint services are only available for dedicated clusters",
 		)
 		return
 	} else if cluster.CloudProvider != client.APICLOUDPROVIDER_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster cloud provider",
-			"Private endpoint services are only available for AWS clusters.",
+			"Private endpoint services are only available for AWS clusters",
 		)
 		return
 	}
@@ -164,8 +164,8 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.Value, r.provider.service, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error enabling private endpoint services",
-			fmt.Sprintf("Could not enable private endpoint services: %s", formatAPIErrorMessage(err)),
+			"Error accepting private endpoint connection",
+			fmt.Sprintf("Could not accept private endpoint connection: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}

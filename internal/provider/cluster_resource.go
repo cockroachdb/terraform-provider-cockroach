@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"regexp"
 	"sort"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -32,6 +33,11 @@ import (
 )
 
 type clusterResourceType struct{}
+
+const (
+	clusterCreateTimeout = time.Hour
+	clusterUpdateTimeout = time.Hour * 2
+)
 
 func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -278,7 +284,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+	err = resource.RetryContext(ctx, clusterCreateTimeout,
 		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -415,7 +421,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		return
 	}
 
-	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+	err = resource.RetryContext(ctx, clusterUpdateTimeout,
 		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -554,7 +560,6 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) resource.RetryFunc {
 	return func() *resource.RetryError {
 		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
-		*cluster = *apiCluster
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
 				return resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
@@ -562,10 +567,11 @@ func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service
 				return resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
 			}
 		}
-		if string(cluster.State) == CLUSTERSTATETYPE_CREATED {
+		*cluster = *apiCluster
+		if cluster.State == client.CLUSTERSTATETYPE_CREATED {
 			return nil
 		}
-		if string(cluster.State) == CLUSTERSTATETYPE_CREATION_FAILED {
+		if cluster.State == client.CLUSTERSTATETYPE_CREATION_FAILED {
 			return resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
 		return resource.RetryableError(fmt.Errorf("cluster is not ready yet"))

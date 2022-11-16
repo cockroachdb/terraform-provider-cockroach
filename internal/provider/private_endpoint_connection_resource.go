@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -31,8 +32,11 @@ import (
 
 type privateEndpointConnectionResourceType struct{}
 
-// clusterID:endpointID
-const privateEndpointConnectionIDFmt = "%s:%s"
+const (
+	// clusterID:endpointID
+	privateEndpointConnectionIDFmt  = "%s:%s"
+	endpointConnectionCreateTimeout = time.Minute * 10
+)
 
 var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegex))
 
@@ -156,7 +160,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	}
 
 	var connection client.AwsEndpointConnection
-	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+	err = resource.RetryContext(ctx, endpointConnectionCreateTimeout,
 		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.Value, r.provider.service, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(

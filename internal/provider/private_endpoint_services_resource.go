@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -30,6 +31,8 @@ import (
 )
 
 type privateEndpointServicesResourceType struct{}
+
+const endpointServicesCreateTimeout = time.Hour
 
 func (n privateEndpointServicesResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
 	return tfsdk.Schema{
@@ -155,7 +158,7 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 		return
 	}
 	var services client.PrivateEndpointServices
-	err = resource.RetryContext(ctx, CREATE_TIMEOUT,
+	err = resource.RetryContext(ctx, endpointServicesCreateTimeout,
 		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, n.provider.service, &services))
 	if err != nil {
 		resp.Diagnostics.AddError(

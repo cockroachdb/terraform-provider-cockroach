@@ -219,7 +219,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		(plan.ServerlessConfig != nil && plan.DedicatedConfig != nil) {
 		resp.Diagnostics.AddError(
 			"Invalid cluster configuration",
-			"You must set either 'dedicated' or 'serverless', but not both.",
+			"You must set either 'dedicated' or 'serverless', but not both",
 		)
 	}
 
@@ -254,7 +254,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 			} else {
 				resp.Diagnostics.AddError(
 					"Invalid dedicated cluster configuration",
-					"A dedicated cluster needs either num_virtual_cpus or machine_type to be set.",
+					"A dedicated cluster needs either num_virtual_cpus or machine_type to be set",
 				)
 			}
 			hardware.MachineSpec = machineSpec
@@ -288,8 +288,8 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"cluster ready timeout",
-			fmt.Sprintf("cluster is not ready: %s", formatAPIErrorMessage(err)),
+			"Cluster creation failed",
+			fmt.Sprintf("Cluster is not ready: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -425,8 +425,8 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"cluster ready timeout",
-			fmt.Sprintf("cluster is not ready: %v %v "+err.Error()),
+			"Cluster update failed",
+			fmt.Sprintf("Cluster is not ready: %v %v "+err.Error()),
 		)
 		return
 	}
@@ -445,7 +445,6 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.AddWarning("this is error loading cluster ", "")
 		return
 	}
 
@@ -455,7 +454,6 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	}
 	clusterID := state.ID.Value
 
-	// Delete order by calling API
 	_, httpResp, err := r.provider.service.DeleteCluster(ctx, clusterID)
 	if err != nil {
 		if httpResp.StatusCode == http.StatusNotFound {

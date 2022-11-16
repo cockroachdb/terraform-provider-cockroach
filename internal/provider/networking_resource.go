@@ -126,8 +126,8 @@ func (n allowListResource) Create(ctx context.Context, req tfsdk.CreateResourceR
 
 	if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
-			"Could not add network allow list in serverless cluster",
-			fmt.Sprintf("Network allow list is a feature of dedicated cluster: %s", formatAPIErrorMessage(err)),
+			"Could not add network allowlist in serverless cluster",
+			"Network allowlists are only supported with dedicated clusters",
 		)
 		return
 	}
@@ -221,14 +221,6 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 		return
 	}
 
-	if state.ClusterId != plan.ClusterId {
-		resp.Diagnostics.AddError(
-			"can not change cluster id in the network allow list",
-			"You can only change network allow list. Thanks!",
-		)
-		return
-	}
-
 	clusterId := plan.ClusterId.Value
 	entryCIDRIp := plan.CidrIp.Value
 	entryCIDRMask := int32(plan.CidrMask.Value)
@@ -243,8 +235,8 @@ func (n allowListResource) Update(ctx context.Context, req tfsdk.UpdateResourceR
 		&existingAllowList, &client.UpdateAllowlistEntryOptions{})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating network allow list",
-			fmt.Sprintf("Could not update network allow list: %s", formatAPIErrorMessage(err)),
+			"Error updating network allowlist",
+			fmt.Sprintf("Could not update network allowlist: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -267,8 +259,8 @@ func (n allowListResource) Delete(ctx context.Context, req tfsdk.DeleteResourceR
 	_, _, err := n.provider.service.DeleteAllowlistEntry(ctx, state.ClusterId.Value, state.CidrIp.Value, int32(state.CidrMask.Value))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error deleting network allow list",
-			fmt.Sprintf("Could not delete network allow list: %s", formatAPIErrorMessage(err)),
+			"Error deleting network allowlist",
+			fmt.Sprintf("Could not delete network allowlist: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}

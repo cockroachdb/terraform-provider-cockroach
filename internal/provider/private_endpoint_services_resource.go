@@ -135,13 +135,13 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 	if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster type",
-			"Private endpoint services are only available for dedicated clusters.",
+			"Private endpoint services are only available for dedicated clusters",
 		)
 		return
 	} else if cluster.CloudProvider != client.APICLOUDPROVIDER_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster cloud provider",
-			"Private endpoint services are only available for AWS clusters.",
+			"Private endpoint services are currently only available for AWS clusters",
 		)
 		return
 	}

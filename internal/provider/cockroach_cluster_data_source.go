@@ -186,8 +186,8 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 	}
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"error in getting cluster",
-			"")
+			"Error getting cluster info",
+			fmt.Sprintf("Unexpected error while retrieving cluster info: %v", formatAPIErrorMessage(err)))
 	}
 
 	cluster.Name = types.String{Value: cockroachCluster.Name}

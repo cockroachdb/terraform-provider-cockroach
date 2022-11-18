@@ -23,95 +23,99 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-type privateEndpointServicesResourceType struct{}
+type privateEndpointServicesResource struct {
+	provider *provider
+}
 
 const endpointServicesCreateTimeout = time.Hour
 
-func (n privateEndpointServicesResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+func (r *privateEndpointServicesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)",
-		Attributes: map[string]tfsdk.Attribute{
-			"cluster_id": {
+		Attributes: map[string]schema.Attribute{
+			"cluster_id": schema.StringAttribute{
 				Required: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"id": {
+			"id": schema.StringAttribute{
 				Computed: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 				MarkdownDescription: "Always matches the cluster ID. Required by Terraform.",
 			},
-			"services": {
+			"services": schema.ListNestedAttribute{
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
-				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
-					"region_name": {
-						Computed: true,
-						Type:     types.StringType,
-					},
-					"cloud_provider": {
-						Computed: true,
-						Type:     types.StringType,
-					},
-					"status": {
-						Computed: true,
-						Type:     types.StringType,
-					},
-					"aws": {
-						Computed: true,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"region_name": schema.StringAttribute{
+							Computed: true,
 						},
-						Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-							"service_name": {
-								Computed: true,
-								Type:     types.StringType,
+						"cloud_provider": schema.StringAttribute{
+							Computed: true,
+						},
+						"status": schema.StringAttribute{
+							Computed: true,
+						},
+						"aws": schema.SingleNestedAttribute{
+							Computed: true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
 							},
-							"service_id": {
-								Computed: true,
-								Type:     types.StringType,
+							Attributes: map[string]schema.Attribute{
+								"service_name": schema.StringAttribute{
+									Computed: true,
+								},
+								"service_id": schema.StringAttribute{
+									Computed: true,
+								},
+								"availability_zone_ids": schema.ListAttribute{
+									Computed:            true,
+									ElementType:         types.StringType,
+									MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
+								},
 							},
-							"availability_zone_ids": {
-								Computed:            true,
-								Type:                types.ListType{ElemType: types.StringType},
-								MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
-							},
-						}),
+						},
 					},
-				}, tfsdk.ListNestedAttributesOptions{}),
+				},
 			},
 		},
-	}, nil
+	}
 }
 
-func (n privateEndpointServicesResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	provider, diags := convertProviderType(in)
-
-	return privateEndpointServicesResource{
-		provider: provider,
-	}, diags
+func (r *privateEndpointServicesResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_private_endpoint_services"
 }
 
-type privateEndpointServicesResource struct {
-	provider provider
+func (r *privateEndpointServicesResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	var ok bool
+	if r.provider, ok = req.ProviderData.(*provider); !ok {
+		resp.Diagnostics.AddError("Internal provider error",
+			fmt.Sprintf("Error in Configure: expected %T but got %T", provider{}, req.ProviderData))
+	}
 }
 
-func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !n.provider.configured {
+func (r *privateEndpointServicesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
@@ -123,7 +127,7 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 		return
 	}
 
-	cluster, _, err := n.provider.service.GetCluster(ctx, config.ClusterID.Value)
+	cluster, _, err := r.provider.service.GetCluster(ctx, config.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
@@ -149,7 +153,7 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 	body := make(map[string]interface{}, 0)
 	// If private endpoint services already exist for this cluster,
 	// this is a no-op. The API will gracefully return the existing services.
-	_, _, err = n.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.Value, &body)
+	_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.ValueString(), &body)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -158,8 +162,8 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 		return
 	}
 	var services client.PrivateEndpointServices
-	err = resource.RetryContext(ctx, endpointServicesCreateTimeout,
-		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, n.provider.service, &services))
+	err = sdk_resource.RetryContext(ctx, endpointServicesCreateTimeout,
+		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, r.provider.service, &services))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -176,8 +180,8 @@ func (n privateEndpointServicesResource) Create(ctx context.Context, req tfsdk.C
 	resp.Diagnostics.Append(diags...)
 }
 
-func (n privateEndpointServicesResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	if !n.provider.configured {
+func (r *privateEndpointServicesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
@@ -188,7 +192,7 @@ func (n privateEndpointServicesResource) Read(ctx context.Context, req tfsdk.Rea
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	apiResp, httpResp, err := n.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.Value)
+	apiResp, httpResp, err := r.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.ValueString())
 	if err != nil {
 		if httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning("Couldn't find endpoint services",
@@ -211,31 +215,31 @@ func loadEndpointServicesIntoTerraformState(apiServices *client.PrivateEndpointS
 	state.Services = make([]PrivateEndpointService, len(serviceList))
 	for i, service := range serviceList {
 		state.Services[i] = PrivateEndpointService{
-			RegionName:    types.String{Value: service.GetRegionName()},
-			CloudProvider: types.String{Value: string(service.GetCloudProvider())},
-			Status:        types.String{Value: string(service.GetStatus())},
+			RegionName:    types.StringValue(service.GetRegionName()),
+			CloudProvider: types.StringValue(string(service.GetCloudProvider())),
+			Status:        types.StringValue(string(service.GetStatus())),
 			Aws: PrivateLinkServiceAWSDetail{
-				ServiceName: types.String{Value: service.Aws.GetServiceName()},
-				ServiceId:   types.String{Value: service.Aws.GetServiceId()},
+				ServiceName: types.StringValue(service.Aws.GetServiceName()),
+				ServiceId:   types.StringValue(service.Aws.GetServiceId()),
 			},
 		}
 		apiAZs := service.Aws.GetAvailabilityZoneIds()
 		azs := make([]types.String, len(apiAZs))
 		for j, az := range apiAZs {
-			azs[j] = types.String{Value: az}
+			azs[j] = types.StringValue(az)
 		}
 		state.Services[i].Aws.AvailabilityZoneIds = azs
 	}
 }
 
-func (n privateEndpointServicesResource) Update(_ context.Context, _ tfsdk.UpdateResourceRequest, _ *tfsdk.UpdateResourceResponse) {
+func (r *privateEndpointServicesResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
 	// no-op - Endpoint services cannot be updated
 
 	// The only non-computed field is the cluster ID, which requires replace,
 	// so no extra warning is necessary here.
 }
 
-func (n privateEndpointServicesResource) Delete(_ context.Context, _ tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *privateEndpointServicesResource) Delete(_ context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
 	// no-op - Endpoint services cannot be deleted
 	resp.Diagnostics.AddWarning("Cannot remove endpoint services",
 		"Endpoint Services resources can't be deleted once established."+
@@ -243,18 +247,18 @@ func (n privateEndpointServicesResource) Delete(_ context.Context, _ tfsdk.Delet
 	)
 }
 
-func (n privateEndpointServicesResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("cluster_id"), req, resp)
+func (r *privateEndpointServicesResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("cluster_id"), req, resp)
 }
 
-func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, cl client.Service, services *client.PrivateEndpointServices) resource.RetryFunc {
-	return func() *resource.RetryError {
+func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, cl client.Service, services *client.PrivateEndpointServices) sdk_resource.RetryFunc {
+	return func() *sdk_resource.RetryError {
 		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
-				return resource.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
+				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
 			} else {
-				return resource.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
+				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
 			}
 		}
 		*services = *apiServices
@@ -266,12 +270,16 @@ func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, c
 			if service.GetStatus() == client.PRIVATEENDPOINTSERVICESTATUS_CREATING {
 				creating = true
 			} else if service.GetStatus() != client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE {
-				return resource.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
+				return sdk_resource.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
 			}
 		}
 		if creating {
-			return resource.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
+			return sdk_resource.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
 		}
 		return nil
 	}
+}
+
+func NewPrivateEndpointServicesResource() resource.Resource {
+	return &privateEndpointServicesResource{}
 }

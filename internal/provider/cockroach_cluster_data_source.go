@@ -21,145 +21,118 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-type clusterDataSourceType struct{}
+type clusterDataSource struct {
+	provider *provider
+}
 
-func (t clusterDataSourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
+func (d *clusterDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
 				Required: true,
 			},
-			"name": {
+			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of cluster",
-				Type:                types.StringType,
 				Computed:            true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
-			"cockroach_version": {
-				Type:     types.StringType,
+			"cockroach_version": schema.StringAttribute{
 				Computed: true,
 			},
-			"plan": {
-				Type:     types.StringType,
+			"plan": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
-			"cloud_provider": {
-				Type:     types.StringType,
+			"cloud_provider": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
-				},
 			},
-			"account_id": {
+			"account_id": schema.StringAttribute{
 				Computed: true,
-				Type:     types.StringType,
 			},
-			"serverless": {
+			"serverless": schema.SingleNestedAttribute{
 				Computed: true,
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"spend_limit": {
+				Attributes: map[string]schema.Attribute{
+					"spend_limit": schema.Int64Attribute{
 						Computed: true,
-						Type:     types.Int64Type,
 					},
-					"routing_id": {
-						Type:     types.StringType,
+					"routing_id": schema.StringAttribute{
 						Computed: true,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
+					},
+				},
+			},
+			"dedicated": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"machine_type": schema.StringAttribute{
+						Computed: true,
+					},
+					"num_virtual_cpus": schema.Int64Attribute{
+						Computed: true,
+					},
+					"storage_gib": schema.Int64Attribute{
+						Computed: true,
+					},
+					"memory_gib": schema.Float64Attribute{
+						Computed: true,
+					},
+					"disk_iops": schema.Int64Attribute{
+						Computed: true,
+					},
+				},
+			},
+			"regions": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed: true,
+						},
+						"sql_dns": schema.StringAttribute{
+							Computed: true,
+						},
+						"ui_dns": schema.StringAttribute{
+							Computed: true,
+						},
+						"node_count": schema.Int64Attribute{
+							Computed: true,
 						},
 					},
-				}),
-			},
-			"dedicated": {
-				Computed: true,
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"machine_type": {
-						Type:     types.StringType,
-						Computed: true,
-					},
-					"num_virtual_cpus": {
-						Type:     types.Int64Type,
-						Computed: true,
-					},
-					"storage_gib": {
-						Type:     types.Int64Type,
-						Computed: true,
-					},
-					"memory_gib": {
-						Type:     types.Float64Type,
-						Computed: true,
-					},
-					"disk_iops": {
-						Type:     types.Int64Type,
-						Computed: true,
-					},
-				}),
-			},
-			"regions": {
-				Computed: true,
-				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
-					"name": {
-						Type:     types.StringType,
-						Computed: true,
-					},
-					"sql_dns": {
-						Type:     types.StringType,
-						Computed: true,
-					},
-					"ui_dns": {
-						Type:     types.StringType,
-						Computed: true,
-					},
-					"node_count": {
-						Type:     types.Int64Type,
-						Computed: true,
-					},
-				}, tfsdk.ListNestedAttributesOptions{}),
-			},
-			"state": {
-				Type:     types.StringType,
-				Computed: true,
-			},
-			"creator_id": {
-				Type:     types.StringType,
-				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
 				},
 			},
-			"operation_status": {
-				Type:     types.StringType,
+			"state": schema.StringAttribute{
+				Computed: true,
+			},
+			"creator_id": schema.StringAttribute{
+				Computed: true,
+			},
+			"operation_status": schema.StringAttribute{
 				Computed: true,
 			},
 		},
-		MarkdownDescription: "clusterSourceType Data Source",
-	}, nil
+		MarkdownDescription: "Cluster Data Source",
+	}
 }
 
-func (t clusterDataSourceType) NewDataSource(_ context.Context, in tfsdk.Provider) (tfsdk.DataSource, diag.Diagnostics) {
-	provider, diags := convertProviderType(in)
-
-	return clusterDataSource{
-		provider: provider,
-	}, diags
+func (d *clusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_cluster"
 }
 
-type clusterDataSource struct {
-	provider provider
+func (d *clusterDataSource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	var ok bool
+	if d.provider, ok = req.ProviderData.(*provider); !ok {
+		resp.Diagnostics.AddError("Internal provider error",
+			fmt.Sprintf("Error in Configure: expected %T but got %T", provider{}, req.ProviderData))
+	}
 }
 
-func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceRequest, resp *tfsdk.ReadDataSourceResponse) {
+func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var cluster CockroachCluster
 	diags := req.Config.Get(ctx, &cluster)
 
@@ -169,7 +142,7 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 		return
 	}
 
-	if cluster.ID.Null {
+	if cluster.ID.IsNull() {
 		resp.Diagnostics.AddError(
 			"ID can't be null",
 			"The ID field is null, but it never should be. Please double check the value!",
@@ -177,11 +150,11 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 		return
 	}
 
-	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.Value)
+	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.ValueString())
 	if httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"Cluster not found",
-			fmt.Sprintf("Couldn't find a cluster with ID %s", cluster.ID.Value))
+			fmt.Sprintf("Couldn't find a cluster with ID %s", cluster.ID.ValueString()))
 		return
 	}
 	if err != nil {
@@ -190,38 +163,42 @@ func (d clusterDataSource) Read(ctx context.Context, req tfsdk.ReadDataSourceReq
 			fmt.Sprintf("Unexpected error while retrieving cluster info: %v", formatAPIErrorMessage(err)))
 	}
 
-	cluster.Name = types.String{Value: cockroachCluster.Name}
-	cluster.CloudProvider = types.String{Value: string(cockroachCluster.CloudProvider)}
-	cluster.State = types.String{Value: string(cockroachCluster.State)}
-	cluster.CockroachVersion = types.String{Value: cockroachCluster.CockroachVersion}
-	cluster.Plan = types.String{Value: string(cockroachCluster.Plan)}
-	cluster.OperationStatus = types.String{Value: string(cockroachCluster.OperationStatus)}
+	cluster.Name = types.StringValue(cockroachCluster.Name)
+	cluster.CloudProvider = types.StringValue(string(cockroachCluster.CloudProvider))
+	cluster.State = types.StringValue(string(cockroachCluster.State))
+	cluster.CockroachVersion = types.StringValue(cockroachCluster.CockroachVersion)
+	cluster.Plan = types.StringValue(string(cockroachCluster.Plan))
+	cluster.OperationStatus = types.StringValue(string(cockroachCluster.OperationStatus))
 	if cockroachCluster.Config.Serverless != nil {
 		cluster.ServerlessConfig = &ServerlessClusterConfig{
-			SpendLimit: types.Int64{Value: int64(cockroachCluster.Config.Serverless.SpendLimit)},
-			RoutingId:  types.String{Value: cockroachCluster.Config.Serverless.RoutingId},
+			SpendLimit: types.Int64Value(int64(cockroachCluster.Config.Serverless.SpendLimit)),
+			RoutingId:  types.StringValue(cockroachCluster.Config.Serverless.RoutingId),
 		}
 	}
 	if cockroachCluster.Config.Dedicated != nil {
 		cluster.DedicatedConfig = &DedicatedClusterConfig{
-			MachineType:    types.String{Value: cockroachCluster.Config.Dedicated.MachineType},
-			NumVirtualCpus: types.Int64{Value: int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)},
-			StorageGib:     types.Int64{Value: int64(cockroachCluster.Config.Dedicated.StorageGib)},
-			MemoryGib:      types.Float64{Value: float64(cockroachCluster.Config.Dedicated.MemoryGib)},
-			DiskIops:       types.Int64{Value: int64(cockroachCluster.Config.Dedicated.DiskIops)},
+			MachineType:    types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
+			NumVirtualCpus: types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
+			StorageGib:     types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
+			MemoryGib:      types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
+			DiskIops:       types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
 		}
 	}
 
 	for _, r := range cockroachCluster.Regions {
 		reg := Region{
-			Name:      types.String{Value: r.Name},
-			SqlDns:    types.String{Value: r.SqlDns},
-			UiDns:     types.String{Value: r.UiDns},
-			NodeCount: types.Int64{Value: int64(r.NodeCount)},
+			Name:      types.StringValue(r.Name),
+			SqlDns:    types.StringValue(r.SqlDns),
+			UiDns:     types.StringValue(r.UiDns),
+			NodeCount: types.Int64Value(int64(r.NodeCount)),
 		}
 		cluster.Regions = append(cluster.Regions, reg)
 	}
 
 	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
+}
+
+func NewClusterDataSource() datasource.DataSource {
+	return &clusterDataSource{}
 }

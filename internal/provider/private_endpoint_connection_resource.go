@@ -24,13 +24,13 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
-
-type privateEndpointConnectionResourceType struct{}
 
 const (
 	// clusterID:endpointID
@@ -40,71 +40,72 @@ const (
 
 var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegex))
 
-func (r privateEndpointConnectionResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+type privateEndpointConnectionResource struct {
+	provider *provider
+}
+
+func (r *privateEndpointConnectionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		MarkdownDescription: "AWS PrivateLink Endpoint Connection",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
 				Computed:            true,
-				Type:                types.StringType,
 				MarkdownDescription: "Used with `terrform import`. Format is \"<cluster ID>:<endpoint ID>\"",
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"region_name": {
+			"region_name": schema.StringAttribute{
 				Computed: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"cloud_provider": {
+			"cloud_provider": schema.StringAttribute{
 				Computed: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"endpoint_id": {
+			"endpoint_id": schema.StringAttribute{
 				Required: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"service_id": {
+			"service_id": schema.StringAttribute{
 				Computed: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"cluster_id": {
+			"cluster_id": schema.StringAttribute{
 				Required: true,
-				Type:     types.StringType,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.RequiresReplace(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
 		},
-	}, nil
+	}
 }
 
-func (r privateEndpointConnectionResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	provider, diags := convertProviderType(in)
-
-	return privateEndpointConnectionResource{
-		provider: provider,
-	}, diags
+func (r *privateEndpointConnectionResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_private_endpoint_connection"
 }
 
-type privateEndpointConnectionResource struct {
-	provider provider
+func (r *privateEndpointConnectionResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	var ok bool
+	if r.provider, ok = req.ProviderData.(*provider); !ok {
+		resp.Diagnostics.AddError("Internal provider error",
+			fmt.Sprintf("Error in Configure: expected %T but got %T", provider{}, req.ProviderData))
+	}
 }
 
-func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !r.provider.configured {
+func (r *privateEndpointConnectionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
@@ -116,7 +117,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 		return
 	}
 
-	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ClusterID.Value)
+	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
@@ -144,7 +145,7 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 		Status: &status,
 	}
 
-	_, _, err = r.provider.service.SetAwsEndpointConnectionState(ctx, plan.ClusterID.Value, plan.EndpointID.Value, &connectionStateRequest)
+	_, _, err = r.provider.service.SetAwsEndpointConnectionState(ctx, plan.ClusterID.ValueString(), plan.EndpointID.ValueString(), &connectionStateRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error establishing AWS Endpoint Connection",
@@ -160,8 +161,8 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	}
 
 	var connection client.AwsEndpointConnection
-	err = resource.RetryContext(ctx, endpointConnectionCreateTimeout,
-		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.Value, r.provider.service, &connection))
+	err = sdk_resource.RetryContext(ctx, endpointConnectionCreateTimeout,
+		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.ValueString(), r.provider.service, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error accepting private endpoint connection",
@@ -177,8 +178,8 @@ func (r privateEndpointConnectionResource) Create(ctx context.Context, req tfsdk
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r privateEndpointConnectionResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	if !r.provider.configured {
+func (r *privateEndpointConnectionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
@@ -190,14 +191,14 @@ func (r privateEndpointConnectionResource) Read(ctx context.Context, req tfsdk.R
 		return
 	}
 
-	connections, _, err := r.provider.service.ListAwsEndpointConnections(ctx, state.ClusterID.Value)
+	connections, _, err := r.provider.service.ListAwsEndpointConnections(ctx, state.ClusterID.ValueString())
 	if err != nil {
 		diags.AddError("Unable to get endpoint connection status",
 			fmt.Sprintf("Unexpected error retrieving endpoint status: %s", formatAPIErrorMessage(err)))
 		return
 	}
 	for _, connection := range connections.GetConnections() {
-		if connection.GetEndpointId() == state.EndpointID.Value {
+		if connection.GetEndpointId() == state.EndpointID.ValueString() {
 			loadEndpointConnectionIntoTerraformState(&connection, &state)
 			diags = resp.State.Set(ctx, state)
 			resp.Diagnostics.Append(diags...)
@@ -210,23 +211,21 @@ func (r privateEndpointConnectionResource) Read(ctx context.Context, req tfsdk.R
 }
 
 func loadEndpointConnectionIntoTerraformState(apiConnection *client.AwsEndpointConnection, state *PrivateEndpointConnection) {
-	state.EndpointID = types.String{Value: apiConnection.GetEndpointId()}
-	state.ID = types.String{
-		Value: fmt.Sprintf(
-			privateEndpointConnectionIDFmt,
-			state.ClusterID.Value,
-			apiConnection.GetEndpointId()),
-	}
-	state.ServiceID = types.String{Value: apiConnection.GetServiceId()}
-	state.CloudProvider = types.String{Value: string(apiConnection.GetCloudProvider())}
-	state.RegionName = types.String{Value: apiConnection.GetRegionName()}
+	state.EndpointID = types.StringValue(apiConnection.GetEndpointId())
+	state.ID = types.StringValue(fmt.Sprintf(
+		privateEndpointConnectionIDFmt,
+		state.ClusterID.ValueString(),
+		apiConnection.GetEndpointId()))
+	state.ServiceID = types.StringValue(apiConnection.GetServiceId())
+	state.CloudProvider = types.StringValue(string(apiConnection.GetCloudProvider()))
+	state.RegionName = types.StringValue(apiConnection.GetRegionName())
 }
 
-func (r privateEndpointConnectionResource) Update(_ context.Context, _ tfsdk.UpdateResourceRequest, _ *tfsdk.UpdateResourceResponse) {
+func (r *privateEndpointConnectionResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
 	// No-op. Contains only requires-replace or computed fields.
 }
 
-func (r privateEndpointConnectionResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *privateEndpointConnectionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state PrivateEndpointConnection
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -237,8 +236,8 @@ func (r privateEndpointConnectionResource) Delete(ctx context.Context, req tfsdk
 	status := client.AWSENDPOINTCONNECTIONSTATUS_REJECTED
 	_, httpResp, err := r.provider.service.SetAwsEndpointConnectionState(
 		ctx,
-		state.ClusterID.Value,
-		state.EndpointID.Value,
+		state.ClusterID.ValueString(),
+		state.EndpointID.ValueString(),
 		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
 			Status: &status,
 		})
@@ -251,7 +250,7 @@ func (r privateEndpointConnectionResource) Delete(ctx context.Context, req tfsdk
 	resp.State.RemoveResource(ctx)
 }
 
-func (r privateEndpointConnectionResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
+func (r *privateEndpointConnectionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	// Since an endpoint connection is uniquely identified by two fields, the cluster ID
 	// and the endpoint ID, we serialize them both into the ID field. To make import
 	// work, we need to deserialize an ID back into endpoint ID and cluster ID.
@@ -266,21 +265,21 @@ func (r privateEndpointConnectionResource) ImportState(ctx context.Context, req 
 		return
 	}
 	connection := PrivateEndpointConnection{
-		ClusterID:  types.String{Value: matches[1]},
-		EndpointID: types.String{Value: matches[2]},
-		ID:         types.String{Value: req.ID},
+		ClusterID:  types.StringValue(matches[1]),
+		EndpointID: types.StringValue(matches[2]),
+		ID:         types.StringValue(req.ID),
 	}
 	resp.Diagnostics = resp.State.Set(ctx, &connection)
 }
 
-func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpointID string, cl client.Service, connection *client.AwsEndpointConnection) resource.RetryFunc {
-	return func() *resource.RetryError {
+func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpointID string, cl client.Service, connection *client.AwsEndpointConnection) sdk_resource.RetryFunc {
+	return func() *sdk_resource.RetryError {
 		connections, httpResp, err := cl.ListAwsEndpointConnections(ctx, clusterID)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
-				return resource.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
+				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
 			} else {
-				return resource.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))
+				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))
 			}
 		}
 
@@ -291,12 +290,16 @@ func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpoi
 					return nil
 				case client.AWSENDPOINTCONNECTIONSTATUS_PENDING,
 					client.AWSENDPOINTCONNECTIONSTATUS_PENDING_ACCEPTANCE:
-					return resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
+					return sdk_resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
 				default:
-					return resource.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))
+					return sdk_resource.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))
 				}
 			}
 		}
-		return resource.NonRetryableError(fmt.Errorf("endpoint connection lost, presumed failed"))
+		return sdk_resource.NonRetryableError(fmt.Errorf("endpoint connection lost, presumed failed"))
 	}
+}
+
+func NewPrivateEndpointConnectionResource() resource.Resource {
+	return &privateEndpointConnectionResource{}
 }

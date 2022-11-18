@@ -193,7 +193,7 @@ func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool
 
 func testCheckCockroachClusterExists(resourceName string, cluster *client.Cluster) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
-		p, _ := convertProviderType(testAccProvider)
+		p := testAccProvider.(*provider)
 		p.service = NewService(cl)
 		rs, ok := s.RootModule().Resources[resourceName]
 		if !ok {
@@ -258,14 +258,14 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}}
 		plan := &CockroachCluster{
 			Regions: []Region{
-				{Name: types.String{Value: "us-west2"}},
-				{Name: types.String{Value: "us-central1"}},
-				{Name: types.String{Value: "us-east1"}},
+				{Name: types.StringValue("us-west2")},
+				{Name: types.StringValue("us-central1")},
+				{Name: types.StringValue("us-east1")},
 			},
 		}
 		sortRegionsByPlan(clusterObj, plan)
 		for i, region := range clusterObj.Regions {
-			require.Equal(t, plan.Regions[i].Name.Value, region.Name)
+			require.Equal(t, plan.Regions[i].Name.ValueString(), region.Name)
 		}
 	})
 
@@ -277,8 +277,8 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}}
 		plan := &CockroachCluster{
 			Regions: []Region{
-				{Name: types.String{Value: "us-west2"}},
-				{Name: types.String{Value: "us-central1"}},
+				{Name: types.StringValue("us-west2")},
+				{Name: types.StringValue("us-central1")},
 			},
 		}
 		// We really just want to make sure it doesn't panic here.
@@ -292,9 +292,9 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}}
 		plan := &CockroachCluster{
 			Regions: []Region{
-				{Name: types.String{Value: "us-west2"}},
-				{Name: types.String{Value: "us-central1"}},
-				{Name: types.String{Value: "us-east1"}},
+				{Name: types.StringValue("us-west2")},
+				{Name: types.StringValue("us-central1")},
+				{Name: types.StringValue("us-east1")},
 			},
 		}
 		// We really just want to make sure it doesn't panic here.

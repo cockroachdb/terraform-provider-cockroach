@@ -127,7 +127,7 @@ func testAllowlistEntryResource(t *testing.T, clusterName string, entry client.A
 func testAllowlistEntryExists(resourceName, clusterResourceName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		var networkRule client.ListAllowlistEntriesOptions
-		p, _ := convertProviderType(testAccProvider)
+		p := testAccProvider.(*provider)
 		p.service = NewService(cl)
 
 		rs, ok := s.RootModule().Resources[resourceName]

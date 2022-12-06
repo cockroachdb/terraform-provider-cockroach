@@ -18,14 +18,14 @@ package provider
 
 import (
 	"context"
-	"fmt"
 	"os"
 
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types"
-
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 // NewService overrides the client method for testing.
@@ -55,7 +55,7 @@ type providerData struct {
 	ApiKey types.String `tfsdk:"apikey"`
 }
 
-func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderRequest, resp *tfsdk.ConfigureProviderResponse) {
+func (p *provider) Configure(ctx context.Context, req tf_provider.ConfigureRequest, resp *tf_provider.ConfigureResponse) {
 	var config providerData
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -65,7 +65,7 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	}
 
 	var apiKey string
-	if config.ApiKey.Unknown {
+	if config.ApiKey.IsUnknown() {
 		// cannot connect to client with an unknown value
 		resp.Diagnostics.AddWarning(
 			"Unable to create client",
@@ -74,10 +74,10 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 		return
 	}
 
-	if config.ApiKey.Null {
+	if config.ApiKey.IsNull() {
 		apiKey = os.Getenv(CockroachAPIKey)
 	} else {
-		apiKey = config.ApiKey.Value
+		apiKey = config.ApiKey.ValueString()
 	}
 
 	if apiKey == "" {
@@ -96,72 +96,49 @@ func (p *provider) Configure(ctx context.Context, req tfsdk.ConfigureProviderReq
 	cfg.UserAgent = UserAgent
 	cl := client.NewClient(cfg)
 	p.service = NewService(cl)
+	resp.ResourceData = p
+	resp.DataSourceData = p
 
 	p.configured = true
 }
 
-func (p *provider) GetResources(ctx context.Context) (map[string]tfsdk.ResourceType, diag.Diagnostics) {
-	return map[string]tfsdk.ResourceType{
-		"cockroach_cluster":                     clusterResourceType{},
-		"cockroach_sql_user":                    sqlUserResourceType{},
-		"cockroach_allow_list":                  allowListResourceType{},
-		"cockroach_private_endpoint_services":   privateEndpointServicesResourceType{},
-		"cockroach_private_endpoint_connection": privateEndpointConnectionResourceType{},
-	}, nil
+func (p *provider) Metadata(_ context.Context, _ tf_provider.MetadataRequest, resp *tf_provider.MetadataResponse) {
+	resp.TypeName = "cockroach"
+	resp.Version = p.version
 }
 
-func (p *provider) GetDataSources(ctx context.Context) (map[string]tfsdk.DataSourceType, diag.Diagnostics) {
-	return map[string]tfsdk.DataSourceType{
-		"cockroach_cluster": clusterDataSourceType{},
-	}, nil
+func (p *provider) Resources(_ context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		NewClusterResource,
+		NewSQLUserResource,
+		NewAllowlistResource,
+		NewPrivateEndpointServicesResource,
+		NewPrivateEndpointConnectionResource,
+	}
 }
 
-func (p *provider) GetSchema(ctx context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
-		Attributes: map[string]tfsdk.Attribute{
-			"apikey": {
+func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		NewClusterDataSource,
+	}
+}
+
+func (p *provider) Schema(_ context.Context, _ tf_provider.SchemaRequest, resp *tf_provider.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"apikey": schema.StringAttribute{
 				MarkdownDescription: "apikey to access cockroach cloud",
 				Optional:            true,
-				Type:                types.StringType,
 				Sensitive:           true,
 			},
 		},
-	}, nil
+	}
 }
 
-func New(version string) func() tfsdk.Provider {
-	return func() tfsdk.Provider {
+func New(version string) func() tf_provider.Provider {
+	return func() tf_provider.Provider {
 		return &provider{
 			version: version,
 		}
 	}
-}
-
-// convertProviderType is a helper function for NewResource and NewDataSource
-// implementations to associate the concrete provider type. Alternatively,
-// this helper can be skipped and the provider type can be directly type
-// asserted (e.g. provider: in.(*provider)), however using this can prevent
-// potential panics.
-func convertProviderType(in tfsdk.Provider) (provider, diag.Diagnostics) {
-	var diags diag.Diagnostics
-
-	p, ok := in.(*provider)
-
-	if !ok {
-		diags.AddError(
-			"Unexpected Provider Instance Type",
-			fmt.Sprintf("While creating the data source or resource, an unexpected provider type (%T) was received. This is always a bug in the provider code and should be reported to the provider developers.", p),
-		)
-		return provider{}, diags
-	}
-
-	if p == nil {
-		diags.AddError(
-			"Unexpected Provider Instance Type",
-			"While creating the data source or resource, an unexpected empty provider instance was received. This is always a bug in the provider code and should be reported to the provider developers.",
-		)
-		return provider{}, diags
-	}
-
-	return *p, diags
 }

@@ -25,181 +25,173 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
-
-type clusterResourceType struct{}
 
 const (
 	clusterCreateTimeout = time.Hour
 	clusterUpdateTimeout = time.Hour * 2
 )
 
-func (r clusterResourceType) GetSchema(_ context.Context) (tfsdk.Schema, diag.Diagnostics) {
-	return tfsdk.Schema{
+type clusterResource struct {
+	provider *provider
+}
+
+func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
 		MarkdownDescription: "Cluster Resource",
-		Attributes: map[string]tfsdk.Attribute{
-			"id": {
-				Type:     types.StringType,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"name": {
+			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of cluster",
-				Type:                types.StringType,
 				Required:            true,
 			},
-			"cockroach_version": {
-				Type:     types.StringType,
+			"cockroach_version": schema.StringAttribute{
 				Computed: true,
 				Optional: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"account_id": {
-				Type:     types.StringType,
+			"account_id": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"plan": {
-				Type:     types.StringType,
+			"plan": schema.StringAttribute{
 				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"cloud_provider": {
-				Type:     types.StringType,
+			"cloud_provider": schema.StringAttribute{
 				Required: true,
 			},
-			"serverless": {
+			"serverless": schema.SingleNestedAttribute{
 				Optional: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
 				},
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"spend_limit": {
+				Attributes: map[string]schema.Attribute{
+					"spend_limit": schema.Int64Attribute{
 						Required: true,
-						Type:     types.Int64Type,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
 						},
 						MarkdownDescription: "Spend limit in US cents",
 					},
-					"routing_id": {
+					"routing_id": schema.StringAttribute{
 						Computed: true,
-						Type:     types.StringType,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
-				}),
+				},
 			},
-			"dedicated": {
+			"dedicated": schema.SingleNestedAttribute{
 				Optional: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
 				},
-				Attributes: tfsdk.SingleNestedAttributes(map[string]tfsdk.Attribute{
-					"storage_gib": {
-						Type:     types.Int64Type,
+				Attributes: map[string]schema.Attribute{
+					"storage_gib": schema.Int64Attribute{
 						Optional: true,
 						Computed: true,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
 						},
 					},
-					"disk_iops": {
-						Type:     types.Int64Type,
+					"disk_iops": schema.Int64Attribute{
 						Optional: true,
 						Computed: true,
 					},
-					"memory_gib": {
+					"memory_gib": schema.Float64Attribute{
 						Computed: true,
-						Type:     types.Float64Type,
 					},
-					"machine_type": {
-						Type:     types.StringType,
+					"machine_type": schema.StringAttribute{
 						Optional: true,
 						Computed: true,
 					},
-					"num_virtual_cpus": {
+					"num_virtual_cpus": schema.Int64Attribute{
 						Optional: true,
 						Computed: true,
-						Type:     types.Int64Type,
 					},
-				}),
+				},
 			},
-			"regions": {
+			"regions": schema.ListNestedAttribute{
 				Required: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
-				Attributes: tfsdk.ListNestedAttributes(map[string]tfsdk.Attribute{
-					"name": {
-						Required: true,
-						Type:     types.StringType,
-					},
-					"sql_dns": {
-						Computed: true,
-						Type:     types.StringType,
-					},
-					"ui_dns": {
-						Computed: true,
-						Type:     types.StringType,
-					},
-					"node_count": {
-						Optional: true,
-						Computed: true,
-						Type:     types.Int64Type,
-						PlanModifiers: tfsdk.AttributePlanModifiers{
-							tfsdk.UseStateForUnknown(),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Required: true,
+						},
+						"sql_dns": schema.StringAttribute{
+							Computed: true,
+						},
+						"ui_dns": schema.StringAttribute{
+							Computed: true,
+						},
+						"node_count": schema.Int64Attribute{
+							Optional: true,
+							Computed: true,
+							PlanModifiers: []planmodifier.Int64{
+								int64planmodifier.UseStateForUnknown(),
+							},
 						},
 					},
-				}, tfsdk.ListNestedAttributesOptions{}),
-			},
-			"state": {
-				Type:     types.StringType,
-				Computed: true,
-			},
-			"creator_id": {
-				Type:     types.StringType,
-				Computed: true,
-				PlanModifiers: tfsdk.AttributePlanModifiers{
-					tfsdk.UseStateForUnknown(),
 				},
 			},
-			"operation_status": {
-				Type:     types.StringType,
+			"state": schema.StringAttribute{
+				Computed: true,
+			},
+			"creator_id": schema.StringAttribute{
+				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"operation_status": schema.StringAttribute{
 				Computed: true,
 			},
 		},
-	}, nil
+	}
 }
 
-func (r clusterResourceType) NewResource(_ context.Context, in tfsdk.Provider) (tfsdk.Resource, diag.Diagnostics) {
-	provider, diags := convertProviderType(in)
-
-	return clusterResource{
-		provider: provider,
-	}, diags
+func (r *clusterResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_cluster"
 }
 
-type clusterResource struct {
-	provider provider
+func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	var ok bool
+	if r.provider, ok = req.ProviderData.(*provider); !ok {
+		resp.Diagnostics.AddError("Internal provider error",
+			fmt.Sprintf("Error in Configure: expected %T but got %T", provider{}, req.ProviderData))
+	}
 }
 
-func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceRequest, resp *tfsdk.CreateResourceResponse) {
-	if !r.provider.configured {
+func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
@@ -226,30 +218,31 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	if plan.ServerlessConfig != nil {
 		var regions []string
 		for _, region := range plan.Regions {
-			regions = append(regions, region.Name.Value)
+			regions = append(regions, region.Name.ValueString())
 		}
-		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.ServerlessConfig.SpendLimit.Value))
+		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.ServerlessConfig.SpendLimit.ValueInt64()))
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
-		if !plan.CockroachVersion.Null {
-			dedicated.CockroachVersion = &plan.CockroachVersion.Value
+		if !plan.CockroachVersion.IsNull() {
+			version := plan.CockroachVersion.ValueString()
+			dedicated.CockroachVersion = &version
 		}
 		if plan.Regions != nil {
 			regionNodes := make(map[string]int32, len(plan.Regions))
 			for _, region := range plan.Regions {
-				regionNodes[region.Name.Value] = int32(region.NodeCount.Value)
+				regionNodes[region.Name.ValueString()] = int32(region.NodeCount.ValueInt64())
 			}
 			dedicated.RegionNodes = regionNodes
 		}
 		if plan.DedicatedConfig != nil {
 			hardware := client.DedicatedHardwareCreateSpecification{}
 			machineSpec := client.DedicatedMachineTypeSpecification{}
-			if !plan.DedicatedConfig.NumVirtualCpus.Null {
-				cpus := int32(plan.DedicatedConfig.NumVirtualCpus.Value)
+			if !plan.DedicatedConfig.NumVirtualCpus.IsNull() {
+				cpus := int32(plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
 				machineSpec.NumVirtualCpus = &cpus
-			} else if !plan.DedicatedConfig.MachineType.Null {
-				machineType := plan.DedicatedConfig.MachineType.Value
+			} else if !plan.DedicatedConfig.MachineType.IsNull() {
+				machineType := plan.DedicatedConfig.MachineType.ValueString()
 				machineSpec.MachineType = &machineType
 			} else {
 				resp.Diagnostics.AddError(
@@ -258,11 +251,11 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 				)
 			}
 			hardware.MachineSpec = machineSpec
-			if !plan.DedicatedConfig.StorageGib.Null {
-				hardware.StorageGib = int32(plan.DedicatedConfig.StorageGib.Value)
+			if !plan.DedicatedConfig.StorageGib.IsNull() {
+				hardware.StorageGib = int32(plan.DedicatedConfig.StorageGib.ValueInt64())
 			}
-			if !plan.DedicatedConfig.DiskIops.Null {
-				diskiops := int32(plan.DedicatedConfig.DiskIops.Value)
+			if !plan.DedicatedConfig.DiskIops.IsNull() {
+				diskiops := int32(plan.DedicatedConfig.DiskIops.ValueInt64())
 				hardware.DiskIops = &diskiops
 			}
 			dedicated.Hardware = hardware
@@ -274,7 +267,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	clusterReq := client.NewCreateClusterRequest(plan.Name.Value, client.ApiCloudProvider(plan.CloudProvider.Value), *clusterSpec)
+	clusterReq := client.NewCreateClusterRequest(plan.Name.ValueString(), client.ApiCloudProvider(plan.CloudProvider.ValueString()), *clusterSpec)
 	clusterObj, _, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -284,7 +277,7 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 		return
 	}
 
-	err = resource.RetryContext(ctx, clusterCreateTimeout,
+	err = sdk_resource.RetryContext(ctx, clusterCreateTimeout,
 		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -303,8 +296,8 @@ func (r clusterResource) Create(ctx context.Context, req tfsdk.CreateResourceReq
 	}
 }
 
-func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest, resp *tfsdk.ReadResourceResponse) {
-	if !r.provider.configured {
+func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
@@ -317,10 +310,10 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 		return
 	}
 
-	if cluster.ID.Null {
+	if cluster.ID.IsNull() {
 		return
 	}
-	clusterID := cluster.ID.Value
+	clusterID := cluster.ID.ValueString()
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
@@ -348,7 +341,7 @@ func (r clusterResource) Read(ctx context.Context, req tfsdk.ReadResourceRequest
 
 }
 
-func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceRequest, resp *tfsdk.UpdateResourceResponse) {
+func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// Get plan values
 	var plan CockroachCluster
 	diags := req.Plan.Get(ctx, &plan)
@@ -380,31 +373,32 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 
 	clusterReq := client.NewUpdateClusterSpecification()
 	if plan.ServerlessConfig != nil {
-		serverless := client.NewServerlessClusterUpdateSpecification(int32(plan.ServerlessConfig.SpendLimit.Value))
+		serverless := client.NewServerlessClusterUpdateSpecification(int32(plan.ServerlessConfig.SpendLimit.ValueInt64()))
 		clusterReq.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
 		dedicated := client.NewDedicatedClusterUpdateSpecification()
 		if plan.Regions != nil {
 			regionNodes := make(map[string]int32, len(plan.Regions))
 			for _, region := range plan.Regions {
-				regionNodes[region.Name.Value] = int32(region.NodeCount.Value)
+				regionNodes[region.Name.ValueString()] = int32(region.NodeCount.ValueInt64())
 			}
 			dedicated.RegionNodes = &regionNodes
 		}
 		dedicated.Hardware = client.NewDedicatedHardwareUpdateSpecification()
-		if !plan.DedicatedConfig.StorageGib.Null {
-			storage := int32(plan.DedicatedConfig.StorageGib.Value)
+		if !plan.DedicatedConfig.StorageGib.IsNull() {
+			storage := int32(plan.DedicatedConfig.StorageGib.ValueInt64())
 			dedicated.Hardware.StorageGib = &storage
 		}
-		if !plan.DedicatedConfig.DiskIops.Null {
-			diskiops := int32(plan.DedicatedConfig.DiskIops.Value)
+		if !plan.DedicatedConfig.DiskIops.IsNull() {
+			diskiops := int32(plan.DedicatedConfig.DiskIops.ValueInt64())
 			dedicated.Hardware.DiskIops = &diskiops
 		}
 		machineSpec := client.DedicatedMachineTypeSpecification{}
-		if !plan.DedicatedConfig.MachineType.Null {
-			machineSpec.MachineType = &plan.DedicatedConfig.MachineType.Value
-		} else if !plan.DedicatedConfig.NumVirtualCpus.Null {
-			cpus := int32(plan.DedicatedConfig.NumVirtualCpus.Value)
+		if !plan.DedicatedConfig.MachineType.IsNull() {
+			machineType := plan.DedicatedConfig.MachineType.ValueString()
+			machineSpec.MachineType = &machineType
+		} else if !plan.DedicatedConfig.NumVirtualCpus.IsNull() {
+			cpus := int32(plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
 			machineSpec.NumVirtualCpus = &cpus
 		}
 		dedicated.Hardware.MachineSpec = &machineSpec
@@ -412,7 +406,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		clusterReq.SetDedicated(*dedicated)
 	}
 
-	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.Value, clusterReq, &client.UpdateClusterOptions{})
+	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq, &client.UpdateClusterOptions{})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating cluster",
@@ -421,7 +415,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 		return
 	}
 
-	err = resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
 		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -440,7 +434,7 @@ func (r clusterResource) Update(ctx context.Context, req tfsdk.UpdateResourceReq
 	}
 }
 
-func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceRequest, resp *tfsdk.DeleteResourceResponse) {
+func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state CockroachCluster
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -449,10 +443,10 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	}
 
 	// Get cluster ID from state
-	if state.ID.Null {
+	if state.ID.IsNull() {
 		return
 	}
-	clusterID := state.ID.Value
+	clusterID := state.ID.ValueString()
 
 	_, httpResp, err := r.provider.service.DeleteCluster(ctx, clusterID)
 	if err != nil {
@@ -471,8 +465,8 @@ func (r clusterResource) Delete(ctx context.Context, req tfsdk.DeleteResourceReq
 	resp.State.RemoveResource(ctx)
 }
 
-func (r clusterResource) ImportState(ctx context.Context, req tfsdk.ImportResourceStateRequest, resp *tfsdk.ImportResourceStateResponse) {
-	tfsdk.ResourceImportStatePassthroughID(ctx, tftypes.NewAttributePath().WithAttributeName("id"), req, resp)
+func (r *clusterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 // versionRE is the regexp that is used to verify that a version string is
@@ -504,7 +498,7 @@ func sortRegionsByPlan(clusterObj *client.Cluster, plan *CockroachCluster) {
 	}
 	regionOrdinals := make(map[string]int, len(clusterObj.Regions))
 	for i, region := range plan.Regions {
-		regionOrdinals[region.Name.Value] = i
+		regionOrdinals[region.Name.ValueString()] = i
 	}
 	sort.Slice(clusterObj.Regions, func(i, j int) bool {
 		return regionOrdinals[clusterObj.Regions[i].Name] < regionOrdinals[clusterObj.Regions[j].Name]
@@ -516,53 +510,53 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	var rgs []Region
 	for _, x := range clusterObj.Regions {
 		rg := Region{
-			Name:      types.String{Value: x.Name},
-			SqlDns:    types.String{Value: x.SqlDns},
-			UiDns:     types.String{Value: x.UiDns},
-			NodeCount: types.Int64{Value: int64(x.NodeCount)},
+			Name:      types.StringValue(x.Name),
+			SqlDns:    types.StringValue(x.SqlDns),
+			UiDns:     types.StringValue(x.UiDns),
+			NodeCount: types.Int64Value(int64(x.NodeCount)),
 		}
 		rgs = append(rgs, rg)
 	}
 
-	state.ID = types.String{Value: clusterObj.Id}
-	state.Name = types.String{Value: clusterObj.Name}
-	state.CloudProvider = types.String{Value: string(clusterObj.CloudProvider)}
-	state.CockroachVersion = types.String{Value: simplifyClusterVersion(clusterObj.CockroachVersion)}
-	state.Plan = types.String{Value: string(clusterObj.Plan)}
+	state.ID = types.StringValue(clusterObj.Id)
+	state.Name = types.StringValue(clusterObj.Name)
+	state.CloudProvider = types.StringValue(string(clusterObj.CloudProvider))
+	state.CockroachVersion = types.StringValue(simplifyClusterVersion(clusterObj.CockroachVersion))
+	state.Plan = types.StringValue(string(clusterObj.Plan))
 	if clusterObj.AccountId == nil {
-		state.AccountId.Null = true
+		state.AccountId = types.StringNull()
 	} else {
-		state.AccountId = types.String{Value: *clusterObj.AccountId}
+		state.AccountId = types.StringValue(*clusterObj.AccountId)
 	}
-	state.State = types.String{Value: string(clusterObj.State)}
-	state.CreatorId = types.String{Value: clusterObj.CreatorId}
-	state.OperationStatus = types.String{Value: string(clusterObj.OperationStatus)}
+	state.State = types.StringValue(string(clusterObj.State))
+	state.CreatorId = types.StringValue(clusterObj.CreatorId)
+	state.OperationStatus = types.StringValue(string(clusterObj.OperationStatus))
 	state.Regions = rgs
 
 	if clusterObj.Config.Serverless != nil {
 		state.ServerlessConfig = &ServerlessClusterConfig{
-			SpendLimit: types.Int64{Value: int64(clusterObj.Config.Serverless.SpendLimit)},
-			RoutingId:  types.String{Value: clusterObj.Config.Serverless.RoutingId},
+			SpendLimit: types.Int64Value(int64(clusterObj.Config.Serverless.SpendLimit)),
+			RoutingId:  types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
 	} else if clusterObj.Config.Dedicated != nil {
 		state.DedicatedConfig = &DedicatedClusterConfig{
-			MachineType:    types.String{Value: clusterObj.Config.Dedicated.MachineType},
-			NumVirtualCpus: types.Int64{Value: int64(clusterObj.Config.Dedicated.NumVirtualCpus)},
-			StorageGib:     types.Int64{Value: int64(clusterObj.Config.Dedicated.StorageGib)},
-			MemoryGib:      types.Float64{Value: float64(clusterObj.Config.Dedicated.MemoryGib)},
-			DiskIops:       types.Int64{Value: int64(clusterObj.Config.Dedicated.DiskIops)},
+			MachineType:    types.StringValue(clusterObj.Config.Dedicated.MachineType),
+			NumVirtualCpus: types.Int64Value(int64(clusterObj.Config.Dedicated.NumVirtualCpus)),
+			StorageGib:     types.Int64Value(int64(clusterObj.Config.Dedicated.StorageGib)),
+			MemoryGib:      types.Float64Value(float64(clusterObj.Config.Dedicated.MemoryGib)),
+			DiskIops:       types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
 		}
 	}
 }
 
-func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) resource.RetryFunc {
-	return func() *resource.RetryError {
+func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) sdk_resource.RetryFunc {
+	return func() *sdk_resource.RetryError {
 		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
 		if err != nil {
 			if httpResp.StatusCode < http.StatusInternalServerError {
-				return resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
+				return sdk_resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
 			} else {
-				return resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
+				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
 			}
 		}
 		*cluster = *apiCluster
@@ -570,8 +564,12 @@ func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service
 			return nil
 		}
 		if cluster.State == client.CLUSTERSTATETYPE_CREATION_FAILED {
-			return resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
+			return sdk_resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
-		return resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
+		return sdk_resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
 	}
+}
+
+func NewClusterResource() resource.Resource {
+	return &clusterResource{}
 }

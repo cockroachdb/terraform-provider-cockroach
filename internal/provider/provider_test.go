@@ -25,12 +25,12 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 )
 
-var testAccProvider tfsdk.Provider
+var testAccProvider tf_provider.Provider
 var cl *client.Client
 
 func init() {

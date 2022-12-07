@@ -25,9 +25,11 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
@@ -44,6 +46,27 @@ const (
 
 type clusterResource struct {
 	provider *provider
+}
+
+var regionSchema = schema.NestedAttributeObject{
+	Attributes: map[string]schema.Attribute{
+		"name": schema.StringAttribute{
+			Required: true,
+		},
+		"sql_dns": schema.StringAttribute{
+			Computed: true,
+		},
+		"ui_dns": schema.StringAttribute{
+			Computed: true,
+		},
+		"node_count": schema.Int64Attribute{
+			Optional: true,
+			Computed: true,
+			PlanModifiers: []planmodifier.Int64{
+				int64planmodifier.UseStateForUnknown(),
+			},
+		},
+	},
 }
 
 func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -131,6 +154,14 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						Optional: true,
 						Computed: true,
 					},
+					"private_network_visibility": schema.BoolAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "Set to true to assign private IP addresses to nodes. Required for CMEK, PrivateLink, and other advanced features.",
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -138,26 +169,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
 				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Required: true,
-						},
-						"sql_dns": schema.StringAttribute{
-							Computed: true,
-						},
-						"ui_dns": schema.StringAttribute{
-							Computed: true,
-						},
-						"node_count": schema.Int64Attribute{
-							Optional: true,
-							Computed: true,
-							PlanModifiers: []planmodifier.Int64{
-								int64planmodifier.UseStateForUnknown(),
-							},
-						},
-					},
-				},
+				NestedObject: regionSchema,
 			},
 			"state": schema.StringAttribute{
 				Computed: true,
@@ -235,14 +247,14 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			}
 			dedicated.RegionNodes = regionNodes
 		}
-		if plan.DedicatedConfig != nil {
+		if cfg := plan.DedicatedConfig; cfg != nil {
 			hardware := client.DedicatedHardwareCreateSpecification{}
 			machineSpec := client.DedicatedMachineTypeSpecification{}
-			if !plan.DedicatedConfig.NumVirtualCpus.IsNull() {
-				cpus := int32(plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
+			if !cfg.NumVirtualCpus.IsNull() {
+				cpus := int32(cfg.NumVirtualCpus.ValueInt64())
 				machineSpec.NumVirtualCpus = &cpus
-			} else if !plan.DedicatedConfig.MachineType.IsNull() {
-				machineType := plan.DedicatedConfig.MachineType.ValueString()
+			} else if !cfg.MachineType.IsNull() {
+				machineType := cfg.MachineType.ValueString()
 				machineSpec.MachineType = &machineType
 			} else {
 				resp.Diagnostics.AddError(
@@ -251,14 +263,20 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				)
 			}
 			hardware.MachineSpec = machineSpec
-			if !plan.DedicatedConfig.StorageGib.IsNull() {
-				hardware.StorageGib = int32(plan.DedicatedConfig.StorageGib.ValueInt64())
+			if !cfg.StorageGib.IsNull() {
+				hardware.StorageGib = int32(cfg.StorageGib.ValueInt64())
 			}
-			if !plan.DedicatedConfig.DiskIops.IsNull() {
-				diskiops := int32(plan.DedicatedConfig.DiskIops.ValueInt64())
+			if !cfg.DiskIops.IsNull() {
+				diskiops := int32(cfg.DiskIops.ValueInt64())
 				hardware.DiskIops = &diskiops
 			}
 			dedicated.Hardware = hardware
+			if cfg.PrivateNetworkVisibility.ValueBool() {
+				//TODO(erademacher): Do this natively when the Go SDK is updated
+				dedicated.AdditionalProperties = map[string]interface{}{
+					"network_visibility": "NETWORK_VISIBILITY_PRIVATE",
+				}
+			}
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
@@ -278,7 +296,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	err = sdk_resource.RetryContext(ctx, clusterCreateTimeout,
-		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
+		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Cluster creation failed",
@@ -317,7 +335,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
-		if httpResp.StatusCode == http.StatusNotFound {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
 				"Cluster not found",
 				fmt.Sprintf("Cluster with clusterID %s is not found. Removing from state.", clusterID))
@@ -333,6 +351,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	// We actually want to use the current state as the plan here,
 	// since we're trying to see if it changed.
 	loadClusterToTerraformState(clusterObj, &cluster, &cluster)
+
 	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -375,14 +394,14 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	if plan.ServerlessConfig != nil {
 		serverless := client.NewServerlessClusterUpdateSpecification(int32(plan.ServerlessConfig.SpendLimit.ValueInt64()))
 		clusterReq.SetServerless(*serverless)
-	} else if plan.DedicatedConfig != nil {
+	} else if cfg := plan.DedicatedConfig; cfg != nil {
 		dedicated := client.NewDedicatedClusterUpdateSpecification()
 		if plan.Regions != nil {
-			regionNodes := make(map[string]int32, len(plan.Regions))
-			for _, region := range plan.Regions {
-				regionNodes[region.Name.ValueString()] = int32(region.NodeCount.ValueInt64())
+			dedicated.RegionNodes, diags = reconcileRegionUpdate(ctx, state.Regions, plan.Regions, state.ID.ValueString(), r.provider.service) //&regionNodes
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
 			}
-			dedicated.RegionNodes = &regionNodes
 		}
 		dedicated.Hardware = client.NewDedicatedHardwareUpdateSpecification()
 		if !plan.DedicatedConfig.StorageGib.IsNull() {
@@ -416,11 +435,11 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
-		waitForClusterCreatedFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
+		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Cluster update failed",
-			fmt.Sprintf("Cluster is not ready: %v %v "+err.Error()),
+			fmt.Sprintf("Cluster is not ready: %v", formatAPIErrorMessage(err)),
 		)
 		return
 	}
@@ -450,7 +469,7 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	_, httpResp, err := r.provider.service.DeleteCluster(ctx, clusterID)
 	if err != nil {
-		if httpResp.StatusCode == http.StatusNotFound {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			// Cluster is already gone. Swallow the error.
 		} else {
 			resp.Diagnostics.AddError(
@@ -492,32 +511,20 @@ func simplifyClusterVersion(version string) string {
 // resort the list, so it matches up with the plan. If the response and
 // plan regions don't match up, the sort won't work right, but we can
 // ignore it. Terraform will handle it.
-func sortRegionsByPlan(clusterObj *client.Cluster, plan *CockroachCluster) {
-	if clusterObj == nil || plan == nil {
+func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
+	if regions == nil || plan == nil {
 		return
 	}
-	regionOrdinals := make(map[string]int, len(clusterObj.Regions))
-	for i, region := range plan.Regions {
+	regionOrdinals := make(map[string]int, len(*regions))
+	for i, region := range plan {
 		regionOrdinals[region.Name.ValueString()] = i
 	}
-	sort.Slice(clusterObj.Regions, func(i, j int) bool {
-		return regionOrdinals[clusterObj.Regions[i].Name] < regionOrdinals[clusterObj.Regions[j].Name]
+	sort.Slice(*regions, func(i, j int) bool {
+		return regionOrdinals[(*regions)[i].Name] < regionOrdinals[(*regions)[j].Name]
 	})
 }
 
 func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster) {
-	sortRegionsByPlan(clusterObj, plan)
-	var rgs []Region
-	for _, x := range clusterObj.Regions {
-		rg := Region{
-			Name:      types.StringValue(x.Name),
-			SqlDns:    types.StringValue(x.SqlDns),
-			UiDns:     types.StringValue(x.UiDns),
-			NodeCount: types.Int64Value(int64(x.NodeCount)),
-		}
-		rgs = append(rgs, rg)
-	}
-
 	state.ID = types.StringValue(clusterObj.Id)
 	state.Name = types.StringValue(clusterObj.Name)
 	state.CloudProvider = types.StringValue(string(clusterObj.CloudProvider))
@@ -531,7 +538,7 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 	state.State = types.StringValue(string(clusterObj.State))
 	state.CreatorId = types.StringValue(clusterObj.CreatorId)
 	state.OperationStatus = types.StringValue(string(clusterObj.OperationStatus))
-	state.Regions = rgs
+	state.Regions = getManagedRegions(&clusterObj.Regions, plan.Regions)
 
 	if clusterObj.Config.Serverless != nil {
 		state.ServerlessConfig = &ServerlessClusterConfig{
@@ -539,21 +546,54 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 			RoutingId:  types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
 	} else if clusterObj.Config.Dedicated != nil {
+		var privateNetworkVisibility bool
+		if networkVisibility, ok := clusterObj.AdditionalProperties["network_visibility"].(string); ok {
+			privateNetworkVisibility = networkVisibility == "NETWORK_VISIBILITY_PRIVATE"
+		}
 		state.DedicatedConfig = &DedicatedClusterConfig{
-			MachineType:    types.StringValue(clusterObj.Config.Dedicated.MachineType),
-			NumVirtualCpus: types.Int64Value(int64(clusterObj.Config.Dedicated.NumVirtualCpus)),
-			StorageGib:     types.Int64Value(int64(clusterObj.Config.Dedicated.StorageGib)),
-			MemoryGib:      types.Float64Value(float64(clusterObj.Config.Dedicated.MemoryGib)),
-			DiskIops:       types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
+			MachineType:              types.StringValue(clusterObj.Config.Dedicated.MachineType),
+			NumVirtualCpus:           types.Int64Value(int64(clusterObj.Config.Dedicated.NumVirtualCpus)),
+			StorageGib:               types.Int64Value(int64(clusterObj.Config.Dedicated.StorageGib)),
+			MemoryGib:                types.Float64Value(float64(clusterObj.Config.Dedicated.MemoryGib)),
+			DiskIops:                 types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
+			PrivateNetworkVisibility: types.BoolValue(privateNetworkVisibility),
 		}
 	}
 }
 
-func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) sdk_resource.RetryFunc {
+// Due to the cyclic dependency issues of CMEK, there may be additional
+// regions that are managed by another resource (i.e. cockroach_cmek) that
+// we can safely omit from the state.
+func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
+	if apiRegions == nil {
+		return nil
+	}
+	regions := make([]Region, 0, len(*apiRegions))
+	sortRegionsByPlan(apiRegions, plan)
+	planRegions := make(map[string]bool, len(plan))
+	for _, region := range plan {
+		planRegions[region.Name.ValueString()] = true
+	}
+	isImport := len(plan) == 0
+	for _, x := range *apiRegions {
+		if isImport || planRegions[x.Name] {
+			rg := Region{
+				Name:      types.StringValue(x.Name),
+				SqlDns:    types.StringValue(x.SqlDns),
+				UiDns:     types.StringValue(x.UiDns),
+				NodeCount: types.Int64Value(int64(x.NodeCount)),
+			}
+			regions = append(regions, rg)
+		}
+	}
+	return regions
+}
+
+func waitForClusterReadyFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) sdk_resource.RetryFunc {
 	return func() *sdk_resource.RetryError {
 		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
 		if err != nil {
-			if httpResp.StatusCode < http.StatusInternalServerError {
+			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
 				return sdk_resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
 			} else {
 				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
@@ -568,6 +608,73 @@ func waitForClusterCreatedFunc(ctx context.Context, id string, cl client.Service
 		}
 		return sdk_resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
 	}
+}
+
+// To build an update request, we need to reconcile three region lists:
+// the current regions managed by this resource (state), the planned regions
+// managed by this resource (plan), and the full list of regions in the
+// cluster. We need to update the current resource's regions without impacting
+// the regions managed by another resource.
+//
+// A nil return value means no region update is required.
+func reconcileRegionUpdate(ctx context.Context, state, plan []Region, clusterID string, service client.Service) (*map[string]int32, diag.Diagnostics) {
+	type regionInfo struct {
+		inState   bool
+		inPlan    bool
+		nodeCount int64
+	}
+	var regionUpdateRequired bool
+	regions := make(map[string]*regionInfo, len(state))
+	for _, region := range state {
+		regions[region.Name.ValueString()] = &regionInfo{true, false, region.NodeCount.ValueInt64()}
+	}
+	for _, planRegion := range plan {
+		region, ok := regions[planRegion.Name.ValueString()]
+		if !ok {
+			regions[planRegion.Name.ValueString()] = &regionInfo{false, true, planRegion.NodeCount.ValueInt64()}
+			regionUpdateRequired = true
+		} else {
+			region.inPlan = true
+			if region.nodeCount != planRegion.NodeCount.ValueInt64() {
+				region.nodeCount = planRegion.NodeCount.ValueInt64()
+				regionUpdateRequired = true
+			}
+		}
+	}
+	for _, region := range regions {
+		if !region.inPlan {
+			regionUpdateRequired = true
+		}
+	}
+	if regionUpdateRequired {
+		cluster, _, err := service.GetCluster(ctx, clusterID)
+		if err != nil {
+			diags := diag.Diagnostics{}
+			diags.AddError("Error retrieving cluster info", formatAPIErrorMessage(err))
+			return nil, diags
+		}
+		for _, region := range cluster.Regions {
+			_, ok := regions[region.Name]
+			if !ok {
+				regions[region.Name] = &regionInfo{
+					inState:   false,
+					inPlan:    false,
+					nodeCount: int64(region.NodeCount),
+				}
+			}
+		}
+		regionNodes := make(map[string]int32, len(regions))
+		for name, info := range regions {
+			// Omit regions that are in the state (meaning we had been managing them)
+			// but not the plan. Everything else stays.
+			if info.inState && !info.inPlan {
+				continue
+			}
+			regionNodes[name] = int32(info.nodeCount)
+		}
+		return &regionNodes, nil
+	}
+	return nil, nil
 }
 
 func NewClusterResource() resource.Resource {

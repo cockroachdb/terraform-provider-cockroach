@@ -241,7 +241,7 @@ func (r *privateEndpointConnectionResource) Delete(ctx context.Context, req reso
 		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
 			Status: &status,
 		})
-	if err != nil && httpResp.StatusCode != http.StatusNotFound {
+	if err != nil && httpResp != nil && httpResp.StatusCode != http.StatusNotFound {
 		diags.AddError("Couldn't delete connection",
 			fmt.Sprintf("Unexpected error occurred while setting connection status: %s", formatAPIErrorMessage(err)))
 		return
@@ -276,7 +276,7 @@ func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpoi
 	return func() *sdk_resource.RetryError {
 		connections, httpResp, err := cl.ListAwsEndpointConnections(ctx, clusterID)
 		if err != nil {
-			if httpResp.StatusCode < http.StatusInternalServerError {
+			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
 				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
 			} else {
 				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))

@@ -114,6 +114,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewAllowlistResource,
 		NewPrivateEndpointServicesResource,
 		NewPrivateEndpointConnectionResource,
+		NewCMEKResource,
 	}
 }
 

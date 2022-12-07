@@ -36,11 +36,12 @@ type Region struct {
 }
 
 type DedicatedClusterConfig struct {
-	MachineType    types.String  `tfsdk:"machine_type"`
-	NumVirtualCpus types.Int64   `tfsdk:"num_virtual_cpus"`
-	StorageGib     types.Int64   `tfsdk:"storage_gib"`
-	MemoryGib      types.Float64 `tfsdk:"memory_gib"`
-	DiskIops       types.Int64   `tfsdk:"disk_iops"`
+	MachineType              types.String  `tfsdk:"machine_type"`
+	NumVirtualCpus           types.Int64   `tfsdk:"num_virtual_cpus"`
+	StorageGib               types.Int64   `tfsdk:"storage_gib"`
+	MemoryGib                types.Float64 `tfsdk:"memory_gib"`
+	DiskIops                 types.Int64   `tfsdk:"disk_iops"`
+	PrivateNetworkVisibility types.Bool    `tfsdk:"private_network_visibility"`
 }
 
 type ServerlessClusterConfig struct {
@@ -112,6 +113,29 @@ type PrivateEndpointConnection struct {
 	EndpointID    types.String `tfsdk:"endpoint_id"`
 	ServiceID     types.String `tfsdk:"service_id"`
 	ClusterID     types.String `tfsdk:"cluster_id"`
+}
+
+type CMEKKey struct {
+	Status        types.String `tfsdk:"status"`
+	UserMessage   types.String `tfsdk:"user_message"`
+	Type          types.String `tfsdk:"type"`
+	URI           types.String `tfsdk:"uri"`
+	AuthPrincipal types.String `tfsdk:"auth_principal"`
+	CreatedAt     types.String `tfsdk:"created_at"`
+	UpdatedAt     types.String `tfsdk:"updated_at"`
+}
+
+type CMEKRegion struct {
+	Region types.String `tfsdk:"region"`
+	Status types.String `tfsdk:"status"`
+	Key    CMEKKey      `tfsdk:"key"`
+}
+
+type ClusterCMEK struct {
+	ID                types.String `tfsdk:"id"`
+	Status            types.String `tfsdk:"status"`
+	Regions           []CMEKRegion `tfsdk:"regions"`
+	AdditionalRegions []Region     `tfsdk:"additional_regions"`
 }
 
 func (e *APIErrorMessage) String() string {

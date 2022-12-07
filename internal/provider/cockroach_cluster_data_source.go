@@ -81,6 +81,9 @@ func (d *clusterDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 					"disk_iops": schema.Int64Attribute{
 						Computed: true,
 					},
+					"private_network_visibility": schema.BoolAttribute{
+						Computed: true,
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -136,7 +139,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
-	
+
 	var cluster CockroachCluster
 	diags := req.Config.Get(ctx, &cluster)
 
@@ -155,7 +158,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.ValueString())
-	if httpResp.StatusCode == http.StatusNotFound {
+	if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"Cluster not found",
 			fmt.Sprintf("Couldn't find a cluster with ID %s", cluster.ID.ValueString()))
@@ -180,12 +183,18 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 	}
 	if cockroachCluster.Config.Dedicated != nil {
+		var privateNodes bool
+		//TODO(erademacher): Do this natively when the Go SDK is updated
+		if visibility, ok := cockroachCluster.Config.Dedicated.AdditionalProperties["network_visibility"]; ok {
+			privateNodes = visibility.(string) == "NETWORK_VISIBILITY_PRIVATE"
+		}
 		cluster.DedicatedConfig = &DedicatedClusterConfig{
-			MachineType:    types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
-			NumVirtualCpus: types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
-			StorageGib:     types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
-			MemoryGib:      types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
-			DiskIops:       types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
+			MachineType:              types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
+			NumVirtualCpus:           types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
+			StorageGib:               types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
+			MemoryGib:                types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
+			DiskIops:                 types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
+			PrivateNetworkVisibility: types.BoolValue(privateNodes),
 		}
 	}
 

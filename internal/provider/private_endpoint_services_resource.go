@@ -194,7 +194,7 @@ func (r *privateEndpointServicesResource) Read(ctx context.Context, req resource
 	}
 	apiResp, httpResp, err := r.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.ValueString())
 	if err != nil {
-		if httpResp.StatusCode == http.StatusNotFound {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning("Couldn't find endpoint services",
 				"Couldn't find endpoint services, which usually means the cluster has been deleted. Removing from state.")
 			resp.State.RemoveResource(ctx)
@@ -255,7 +255,7 @@ func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, c
 	return func() *sdk_resource.RetryError {
 		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
-			if httpResp.StatusCode < http.StatusInternalServerError {
+			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
 				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
 			} else {
 				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))

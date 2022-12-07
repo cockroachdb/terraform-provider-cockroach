@@ -3,12 +3,12 @@
 page_title: "cockroach_cluster Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  clusterSourceType Data Source
+  Cluster Data Source
 ---
 
 # cockroach_cluster (Data Source)
 
-clusterSourceType Data Source
+Cluster Data Source
 
 
 
@@ -39,6 +39,7 @@ Read-Only:
 - `machine_type` (String)
 - `memory_gib` (Number)
 - `num_virtual_cpus` (Number)
+- `private_network_visibility` (Boolean)
 - `storage_gib` (Number)
 
 

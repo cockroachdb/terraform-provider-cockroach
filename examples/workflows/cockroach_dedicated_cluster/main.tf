@@ -22,7 +22,7 @@ variable "sql_user_password" {
 variable "cockroach_version" {
   type     = string
   nullable = true
-  default  = "v22.1"
+  default  = "v22.2"
 }
 
 variable "cloud_provider" {

@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strconv"
 
@@ -175,12 +176,20 @@ func (r *allowListResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual entry list and make sure this one is in there.
-	apiResp, _, err := r.provider.service.ListAllowlistEntries(ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{})
+	apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Couldn't retrieve allowlist entries",
-			fmt.Sprintf("Unexpected error retrieving allowlist entries: %s", formatAPIErrorMessage(err)),
-		)
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddWarning(
+				"Cluster not found",
+				fmt.Sprintf("Allowlist's parent cluster with clusterID %s is not found. Removing from state.", state.ClusterId.ValueString()))
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.Diagnostics.AddError(
+				"Couldn't retrieve allowlist entries",
+				fmt.Sprintf("Unexpected error retrieving allowlist entries: %s", formatAPIErrorMessage(err)),
+			)
+		}
+		return
 	}
 	if resp.Diagnostics.HasError() {
 		return
@@ -257,13 +266,17 @@ func (r *allowListResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	_, _, err := r.provider.service.DeleteAllowlistEntry(ctx, state.ClusterId.ValueString(), state.CidrIp.ValueString(), int32(state.CidrMask.ValueInt64()))
+	_, httpResp, err := r.provider.service.DeleteAllowlistEntry(ctx, state.ClusterId.ValueString(), state.CidrIp.ValueString(), int32(state.CidrMask.ValueInt64()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error deleting network allowlist",
-			fmt.Sprintf("Could not delete network allowlist: %s", formatAPIErrorMessage(err)),
-		)
-		return
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			// Entry or cluster is already gone. Swallow the error.
+		} else {
+			resp.Diagnostics.AddError(
+				"Error deleting network allowlist",
+				fmt.Sprintf("Could not delete network allowlist: %s", formatAPIErrorMessage(err)),
+			)
+			return
+		}
 	}
 
 	// Remove resource from state

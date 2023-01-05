@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"regexp"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -145,14 +146,19 @@ func (r *sqlUserResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual user list and make sure this one is in there.
-	apiResp, _, err := r.provider.service.ListSQLUsers(ctx, state.ClusterId.ValueString(), &client.ListSQLUsersOptions{})
+	apiResp, httpResp, err := r.provider.service.ListSQLUsers(ctx, state.ClusterId.ValueString(), &client.ListSQLUsersOptions{})
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Couldn't retrieve SQL users",
-			fmt.Sprintf("Unexpected error retrieving SQL users: %s", formatAPIErrorMessage(err)),
-		)
-	}
-	if resp.Diagnostics.HasError() {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddWarning(
+				"Cluster not found",
+				fmt.Sprintf("SQL User's parent cluster with clusterID %s is not found. Removing from state.", state.ClusterId.ValueString()))
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.Diagnostics.AddError(
+				"Couldn't retrieve SQL users",
+				fmt.Sprintf("Unexpected error retrieving SQL users: %s", formatAPIErrorMessage(err)),
+			)
+		}
 		return
 	}
 	for _, user := range apiResp.GetUsers() {
@@ -209,13 +215,17 @@ func (r *sqlUserResource) Delete(ctx context.Context, req resource.DeleteRequest
 		return
 	}
 
-	_, _, err := r.provider.service.DeleteSQLUser(ctx, state.ClusterId.ValueString(), state.Name.ValueString())
+	_, httpResp, err := r.provider.service.DeleteSQLUser(ctx, state.ClusterId.ValueString(), state.Name.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error deleting sql user",
-			fmt.Sprintf("Could not delete sql user: %s", formatAPIErrorMessage(err)),
-		)
-		return
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			// User or cluster is already gone. Swallow the error.
+		} else {
+			resp.Diagnostics.AddError(
+				"Error deleting sql user",
+				fmt.Sprintf("Could not delete sql user: %s", formatAPIErrorMessage(err)),
+			)
+			return
+		}
 	}
 
 	// Remove resource from state

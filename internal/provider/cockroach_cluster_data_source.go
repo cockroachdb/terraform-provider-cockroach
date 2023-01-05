@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -183,18 +184,13 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 	}
 	if cockroachCluster.Config.Dedicated != nil {
-		var privateNodes bool
-		//TODO(erademacher): Do this natively when the Go SDK is updated
-		if visibility, ok := cockroachCluster.Config.Dedicated.AdditionalProperties["network_visibility"]; ok {
-			privateNodes = visibility.(string) == "NETWORK_VISIBILITY_PRIVATE"
-		}
 		cluster.DedicatedConfig = &DedicatedClusterConfig{
 			MachineType:              types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
 			NumVirtualCpus:           types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
 			StorageGib:               types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
 			MemoryGib:                types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
 			DiskIops:                 types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
-			PrivateNetworkVisibility: types.BoolValue(privateNodes),
+			PrivateNetworkVisibility: types.BoolValue(cockroachCluster.GetNetworkVisibility() == client.NETWORKVISIBLITY_PRIVATE),
 		}
 	}
 

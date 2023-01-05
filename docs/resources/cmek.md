@@ -23,9 +23,6 @@ Customer-managed encryption keys (CMEK) resource for a single cluster
 ### Optional
 
 - `additional_regions` (Attributes List) Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead. (see [below for nested schema](#nestedatt--additional_regions))
-
-### Read-Only
-
 - `status` (String) Aggregated status of the cluster's encryption key(s)
 
 <a id="nestedatt--regions"></a>

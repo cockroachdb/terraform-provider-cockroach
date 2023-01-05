@@ -68,6 +68,22 @@ func (mr *MockServiceMockRecorder) AddAllowlistEntry2(arg0, arg1, arg2, arg3, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddAllowlistEntry2", reflect.TypeOf((*MockService)(nil).AddAllowlistEntry2), arg0, arg1, arg2, arg3, arg4)
 }
 
+// AddEgressRule mocks base method.
+func (m *MockService) AddEgressRule(arg0 context.Context, arg1 string, arg2 *client.AddEgressRuleRequest) (*client.AddEgressRuleResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddEgressRule", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.AddEgressRuleResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// AddEgressRule indicates an expected call of AddEgressRule.
+func (mr *MockServiceMockRecorder) AddEgressRule(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEgressRule", reflect.TypeOf((*MockService)(nil).AddEgressRule), arg0, arg1, arg2)
+}
+
 // CreateCluster mocks base method.
 func (m *MockService) CreateCluster(arg0 context.Context, arg1 *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -180,6 +196,22 @@ func (mr *MockServiceMockRecorder) DeleteDatabase(arg0, arg1, arg2 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDatabase", reflect.TypeOf((*MockService)(nil).DeleteDatabase), arg0, arg1, arg2)
 }
 
+// DeleteEgressRule mocks base method.
+func (m *MockService) DeleteEgressRule(arg0 context.Context, arg1, arg2 string, arg3 *client.DeleteEgressRuleOptions) (*client.DeleteEgressRuleResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEgressRule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*client.DeleteEgressRuleResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteEgressRule indicates an expected call of DeleteEgressRule.
+func (mr *MockServiceMockRecorder) DeleteEgressRule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEgressRule", reflect.TypeOf((*MockService)(nil).DeleteEgressRule), arg0, arg1, arg2, arg3)
+}
+
 // DeleteLogExport mocks base method.
 func (m *MockService) DeleteLogExport(arg0 context.Context, arg1 string) (*client.LogExportClusterInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -194,6 +226,22 @@ func (m *MockService) DeleteLogExport(arg0 context.Context, arg1 string) (*clien
 func (mr *MockServiceMockRecorder) DeleteLogExport(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLogExport", reflect.TypeOf((*MockService)(nil).DeleteLogExport), arg0, arg1)
+}
+
+// DeleteMetricExport mocks base method.
+func (m *MockService) DeleteMetricExport(arg0 context.Context, arg1 string, arg2 *client.DeleteMetricExportOptions) (*client.DeleteMetricExportResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteMetricExport indicates an expected call of DeleteMetricExport.
+func (mr *MockServiceMockRecorder) DeleteMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricExport", reflect.TypeOf((*MockService)(nil).DeleteMetricExport), arg0, arg1, arg2)
 }
 
 // DeleteSQLUser mocks base method.
@@ -228,6 +276,22 @@ func (mr *MockServiceMockRecorder) EditDatabase(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditDatabase", reflect.TypeOf((*MockService)(nil).EditDatabase), arg0, arg1, arg2)
 }
 
+// EditEgressRule mocks base method.
+func (m *MockService) EditEgressRule(arg0 context.Context, arg1, arg2 string, arg3 *client.EditEgressRuleRequest) (*client.EditEgressRuleResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditEgressRule", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*client.EditEgressRuleResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EditEgressRule indicates an expected call of EditEgressRule.
+func (mr *MockServiceMockRecorder) EditEgressRule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditEgressRule", reflect.TypeOf((*MockService)(nil).EditEgressRule), arg0, arg1, arg2, arg3)
+}
+
 // EnableCMEKSpec mocks base method.
 func (m *MockService) EnableCMEKSpec(arg0 context.Context, arg1 string, arg2 *client.CMEKClusterSpecification) (*client.CMEKClusterInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -258,6 +322,22 @@ func (m *MockService) EnableLogExport(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) EnableLogExport(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableLogExport", reflect.TypeOf((*MockService)(nil).EnableLogExport), arg0, arg1, arg2)
+}
+
+// EnableMetricExport mocks base method.
+func (m *MockService) EnableMetricExport(arg0 context.Context, arg1 string, arg2 *client.EnableMetricExportRequest) (*client.MetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.MetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnableMetricExport indicates an expected call of EnableMetricExport.
+func (mr *MockServiceMockRecorder) EnableMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableMetricExport", reflect.TypeOf((*MockService)(nil).EnableMetricExport), arg0, arg1, arg2)
 }
 
 // GetCMEKClusterInfo mocks base method.
@@ -292,6 +372,22 @@ func (mr *MockServiceMockRecorder) GetCluster(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*MockService)(nil).GetCluster), arg0, arg1)
 }
 
+// GetEgressRule mocks base method.
+func (m *MockService) GetEgressRule(arg0 context.Context, arg1, arg2 string) (*client.GetEgressRuleResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEgressRule", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.GetEgressRuleResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetEgressRule indicates an expected call of GetEgressRule.
+func (mr *MockServiceMockRecorder) GetEgressRule(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEgressRule", reflect.TypeOf((*MockService)(nil).GetEgressRule), arg0, arg1, arg2)
+}
+
 // GetInvoice mocks base method.
 func (m *MockService) GetInvoice(arg0 context.Context, arg1 string) (*client.Invoice, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -322,6 +418,22 @@ func (m *MockService) GetLogExportInfo(arg0 context.Context, arg1 string) (*clie
 func (mr *MockServiceMockRecorder) GetLogExportInfo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogExportInfo", reflect.TypeOf((*MockService)(nil).GetLogExportInfo), arg0, arg1)
+}
+
+// GetMetricExportInfo mocks base method.
+func (m *MockService) GetMetricExportInfo(arg0 context.Context, arg1 string) (*client.MetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMetricExportInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.MetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetMetricExportInfo indicates an expected call of GetMetricExportInfo.
+func (mr *MockServiceMockRecorder) GetMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetMetricExportInfo), arg0, arg1)
 }
 
 // ListAllowlistEntries mocks base method.
@@ -420,6 +532,22 @@ func (mr *MockServiceMockRecorder) ListDatabases(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDatabases", reflect.TypeOf((*MockService)(nil).ListDatabases), arg0, arg1, arg2)
 }
 
+// ListEgressRules mocks base method.
+func (m *MockService) ListEgressRules(arg0 context.Context, arg1 string, arg2 *client.ListEgressRulesOptions) (*client.ListEgressRulesResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEgressRules", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ListEgressRulesResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListEgressRules indicates an expected call of ListEgressRules.
+func (mr *MockServiceMockRecorder) ListEgressRules(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEgressRules", reflect.TypeOf((*MockService)(nil).ListEgressRules), arg0, arg1, arg2)
+}
+
 // ListInvoices mocks base method.
 func (m *MockService) ListInvoices(arg0 context.Context) (*client.ListInvoicesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -482,6 +610,21 @@ func (m *MockService) SetAwsEndpointConnectionState(arg0 context.Context, arg1, 
 func (mr *MockServiceMockRecorder) SetAwsEndpointConnectionState(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAwsEndpointConnectionState", reflect.TypeOf((*MockService)(nil).SetAwsEndpointConnectionState), arg0, arg1, arg2, arg3)
+}
+
+// SetEgressTrafficPolicy mocks base method.
+func (m *MockService) SetEgressTrafficPolicy(arg0 context.Context, arg1 string, arg2 *client.SetEgressTrafficPolicyRequest) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetEgressTrafficPolicy", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SetEgressTrafficPolicy indicates an expected call of SetEgressTrafficPolicy.
+func (mr *MockServiceMockRecorder) SetEgressTrafficPolicy(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEgressTrafficPolicy", reflect.TypeOf((*MockService)(nil).SetEgressTrafficPolicy), arg0, arg1, arg2)
 }
 
 // UpdateAllowlistEntry mocks base method.

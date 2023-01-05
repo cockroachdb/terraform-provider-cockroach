@@ -272,10 +272,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			}
 			dedicated.Hardware = hardware
 			if cfg.PrivateNetworkVisibility.ValueBool() {
-				//TODO(erademacher): Do this natively when the Go SDK is updated
-				dedicated.AdditionalProperties = map[string]interface{}{
-					"network_visibility": "NETWORK_VISIBILITY_PRIVATE",
-				}
+				visibilityPrivate := client.NETWORKVISIBLITY_PRIVATE
+				dedicated.NetworkVisibility = &visibilityPrivate
 			}
 		}
 		clusterSpec.SetDedicated(dedicated)
@@ -546,17 +544,13 @@ func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachClu
 			RoutingId:  types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
 	} else if clusterObj.Config.Dedicated != nil {
-		var privateNetworkVisibility bool
-		if networkVisibility, ok := clusterObj.AdditionalProperties["network_visibility"].(string); ok {
-			privateNetworkVisibility = networkVisibility == "NETWORK_VISIBILITY_PRIVATE"
-		}
 		state.DedicatedConfig = &DedicatedClusterConfig{
 			MachineType:              types.StringValue(clusterObj.Config.Dedicated.MachineType),
 			NumVirtualCpus:           types.Int64Value(int64(clusterObj.Config.Dedicated.NumVirtualCpus)),
 			StorageGib:               types.Int64Value(int64(clusterObj.Config.Dedicated.StorageGib)),
 			MemoryGib:                types.Float64Value(float64(clusterObj.Config.Dedicated.MemoryGib)),
 			DiskIops:                 types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
-			PrivateNetworkVisibility: types.BoolValue(privateNetworkVisibility),
+			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBLITY_PRIVATE),
 		}
 	}
 }

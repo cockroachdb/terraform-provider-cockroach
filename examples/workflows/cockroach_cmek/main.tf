@@ -133,7 +133,7 @@ resource "aws_kms_key" "example" {
 
 resource "cockroach_cmek" "example" {
   id = cockroach_cluster.example.id
-  regions = /*concat(*/[
+  regions = /*concat(*/ [
     {
       region : var.aws_region
       key : {
@@ -142,7 +142,7 @@ resource "cockroach_cmek" "example" {
         uri : aws_kms_key.example.arn
       }
     }
-  ]#,
+  ] #,
   #
   # Additional regions can be added after CMEK is enabled by updating
   # the `region` attribute and adding their name and node count to

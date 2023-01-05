@@ -23,7 +23,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -121,7 +120,7 @@ func (d *clusterDataSource) Metadata(_ context.Context, req datasource.MetadataR
 	resp.TypeName = req.ProviderTypeName + "_cluster"
 }
 
-func (d *clusterDataSource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (d *clusterDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -133,6 +132,11 @@ func (d *clusterDataSource) Configure(_ context.Context, req resource.ConfigureR
 }
 
 func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	if d.provider == nil || !d.provider.configured {
+		addConfigureProviderErr(&resp.Diagnostics)
+		return
+	}
+	
 	var cluster CockroachCluster
 	diags := req.Config.Get(ctx, &cluster)
 

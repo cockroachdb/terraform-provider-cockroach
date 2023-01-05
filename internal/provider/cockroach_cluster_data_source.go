@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -81,6 +82,9 @@ func (d *clusterDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 					"disk_iops": schema.Int64Attribute{
 						Computed: true,
 					},
+					"private_network_visibility": schema.BoolAttribute{
+						Computed: true,
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -136,7 +140,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
 	}
-	
+
 	var cluster CockroachCluster
 	diags := req.Config.Get(ctx, &cluster)
 
@@ -155,7 +159,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 
 	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.ValueString())
-	if httpResp.StatusCode == http.StatusNotFound {
+	if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"Cluster not found",
 			fmt.Sprintf("Couldn't find a cluster with ID %s", cluster.ID.ValueString()))
@@ -181,11 +185,12 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	}
 	if cockroachCluster.Config.Dedicated != nil {
 		cluster.DedicatedConfig = &DedicatedClusterConfig{
-			MachineType:    types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
-			NumVirtualCpus: types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
-			StorageGib:     types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
-			MemoryGib:      types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
-			DiskIops:       types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
+			MachineType:              types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
+			NumVirtualCpus:           types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
+			StorageGib:               types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
+			MemoryGib:                types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
+			DiskIops:                 types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
+			PrivateNetworkVisibility: types.BoolValue(cockroachCluster.GetNetworkVisibility() == client.NETWORKVISIBLITY_PRIVATE),
 		}
 	}
 

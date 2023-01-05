@@ -61,6 +61,7 @@ Optional:
 - `disk_iops` (Number)
 - `machine_type` (String)
 - `num_virtual_cpus` (Number)
+- `private_network_visibility` (Boolean) Set to true to assign private IP addresses to nodes. Required for CMEK, PrivateLink, and other advanced features.
 - `storage_gib` (Number)
 
 Read-Only:

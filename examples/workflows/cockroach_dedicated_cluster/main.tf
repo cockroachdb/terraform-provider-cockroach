@@ -102,6 +102,10 @@ resource "cockroach_cluster" "example" {
   ]
 }
 
+data "cockroach_cluster_cert" "example" {
+  id = cockroach_cluster.example.id
+}
+
 resource "cockroach_allow_list" "example" {
   name       = var.allow_list_name
   cidr_ip    = var.cidr_ip
@@ -123,4 +127,8 @@ data "cockroach_cluster" "example" {
 
 output "cluster" {
   value = data.cockroach_cluster.example
+}
+
+output "cert" {
+  value = data.cockroach_cluster_cert.example.cert
 }

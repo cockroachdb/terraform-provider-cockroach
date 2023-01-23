@@ -36,6 +36,10 @@ github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.1 h1:PaqggGcqDV8/T9AQMXzSC+xj
 github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.1/go.mod h1:zVVtMKMcPkwrYgrZ/hv73HiGSsWId3BorWlSpRWc7tM=
 github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.3 h1:Dk6ACbo0UgxIzwqoXiMS7zbM/L2f5z8INU3pHUOinXs=
 github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.3/go.mod h1:zVVtMKMcPkwrYgrZ/hv73HiGSsWId3BorWlSpRWc7tM=
+github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.4 h1:PGh8hC05SIj11bymkAu8nEx4zDTYk3qIaYp3JB7p0+k=
+github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.4/go.mod h1:zVVtMKMcPkwrYgrZ/hv73HiGSsWId3BorWlSpRWc7tM=
+github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.5 h1:leDm3ebTSYl+uLxpcv0zZvZ5g5dOS/i+AuoI1kxg0hw=
+github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.5/go.mod h1:zVVtMKMcPkwrYgrZ/hv73HiGSsWId3BorWlSpRWc7tM=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

@@ -372,6 +372,22 @@ func (mr *MockServiceMockRecorder) GetCluster(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*MockService)(nil).GetCluster), arg0, arg1)
 }
 
+// GetConnectionString mocks base method.
+func (m *MockService) GetConnectionString(arg0 context.Context, arg1 string, arg2 *client.GetConnectionStringOptions) (*client.GetConnectionStringResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetConnectionString", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.GetConnectionStringResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetConnectionString indicates an expected call of GetConnectionString.
+func (mr *MockServiceMockRecorder) GetConnectionString(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnectionString", reflect.TypeOf((*MockService)(nil).GetConnectionString), arg0, arg1, arg2)
+}
+
 // GetEgressRule mocks base method.
 func (m *MockService) GetEgressRule(arg0 context.Context, arg1, arg2 string) (*client.GetEgressRuleResponse, *http.Response, error) {
 	m.ctrl.T.Helper()

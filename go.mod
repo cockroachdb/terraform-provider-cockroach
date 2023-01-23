@@ -3,7 +3,6 @@ module github.com/cockroachdb/terraform-provider-cockroach
 go 1.18
 
 require (
-	github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.3
 	github.com/golang/mock v1.6.0
 	github.com/hashicorp/terraform-plugin-docs v0.13.0
 	github.com/hashicorp/terraform-plugin-framework v0.17.0
@@ -20,6 +19,7 @@ require (
 	github.com/apparentlymart/go-textseg/v13 v13.0.0 // indirect
 	github.com/armon/go-radix v1.0.0 // indirect
 	github.com/bgentry/speakeasy v0.1.0 // indirect
+	github.com/cockroachdb/cockroach-cloud-sdk-go v0.3.5 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect

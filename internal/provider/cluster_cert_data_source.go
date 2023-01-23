@@ -82,7 +82,7 @@ func downloadCert(cluster *client.Cluster, diags *diag.Diagnostics) []byte {
 	}
 	certContents, err := io.ReadAll(httpResp.Body)
 	if err != nil {
-		diags.AddError("Error parsing cert", err.Error())
+		diags.AddError("Error reading cert", err.Error())
 		return nil
 	}
 	return certContents
@@ -98,7 +98,6 @@ func (d *clusterCertDataSource) Read(ctx context.Context, req datasource.ReadReq
 	diags := req.Config.Get(ctx, &cert)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		resp.Diagnostics.AddWarning("Error loading the cert config", "")
 		return
 	}
 

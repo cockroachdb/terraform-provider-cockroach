@@ -11,6 +11,10 @@ default: install
 build:
 	go build -o ${BINARY}
 
+update-sdk:
+	go get github.com/cockroachdb/cockroach-cloud-sdk-go
+	go generate ./mock
+
 release:
 	GOOS=darwin GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_darwin_amd64
 	GOOS=freebsd GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_freebsd_386

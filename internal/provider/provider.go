@@ -122,6 +122,7 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 	return []func() datasource.DataSource{
 		NewClusterDataSource,
 		NewClusterCertDataSource,
+		NewConnectionStringDataSource,
 	}
 }
 

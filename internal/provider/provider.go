@@ -121,6 +121,8 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewClusterDataSource,
+		NewClusterCertDataSource,
+		NewConnectionStringDataSource,
 	}
 }
 

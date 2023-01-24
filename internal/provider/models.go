@@ -138,6 +138,21 @@ type ClusterCMEK struct {
 	AdditionalRegions []Region     `tfsdk:"additional_regions"`
 }
 
+type ClusterCert struct {
+	ID   types.String `tfsdk:"id"`
+	Cert types.String `tfsdk:"cert"`
+}
+
+type ConnectionString struct {
+	ID               types.String `tfsdk:"id"`
+	OS               types.String `tfsdk:"os"`
+	Database         types.String `tfsdk:"database"`
+	SqlUser          types.String `tfsdk:"sql_user"`
+	Password         types.String `tfsdk:"password"`
+	ConnectionString types.String `tfsdk:"connection_string"`
+	ConnectionParams types.Map    `tfsdk:"connection_params"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

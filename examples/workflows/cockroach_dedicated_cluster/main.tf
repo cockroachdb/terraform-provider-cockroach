@@ -61,6 +61,16 @@ variable "allow_list_name" {
   default  = "default-allow-list"
 }
 
+variable "os" {
+  type     = string
+  nullable = true
+}
+
+variable "database" {
+  type     = string
+  nullable = true
+}
+
 # A production cluster should be locked down with a more
 # targeted allowlist or VPC peering.
 variable "cidr_ip" {
@@ -102,6 +112,10 @@ resource "cockroach_cluster" "example" {
   ]
 }
 
+data "cockroach_cluster_cert" "example" {
+  id = cockroach_cluster.example.id
+}
+
 resource "cockroach_allow_list" "example" {
   name       = var.allow_list_name
   cidr_ip    = var.cidr_ip
@@ -121,6 +135,28 @@ data "cockroach_cluster" "example" {
   id = cockroach_cluster.example.id
 }
 
-output "cluster" {
-  value = data.cockroach_cluster.example
+data "cockroach_connection_string" "example" {
+  id       = cockroach_cluster.example.id
+  sql_user = cockroach_sql_user.example.name
+  database = var.database
+
+  # Caution: Including the `password` field will result in
+  # the password showing up in plain text in the
+  # connection string output!
+  #
+  # password = cockroach_sql_user.example.password
+
+  os = var.os
+}
+
+output "cluster_status" {
+  value = data.cockroach_cluster.example.operation_status
+}
+
+output "cert" {
+  value = data.cockroach_cluster_cert.example.cert
+}
+
+output "connection_string" {
+  value = data.cockroach_connection_string.example.connection_string
 }

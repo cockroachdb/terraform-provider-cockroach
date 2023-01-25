@@ -8,7 +8,7 @@ resource "cockroach_cluster" "cockroach" {
   }
   regions = [
     {
-      name = "us-east1"
+      name = "us-east-1"
     }
   ]
 }

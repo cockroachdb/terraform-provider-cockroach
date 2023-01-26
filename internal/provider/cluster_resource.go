@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -202,6 +203,19 @@ func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureReq
 	}
 }
 
+func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		resourcevalidator.Conflicting(
+			path.MatchRoot("dedicated"),
+			path.MatchRoot("serverless"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("dedicated").AtName("num_virtual_cpus"),
+			path.MatchRoot("dedicated").AtName("machine_type"),
+		),
+	}
+}
+
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
@@ -218,14 +232,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	clusterSpec := client.NewCreateClusterSpecification()
-
-	if (plan.ServerlessConfig == nil && plan.DedicatedConfig == nil) ||
-		(plan.ServerlessConfig != nil && plan.DedicatedConfig != nil) {
-		resp.Diagnostics.AddError(
-			"Invalid cluster configuration",
-			"You must set either 'dedicated' or 'serverless', but not both",
-		)
-	}
 
 	if plan.ServerlessConfig != nil {
 		var regions []string
@@ -256,11 +262,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			} else if !cfg.MachineType.IsNull() {
 				machineType := cfg.MachineType.ValueString()
 				machineSpec.MachineType = &machineType
-			} else {
-				resp.Diagnostics.AddError(
-					"Invalid dedicated cluster configuration",
-					"A dedicated cluster needs either num_virtual_cpus or machine_type to be set",
-				)
 			}
 			hardware.MachineSpec = machineSpec
 			if !cfg.StorageGib.IsNull() {
@@ -358,6 +359,50 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 }
 
+// ModifyPlan is used to make sure the user isn't trying to modify an
+// immutable attribute. We can't use `RequiresReplace` because that
+// would destroy the cluster and all of its data.
+func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	var state *CockroachCluster
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || state == nil {
+		return
+	}
+
+	var plan *CockroachCluster
+	diags = req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() || plan == nil {
+		return
+	}
+
+	if plan.Name != state.Name {
+		resp.Diagnostics.AddError("Cannot update cluster name",
+			"To prevent accidental deletion of data, renaming clusters isn't allowed. "+
+				"Please explicitly destroy this cluster before changing its name.")
+	}
+	if plan.CloudProvider != state.CloudProvider {
+		resp.Diagnostics.AddError("Cannot update cluster cloud provider",
+			"To prevent accidental deletion of data, changing a cluster's cloud provider "+
+				"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
+	}
+	if ((plan.DedicatedConfig == nil) != (state.DedicatedConfig == nil)) ||
+		((plan.ServerlessConfig == nil) != (state.ServerlessConfig == nil)) {
+		resp.Diagnostics.AddError("Cannot update cluster plan type",
+			"To prevent accidental deletion of data, changing a cluster's plan type "+
+				"isn't allowed. Please explicitly destroy this cluster before changing between "+
+				"dedicated and serverless plans.")
+		return
+	}
+	if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.PrivateNetworkVisibility != state.DedicatedConfig.PrivateNetworkVisibility {
+		resp.Diagnostics.AddError("Cannot update network visibility",
+			"To prevent accidental deletion of data, changing a cluster's network "+
+				"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
+				"network visibility.")
+	}
+}
+
 func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	// Get plan values
 	var plan CockroachCluster
@@ -372,19 +417,6 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	if plan.Name != state.Name {
-		resp.Diagnostics.AddError("Cannot update cluster name",
-			"To prevent accidental deletion of data, renaming clusters isn't allowed. "+
-				"Please explicitly destroy this cluster before changing its name.")
-		return
-	}
-	if plan.CloudProvider != state.CloudProvider {
-		resp.Diagnostics.AddError("Cannot update cluster cloud provider",
-			"To prevent accidental deletion of data, changing a cluster's cloud provider "+
-				"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
 		return
 	}
 

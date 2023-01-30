@@ -60,6 +60,14 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		Sql:      true,
 		Ui:       true,
 	}
+	// Return another entry in the List call to make sure we're selecting
+	// the right one.
+	otherName := "wrong-entry"
+	otherEntry := client.AllowlistEntry{
+		Name:     &otherName,
+		CidrIp:   "192.168.5.4",
+		CidrMask: 32,
+	}
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -94,7 +102,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		Times(3)
 	s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
 	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Times(2).Return(
-		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{entry}}, nil, nil)
+		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil)
 	s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 

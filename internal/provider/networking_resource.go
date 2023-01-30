@@ -195,7 +195,7 @@ func (r *allowListResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 	for _, entry := range apiResp.GetAllowlist() {
-		if entry.GetCidrIp() == state.CidrIp.ValueString() ||
+		if entry.GetCidrIp() == state.CidrIp.ValueString() &&
 			int64(entry.GetCidrMask()) == state.CidrMask.ValueInt64() {
 			// Update flags in case they've changed externally.
 			state.Sql = types.BoolValue(entry.GetSql())

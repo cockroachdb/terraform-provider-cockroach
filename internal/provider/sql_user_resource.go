@@ -18,7 +18,10 @@ package provider
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
+	"io"
 	"net/http"
 	"regexp"
 
@@ -37,6 +40,7 @@ type sqlUserResource struct {
 // clusterID:name
 const sqlUserIDFmt = "%s:%s"
 const sqlUserNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
+const passwordLength = 32
 
 var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegex, sqlUserNameRegex))
 
@@ -57,8 +61,9 @@ func (r *sqlUserResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"password": schema.StringAttribute{
-				Required:  true,
-				Sensitive: true,
+				Optional:    true,
+				Sensitive:   true,
+				Description: "If provided, this field sets the password of the SQL user when created. If omitted, a random password is generated, but not saved to Terraform state. The password must be changed via the CockroachDB cloud console.",
 			},
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -83,6 +88,24 @@ func (r *sqlUserResource) Configure(_ context.Context, req resource.ConfigureReq
 		resp.Diagnostics.AddError("Internal provider error",
 			fmt.Sprintf("Error in Configure: expected %T but got %T", provider{}, req.ProviderData))
 	}
+}
+
+// generateRandomPassword generates a password of length passwordLength.
+// The password has 6 bits of entropy per character, so a password
+// of length 32 will have an entropy of 192.
+var generateRandomPassword = func() (string, error) {
+	// Base64 is 4/3 the size of the raw data.
+	// It's easier to read an extra 1/3 of the bytes than to do math.
+	bytes := make([]byte, passwordLength)
+	if _, err := io.ReadFull(rand.Reader, bytes); err != nil {
+		return "", err
+	}
+
+	// Use RawURLEncoding which is case-sensitive alphanumeric with '-_', and no padding.
+	longPassword := base64.RawURLEncoding.EncodeToString(bytes)
+	result := longPassword[:passwordLength]
+
+	return result, nil
 }
 
 func (r *sqlUserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -113,7 +136,16 @@ func (r *sqlUserResource) Create(ctx context.Context, req resource.CreateRequest
 
 	var sqlUserRequest client.CreateSQLUserRequest
 	sqlUserRequest.Name = sqlUserSpec.Name.ValueString()
-	sqlUserRequest.Password = sqlUserSpec.Password.ValueString()
+	if sqlUserSpec.Password.IsNull() {
+		sqlUserRequest.Password, err = generateRandomPassword()
+		sqlUserSpec.Password = types.StringNull()
+		if err != nil {
+			resp.Diagnostics.AddError("Error generating password", err.Error())
+			return
+		}
+	} else {
+		sqlUserRequest.Password = sqlUserSpec.Password.ValueString()
+	}
 
 	_, _, err = r.provider.service.CreateSQLUser(ctx, sqlUserSpec.ClusterId.ValueString(), &sqlUserRequest)
 	if err != nil {
@@ -190,14 +222,22 @@ func (r *sqlUserResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.ValueString()}
-	_, _, err := r.provider.service.UpdateSQLUserPassword(ctx, plan.ClusterId.ValueString(), plan.Name.ValueString(), &updateReq)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error updating sql user password",
-			fmt.Sprintf("Could not update sql user password: %s", formatAPIErrorMessage(err)),
-		)
-		return
+	// Only update the password if it's non-null. Setting it to null
+	// will essentially cause Terraform to forget the password.
+	if plan.Password.IsNull() {
+		if !state.Password.IsNull() {
+			resp.Diagnostics.AddWarning("Password will not be changed", "Setting the password field to null will not change the password. It will simply remove it from Terraform state.")
+		}
+	} else {
+		updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.ValueString()}
+		_, _, err := r.provider.service.UpdateSQLUserPassword(ctx, plan.ClusterId.ValueString(), plan.Name.ValueString(), &updateReq)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error updating sql user password",
+				fmt.Sprintf("Could not update sql user password: %s", formatAPIErrorMessage(err)),
+			)
+			return
+		}
 	}
 
 	diags = resp.State.Set(ctx, plan)

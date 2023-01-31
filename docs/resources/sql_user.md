@@ -19,7 +19,10 @@ SQL user and password
 
 - `cluster_id` (String)
 - `name` (String)
-- `password` (String, Sensitive)
+
+### Optional
+
+- `password` (String, Sensitive) If provided, this field sets the password of the SQL user when created. If omitted, a random password is generated, but not saved to Terraform state. The password must be changed via the CockroachDB cloud console.
 
 ### Read-Only
 

@@ -31,22 +31,25 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
+const testPassword = "random-password"
+
 // TestAccSqlUserResource attempts to create, check, and destroy
 // a real cluster and SQL user. It will be skipped if TF_ACC isn't set.
 func TestAccSqlUserResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("tftest-sql-user-%s", GenerateRandomString(4))
-	sqlUserName := "cockroach-user"
-	sqlPassword := "cockroach@123456"
+	sqlUserNameWithPass := "cockroach-user"
+	sqlUserNameNoPass := "cockroach-user-nopass"
 
-	testSqlUserResource(t, clusterName, sqlUserName, sqlPassword, false)
+	testSqlUserResource(t, clusterName, sqlUserNameWithPass, sqlUserNameNoPass, false)
 }
 
 // TestIntegrationSqlUserResource attempts to create, check, and destroy
 // a cluster and SQL user, but uses a mocked API service.
 func TestIntegrationSqlUserResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-sql-user-%s", GenerateRandomString(4))
-	sqlUserName := "cockroach-user"
+	sqlUserNameWithPass := "cockroach-user"
+	sqlUserNameNoPass := "cockroach-user-nopass"
 	sqlPassword := "cockroach@123456"
 	clusterID := "cluster-id"
 	if os.Getenv(CockroachAPIKey) == "" {
@@ -74,42 +77,57 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 			},
 		},
 	}
-	user := client.SQLUser{
-		Name: sqlUserName,
+	userWithPass := client.SQLUser{
+		Name: sqlUserNameWithPass,
+	}
+	userNoPass := client.SQLUser{
+		Name: sqlUserNameNoPass,
 	}
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
+		Times(4)
 	s.EXPECT().CreateSQLUser(
 		gomock.Any(),
 		clusterID,
-		&client.CreateSQLUserRequest{Name: sqlUserName, Password: sqlPassword},
-	).Return(&user, nil, nil)
-	s.EXPECT().ListSQLUsers(gomock.Any(), clusterID, gomock.Any()).Times(2).Return(
-		&client.ListSQLUsersResponse{Users: []client.SQLUser{user}}, nil, nil)
-	s.EXPECT().DeleteSQLUser(gomock.Any(), clusterID, user.Name)
+		&client.CreateSQLUserRequest{Name: sqlUserNameWithPass, Password: sqlPassword},
+	).Return(&userWithPass, nil, nil)
+	s.EXPECT().CreateSQLUser(
+		gomock.Any(),
+		clusterID,
+		&client.CreateSQLUserRequest{Name: sqlUserNameNoPass, Password: testPassword},
+	).Return(&userNoPass, nil, nil)
+	s.EXPECT().ListSQLUsers(gomock.Any(), clusterID, gomock.Any()).Times(4).Return(
+		&client.ListSQLUsersResponse{Users: []client.SQLUser{userWithPass, userNoPass}}, nil, nil)
+	s.EXPECT().DeleteSQLUser(gomock.Any(), clusterID, userWithPass.Name)
+	s.EXPECT().DeleteSQLUser(gomock.Any(), clusterID, userNoPass.Name)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testSqlUserResource(t, clusterName, sqlUserName, sqlPassword, true)
+	testSqlUserResource(t, clusterName, sqlUserNameWithPass, sqlUserNameNoPass, true)
 }
 
-func testSqlUserResource(t *testing.T, clusterName, sqlUserName, sqlPassword string, useMock bool) {
+func testSqlUserResource(t *testing.T, clusterName, sqlUserNameWithPass, sqlUserNameNoPass string, useMock bool) {
 	var (
 		clusterResourceName = "cockroach_cluster.serverless"
-		resourceName        = "cockroach_sql_user.sqluser"
+		resourceNamePass    = "cockroach_sql_user.with_pass"
+		resourceNameNoPass  = "cockroach_sql_user.no_pass"
 	)
+	defer HookGlobal(&generateRandomPassword, func() (string, error) {
+		return testPassword, nil
+	})()
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestSqlUserResourceConfig(clusterName, sqlUserName, "cockroach@123456"),
+				Config: getTestSqlUserResourceConfig(clusterName, sqlUserNameWithPass, sqlUserNameNoPass, "cockroach@123456"),
 				Check: resource.ComposeTestCheckFunc(
-					testSqlUserExists(resourceName, clusterResourceName),
-					resource.TestCheckResourceAttr(resourceName, "name", sqlUserName),
+					testSqlUserExists(resourceNamePass, clusterResourceName),
+					testSqlUserExists(resourceNameNoPass, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceNamePass, "name", sqlUserNameWithPass),
+					resource.TestCheckResourceAttr(resourceNameNoPass, "name", sqlUserNameNoPass),
 				),
 			},
 		},
@@ -151,7 +169,7 @@ func testSqlUserExists(resourceName, clusterResourceName string) resource.TestCh
 	}
 }
 
-func getTestSqlUserResourceConfig(clusterName, userName, password string) string {
+func getTestSqlUserResourceConfig(clusterName, userNamePass, userNameNoPass, password string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
@@ -164,10 +182,15 @@ resource "cockroach_cluster" "serverless" {
 	}]
 }
 
-resource "cockroach_sql_user" "sqluser" {
+resource "cockroach_sql_user" "with_pass" {
   name = "%s"
   password = "%s"
   cluster_id = cockroach_cluster.serverless.id
 }
-`, clusterName, userName, password)
+
+resource "cockroach_sql_user" "no_pass" {
+  name = "%s"
+  cluster_id = cockroach_cluster.serverless.id
+}
+`, clusterName, userNamePass, password, userNameNoPass)
 }

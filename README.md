@@ -2,6 +2,7 @@
 
 [`terraform-provider-cockroach`](https://registry.terraform.io/providers/cockroachdb/cockroach/latest) is the [Terraform provider](https://learn.hashicorp.com/collections/terraform/providers) for the CockroachDB Cloud API [[reference](https://www.cockroachlabs.com/docs/api/cloud/v1), [getting started](https://www.cockroachlabs.com/docs/cockroachcloud/cloud-api)].
 
+- [Provision a CockroachDB Cloud Cluster with Terraform](https://www.cockroachlabs.com/docs/cockroachcloud/provision-a-cluster-with-terraform.html)
 - [More information about CockroachDB](https://www.cockroachlabs.com/)
 - [More information about Terraform](https://terraform.io)
 

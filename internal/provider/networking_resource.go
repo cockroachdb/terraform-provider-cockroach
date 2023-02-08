@@ -200,7 +200,11 @@ func (r *allowListResource) Read(ctx context.Context, req resource.ReadRequest, 
 			// Update flags in case they've changed externally.
 			state.Sql = types.BoolValue(entry.GetSql())
 			state.Ui = types.BoolValue(entry.GetUi())
-			state.Name = types.StringValue(entry.GetName())
+			if entry.Name == nil {
+				state.Name = types.StringNull()
+			} else {
+				state.Name = types.StringValue(entry.GetName())
+			}
 			diags = resp.State.Set(ctx, &state)
 			resp.Diagnostics.Append(diags...)
 			return

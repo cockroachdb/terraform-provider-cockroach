@@ -121,6 +121,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewCMEKResource,
 		NewDatabaseResource,
 		NewFinalizeVersionUpgradeResource,
+		NewLogExportConfigResource,
 	}
 }
 

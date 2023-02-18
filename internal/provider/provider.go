@@ -55,7 +55,9 @@ type providerData struct {
 	ApiKey types.String `tfsdk:"apikey"`
 }
 
-func (p *provider) Configure(ctx context.Context, req tf_provider.ConfigureRequest, resp *tf_provider.ConfigureResponse) {
+func (p *provider) Configure(
+	ctx context.Context, req tf_provider.ConfigureRequest, resp *tf_provider.ConfigureResponse,
+) {
 	var config providerData
 	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
@@ -102,7 +104,9 @@ func (p *provider) Configure(ctx context.Context, req tf_provider.ConfigureReque
 	p.configured = true
 }
 
-func (p *provider) Metadata(_ context.Context, _ tf_provider.MetadataRequest, resp *tf_provider.MetadataResponse) {
+func (p *provider) Metadata(
+	_ context.Context, _ tf_provider.MetadataRequest, resp *tf_provider.MetadataResponse,
+) {
 	resp.TypeName = "cockroach"
 	resp.Version = p.version
 }
@@ -115,6 +119,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewPrivateEndpointServicesResource,
 		NewPrivateEndpointConnectionResource,
 		NewCMEKResource,
+		NewLogExportConfigResource,
 	}
 }
 
@@ -126,7 +131,9 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 	}
 }
 
-func (p *provider) Schema(_ context.Context, _ tf_provider.SchemaRequest, resp *tf_provider.SchemaResponse) {
+func (p *provider) Schema(
+	_ context.Context, _ tf_provider.SchemaRequest, resp *tf_provider.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"apikey": schema.StringAttribute{

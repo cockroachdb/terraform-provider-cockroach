@@ -160,6 +160,27 @@ type Database struct {
 	TableCount types.Int64  `tfsdk:"table_count"`
 }
 
+type LogExportGroup struct {
+	LogName  types.String   `tfsdk:"log_name"`
+	Channels []types.String `tfsdk:"channels"`
+	MinLevel types.String   `tfsdk:"min_level"`
+	Redact   types.Bool     `tfsdk:"redact"`
+}
+
+type ClusterLogExport struct {
+	ID            types.String      `tfsdk:"id"`
+	AuthPrincipal types.String      `tfsdk:"auth_principal"`
+	LogName       types.String      `tfsdk:"log_name"`
+	Type          types.String      `tfsdk:"type"`
+	Redact        types.Bool        `tfsdk:"redact"`
+	Region        types.String      `tfsdk:"region"`
+	Groups        *[]LogExportGroup `tfsdk:"groups"`
+	Status        types.String      `tfsdk:"status"`
+	UserMessage   types.String      `tfsdk:"user_message"`
+	CreatedAt     types.String      `tfsdk:"created_at"`
+	UpdatedAt     types.String      `tfsdk:"updated_at"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

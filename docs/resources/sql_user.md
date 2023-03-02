@@ -26,6 +26,6 @@ SQL user and password
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) A unique identifier with format '<cluster ID>:<SQL user name>'
 
 

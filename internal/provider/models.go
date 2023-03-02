@@ -153,6 +153,13 @@ type ConnectionString struct {
 	ConnectionParams types.Map    `tfsdk:"connection_params"`
 }
 
+type Database struct {
+	ClusterId  types.String `tfsdk:"cluster_id"`
+	Name       types.String `tfsdk:"name"`
+	ID         types.String `tfsdk:"id"`
+	TableCount types.Int64  `tfsdk:"table_count"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

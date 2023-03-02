@@ -62,3 +62,8 @@ resource "cockroach_sql_user" "example" {
   password   = var.sql_user_password
   cluster_id = cockroach_cluster.example.id
 }
+
+resource "cockroach_database" "example" {
+  name       = "example-database"
+  cluster_id = cockroach_cluster.example.id
+}

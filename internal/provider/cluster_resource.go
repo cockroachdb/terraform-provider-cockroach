@@ -70,7 +70,9 @@ var regionSchema = schema.NestedAttributeObject{
 	},
 }
 
-func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *clusterResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Cluster Resource",
 		Attributes: map[string]schema.Attribute{
@@ -188,11 +190,15 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
-func (r *clusterResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *clusterResource) Metadata(
+	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_cluster"
 }
 
-func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *clusterResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -216,7 +222,9 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 	}
 }
 
-func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *clusterResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -313,7 +321,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 }
 
-func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *clusterResource) Read(
+	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -362,7 +372,9 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 // ModifyPlan is used to make sure the user isn't trying to modify an
 // immutable attribute. We can't use `RequiresReplace` because that
 // would destroy the cluster and all of its data.
-func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+func (r *clusterResource) ModifyPlan(
+	ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse,
+) {
 	var state *CockroachCluster
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -403,7 +415,9 @@ func (r *clusterResource) ModifyPlan(ctx context.Context, req resource.ModifyPla
 	}
 }
 
-func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *clusterResource) Update(
+	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
+) {
 	// Get plan values
 	var plan CockroachCluster
 	diags := req.Plan.Get(ctx, &plan)
@@ -455,7 +469,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		clusterReq.SetDedicated(*dedicated)
 	}
 
-	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq, &client.UpdateClusterOptions{})
+	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating cluster",
@@ -483,7 +497,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 }
 
-func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *clusterResource) Delete(
+	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	var state CockroachCluster
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -514,7 +530,9 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *clusterResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *clusterResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
@@ -554,7 +572,9 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 	})
 }
 
-func loadClusterToTerraformState(clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster) {
+func loadClusterToTerraformState(
+	clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster,
+) {
 	state.ID = types.StringValue(clusterObj.Id)
 	state.Name = types.StringValue(clusterObj.Name)
 	state.CloudProvider = types.StringValue(string(clusterObj.CloudProvider))
@@ -615,7 +635,9 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 	return regions
 }
 
-func waitForClusterReadyFunc(ctx context.Context, id string, cl client.Service, cluster *client.Cluster) sdk_resource.RetryFunc {
+func waitForClusterReadyFunc(
+	ctx context.Context, id string, cl client.Service, cluster *client.Cluster,
+) sdk_resource.RetryFunc {
 	return func() *sdk_resource.RetryError {
 		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
 		if err != nil {
@@ -643,7 +665,9 @@ func waitForClusterReadyFunc(ctx context.Context, id string, cl client.Service, 
 // the regions managed by another resource.
 //
 // A nil return value means no region update is required.
-func reconcileRegionUpdate(ctx context.Context, state, plan []Region, clusterID string, service client.Service) (*map[string]int32, diag.Diagnostics) {
+func reconcileRegionUpdate(
+	ctx context.Context, state, plan []Region, clusterID string, service client.Service,
+) (*map[string]int32, diag.Diagnostics) {
 	type regionInfo struct {
 		inState   bool
 		inPlan    bool

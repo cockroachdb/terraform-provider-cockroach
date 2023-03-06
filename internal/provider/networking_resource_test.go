@@ -27,6 +27,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -51,7 +52,7 @@ func TestAccAllowlistEntryResource(t *testing.T) {
 // a cluster and allowlist entry, but uses a mocked API service.
 func TestIntegrationAllowlistEntryResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	name := "default-allow-list"
 	entry := client.AllowlistEntry{
 		Name:     &name,
@@ -79,7 +80,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 	})()
 	cluster := client.Cluster{
 		Name:          clusterName,
-		Id:            "cluster-id",
+		Id:            uuid.Nil.String(),
 		CloudProvider: "AWS",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{

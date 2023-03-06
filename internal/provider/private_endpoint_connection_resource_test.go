@@ -25,6 +25,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -38,7 +39,7 @@ func TestAccPrivateEndpointConnectionResource(t *testing.T) {
 
 func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	endpointID := "endpoint-id"
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -139,7 +140,7 @@ func testPrivateEndpointConnectionResource(t *testing.T, clusterName string, use
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "endpoint_id", "endpoint-id"),
 					resource.TestCheckResourceAttr(resourceName, "service_id", "service-id"),
-					resource.TestCheckResourceAttr(resourceName, "cluster_id", "cluster-id"),
+					resource.TestCheckResourceAttr(resourceName, "cluster_id", uuid.Nil.String()),
 					resource.TestCheckResourceAttr(resourceName, "region_name", "us-east-1"),
 					resource.TestCheckResourceAttr(resourceName, "cloud_provider", "AWS"),
 				),

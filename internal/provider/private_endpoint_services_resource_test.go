@@ -25,6 +25,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -40,7 +41,7 @@ func TestAccPrivateEndpointServicesResource(t *testing.T) {
 // a cluster and endpoint services, but uses a mocked API service.
 func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -52,7 +53,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	})()
 	cluster := client.Cluster{
 		Name:          clusterName,
-		Id:            "cluster-id",
+		Id:            uuid.Nil.String(),
 		CloudProvider: "AWS",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{

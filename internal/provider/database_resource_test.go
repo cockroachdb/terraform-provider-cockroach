@@ -27,6 +27,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
@@ -48,7 +49,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-database-%s", GenerateRandomString(4))
 	databaseName := "test-database"
 	newDatabaseName := "test-database-updated"
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -60,7 +61,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 	})()
 	cluster := client.Cluster{
 		Name:          clusterName,
-		Id:            "cluster-id",
+		Id:            uuid.Nil.String(),
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{

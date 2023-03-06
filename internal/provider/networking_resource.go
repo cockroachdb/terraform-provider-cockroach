@@ -36,7 +36,7 @@ import (
 const allowListIDFmt = "%s:%s/%d"
 const allowlistEntryRegex = `(([0-9]{1,3}\.){3}[0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])`
 
-var allowlistIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):%s$", uuidRegex, allowlistEntryRegex))
+var allowlistIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):%s$", uuidRegexString, allowlistEntryRegex))
 
 type allowListResource struct {
 	provider *provider

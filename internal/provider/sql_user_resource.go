@@ -42,7 +42,7 @@ const sqlUserIDFmt = "%s:%s"
 const sqlUserNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
 const passwordLength = 32
 
-var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegex, sqlUserNameRegex))
+var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegexString, sqlUserNameRegex))
 
 func (r *sqlUserResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,

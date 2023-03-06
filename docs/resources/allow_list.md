@@ -29,6 +29,6 @@ Allow list of IP range
 
 ### Read-Only
 
-- `id` (String) The ID of this resource.
+- `id` (String) A unique identifier with format '<cluster ID>:<CIDR IP>/<CIDR mask>'
 
 

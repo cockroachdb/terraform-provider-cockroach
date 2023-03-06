@@ -42,7 +42,9 @@ type allowListResource struct {
 	provider *provider
 }
 
-func (r *allowListResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *allowListResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Allow list of IP range",
 		Attributes: map[string]schema.Attribute{
@@ -78,12 +80,15 @@ func (r *allowListResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "A unique identifier with format '<cluster ID>:<CIDR IP>/<CIDR mask>'",
 			},
 		},
 	}
 }
 
-func (r *allowListResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *allowListResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -94,11 +99,15 @@ func (r *allowListResource) Configure(_ context.Context, req resource.ConfigureR
 	}
 }
 
-func (r *allowListResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *allowListResource) Metadata(
+	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_allow_list"
 }
 
-func (r *allowListResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *allowListResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -109,7 +118,9 @@ func (r *allowListResource) Create(ctx context.Context, req resource.CreateReque
 	resp.Diagnostics.Append(diags...)
 	// Create a unique ID (required by terraform framework) by combining
 	// the cluster ID and full CIDR address.
-	entry.ID = types.StringValue(fmt.Sprintf(allowListIDFmt, entry.ClusterId.ValueString(), entry.CidrIp.ValueString(), entry.CidrMask.ValueInt64()))
+	entry.ID = types.StringValue(fmt.Sprintf(
+		allowListIDFmt, entry.ClusterId.ValueString(),
+		entry.CidrIp.ValueString(), entry.CidrMask.ValueInt64()))
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -160,7 +171,9 @@ func (r *allowListResource) Create(ctx context.Context, req resource.CreateReque
 	}
 }
 
-func (r *allowListResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *allowListResource) Read(
+	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -176,12 +189,17 @@ func (r *allowListResource) Read(ctx context.Context, req resource.ReadRequest, 
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual entry list and make sure this one is in there.
-	apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{})
+	apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(
+		ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{},
+	)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
 				"Cluster not found",
-				fmt.Sprintf("Allowlist's parent cluster with clusterID %s is not found. Removing from state.", state.ClusterId.ValueString()))
+				fmt.Sprintf(
+					"Allowlist's parent cluster with clusterID %s is not found. Removing from state.",
+					state.ClusterId.ValueString()),
+			)
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(
@@ -212,12 +230,15 @@ func (r *allowListResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 	resp.Diagnostics.AddWarning(
 		"Couldn't find entry.",
-		fmt.Sprintf("This cluster's allowlist doesn't contain %s/%d. Removing from state.", state.CidrIp.ValueString(), state.CidrMask.ValueInt64()),
+		fmt.Sprintf("This cluster's allowlist doesn't contain %s/%d. Removing from state.",
+			state.CidrIp.ValueString(), state.CidrMask.ValueInt64()),
 	)
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *allowListResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *allowListResource) Update(
+	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
+) {
 	// Get plan values
 	var plan AllowlistEntry
 	diags := req.Plan.Get(ctx, &plan)
@@ -262,7 +283,9 @@ func (r *allowListResource) Update(ctx context.Context, req resource.UpdateReque
 	}
 }
 
-func (r *allowListResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *allowListResource) Delete(
+	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	var state AllowlistEntry
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -270,7 +293,8 @@ func (r *allowListResource) Delete(ctx context.Context, req resource.DeleteReque
 		return
 	}
 
-	_, httpResp, err := r.provider.service.DeleteAllowlistEntry(ctx, state.ClusterId.ValueString(), state.CidrIp.ValueString(), int32(state.CidrMask.ValueInt64()))
+	_, httpResp, err := r.provider.service.DeleteAllowlistEntry(
+		ctx, state.ClusterId.ValueString(), state.CidrIp.ValueString(), int32(state.CidrMask.ValueInt64()))
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			// Entry or cluster is already gone. Swallow the error.
@@ -287,7 +311,9 @@ func (r *allowListResource) Delete(ctx context.Context, req resource.DeleteReque
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *allowListResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *allowListResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
 	// Since an allowlist entry is uniquely identified by three fields: the cluster ID,
 	// CIDR IP, and CIDR mask, and we serialize them all into the ID field. To make import
 	// work, we need to deserialize an ID back into its components.

@@ -44,7 +44,9 @@ const passwordLength = 32
 
 var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegex, sqlUserNameRegex))
 
-func (r *sqlUserResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *sqlUserResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "SQL user and password",
 		Attributes: map[string]schema.Attribute{
@@ -70,16 +72,21 @@ func (r *sqlUserResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "A unique identifier with format '<cluster ID>:<SQL user name>'",
 			},
 		},
 	}
 }
 
-func (r *sqlUserResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *sqlUserResource) Metadata(
+	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_sql_user"
 }
 
-func (r *sqlUserResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *sqlUserResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -108,7 +115,9 @@ var generateRandomPassword = func() (string, error) {
 	return result, nil
 }
 
-func (r *sqlUserResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *sqlUserResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -119,7 +128,8 @@ func (r *sqlUserResource) Create(ctx context.Context, req resource.CreateRequest
 	resp.Diagnostics.Append(diags...)
 	// Create a unique ID (required by terraform framework) by combining
 	// the cluster ID and username.
-	sqlUserSpec.ID = types.StringValue(fmt.Sprintf(sqlUserIDFmt, sqlUserSpec.ClusterId.ValueString(), sqlUserSpec.Name.ValueString()))
+	sqlUserSpec.ID = types.StringValue(fmt.Sprintf(
+		sqlUserIDFmt, sqlUserSpec.ClusterId.ValueString(), sqlUserSpec.Name.ValueString()))
 
 	if resp.Diagnostics.HasError() {
 		return
@@ -163,7 +173,9 @@ func (r *sqlUserResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 }
 
-func (r *sqlUserResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *sqlUserResource) Read(
+	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -183,7 +195,8 @@ func (r *sqlUserResource) Read(ctx context.Context, req resource.ReadRequest, re
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
 				"Cluster not found",
-				fmt.Sprintf("SQL User's parent cluster with clusterID %s is not found. Removing from state.", state.ClusterId.ValueString()))
+				fmt.Sprintf("SQL User's parent cluster with clusterID %s is not found. Removing from state.",
+					state.ClusterId.ValueString()))
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(
@@ -205,7 +218,9 @@ func (r *sqlUserResource) Read(ctx context.Context, req resource.ReadRequest, re
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *sqlUserResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *sqlUserResource) Update(
+	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
+) {
 	// Get plan values
 	var plan SQLUser
 	diags := req.Plan.Get(ctx, &plan)
@@ -226,7 +241,10 @@ func (r *sqlUserResource) Update(ctx context.Context, req resource.UpdateRequest
 	// will essentially cause Terraform to forget the password.
 	if plan.Password.IsNull() {
 		if !state.Password.IsNull() {
-			resp.Diagnostics.AddWarning("Password will not be changed", "Setting the password field to null will not change the password. It will simply remove it from Terraform state.")
+			resp.Diagnostics.AddWarning(
+				"Password will not be changed",
+				"Setting the password field to null will not change the password. It will simply remove it from Terraform state.",
+			)
 		}
 	} else {
 		updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.ValueString()}
@@ -247,7 +265,9 @@ func (r *sqlUserResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 }
 
-func (r *sqlUserResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *sqlUserResource) Delete(
+	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	var state SQLUser
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -272,7 +292,9 @@ func (r *sqlUserResource) Delete(ctx context.Context, req resource.DeleteRequest
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *sqlUserResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *sqlUserResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
 	// Since a SQL user is uniquely identified by two fields, the cluster ID
 	// and the name, we serialize them both into the ID field. To make import
 	// work, we need to deserialize an ID back into name and cluster ID.

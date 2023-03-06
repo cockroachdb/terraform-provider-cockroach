@@ -131,6 +131,11 @@ resource "cockroach_sql_user" "example" {
   cluster_id = cockroach_cluster.example.id
 }
 
+resource "cockroach_database" "example" {
+  name       = "example-database"
+  cluster_id = cockroach_cluster.example.id
+}
+
 data "cockroach_cluster" "example" {
   id = cockroach_cluster.example.id
 }

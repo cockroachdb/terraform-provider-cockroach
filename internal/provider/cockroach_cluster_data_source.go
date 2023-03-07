@@ -157,18 +157,27 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 		)
 		return
 	}
+	clusterID := cluster.ID.ValueString()
+	if !uuidRegex.MatchString(clusterID) {
+		resp.Diagnostics.AddError(
+			"Unexpected cluster ID format",
+			fmt.Sprintf("'%s' is not a valid cluster ID format. Expected UUID.", clusterID),
+		)
+		return
+	}
 
-	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, cluster.ID.ValueString())
+	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, clusterID)
 	if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"Cluster not found",
-			fmt.Sprintf("Couldn't find a cluster with ID %s", cluster.ID.ValueString()))
+			fmt.Sprintf("Couldn't find a cluster with ID %s", clusterID))
 		return
 	}
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster info",
 			fmt.Sprintf("Unexpected error while retrieving cluster info: %v", formatAPIErrorMessage(err)))
+		return
 	}
 
 	cluster.Name = types.StringValue(cockroachCluster.Name)

@@ -2,6 +2,7 @@ package provider
 
 import (
 	"errors"
+	"regexp"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -40,4 +41,6 @@ func formatAPIErrorMessage(err error) string {
 	return err.Error()
 }
 
-const uuidRegex = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+const uuidRegexString = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
+
+var uuidRegex = regexp.MustCompile(uuidRegexString)

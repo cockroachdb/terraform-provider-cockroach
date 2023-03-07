@@ -25,6 +25,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -42,7 +43,7 @@ func TestAccCMEKResource(t *testing.T) {
 // a cluster, but uses a mocked API service.
 func TestIntegrationCMEKResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-cmek-%s", GenerateRandomString(4))
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}

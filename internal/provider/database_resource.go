@@ -40,7 +40,7 @@ type databaseResource struct {
 const databaseIDFmt = "%s:%s"
 const databaseNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
 
-var databaseIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegex, databaseNameRegex))
+var databaseIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegexString, databaseNameRegex))
 
 func (r *databaseResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,

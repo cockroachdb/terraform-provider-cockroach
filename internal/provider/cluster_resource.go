@@ -341,6 +341,14 @@ func (r *clusterResource) Read(
 		return
 	}
 	clusterID := cluster.ID.ValueString()
+	// In case this was an import, validate the ID format.
+	if !uuidRegex.MatchString(clusterID) {
+		resp.Diagnostics.AddError(
+			"Unexpected cluster ID format",
+			fmt.Sprintf("'%s' is not a valid cluster ID format. Expected UUID.", clusterID),
+		)
+		return
+	}
 
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {

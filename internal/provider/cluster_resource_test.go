@@ -27,6 +27,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
+	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -45,7 +46,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 // a cluster, but uses a mocked API service.
 func TestIntegrationServerlessClusterResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -122,7 +123,7 @@ func TestAccDedicatedClusterResource(t *testing.T) {
 
 func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
-	clusterID := "cluster-id"
+	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}

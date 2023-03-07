@@ -38,7 +38,7 @@ const (
 	endpointConnectionCreateTimeout = time.Minute * 10
 )
 
-var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegex))
+var privateEndpointConnectionIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(.*)$", uuidRegexString))
 
 type privateEndpointConnectionResource struct {
 	provider *provider

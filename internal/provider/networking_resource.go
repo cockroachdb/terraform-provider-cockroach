@@ -259,15 +259,15 @@ func (r *allowListResource) Update(
 	entryCIDRIp := plan.CidrIp.ValueString()
 	entryCIDRMask := int32(plan.CidrMask.ValueInt64())
 
-	name := state.Name.ValueString()
-	existingAllowList := client.AllowlistEntry1{
-		Ui:   state.Ui.ValueBool(),
-		Sql:  state.Sql.ValueBool(),
+	name := plan.Name.ValueString()
+	updatedAllowList := client.AllowlistEntry1{
+		Ui:   plan.Ui.ValueBool(),
+		Sql:  plan.Sql.ValueBool(),
 		Name: &name,
 	}
 
 	_, _, err := r.provider.service.UpdateAllowlistEntry(
-		ctx, clusterId, entryCIDRIp, entryCIDRMask, &existingAllowList)
+		ctx, clusterId, entryCIDRIp, entryCIDRMask, &updatedAllowList)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating network allowlist",

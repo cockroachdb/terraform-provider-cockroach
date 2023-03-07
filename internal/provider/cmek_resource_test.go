@@ -202,7 +202,7 @@ func TestIntegrationCMEKResource(t *testing.T) {
 		Times(2)
 	s.EXPECT().GetCMEKClusterInfo(gomock.Any(), clusterID).
 		Return(initialCMEKInfo, nil, nil)
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, clusterUpdateSpec, gomock.Any()).
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, clusterUpdateSpec).
 		Return(updatedCluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(updatedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).

@@ -101,18 +101,24 @@ type cmekResource struct {
 	provider *provider
 }
 
-func (r *cmekResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *cmekResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Customer-managed encryption keys (CMEK) resource for a single cluster",
 		Attributes:          cmekAttributes,
 	}
 }
 
-func (r *cmekResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *cmekResource) Metadata(
+	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_cmek"
 }
 
-func (r *cmekResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *cmekResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -123,7 +129,9 @@ func (r *cmekResource) Configure(_ context.Context, req resource.ConfigureReques
 	}
 }
 
-func (r *cmekResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *cmekResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -175,7 +183,9 @@ func (r *cmekResource) Create(ctx context.Context, req resource.CreateRequest, r
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *cmekResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *cmekResource) Read(
+	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -211,7 +221,9 @@ func (r *cmekResource) Read(ctx context.Context, req resource.ReadRequest, resp 
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *cmekResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *cmekResource) Update(
+	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
+) {
 	// Get plan values
 	var plan ClusterCMEK
 	diags := req.Plan.Get(ctx, &plan)
@@ -278,7 +290,7 @@ func (r *cmekResource) Update(ctx context.Context, req resource.UpdateRequest, r
 				RegionNodes:     regionNodes,
 				CmekRegionSpecs: &newRegions,
 			},
-		}, &client.UpdateClusterOptions{})
+		})
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error updating cluster",
@@ -327,11 +339,15 @@ func (r *cmekResource) Update(ctx context.Context, req resource.UpdateRequest, r
 }
 
 // Delete is a no-op, since you can't disable CMEK once it's set up.
-func (r *cmekResource) Delete(ctx context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *cmekResource) Delete(
+	ctx context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *cmekResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *cmekResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
@@ -352,7 +368,9 @@ func sortCMEKRegionsByPlan(cmekObj *client.CMEKClusterInfo, plan *ClusterCMEK) {
 	})
 }
 
-func loadCMEKToTerraformState(cmekObj *client.CMEKClusterInfo, state *ClusterCMEK, plan *ClusterCMEK) {
+func loadCMEKToTerraformState(
+	cmekObj *client.CMEKClusterInfo, state *ClusterCMEK, plan *ClusterCMEK,
+) {
 	sortCMEKRegionsByPlan(cmekObj, plan)
 	var rgs []CMEKRegion
 	for i, region := range cmekObj.GetRegionInfos() {
@@ -408,7 +426,9 @@ func cmekRegionToClientSpec(region CMEKRegion) client.CMEKRegionSpecification {
 	}
 }
 
-func waitForCMEKReadyFunc(ctx context.Context, clusterID string, cl client.Service, cmek *client.CMEKClusterInfo) sdk_resource.RetryFunc {
+func waitForCMEKReadyFunc(
+	ctx context.Context, clusterID string, cl client.Service, cmek *client.CMEKClusterInfo,
+) sdk_resource.RetryFunc {
 	return func() *sdk_resource.RetryError {
 		apiCMEK, httpResp, err := cl.GetCMEKClusterInfo(ctx, clusterID)
 		if err != nil {

@@ -452,6 +452,22 @@ func (mr *MockServiceMockRecorder) GetMetricExportInfo(arg0, arg1 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetMetricExportInfo), arg0, arg1)
 }
 
+// GetOrganizationInfo mocks base method.
+func (m *MockService) GetOrganizationInfo(arg0 context.Context) (*client.Organization, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOrganizationInfo", arg0)
+	ret0, _ := ret[0].(*client.Organization)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetOrganizationInfo indicates an expected call of GetOrganizationInfo.
+func (mr *MockServiceMockRecorder) GetOrganizationInfo(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationInfo", reflect.TypeOf((*MockService)(nil).GetOrganizationInfo), arg0)
+}
+
 // ListAllowlistEntries mocks base method.
 func (m *MockService) ListAllowlistEntries(arg0 context.Context, arg1 string, arg2 *client.ListAllowlistEntriesOptions) (*client.ListAllowlistEntriesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -644,9 +660,9 @@ func (mr *MockServiceMockRecorder) SetEgressTrafficPolicy(arg0, arg1, arg2 inter
 }
 
 // UpdateAllowlistEntry mocks base method.
-func (m *MockService) UpdateAllowlistEntry(arg0 context.Context, arg1, arg2 string, arg3 int32, arg4 *client.AllowlistEntry1, arg5 *client.UpdateAllowlistEntryOptions) (*client.AllowlistEntry, *http.Response, error) {
+func (m *MockService) UpdateAllowlistEntry(arg0 context.Context, arg1, arg2 string, arg3 int32, arg4 *client.AllowlistEntry1) (*client.AllowlistEntry, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateAllowlistEntry", arg0, arg1, arg2, arg3, arg4, arg5)
+	ret := m.ctrl.Call(m, "UpdateAllowlistEntry", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*client.AllowlistEntry)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -654,9 +670,9 @@ func (m *MockService) UpdateAllowlistEntry(arg0 context.Context, arg1, arg2 stri
 }
 
 // UpdateAllowlistEntry indicates an expected call of UpdateAllowlistEntry.
-func (mr *MockServiceMockRecorder) UpdateAllowlistEntry(arg0, arg1, arg2, arg3, arg4, arg5 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) UpdateAllowlistEntry(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAllowlistEntry", reflect.TypeOf((*MockService)(nil).UpdateAllowlistEntry), arg0, arg1, arg2, arg3, arg4, arg5)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAllowlistEntry", reflect.TypeOf((*MockService)(nil).UpdateAllowlistEntry), arg0, arg1, arg2, arg3, arg4)
 }
 
 // UpdateCMEKSpec mocks base method.
@@ -692,9 +708,9 @@ func (mr *MockServiceMockRecorder) UpdateCMEKStatus(arg0, arg1, arg2 interface{}
 }
 
 // UpdateCluster mocks base method.
-func (m *MockService) UpdateCluster(arg0 context.Context, arg1 string, arg2 *client.UpdateClusterSpecification, arg3 *client.UpdateClusterOptions) (*client.Cluster, *http.Response, error) {
+func (m *MockService) UpdateCluster(arg0 context.Context, arg1 string, arg2 *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateCluster", arg0, arg1, arg2, arg3)
+	ret := m.ctrl.Call(m, "UpdateCluster", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*client.Cluster)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -702,9 +718,9 @@ func (m *MockService) UpdateCluster(arg0 context.Context, arg1 string, arg2 *cli
 }
 
 // UpdateCluster indicates an expected call of UpdateCluster.
-func (mr *MockServiceMockRecorder) UpdateCluster(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) UpdateCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockService)(nil).UpdateCluster), arg0, arg1, arg2, arg3)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockService)(nil).UpdateCluster), arg0, arg1, arg2)
 }
 
 // UpdateSQLUserPassword mocks base method.

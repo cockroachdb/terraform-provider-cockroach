@@ -266,8 +266,8 @@ func (r *allowListResource) Update(
 		Name: &name,
 	}
 
-	_, _, err := r.provider.service.UpdateAllowlistEntry(ctx, clusterId, entryCIDRIp, entryCIDRMask,
-		&existingAllowList, &client.UpdateAllowlistEntryOptions{})
+	_, _, err := r.provider.service.UpdateAllowlistEntry(
+		ctx, clusterId, entryCIDRIp, entryCIDRMask, &existingAllowList)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating network allowlist",

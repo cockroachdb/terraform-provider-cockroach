@@ -113,16 +113,35 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 func testAllowlistEntryResource(t *testing.T, clusterName string, entry client.AllowlistEntry, useMock bool) {
 	clusterResourceName := "cockroach_cluster.dedicated"
 	resourceName := "cockroach_allow_list.network_list"
+	newEntryName := "update-test"
+	newEntry := client.AllowlistEntry{
+		Name:     &newEntryName,
+		CidrIp:   "192.168.3.2",
+		CidrMask: 32,
+		Sql:      false,
+		Ui:       false,
+	}
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestAllowlistEntryResourceConfig(clusterName, *entry.Name, entry.CidrIp, fmt.Sprint(entry.CidrMask)),
+				Config: getTestAllowlistEntryResourceConfig(clusterName, *entry.Name, entry.CidrIp, fmt.Sprint(entry.CidrMask), entry.Sql, entry.Ui),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", *entry.Name),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttrSet(resourceName, "ui"),
+					resource.TestCheckResourceAttrSet(resourceName, "sql"),
+				),
+			},
+			{
+				Config: getTestAllowlistEntryResourceConfig(clusterName, *newEntry.Name, newEntry.CidrIp, fmt.Sprint(newEntry.CidrMask), newEntry.Sql, newEntry.Ui),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", *newEntry.Name),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
 					resource.TestCheckResourceAttrSet(resourceName, "ui"),
@@ -168,7 +187,7 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 	}
 }
 
-func getTestAllowlistEntryResourceConfig(clusterName, entryName, cidrIp, cidrMask string) string {
+func getTestAllowlistEntryResourceConfig(clusterName, entryName, cidrIp, cidrMask string, sql bool, ui bool) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -186,9 +205,9 @@ resource "cockroach_cluster" "dedicated" {
     name = "%s"
     cidr_ip = "%s"
     cidr_mask = %s
-    ui = true
-    sql = true
+    ui = %v
+    sql = %v
     cluster_id = cockroach_cluster.dedicated.id
 }
-`, clusterName, entryName, cidrIp, cidrMask)
+`, clusterName, entryName, cidrIp, cidrMask, sql, ui)
 }

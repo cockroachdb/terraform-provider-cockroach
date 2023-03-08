@@ -39,7 +39,7 @@ func TestAccLogExportConfigResource(t *testing.T) {
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("tftest-logexport-%s", GenerateRandomString(4))
-	testCMEKResource(t, clusterName, false)
+	testLogExportConfigResource(t, clusterName, false)
 }
 
 // TestIntegrationLogExportConfigResource attempts to create, check, and destroy

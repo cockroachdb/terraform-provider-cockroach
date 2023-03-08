@@ -194,6 +194,23 @@ type ClusterLogExport struct {
 	UpdatedAt     types.String      `tfsdk:"updated_at"`
 }
 
+type ClusterCloudWatchMetricExportConfig struct {
+	ID           types.String `tfsdk:"id"`
+	TargetRegion types.String `tfsdk:"target_region"`
+	LogGroupName types.String `tfsdk:"log_group_name"`
+	RoleArn      types.String `tfsdk:"role_arn"`
+	UserMessage  types.String `tfsdk:"user_message"`
+	Status       types.String `tfsdk:"status"`
+}
+
+type ClusterDatadogMetricExportConfig struct {
+	ID          types.String `tfsdk:"id"`
+	Site        types.String `tfsdk:"site"`
+	ApiKey      types.String `tfsdk:"api_key"`
+	UserMessage types.String `tfsdk:"user_message"`
+	Status      types.String `tfsdk:"status"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

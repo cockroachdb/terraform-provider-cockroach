@@ -37,19 +37,31 @@ variable "machine_type" {
 variable "iam_role_name" {
   type     = string
   nullable = false
-  default  = "CockroachCloudLogExportRole"
+  default  = "CockroachCloudMetricExportRole"
 }
 
 variable "iam_policy_name" {
   type     = string
   nullable = false
-  default  = "ExampleCockroachCloudLogExportPolicy"
+  default  = "ExampleCockroachCloudMetricExportPolicy"
 }
 
 variable "log_group_name" {
   type     = string
   nullable = false
   default  = "example"
+}
+
+variable "datadog_site" {
+  type     = string
+  nullable = false
+  default  = "US1"
+}
+
+variable "datadog_api_key" {
+  type      = string
+  nullable  = false
+  sensitive = true
 }
 
 terraform {
@@ -118,7 +130,7 @@ resource "aws_iam_role" "example" {
 
 resource "aws_iam_policy" "example" {
   name        = var.iam_policy_name
-  description = "An example log export policy"
+  description = "An example metric export policy"
   policy = jsonencode({
     "Version" : "2012-10-17",
     "Statement" : [
@@ -133,7 +145,8 @@ resource "aws_iam_policy" "example" {
         ],
         "Effect" : "Allow",
         "Resource" : [
-          "arn:aws:logs:*:${var.aws_account_id}:log-group:${var.log_group_name}:*"
+          "arn:aws:logs:*:${var.aws_account_id}:log-group:${var.log_group_name}:*",
+          "arn:aws:logs:*:${var.aws_account_id}:log-group:${var.log_group_name}:log-stream:*"
         ]
       }
     ]
@@ -145,23 +158,15 @@ resource "aws_iam_role_policy_attachment" "example" {
   policy_arn = aws_iam_policy.example.arn
 }
 
-resource "cockroach_log_export_config" "example" {
+resource "cockroach_metric_export_cloudwatch_config" "example" {
   id             = cockroach_cluster.example.id
-  auth_principal = aws_iam_role.example.arn
-  log_name       = var.log_group_name
-  type           = "AWS_CLOUDWATCH"
-  redact         = true
-  region         = var.aws_region
-  groups = [
-    {
-      log_name  = "sql",
-      channels  = ["SQL_SCHEMA", "SQL_EXEC"],
-      min_level = "WARNING"
-    },
-    {
-      log_name = "devops",
-      channels = ["OPS", "HEALTH", "STORAGE"],
-      redact   = false
-    }
-  ]
+  role_arn       = aws_iam_role.example.arn
+  log_group_name = var.log_group_name
+  target_region  = var.aws_region
+}
+
+resource "cockroach_metric_export_datadog_config" "example" {
+  id      = cockroach_cluster.example.id
+  site    = var.datadog_site
+  api_key = var.datadog_api_key
 }

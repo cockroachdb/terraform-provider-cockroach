@@ -75,6 +75,7 @@ type CockroachCluster struct {
 	State            types.String             `tfsdk:"state"`
 	CreatorId        types.String             `tfsdk:"creator_id"`
 	OperationStatus  types.String             `tfsdk:"operation_status"`
+	UpgradeStatus    types.String             `tfsdk:"upgrade_status"`
 }
 
 type AllowlistEntry struct {
@@ -158,6 +159,11 @@ type Database struct {
 	Name       types.String `tfsdk:"name"`
 	ID         types.String `tfsdk:"id"`
 	TableCount types.Int64  `tfsdk:"table_count"`
+}
+
+type FinalizeVersionUpgrade struct {
+	CockroachVersion types.String `tfsdk:"cockroach_version"`
+	ID               types.String `tfsdk:"id"`
 }
 
 func (e *APIErrorMessage) String() string {

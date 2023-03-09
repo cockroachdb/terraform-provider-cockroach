@@ -115,6 +115,9 @@ func (d *clusterDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			"operation_status": schema.StringAttribute{
 				Computed: true,
 			},
+			"upgrade_status": schema.StringAttribute{
+				Computed: true,
+			},
 		},
 		MarkdownDescription: "Cluster Data Source",
 	}
@@ -186,6 +189,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	cluster.CockroachVersion = types.StringValue(cockroachCluster.CockroachVersion)
 	cluster.Plan = types.StringValue(string(cockroachCluster.Plan))
 	cluster.OperationStatus = types.StringValue(string(cockroachCluster.OperationStatus))
+	cluster.UpgradeStatus = types.StringValue(string(cockroachCluster.UpgradeStatus))
 	if cockroachCluster.Config.Serverless != nil {
 		cluster.ServerlessConfig = &ServerlessClusterConfig{
 			SpendLimit: types.Int64Value(int64(cockroachCluster.Config.Serverless.SpendLimit)),

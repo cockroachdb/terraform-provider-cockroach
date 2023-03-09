@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"regexp"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -184,6 +185,9 @@ func (r *clusterResource) Schema(
 				},
 			},
 			"operation_status": schema.StringAttribute{
+				Computed: true,
+			},
+			"upgrade_status": schema.StringAttribute{
 				Computed: true,
 			},
 		},
@@ -423,6 +427,23 @@ func (r *clusterResource) ModifyPlan(
 	}
 }
 
+// Comparator for two CRDB versions to make validation simpler. Assumes biannual releases of the form vYY.H.
+// Result is the number of releases apart, negative if r is later and positive is l is later. For example,
+// compareCrdbVersions("v22.1", "v22.2") = -1, compareCrdbVersions("v22.1", "v19.2") = 3
+func compareCrdbVersions(l, r string, d *diag.Diagnostics) int {
+	var lMaj, lMin, rMaj, rMin int
+	if _, err := fmt.Sscanf(l, "v%d.%d", &lMaj, &lMin); err != nil {
+		d.AddError("Couldn't parse version number", fmt.Sprintf("Couldn't parse version '%s'.", l))
+		return 0
+	}
+	if _, err := fmt.Sscanf(r, "v%d.%d", &rMaj, &rMin); err != nil {
+		d.AddError("Couldn't parse version number", fmt.Sprintf("Couldn't parse version '%s'.", r))
+		return 0
+	}
+
+	return (rMaj*2 + rMin - 1) - (lMaj*2 + lMin - 1)
+}
+
 func (r *clusterResource) Update(
 	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
 ) {
@@ -440,6 +461,69 @@ func (r *clusterResource) Update(
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// CRDB Versions
+	if !plan.CockroachVersion.IsNull() && plan.CockroachVersion != state.CockroachVersion {
+		// Validate that the target version is valid.
+		planVersion := plan.CockroachVersion.ValueString()
+		stateVersion := state.CockroachVersion.ValueString()
+		apiResp, _, err := r.provider.service.ListMajorClusterVersions(ctx, &client.ListMajorClusterVersionsOptions{})
+		if err != nil {
+			resp.Diagnostics.AddError("Couldn't retrieve CockroachDB version list", formatAPIErrorMessage(err))
+			return
+		}
+		var versionValid bool
+		for _, v := range apiResp.Versions {
+			if v.Version == planVersion {
+				versionValid = true
+				continue
+			}
+		}
+		if !versionValid {
+			validVersions := make([]string, len(apiResp.Versions))
+			for i, v := range apiResp.Versions {
+				validVersions[i] = v.Version
+			}
+			resp.Diagnostics.AddError("Invalid CockroachDB version",
+				fmt.Sprintf(
+					"'%s' is not a valid major CockroachDB version. Valid versions include [%s]",
+					planVersion,
+					strings.Join(validVersions, "|")))
+			return
+		}
+
+		upgradeStatus := client.CLUSTERUPGRADESTATUS_MAJOR_UPGRADE_RUNNING
+		cmp := compareCrdbVersions(stateVersion, planVersion, &resp.Diagnostics)
+		if cmp < 0 {
+			// Make sure we're rolling back to the previous version.
+			if cmp < -1 {
+				resp.Diagnostics.AddError("Invalid rollback version", "Can only roll back to the previous version.")
+				return
+			}
+			upgradeStatus = client.CLUSTERUPGRADESTATUS_ROLLBACK_RUNNING
+		} else if cmp > 1 {
+			resp.Diagnostics.AddError("Invalid upgrade version", "Can't skip versions. Upgrades must be performed one version at a time.")
+			return
+		}
+
+		clusterObj, _, err := r.provider.service.UpdateCluster(ctx, plan.ID.ValueString(), &client.UpdateClusterSpecification{
+			UpgradeStatus: &upgradeStatus,
+		})
+		if err != nil {
+			resp.Diagnostics.AddError("Error updating cluster", formatAPIErrorMessage(err))
+			return
+		}
+
+		err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+			waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Cluster version update failed",
+				formatAPIErrorMessage(err),
+			)
+			return
+		}
 	}
 
 	clusterReq := client.NewUpdateClusterSpecification()
@@ -597,6 +681,7 @@ func loadClusterToTerraformState(
 	state.CreatorId = types.StringValue(clusterObj.CreatorId)
 	state.OperationStatus = types.StringValue(string(clusterObj.OperationStatus))
 	state.Regions = getManagedRegions(&clusterObj.Regions, plan.Regions)
+	state.UpgradeStatus = types.StringValue(string(clusterObj.UpgradeStatus))
 
 	if clusterObj.Config.Serverless != nil {
 		state.ServerlessConfig = &ServerlessClusterConfig{

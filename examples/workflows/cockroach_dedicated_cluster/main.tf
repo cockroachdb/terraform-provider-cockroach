@@ -132,7 +132,7 @@ resource "cockroach_sql_user" "example" {
 }
 
 resource "cockroach_database" "example" {
-  name       = "example-database"
+  name       = var.database
   cluster_id = cockroach_cluster.example.id
 }
 

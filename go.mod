@@ -74,3 +74,7 @@ require (
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace (
+	github.com/cockroachdb/cockroach-cloud-sdk-go v0.4.0 => ../cockroach-cloud-sdk-go
+)

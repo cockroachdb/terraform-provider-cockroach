@@ -29,6 +29,7 @@ Cluster Data Source
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String)
+- `upgrade_status` (String)
 
 <a id="nestedatt--dedicated"></a>
 ### Nested Schema for `dedicated`

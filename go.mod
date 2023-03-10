@@ -11,6 +11,9 @@ require (
 	github.com/stretchr/testify v1.7.2
 )
 
+// TODO: !!!!!!!!!!!!!!!!!!!!!!!! REMOVE THIS BEFORE MERGE !!!!!!!!!!!!!!!!!!!!!!!!!!!
+replace github.com/cockroachdb/cockroach-cloud-sdk-go => /Users/jason.chen/go/src/github.com/cockroachdb/cockroach-cloud-sdk-go
+
 require (
 	github.com/Masterminds/goutils v1.1.1 // indirect
 	github.com/Masterminds/semver/v3 v3.1.1 // indirect

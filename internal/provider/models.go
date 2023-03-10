@@ -208,6 +208,11 @@ type ClusterDatadogMetricExportConfig struct {
 	Site        types.String `tfsdk:"site"`
 	ApiKey      types.String `tfsdk:"api_key"`
 	UserMessage types.String `tfsdk:"user_message"`
+}
+
+type ClientCACertResourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	X509PemCert types.String `tfsdk:"x509_pem_cert"`
 	Status      types.String `tfsdk:"status"`
 }
 

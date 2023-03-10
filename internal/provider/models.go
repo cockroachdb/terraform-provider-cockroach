@@ -194,6 +194,12 @@ type ClusterLogExport struct {
 	UpdatedAt     types.String      `tfsdk:"updated_at"`
 }
 
+type ClientCACertResourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	X509PemCert types.String `tfsdk:"x509_pem_cert"`
+	Status      types.String `tfsdk:"status"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

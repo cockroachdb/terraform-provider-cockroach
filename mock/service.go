@@ -164,6 +164,22 @@ func (mr *MockServiceMockRecorder) DeleteAllowlistEntry(arg0, arg1, arg2, arg3 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllowlistEntry", reflect.TypeOf((*MockService)(nil).DeleteAllowlistEntry), arg0, arg1, arg2, arg3)
 }
 
+// DeleteClientCACert mocks base method.
+func (m *MockService) DeleteClientCACert(arg0 context.Context, arg1 string) (*client.ClientCACertInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteClientCACert", arg0, arg1)
+	ret0, _ := ret[0].(*client.ClientCACertInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteClientCACert indicates an expected call of DeleteClientCACert.
+func (mr *MockServiceMockRecorder) DeleteClientCACert(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClientCACert", reflect.TypeOf((*MockService)(nil).DeleteClientCACert), arg0, arg1)
+}
+
 // DeleteCluster mocks base method.
 func (m *MockService) DeleteCluster(arg0 context.Context, arg1 string) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -354,6 +370,22 @@ func (m *MockService) GetCMEKClusterInfo(arg0 context.Context, arg1 string) (*cl
 func (mr *MockServiceMockRecorder) GetCMEKClusterInfo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCMEKClusterInfo", reflect.TypeOf((*MockService)(nil).GetCMEKClusterInfo), arg0, arg1)
+}
+
+// GetClientCACert mocks base method.
+func (m *MockService) GetClientCACert(arg0 context.Context, arg1 string) (*client.ClientCACertInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClientCACert", arg0, arg1)
+	ret0, _ := ret[0].(*client.ClientCACertInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetClientCACert indicates an expected call of GetClientCACert.
+func (mr *MockServiceMockRecorder) GetClientCACert(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientCACert", reflect.TypeOf((*MockService)(nil).GetClientCACert), arg0, arg1)
 }
 
 // GetCluster mocks base method.
@@ -644,6 +676,22 @@ func (mr *MockServiceMockRecorder) SetAwsEndpointConnectionState(arg0, arg1, arg
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetAwsEndpointConnectionState", reflect.TypeOf((*MockService)(nil).SetAwsEndpointConnectionState), arg0, arg1, arg2, arg3)
 }
 
+// SetClientCACert mocks base method.
+func (m *MockService) SetClientCACert(arg0 context.Context, arg1 string, arg2 *client.SetClientCACertRequest) (*client.ClientCACertInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetClientCACert", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ClientCACertInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SetClientCACert indicates an expected call of SetClientCACert.
+func (mr *MockServiceMockRecorder) SetClientCACert(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetClientCACert", reflect.TypeOf((*MockService)(nil).SetClientCACert), arg0, arg1, arg2)
+}
+
 // SetEgressTrafficPolicy mocks base method.
 func (m *MockService) SetEgressTrafficPolicy(arg0 context.Context, arg1 string, arg2 *client.SetEgressTrafficPolicyRequest) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -705,6 +753,22 @@ func (m *MockService) UpdateCMEKStatus(arg0 context.Context, arg1 string, arg2 *
 func (mr *MockServiceMockRecorder) UpdateCMEKStatus(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCMEKStatus", reflect.TypeOf((*MockService)(nil).UpdateCMEKStatus), arg0, arg1, arg2)
+}
+
+// UpdateClientCACert mocks base method.
+func (m *MockService) UpdateClientCACert(arg0 context.Context, arg1 string, arg2 *client.UpdateClientCACertRequest) (*client.ClientCACertInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateClientCACert", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ClientCACertInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateClientCACert indicates an expected call of UpdateClientCACert.
+func (mr *MockServiceMockRecorder) UpdateClientCACert(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClientCACert", reflect.TypeOf((*MockService)(nil).UpdateClientCACert), arg0, arg1, arg2)
 }
 
 // UpdateCluster mocks base method.

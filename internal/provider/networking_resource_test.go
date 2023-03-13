@@ -45,7 +45,15 @@ func TestAccAllowlistEntryResource(t *testing.T) {
 		Sql:      true,
 		Ui:       true,
 	}
-	testAllowlistEntryResource(t, clusterName, entry, false)
+	newEntryName := "update-test"
+	newEntry := client.AllowlistEntry{
+		Name:     &newEntryName,
+		CidrIp:   "192.168.3.2",
+		CidrMask: 32,
+		Sql:      false,
+		Ui:       false,
+	}
+	testAllowlistEntryResource(t, clusterName, entry, newEntry, false)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
@@ -68,6 +76,14 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		Name:     &otherName,
 		CidrIp:   "192.168.5.4",
 		CidrMask: 32,
+	}
+	newEntryName := "update-test"
+	newEntry := client.AllowlistEntry{
+		CidrIp:   "192.168.3.2",
+		CidrMask: 32,
+		Name:     &newEntryName,
+		Sql:      false,
+		Ui:       false,
 	}
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -96,21 +112,40 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			},
 		},
 	}
+
+	// Create
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
+		Times(5)
 	s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
-	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Times(2).Return(
-		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil)
+	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).
+		Times(3)
+
+	// Update
+	// The OpenAPI generator does something weird when part of an object lives in the URL
+	// and the rest in the request body, and it winds up as a partial object.
+	newEntryForUpdate := &client.AllowlistEntry1{
+		Name: newEntry.Name,
+		Sql:  newEntry.Sql,
+		Ui:   newEntry.Ui,
+	}
+	s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntryForUpdate).
+		Return(&newEntry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+		Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).
+		Times(2)
+
+	// Delete
 	s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testAllowlistEntryResource(t, clusterName, entry, true)
+	testAllowlistEntryResource(t, clusterName, entry, newEntry, true)
 }
 
-func testAllowlistEntryResource(t *testing.T, clusterName string, entry client.AllowlistEntry, useMock bool) {
+func testAllowlistEntryResource(t *testing.T, clusterName string, entry, newEntry client.AllowlistEntry, useMock bool) {
 	clusterResourceName := "cockroach_cluster.dedicated"
 	resourceName := "cockroach_allow_list.network_list"
 	resource.Test(t, resource.TestCase{
@@ -119,14 +154,25 @@ func testAllowlistEntryResource(t *testing.T, clusterName string, entry client.A
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestAllowlistEntryResourceConfig(clusterName, *entry.Name, entry.CidrIp, fmt.Sprint(entry.CidrMask)),
+				Config: getTestAllowlistEntryResourceConfig(clusterName, &entry),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", *entry.Name),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
-					resource.TestCheckResourceAttrSet(resourceName, "ui"),
-					resource.TestCheckResourceAttrSet(resourceName, "sql"),
+					resource.TestCheckResourceAttr(resourceName, "ui", "true"),
+					resource.TestCheckResourceAttr(resourceName, "sql", "true"),
+				),
+			},
+			{
+				Config: getTestAllowlistEntryResourceConfig(clusterName, &newEntry),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", *newEntry.Name),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
+					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
 				),
 			},
 		},
@@ -168,7 +214,7 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 	}
 }
 
-func getTestAllowlistEntryResourceConfig(clusterName, entryName, cidrIp, cidrMask string) string {
+func getTestAllowlistEntryResourceConfig(clusterName string, entry *client.AllowlistEntry) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -185,10 +231,10 @@ resource "cockroach_cluster" "dedicated" {
  resource "cockroach_allow_list" "network_list" {
     name = "%s"
     cidr_ip = "%s"
-    cidr_mask = %s
-    ui = true
-    sql = true
+    cidr_mask = %d
+    ui = %v
+    sql = %v
     cluster_id = cockroach_cluster.dedicated.id
 }
-`, clusterName, entryName, cidrIp, cidrMask)
+`, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }

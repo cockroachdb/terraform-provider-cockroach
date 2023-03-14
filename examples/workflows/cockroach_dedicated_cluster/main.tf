@@ -68,7 +68,7 @@ variable "os" {
 
 variable "database" {
   type     = string
-  nullable = true
+  nullable = false
 }
 
 # A production cluster should be locked down with a more
@@ -132,7 +132,7 @@ resource "cockroach_sql_user" "example" {
 }
 
 resource "cockroach_database" "example" {
-  name       = "example-database"
+  name       = var.database
   cluster_id = cockroach_cluster.example.id
 }
 

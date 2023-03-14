@@ -35,6 +35,7 @@ Cluster Resource
 - `operation_status` (String)
 - `plan` (String)
 - `state` (String)
+- `upgrade_status` (String)
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`

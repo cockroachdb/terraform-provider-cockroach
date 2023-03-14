@@ -596,6 +596,22 @@ func (mr *MockServiceMockRecorder) ListInvoices(arg0 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvoices", reflect.TypeOf((*MockService)(nil).ListInvoices), arg0)
 }
 
+// ListMajorClusterVersions mocks base method.
+func (m *MockService) ListMajorClusterVersions(arg0 context.Context, arg1 *client.ListMajorClusterVersionsOptions) (*client.ListMajorClusterVersionsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListMajorClusterVersions", arg0, arg1)
+	ret0, _ := ret[0].(*client.ListMajorClusterVersionsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListMajorClusterVersions indicates an expected call of ListMajorClusterVersions.
+func (mr *MockServiceMockRecorder) ListMajorClusterVersions(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMajorClusterVersions", reflect.TypeOf((*MockService)(nil).ListMajorClusterVersions), arg0, arg1)
+}
+
 // ListPrivateEndpointServices mocks base method.
 func (m *MockService) ListPrivateEndpointServices(arg0 context.Context, arg1 string) (*client.PrivateEndpointServices, *http.Response, error) {
 	m.ctrl.T.Helper()

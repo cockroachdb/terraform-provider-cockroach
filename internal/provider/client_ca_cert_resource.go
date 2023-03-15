@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,10 +94,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	// Ensure cluster is DEDICATED
 	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ID.ValueString())
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error getting cluster",
-			fmt.Sprintf("Could not retrieve cluster info: %s", formatAPIErrorMessage(err)),
-		)
+		resp.Diagnostics.AddError("Error getting cluster info", formatAPIErrorMessage(err))
 		return
 	}
 	if cluster.Config.Serverless != nil {
@@ -112,10 +110,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 
 	certInfo, _, err := r.provider.service.SetClientCACert(ctx, plan.ID.ValueString(), setClientCACertReq)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error updating Client CA Cert",
-			fmt.Sprintf("Error updating Client CA Cert: %s", formatAPIErrorMessage(err)),
-		)
+		resp.Diagnostics.AddError("Error updating Client CA Cert", formatAPIErrorMessage(err))
 		return
 	}
 
@@ -123,10 +118,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	err = sdk_resource.RetryContext(ctx, clientCACertEndpointTimeout,
 		waitForClientCACertReady(ctx, plan.ID.ValueString(), r.provider.service, certInfo))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Client CA Cert update may have failed",
-			fmt.Sprintf("Client CA Cert update has exceeded timeout, and may have failed: %s", formatAPIErrorMessage(err)),
-		)
+		resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
 		return
 	}
 
@@ -153,14 +145,10 @@ func (r *clientCACertResource) Read(ctx context.Context, req resource.ReadReques
 	certInfo, httpResp, err := r.provider.service.GetClientCACert(ctx, clusterId)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
-			resp.Diagnostics.AddWarning(
-				"Cluster not found",
-				fmt.Sprintf("Cluster '%s' was not found. Removing from state.", clusterId))
+			resp.Diagnostics.AddWarning(fmt.Sprintf("Cluster '%s' was not found", clusterId), "Removing from state.")
 			resp.State.RemoveResource(ctx)
 		} else {
-			resp.Diagnostics.AddError(
-				"Error getting Client CA Cert info",
-				fmt.Sprintf("Error getting Client CA Cert info: %s", formatAPIErrorMessage(err)))
+			resp.Diagnostics.AddError("Error getting Client CA Cert info", formatAPIErrorMessage(err))
 		}
 		return
 	}
@@ -201,10 +189,7 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 		updateReq := client.UpdateClientCACertRequest{X509PemCert: &newCert}
 		certInfo, _, err := r.provider.service.UpdateClientCACert(ctx, plan.ID.ValueString(), &updateReq)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error updating Client CA Cert",
-				fmt.Sprintf("Error updating Client CA Cert: %s", formatAPIErrorMessage(err)),
-			)
+			resp.Diagnostics.AddError("Error updating Client CA Cert", formatAPIErrorMessage(err))
 			return
 		}
 
@@ -212,10 +197,7 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 		err = sdk_resource.RetryContext(ctx, clientCACertEndpointTimeout,
 			waitForClientCACertReady(ctx, plan.ID.ValueString(), r.provider.service, certInfo))
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Client CA Cert update may have failed",
-				fmt.Sprintf("Client CA Cert update has exceeded timeout, and may have failed: %s", formatAPIErrorMessage(err)),
-			)
+			resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
 			return
 		}
 
@@ -239,16 +221,17 @@ func (r *clientCACertResource) Delete(ctx context.Context, req resource.DeleteRe
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			// Already deleted, ignore error
 		} else {
-			resp.Diagnostics.AddError(
-				"Error deleting Client CA Cert",
-				fmt.Sprintf("Error deleting Client CA Cert: %s", formatAPIErrorMessage(err)),
-			)
+			resp.Diagnostics.AddError("Error deleting Client CA Cert", formatAPIErrorMessage(err))
 			return
 		}
 	}
 
 	// TF will automatically remove the resource from state if there are no error diags.
 	// https://developer.hashicorp.com/terraform/plugin/framework/resources/delete#recommendations
+}
+
+func (r *clientCACertResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
 func waitForClientCACertReady(ctx context.Context, clusterId string, cl client.Service, certInfo *client.ClientCACertInfo) sdk_resource.RetryFunc {

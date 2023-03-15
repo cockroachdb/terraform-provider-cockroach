@@ -166,6 +166,13 @@ type FinalizeVersionUpgrade struct {
 	ID               types.String `tfsdk:"id"`
 }
 
+type Organization struct {
+	ID        types.String `tfsdk:"id"`
+	Label     types.String `tfsdk:"label"`
+	Name      types.String `tfsdk:"name"`
+	CreatedAt types.String `tfsdk:"created_at"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

@@ -1,9 +1,3 @@
-# Your Organization ID can be found at https://cockroachlabs.cloud/information
-variable "org_id" {
-  type     = string
-  nullable = false
-}
-
 # Required to assign yourself permission to update the key.
 variable "iam_user" {
   type     = string
@@ -85,6 +79,8 @@ resource "cockroach_cluster" "example" {
   ]
 }
 
+data "cockroach_organization" "example" {}
+
 resource "aws_iam_role" "example" {
   name = "cmek_test_role"
 
@@ -99,7 +95,7 @@ resource "aws_iam_role" "example" {
         },
         "Condition" : {
           "StringEquals" : {
-            "sts:ExternalId" : var.org_id
+            "sts:ExternalId" : data.cockroach_organization.example.id
           }
         }
       }

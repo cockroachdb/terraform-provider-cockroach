@@ -85,18 +85,19 @@ func (mr *MockServiceMockRecorder) AddEgressRule(arg0, arg1, arg2 interface{}) *
 }
 
 // AddUserToRole mocks base method.
-func (m *MockService) AddUserToRole(arg0 context.Context, arg1 string, arg2 *client.AddUserToRoleOptions) (*http.Response, error) {
+func (m *MockService) AddUserToRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUserToRole", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*http.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "AddUserToRole", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(*client.GetAllRolesForUserResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // AddUserToRole indicates an expected call of AddUserToRole.
-func (mr *MockServiceMockRecorder) AddUserToRole(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) AddUserToRole(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToRole", reflect.TypeOf((*MockService)(nil).AddUserToRole), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToRole", reflect.TypeOf((*MockService)(nil).AddUserToRole), arg0, arg1, arg2, arg3, arg4)
 }
 
 // CreateCluster mocks base method.
@@ -195,6 +196,22 @@ func (mr *MockServiceMockRecorder) DeleteClientCACert(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteClientCACert", reflect.TypeOf((*MockService)(nil).DeleteClientCACert), arg0, arg1)
 }
 
+// DeleteCloudWatchMetricExport mocks base method.
+func (m *MockService) DeleteCloudWatchMetricExport(arg0 context.Context, arg1 string) (*client.DeleteMetricExportResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteCloudWatchMetricExport", arg0, arg1)
+	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteCloudWatchMetricExport indicates an expected call of DeleteCloudWatchMetricExport.
+func (mr *MockServiceMockRecorder) DeleteCloudWatchMetricExport(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteCloudWatchMetricExport", reflect.TypeOf((*MockService)(nil).DeleteCloudWatchMetricExport), arg0, arg1)
+}
+
 // DeleteCluster mocks base method.
 func (m *MockService) DeleteCluster(arg0 context.Context, arg1 string) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -227,6 +244,22 @@ func (mr *MockServiceMockRecorder) DeleteDatabase(arg0, arg1, arg2 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDatabase", reflect.TypeOf((*MockService)(nil).DeleteDatabase), arg0, arg1, arg2)
 }
 
+// DeleteDatadogMetricExport mocks base method.
+func (m *MockService) DeleteDatadogMetricExport(arg0 context.Context, arg1 string) (*client.DeleteMetricExportResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteDatadogMetricExport", arg0, arg1)
+	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteDatadogMetricExport indicates an expected call of DeleteDatadogMetricExport.
+func (mr *MockServiceMockRecorder) DeleteDatadogMetricExport(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDatadogMetricExport", reflect.TypeOf((*MockService)(nil).DeleteDatadogMetricExport), arg0, arg1)
+}
+
 // DeleteEgressRule mocks base method.
 func (m *MockService) DeleteEgressRule(arg0 context.Context, arg1, arg2 string, arg3 *client.DeleteEgressRuleOptions) (*client.DeleteEgressRuleResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -257,22 +290,6 @@ func (m *MockService) DeleteLogExport(arg0 context.Context, arg1 string) (*clien
 func (mr *MockServiceMockRecorder) DeleteLogExport(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLogExport", reflect.TypeOf((*MockService)(nil).DeleteLogExport), arg0, arg1)
-}
-
-// DeleteMetricExport mocks base method.
-func (m *MockService) DeleteMetricExport(arg0 context.Context, arg1 string, arg2 *client.DeleteMetricExportOptions) (*client.DeleteMetricExportResponse, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteMetricExport", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// DeleteMetricExport indicates an expected call of DeleteMetricExport.
-func (mr *MockServiceMockRecorder) DeleteMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMetricExport", reflect.TypeOf((*MockService)(nil).DeleteMetricExport), arg0, arg1, arg2)
 }
 
 // DeleteSQLUser mocks base method.
@@ -339,6 +356,38 @@ func (mr *MockServiceMockRecorder) EnableCMEKSpec(arg0, arg1, arg2 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableCMEKSpec", reflect.TypeOf((*MockService)(nil).EnableCMEKSpec), arg0, arg1, arg2)
 }
 
+// EnableCloudWatchMetricExport mocks base method.
+func (m *MockService) EnableCloudWatchMetricExport(arg0 context.Context, arg1 string, arg2 *client.EnableCloudWatchMetricExportRequest) (*client.CloudWatchMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableCloudWatchMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.CloudWatchMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnableCloudWatchMetricExport indicates an expected call of EnableCloudWatchMetricExport.
+func (mr *MockServiceMockRecorder) EnableCloudWatchMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableCloudWatchMetricExport", reflect.TypeOf((*MockService)(nil).EnableCloudWatchMetricExport), arg0, arg1, arg2)
+}
+
+// EnableDatadogMetricExport mocks base method.
+func (m *MockService) EnableDatadogMetricExport(arg0 context.Context, arg1 string, arg2 *client.EnableDatadogMetricExportRequest) (*client.DatadogMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableDatadogMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.DatadogMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnableDatadogMetricExport indicates an expected call of EnableDatadogMetricExport.
+func (mr *MockServiceMockRecorder) EnableDatadogMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableDatadogMetricExport", reflect.TypeOf((*MockService)(nil).EnableDatadogMetricExport), arg0, arg1, arg2)
+}
+
 // EnableLogExport mocks base method.
 func (m *MockService) EnableLogExport(arg0 context.Context, arg1 string, arg2 *client.EnableLogExportRequest) (*client.LogExportClusterInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -353,22 +402,6 @@ func (m *MockService) EnableLogExport(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) EnableLogExport(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableLogExport", reflect.TypeOf((*MockService)(nil).EnableLogExport), arg0, arg1, arg2)
-}
-
-// EnableMetricExport mocks base method.
-func (m *MockService) EnableMetricExport(arg0 context.Context, arg1 string, arg2 *client.EnableMetricExportRequest) (*client.MetricExportInfo, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnableMetricExport", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.MetricExportInfo)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// EnableMetricExport indicates an expected call of EnableMetricExport.
-func (mr *MockServiceMockRecorder) EnableMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableMetricExport", reflect.TypeOf((*MockService)(nil).EnableMetricExport), arg0, arg1, arg2)
 }
 
 // GetAllRolesForUser mocks base method.
@@ -419,6 +452,22 @@ func (mr *MockServiceMockRecorder) GetClientCACert(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClientCACert", reflect.TypeOf((*MockService)(nil).GetClientCACert), arg0, arg1)
 }
 
+// GetCloudWatchMetricExportInfo mocks base method.
+func (m *MockService) GetCloudWatchMetricExportInfo(arg0 context.Context, arg1 string) (*client.CloudWatchMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCloudWatchMetricExportInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.CloudWatchMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetCloudWatchMetricExportInfo indicates an expected call of GetCloudWatchMetricExportInfo.
+func (mr *MockServiceMockRecorder) GetCloudWatchMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCloudWatchMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetCloudWatchMetricExportInfo), arg0, arg1)
+}
+
 // GetCluster mocks base method.
 func (m *MockService) GetCluster(arg0 context.Context, arg1 string) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -449,6 +498,22 @@ func (m *MockService) GetConnectionString(arg0 context.Context, arg1 string, arg
 func (mr *MockServiceMockRecorder) GetConnectionString(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConnectionString", reflect.TypeOf((*MockService)(nil).GetConnectionString), arg0, arg1, arg2)
+}
+
+// GetDatadogMetricExportInfo mocks base method.
+func (m *MockService) GetDatadogMetricExportInfo(arg0 context.Context, arg1 string) (*client.DatadogMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetDatadogMetricExportInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.DatadogMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetDatadogMetricExportInfo indicates an expected call of GetDatadogMetricExportInfo.
+func (mr *MockServiceMockRecorder) GetDatadogMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatadogMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetDatadogMetricExportInfo), arg0, arg1)
 }
 
 // GetEgressRule mocks base method.
@@ -497,22 +562,6 @@ func (m *MockService) GetLogExportInfo(arg0 context.Context, arg1 string) (*clie
 func (mr *MockServiceMockRecorder) GetLogExportInfo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogExportInfo", reflect.TypeOf((*MockService)(nil).GetLogExportInfo), arg0, arg1)
-}
-
-// GetMetricExportInfo mocks base method.
-func (m *MockService) GetMetricExportInfo(arg0 context.Context, arg1 string) (*client.MetricExportInfo, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetMetricExportInfo", arg0, arg1)
-	ret0, _ := ret[0].(*client.MetricExportInfo)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetMetricExportInfo indicates an expected call of GetMetricExportInfo.
-func (mr *MockServiceMockRecorder) GetMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetMetricExportInfo), arg0, arg1)
 }
 
 // GetOrganizationInfo mocks base method.
@@ -724,18 +773,19 @@ func (mr *MockServiceMockRecorder) ListSQLUsers(arg0, arg1, arg2 interface{}) *g
 }
 
 // RemoveUserFromRole mocks base method.
-func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1 string, arg2 *client.RemoveUserFromRoleOptions) (*http.Response, error) {
+func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveUserFromRole", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*http.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "RemoveUserFromRole", arg0, arg1, arg2, arg3, arg4)
+	ret0, _ := ret[0].(*client.GetAllRolesForUserResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // RemoveUserFromRole indicates an expected call of RemoveUserFromRole.
-func (mr *MockServiceMockRecorder) RemoveUserFromRole(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) RemoveUserFromRole(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromRole", reflect.TypeOf((*MockService)(nil).RemoveUserFromRole), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromRole", reflect.TypeOf((*MockService)(nil).RemoveUserFromRole), arg0, arg1, arg2, arg3, arg4)
 }
 
 // SetAwsEndpointConnectionState mocks base method.
@@ -786,18 +836,19 @@ func (mr *MockServiceMockRecorder) SetEgressTrafficPolicy(arg0, arg1, arg2 inter
 }
 
 // SetRolesForUser mocks base method.
-func (m *MockService) SetRolesForUser(arg0 context.Context, arg1 string) (*http.Response, error) {
+func (m *MockService) SetRolesForUser(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudSetRolesForUserRequest) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetRolesForUser", arg0, arg1)
-	ret0, _ := ret[0].(*http.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret := m.ctrl.Call(m, "SetRolesForUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.GetAllRolesForUserResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // SetRolesForUser indicates an expected call of SetRolesForUser.
-func (mr *MockServiceMockRecorder) SetRolesForUser(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SetRolesForUser(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRolesForUser", reflect.TypeOf((*MockService)(nil).SetRolesForUser), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRolesForUser", reflect.TypeOf((*MockService)(nil).SetRolesForUser), arg0, arg1, arg2)
 }
 
 // UpdateAllowlistEntry mocks base method.

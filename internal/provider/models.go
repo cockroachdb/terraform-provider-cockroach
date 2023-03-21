@@ -217,6 +217,18 @@ type ClientCACertResourceModel struct {
 	Status      types.String `tfsdk:"status"`
 }
 
+type Role struct {
+	RoleName     types.String `tfsdk:"role_name"`
+	ResourceType types.String `tfsdk:"resource_type"`
+	ResourceId   types.String `tfsdk:"resource_id"`
+}
+
+type RoleGrant struct {
+	ID     types.String `tfsdk:"id"`
+	UserId types.String `tfsdk:"user_id"`
+	Roles  []Role       `tfsdk:"roles"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

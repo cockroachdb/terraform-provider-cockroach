@@ -85,9 +85,9 @@ func (mr *MockServiceMockRecorder) AddEgressRule(arg0, arg1, arg2 interface{}) *
 }
 
 // AddUserToRole mocks base method.
-func (m *MockService) AddUserToRole(arg0 context.Context, arg1 string, arg2 *client.AddUserToRoleOptions) (*client.GetAllRolesForUserResponse, *http.Response, error) {
+func (m *MockService) AddUserToRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "AddUserToRole", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "AddUserToRole", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*client.GetAllRolesForUserResponse)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -95,9 +95,9 @@ func (m *MockService) AddUserToRole(arg0 context.Context, arg1 string, arg2 *cli
 }
 
 // AddUserToRole indicates an expected call of AddUserToRole.
-func (mr *MockServiceMockRecorder) AddUserToRole(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) AddUserToRole(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToRole", reflect.TypeOf((*MockService)(nil).AddUserToRole), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToRole", reflect.TypeOf((*MockService)(nil).AddUserToRole), arg0, arg1, arg2, arg3, arg4)
 }
 
 // CreateCluster mocks base method.
@@ -773,9 +773,9 @@ func (mr *MockServiceMockRecorder) ListSQLUsers(arg0, arg1, arg2 interface{}) *g
 }
 
 // RemoveUserFromRole mocks base method.
-func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1 string, arg2 *client.RemoveUserFromRoleOptions) (*client.GetAllRolesForUserResponse, *http.Response, error) {
+func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RemoveUserFromRole", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "RemoveUserFromRole", arg0, arg1, arg2, arg3, arg4)
 	ret0, _ := ret[0].(*client.GetAllRolesForUserResponse)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -783,9 +783,9 @@ func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1 string, arg2
 }
 
 // RemoveUserFromRole indicates an expected call of RemoveUserFromRole.
-func (mr *MockServiceMockRecorder) RemoveUserFromRole(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) RemoveUserFromRole(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromRole", reflect.TypeOf((*MockService)(nil).RemoveUserFromRole), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromRole", reflect.TypeOf((*MockService)(nil).RemoveUserFromRole), arg0, arg1, arg2, arg3, arg4)
 }
 
 // SetAwsEndpointConnectionState mocks base method.
@@ -836,9 +836,9 @@ func (mr *MockServiceMockRecorder) SetEgressTrafficPolicy(arg0, arg1, arg2 inter
 }
 
 // SetRolesForUser mocks base method.
-func (m *MockService) SetRolesForUser(arg0 context.Context, arg1 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
+func (m *MockService) SetRolesForUser(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudSetRolesForUserRequest) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SetRolesForUser", arg0, arg1)
+	ret := m.ctrl.Call(m, "SetRolesForUser", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*client.GetAllRolesForUserResponse)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -846,9 +846,9 @@ func (m *MockService) SetRolesForUser(arg0 context.Context, arg1 string) (*clien
 }
 
 // SetRolesForUser indicates an expected call of SetRolesForUser.
-func (mr *MockServiceMockRecorder) SetRolesForUser(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) SetRolesForUser(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRolesForUser", reflect.TypeOf((*MockService)(nil).SetRolesForUser), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetRolesForUser", reflect.TypeOf((*MockService)(nil).SetRolesForUser), arg0, arg1, arg2)
 }
 
 // UpdateAllowlistEntry mocks base method.

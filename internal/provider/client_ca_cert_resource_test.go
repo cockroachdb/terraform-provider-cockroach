@@ -22,14 +22,12 @@ import (
 	"os"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
 // TestAccClientCACertResource attempts to create, check, and destroy
@@ -156,7 +154,6 @@ func testClientCACertResource(t *testing.T, clusterName string, cert1 string, ce
 					resource.TestCheckResourceAttr(clusterResourceName, "name", clusterName),
 					resource.TestCheckResourceAttr(cliCACertResourceName, "x509_pem_cert", cert1),
 					resource.TestCheckResourceAttr(cliCACertResourceName, "status", string(client.CLIENTCACERTSTATUS_IS_SET)),
-					waitSeconds(180),
 				),
 			},
 			{
@@ -165,19 +162,10 @@ func testClientCACertResource(t *testing.T, clusterName string, cert1 string, ce
 					resource.TestCheckResourceAttr(clusterResourceName, "name", clusterName),
 					resource.TestCheckResourceAttr(cliCACertResourceName, "x509_pem_cert", cert2),
 					resource.TestCheckResourceAttr(cliCACertResourceName, "status", string(client.CLIENTCACERTSTATUS_IS_SET)),
-					waitSeconds(180),
 				),
 			},
 		},
 	})
-}
-
-// give the cluster some time to finish any in-flight operations
-func waitSeconds(seconds int) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		time.Sleep(time.Duration(seconds) * time.Second)
-		return nil
-	}
 }
 
 func getTestClientCACertResourceConfig(name string, cert string) string {

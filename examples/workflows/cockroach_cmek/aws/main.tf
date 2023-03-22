@@ -79,8 +79,6 @@ resource "cockroach_cluster" "example" {
   ]
 }
 
-data "cockroach_organization" "example" {}
-
 resource "aws_iam_role" "example" {
   name = "cmek_test_role"
 
@@ -92,11 +90,6 @@ resource "aws_iam_role" "example" {
         "Action" : "sts:AssumeRole",
         "Principal" : {
           "AWS" : cockroach_cluster.example.account_id
-        },
-        "Condition" : {
-          "StringEquals" : {
-            "sts:ExternalId" : data.cockroach_organization.example.id
-          }
         }
       }
     ]

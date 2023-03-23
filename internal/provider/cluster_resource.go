@@ -359,13 +359,21 @@ func (r *clusterResource) Read(
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
 				"Cluster not found",
-				fmt.Sprintf("Cluster with clusterID %s is not found. Removing from state.", clusterID))
+				fmt.Sprintf("Cluster with ID %s is not found. Removing from state.", clusterID))
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(
 				"Error getting cluster info",
 				fmt.Sprintf("Unexpected error retrieving cluster info: %s", formatAPIErrorMessage(err)))
 		}
+		return
+	}
+
+	if clusterObj.State == client.CLUSTERSTATETYPE_DELETED {
+		resp.Diagnostics.AddWarning(
+			"Cluster has been deleted",
+			fmt.Sprintf("Cluster with ID %s has been externally deleted. Removing from state.", clusterID))
+		resp.State.RemoveResource(ctx)
 		return
 	}
 

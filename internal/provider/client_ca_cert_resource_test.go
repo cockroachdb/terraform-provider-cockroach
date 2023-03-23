@@ -80,18 +80,21 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 	}
 
 	cert1InfoPending := client.NewClientCACertInfo()
-	cert1InfoPending.SetX509PemCert(cert1)
 	cert1InfoPending.SetStatus(client.CLIENTCACERTSTATUS_PENDING)
 	cert1InfoReady := client.NewClientCACertInfo()
 	cert1InfoReady.SetX509PemCert(cert1)
 	cert1InfoReady.SetStatus(client.CLIENTCACERTSTATUS_IS_SET)
 
 	cert2InfoPending := client.NewClientCACertInfo()
-	cert2InfoPending.SetX509PemCert(cert2)
 	cert2InfoPending.SetStatus(client.CLIENTCACERTSTATUS_PENDING)
 	cert2InfoReady := client.NewClientCACertInfo()
 	cert2InfoReady.SetX509PemCert(cert2)
 	cert2InfoReady.SetStatus(client.CLIENTCACERTSTATUS_IS_SET)
+
+	certInfoEmptyPending := client.NewClientCACertInfo()
+	certInfoEmptyPending.SetStatus(client.CLIENTCACERTSTATUS_PENDING)
+	certInfoEmptyReady := client.NewClientCACertInfo()
+	certInfoEmptyReady.SetStatus(client.CLIENTCACERTSTATUS_IS_SET)
 
 	httpOkResponse := &http.Response{Status: http.StatusText(http.StatusOK)}
 
@@ -133,8 +136,14 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 	s.EXPECT().GetClientCACert(gomock.Any(), clusterId).
 		Return(cert2InfoReady, nil, nil) // CERT Read()
 
-	s.EXPECT().DeleteClientCACert(gomock.Any(), clusterId) // CERT Delete()
-	s.EXPECT().DeleteCluster(gomock.Any(), clusterId)      // CLUSTER Delete()
+	s.EXPECT().DeleteClientCACert(gomock.Any(), clusterId).
+		Return(certInfoEmptyPending, nil, nil) // CERT Delete()
+	s.EXPECT().GetClientCACert(gomock.Any(), clusterId).
+		Return(certInfoEmptyPending, nil, nil) // CERT Delete()/waitReady(): return PENDING, continue polling
+	s.EXPECT().GetClientCACert(gomock.Any(), clusterId).
+		Return(certInfoEmptyReady, nil, nil) // CERT Delete()/waitReady(): now return IS_SET
+
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterId) // CLUSTER Delete()
 
 	testClientCACertResource(t, clusterName, cert1, cert2, true)
 }

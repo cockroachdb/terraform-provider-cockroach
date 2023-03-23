@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	clientCACertEndpointTimeout = time.Minute * 10 // TODO: what's a reasonable value here?
+	clientCACertEndpointTimeout = time.Minute * 10
 )
 
 type clientCACertResource struct {
@@ -85,7 +85,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 
 	// Retrieve values from plan
 	var plan ClientCACertResourceModel
-	diags := req.Config.Get(ctx, &plan) // TODO: why is tfsdk.Config used here instead of tfsdk.Plan
+	diags := req.Config.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -216,7 +216,7 @@ func (r *clientCACertResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
-	_, httpResp, err := r.provider.service.DeleteClientCACert(ctx, state.ID.ValueString())
+	certInfo, httpResp, err := r.provider.service.DeleteClientCACert(ctx, state.ID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			// Already deleted, ignore error
@@ -224,6 +224,14 @@ func (r *clientCACertResource) Delete(ctx context.Context, req resource.DeleteRe
 			resp.Diagnostics.AddError("Error deleting Client CA Cert", formatAPIErrorMessage(err))
 			return
 		}
+	}
+
+	// poll until update completes
+	err = sdk_resource.RetryContext(ctx, clientCACertEndpointTimeout,
+		waitForClientCACertReady(ctx, state.ID.ValueString(), r.provider.service, certInfo))
+	if err != nil {
+		resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
+		return
 	}
 
 	// TF will automatically remove the resource from state if there are no error diags.

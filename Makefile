@@ -37,4 +37,4 @@ test:
 	go test ./... -v $(TESTARGS) -timeout 5m
 
 testacc:
-	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
+	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m -parallel 100

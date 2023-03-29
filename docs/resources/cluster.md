@@ -47,6 +47,7 @@ Required:
 Optional:
 
 - `node_count` (Number)
+- `primary` (Boolean) Selects which region will be the primary. Required only for a Serverless cluster with more than one region.
 
 Read-Only:
 

@@ -36,6 +36,7 @@ import (
 
 // TestAccClusterResource attempts to create, check, and destroy
 // a real cluster and allowlist entry. It will be skipped if TF_ACC isn't set.
+// TODO(pj): Add real test for multi-region serverless once it's in open beta.
 func TestAccServerlessClusterResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
@@ -45,48 +46,87 @@ func TestAccServerlessClusterResource(t *testing.T) {
 // TestIntegrationServerlessClusterResource attempts to create, check, and destroy
 // a cluster, but uses a mocked API service.
 func TestIntegrationServerlessClusterResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
-	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-
-	ctrl := gomock.NewController(t)
-	s := mock_client.NewMockService(ctrl)
-	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
-		return s
-	})()
-
-	finalCluster := client.Cluster{
-		Id:               clusterID,
-		Name:             clusterName,
-		CockroachVersion: "v22.1.0",
-		Plan:             "SERVERLESS",
-		CloudProvider:    "GCP",
-		State:            "CREATED",
-		Config: client.ClusterConfig{
-			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: 1,
-				RoutingId:  "routing-id",
+	true_val := true
+	cases := []struct {
+		name         string
+		finalCluster client.Cluster
+		testFunc     func(t *testing.T, clusterName string, useMock bool)
+	}{
+		{
+			"single-region serverless cluster",
+			client.Cluster{
+				Id:               uuid.Nil.String(),
+				Name:             fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2)),
+				CockroachVersion: "v22.1.0",
+				Plan:             "SERVERLESS",
+				CloudProvider:    "GCP",
+				State:            "CREATED",
+				Config: client.ClusterConfig{
+					Serverless: &client.ServerlessClusterConfig{
+						SpendLimit: 1,
+						RoutingId:  "routing-id",
+					},
+				},
+				Regions: []client.Region{
+					{
+						Name: "us-central1",
+					},
+				},
 			},
+			testServerlessClusterResource,
 		},
-		Regions: []client.Region{
-			{
-				Name: "us-central1",
+		{
+			"multi-region serverless cluster",
+			client.Cluster{
+				Id:               uuid.Nil.String(),
+				Name:             fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2)),
+				CockroachVersion: "v22.1.0",
+				Plan:             "SERVERLESS",
+				CloudProvider:    "GCP",
+				State:            "CREATED",
+				Config: client.ClusterConfig{
+					Serverless: &client.ServerlessClusterConfig{
+						SpendLimit: 1,
+						RoutingId:  "routing-id",
+					},
+				},
+				Regions: []client.Region{
+					{
+						Name: "us-central1",
+					},
+					{
+						Name:    "us-central2",
+						Primary: &true_val,
+					},
+				},
 			},
+			testMultiRegionServerlessClusterResource,
 		},
 	}
-	initialCluster := finalCluster
-	initialCluster.State = client.CLUSTERSTATETYPE_CREATING
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
 
-	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
-		Return(&initialCluster, nil, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
-	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+			initialCluster := c.finalCluster
+			initialCluster.State = client.CLUSTERSTATETYPE_CREATING
 
-	testServerlessClusterResource(t, clusterName, true)
+			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+				Return(&initialCluster, nil, nil)
+			s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).
+				Return(&c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+				Times(3)
+			s.EXPECT().DeleteCluster(gomock.Any(), c.finalCluster.Id)
+
+			c.testFunc(t, c.finalCluster.Name, true)
+		})
+	}
 }
 
 func testServerlessClusterResource(t *testing.T, clusterName string, useMock bool) {
@@ -109,6 +149,38 @@ func testServerlessClusterResource(t *testing.T, clusterName string, useMock boo
 					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
 					resource.TestCheckResourceAttr(resourceName, "plan", "SERVERLESS"),
 					resource.TestCheckResourceAttr(resourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
+					resource.TestCheckResourceAttr(resourceName, "regions.#", "1"),
+				),
+			},
+		},
+	})
+}
+
+func testMultiRegionServerlessClusterResource(t *testing.T, clusterName string, useMock bool) {
+	var (
+		resourceName = "cockroach_cluster.serverless"
+		cluster      client.Cluster
+	)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: getTestMultiRegionServerlessClusterResourceConfig(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists(resourceName, &cluster),
+					resource.TestCheckResourceAttr(resourceName, "name", clusterName),
+					resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
+					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
+					resource.TestCheckResourceAttr(resourceName, "plan", "SERVERLESS"),
+					resource.TestCheckResourceAttr(resourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
+					resource.TestCheckResourceAttr(resourceName, "regions.#", "2"),
+					resource.TestCheckResourceAttr(resourceName, "regions.0.name", "us-central1"),
+					resource.TestCheckResourceAttr(resourceName, "regions.0.primary", "false"),
+					resource.TestCheckResourceAttr(resourceName, "regions.1.name", "us-central2"),
+					resource.TestCheckResourceAttr(resourceName, "regions.1.primary", "true"),
 				),
 			},
 		},
@@ -277,6 +349,27 @@ resource "cockroach_cluster" "serverless" {
 	regions = [{
 		name = "us-central1"
 	}]
+}
+`, name)
+}
+
+func getTestMultiRegionServerlessClusterResourceConfig(name string) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "serverless" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    serverless = {
+        spend_limit = 1
+    }
+	regions = [
+		{
+			name = "us-central1"
+		},
+		{
+			name = "us-central2"
+			primary = true
+		},
+	]
 }
 `, name)
 }

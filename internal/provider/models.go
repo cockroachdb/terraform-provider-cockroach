@@ -33,6 +33,7 @@ type Region struct {
 	SqlDns    types.String `tfsdk:"sql_dns"`
 	UiDns     types.String `tfsdk:"ui_dns"`
 	NodeCount types.Int64  `tfsdk:"node_count"`
+	Primary   types.Bool   `tfsdk:"primary"`
 }
 
 type DedicatedClusterConfig struct {

@@ -68,6 +68,13 @@ var regionSchema = schema.NestedAttributeObject{
 				int64planmodifier.UseStateForUnknown(),
 			},
 		},
+		"primary": schema.BoolAttribute{
+			Optional: true,
+			Computed: true,
+			PlanModifiers: []planmodifier.Bool{
+				boolplanmodifier.UseStateForUnknown(),
+			},
+		},
 	},
 }
 
@@ -247,10 +254,22 @@ func (r *clusterResource) Create(
 
 	if plan.ServerlessConfig != nil {
 		var regions []string
+		var primaryRegion string
 		for _, region := range plan.Regions {
+			if region.Primary.ValueBool() {
+				primaryRegion = region.Name.ValueString()
+			}
 			regions = append(regions, region.Name.ValueString())
 		}
+		if len(regions) > 1 && primaryRegion == "" {
+			resp.Diagnostics.AddError("Primary region missing",
+				"One region must be marked primary when creating a multi-region Serverless cluster.")
+		}
 		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.ServerlessConfig.SpendLimit.ValueInt64()))
+		if primaryRegion != "" {
+			serverless.PrimaryRegion = &primaryRegion
+		}
+
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
@@ -729,6 +748,7 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 				SqlDns:    types.StringValue(x.SqlDns),
 				UiDns:     types.StringValue(x.UiDns),
 				NodeCount: types.Int64Value(int64(x.NodeCount)),
+				Primary:   types.BoolValue(x.GetPrimary()),
 			}
 			regions = append(regions, rg)
 		}

@@ -62,13 +62,14 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
 		return s
 	})()
+	spendLimit := int32(1)
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            uuid.Nil.String(),
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: 1,
+				SpendLimit: &spendLimit,
 			},
 		},
 		State: "CREATED",
@@ -108,7 +109,9 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 	testSqlUserResource(t, clusterName, sqlUserNameWithPass, sqlUserNameNoPass, true)
 }
 
-func testSqlUserResource(t *testing.T, clusterName, sqlUserNameWithPass, sqlUserNameNoPass string, useMock bool) {
+func testSqlUserResource(
+	t *testing.T, clusterName, sqlUserNameWithPass, sqlUserNameNoPass string, useMock bool,
+) {
 	var (
 		clusterResourceName = "cockroach_cluster.serverless"
 		resourceNamePass    = "cockroach_sql_user.with_pass"
@@ -170,7 +173,9 @@ func testSqlUserExists(resourceName, clusterResourceName string) resource.TestCh
 	}
 }
 
-func getTestSqlUserResourceConfig(clusterName, userNamePass, userNameNoPass, password string) string {
+func getTestSqlUserResourceConfig(
+	clusterName, userNamePass, userNameNoPass, password string,
+) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"

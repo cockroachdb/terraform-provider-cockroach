@@ -49,24 +49,24 @@ func TestIntegrationRoleResource(t *testing.T) {
 				UserId: userId,
 				Roles: []client.BuiltInRole{
 					{
-						Name: client.ORGANIZATIONUSERROLE_CLUSTER_ADMIN,
+						Name: client.ORGANIZATIONUSERROLETYPE_CLUSTER_ADMIN,
 						Resource: client.Resource{
 							Id:   nil,
-							Type: client.RESOURCETYPE_ORGANIZATION,
+							Type: client.RESOURCETYPETYPE_ORGANIZATION,
 						},
 					},
 					{
-						Name: client.ORGANIZATIONUSERROLE_ORG_ADMIN,
+						Name: client.ORGANIZATIONUSERROLETYPE_ORG_ADMIN,
 						Resource: client.Resource{
 							Id:   nil,
-							Type: client.RESOURCETYPE_ORGANIZATION,
+							Type: client.RESOURCETYPETYPE_ORGANIZATION,
 						},
 					},
 					{
-						Name: client.ORGANIZATIONUSERROLE_ORG_MEMBER,
+						Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
 						Resource: client.Resource{
 							Id:   nil,
-							Type: client.RESOURCETYPE_ORGANIZATION,
+							Type: client.RESOURCETYPETYPE_ORGANIZATION,
 						},
 					},
 				},
@@ -78,10 +78,10 @@ func TestIntegrationRoleResource(t *testing.T) {
 	restrictedGetResponse := client.GetAllRolesForUserResponse{
 		Roles: &[]client.BuiltInRole{
 			{
-				Name: client.ORGANIZATIONUSERROLE_ORG_MEMBER,
+				Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
 				Resource: client.Resource{
 					Id:   nil,
-					Type: client.RESOURCETYPE_ORGANIZATION,
+					Type: client.RESOURCETYPETYPE_ORGANIZATION,
 				},
 			},
 		},
@@ -90,24 +90,24 @@ func TestIntegrationRoleResource(t *testing.T) {
 	permissionedGetResponse := client.GetAllRolesForUserResponse{
 		Roles: &[]client.BuiltInRole{
 			{
-				Name: client.ORGANIZATIONUSERROLE_CLUSTER_ADMIN,
+				Name: client.ORGANIZATIONUSERROLETYPE_CLUSTER_ADMIN,
 				Resource: client.Resource{
 					Id:   nil,
-					Type: client.RESOURCETYPE_ORGANIZATION,
+					Type: client.RESOURCETYPETYPE_ORGANIZATION,
 				},
 			},
 			{
-				Name: client.ORGANIZATIONUSERROLE_ORG_ADMIN,
+				Name: client.ORGANIZATIONUSERROLETYPE_ORG_ADMIN,
 				Resource: client.Resource{
 					Id:   nil,
-					Type: client.RESOURCETYPE_ORGANIZATION,
+					Type: client.RESOURCETYPETYPE_ORGANIZATION,
 				},
 			},
 			{
-				Name: client.ORGANIZATIONUSERROLE_ORG_MEMBER,
+				Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
 				Resource: client.Resource{
 					Id:   nil,
-					Type: client.RESOURCETYPE_ORGANIZATION,
+					Type: client.RESOURCETYPETYPE_ORGANIZATION,
 				},
 			},
 		},
@@ -142,7 +142,7 @@ func testRoleResource(t *testing.T, userId string, useMock bool) {
 			{
 				Config: getTestRoleFullyPermissionsedResourceConfig(userId),
 				Check: resource.ComposeTestCheckFunc(
-					testRoleMembership(resourceNameTest, userId, "ORG_ROLE_CLUSTER_ADMIN", true),
+					testRoleMembership(resourceNameTest, userId, "CLUSTER_ADMIN", true),
 					resource.TestCheckResourceAttr(resourceNameTest, "id", userId),
 				),
 			},
@@ -150,7 +150,9 @@ func testRoleResource(t *testing.T, userId string, useMock bool) {
 	})
 }
 
-func testRoleMembership(resourceName, userId, roleName string, hasRole bool) resource.TestCheckFunc {
+func testRoleMembership(
+	resourceName, userId, roleName string, hasRole bool,
+) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p := testAccProvider.(*provider)
 		p.service = NewService(cl)
@@ -186,19 +188,19 @@ resource "cockroach_user_role_grants" "test" {
   user_id = "%s"
   roles = [
     {
-      role_name = "ORG_ROLE_ORG_ADMIN",
+      role_name = "ORG_ADMIN",
       resource_type = "ORGANIZATION",
       resource_id = ""
     },
     {
-      role_name = "ORG_ROLE_CLUSTER_ADMIN",
+      role_name = "CLUSTER_ADMIN",
       resource_type = "ORGANIZATION",
       resource_id = ""
     },
     {
       resource_id   = ""
       resource_type = "ORGANIZATION"
-      role_name     = "ORG_ROLE_ORG_MEMBER"
+      role_name     = "ORG_MEMBER"
     },
   ]
 }

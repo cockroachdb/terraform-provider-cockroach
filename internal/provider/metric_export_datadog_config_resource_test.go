@@ -80,10 +80,10 @@ func TestIntegrationMetricExportDatadogConfigResource(t *testing.T) {
 		},
 	}
 
-	enabledStatus := client.METRICEXPORTSTATUS_ENABLED
+	enabledStatus := client.METRICEXPORTSTATUSTYPE_ENABLED
 	apiKey := "test-api-key"
 	apiKeyTrunc := apiKey[len(apiKey)-4:]
-	site := client.APIDATADOGSITE_US1
+	site := client.DATADOGSITETYPE_US1
 	updatedApiKey := "test-api-key-updated"
 	updatedApiKeyTrunc := updatedApiKey[len(updatedApiKey)-4:]
 

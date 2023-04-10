@@ -72,7 +72,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	finalService := client.PrivateEndpointService{
 		RegionName:    "ap-south-1",
 		CloudProvider: "AWS",
-		Status:        client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE,
+		Status:        client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
 		Aws: client.AWSPrivateLinkServiceDetail{
 			ServiceName:         "finalService-name",
 			ServiceId:           "finalService-id",
@@ -80,7 +80,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 		},
 	}
 	initialService := finalService
-	initialService.Status = client.PRIVATEENDPOINTSERVICESTATUS_CREATING
+	initialService.Status = client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING
 	services := &client.PrivateEndpointServices{
 		Services: []client.PrivateEndpointService{
 			finalService,
@@ -96,7 +96,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(3)
-	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID, gomock.Any()).
+	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
 		Return(initialServices, nil, nil)
 	s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
 		Return(services, nil, nil).
@@ -117,7 +117,7 @@ func testPrivateEndpointServicesResource(t *testing.T, clusterName string, useMo
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("cockroach_cluster.dedicated", "name", clusterName),
 					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", "1"),
-					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.0.status", string(client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE)),
+					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.0.status", string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
 				),
 			},
 		},

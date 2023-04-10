@@ -133,9 +133,9 @@ func (mr *MockServiceMockRecorder) CreateDatabase(arg0, arg1, arg2 interface{}) 
 }
 
 // CreatePrivateEndpointServices mocks base method.
-func (m *MockService) CreatePrivateEndpointServices(arg0 context.Context, arg1 string, arg2 *map[string]interface{}) (*client.PrivateEndpointServices, *http.Response, error) {
+func (m *MockService) CreatePrivateEndpointServices(arg0 context.Context, arg1 string) (*client.PrivateEndpointServices, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreatePrivateEndpointServices", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "CreatePrivateEndpointServices", arg0, arg1)
 	ret0, _ := ret[0].(*client.PrivateEndpointServices)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -143,9 +143,9 @@ func (m *MockService) CreatePrivateEndpointServices(arg0 context.Context, arg1 s
 }
 
 // CreatePrivateEndpointServices indicates an expected call of CreatePrivateEndpointServices.
-func (mr *MockServiceMockRecorder) CreatePrivateEndpointServices(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) CreatePrivateEndpointServices(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePrivateEndpointServices", reflect.TypeOf((*MockService)(nil).CreatePrivateEndpointServices), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePrivateEndpointServices", reflect.TypeOf((*MockService)(nil).CreatePrivateEndpointServices), arg0, arg1)
 }
 
 // CreateSQLUser mocks base method.
@@ -309,9 +309,9 @@ func (mr *MockServiceMockRecorder) DeleteSQLUser(arg0, arg1, arg2 interface{}) *
 }
 
 // EditDatabase mocks base method.
-func (m *MockService) EditDatabase(arg0 context.Context, arg1 string, arg2 *client.UpdateDatabaseRequest) (*client.ApiDatabase, *http.Response, error) {
+func (m *MockService) EditDatabase(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateDatabaseRequest1) (*client.ApiDatabase, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EditDatabase", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "EditDatabase", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*client.ApiDatabase)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -319,9 +319,25 @@ func (m *MockService) EditDatabase(arg0 context.Context, arg1 string, arg2 *clie
 }
 
 // EditDatabase indicates an expected call of EditDatabase.
-func (mr *MockServiceMockRecorder) EditDatabase(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) EditDatabase(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditDatabase", reflect.TypeOf((*MockService)(nil).EditDatabase), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditDatabase", reflect.TypeOf((*MockService)(nil).EditDatabase), arg0, arg1, arg2, arg3)
+}
+
+// EditDatabase2 mocks base method.
+func (m *MockService) EditDatabase2(arg0 context.Context, arg1 string, arg2 *client.UpdateDatabaseRequest) (*client.ApiDatabase, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EditDatabase2", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ApiDatabase)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EditDatabase2 indicates an expected call of EditDatabase2.
+func (mr *MockServiceMockRecorder) EditDatabase2(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EditDatabase2", reflect.TypeOf((*MockService)(nil).EditDatabase2), arg0, arg1, arg2)
 }
 
 // EditEgressRule mocks base method.
@@ -580,6 +596,22 @@ func (mr *MockServiceMockRecorder) GetOrganizationInfo(arg0 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationInfo", reflect.TypeOf((*MockService)(nil).GetOrganizationInfo), arg0)
 }
 
+// GetPersonUsersByEmail mocks base method.
+func (m *MockService) GetPersonUsersByEmail(arg0 context.Context, arg1 *string) (*client.GetPersonUsersByEmailResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPersonUsersByEmail", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetPersonUsersByEmailResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetPersonUsersByEmail indicates an expected call of GetPersonUsersByEmail.
+func (mr *MockServiceMockRecorder) GetPersonUsersByEmail(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonUsersByEmail", reflect.TypeOf((*MockService)(nil).GetPersonUsersByEmail), arg0, arg1)
+}
+
 // ListAllowlistEntries mocks base method.
 func (m *MockService) ListAllowlistEntries(arg0 context.Context, arg1 string, arg2 *client.ListAllowlistEntriesOptions) (*client.ListAllowlistEntriesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -789,7 +821,7 @@ func (mr *MockServiceMockRecorder) RemoveUserFromRole(arg0, arg1, arg2, arg3, ar
 }
 
 // SetAwsEndpointConnectionState mocks base method.
-func (m *MockService) SetAwsEndpointConnectionState(arg0 context.Context, arg1, arg2 string, arg3 *client.CockroachCloudSetAwsEndpointConnectionStateRequest) (*client.AwsEndpointConnection, *http.Response, error) {
+func (m *MockService) SetAwsEndpointConnectionState(arg0 context.Context, arg1, arg2 string, arg3 *client.SetAwsEndpointConnectionStateRequest) (*client.AwsEndpointConnection, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SetAwsEndpointConnectionState", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*client.AwsEndpointConnection)

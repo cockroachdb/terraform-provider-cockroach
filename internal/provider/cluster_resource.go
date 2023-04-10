@@ -265,10 +265,12 @@ func (r *clusterResource) Create(
 			resp.Diagnostics.AddError("Primary region missing",
 				"One region must be marked primary when creating a multi-region Serverless cluster.")
 		}
-		serverless := client.NewServerlessClusterCreateSpecification(regions, int32(plan.ServerlessConfig.SpendLimit.ValueInt64()))
+		serverless := client.NewServerlessClusterCreateSpecification(regions)
 		if primaryRegion != "" {
 			serverless.PrimaryRegion = &primaryRegion
 		}
+		spendLimit := int32(plan.ServerlessConfig.SpendLimit.ValueInt64())
+		serverless.SpendLimit = &spendLimit
 
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
@@ -304,7 +306,7 @@ func (r *clusterResource) Create(
 			}
 			dedicated.Hardware = hardware
 			if cfg.PrivateNetworkVisibility.ValueBool() {
-				visibilityPrivate := client.NETWORKVISIBLITY_PRIVATE
+				visibilityPrivate := client.NETWORKVISIBILITYTYPE_PRIVATE
 				dedicated.NetworkVisibility = &visibilityPrivate
 			}
 		}
@@ -315,7 +317,7 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	clusterReq := client.NewCreateClusterRequest(plan.Name.ValueString(), client.ApiCloudProvider(plan.CloudProvider.ValueString()), *clusterSpec)
+	clusterReq := client.NewCreateClusterRequest(plan.Name.ValueString(), client.CloudProviderType(plan.CloudProvider.ValueString()), *clusterSpec)
 	clusterObj, _, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -520,7 +522,7 @@ func (r *clusterResource) Update(
 			return
 		}
 
-		upgradeStatus := client.CLUSTERUPGRADESTATUS_MAJOR_UPGRADE_RUNNING
+		upgradeStatus := client.CLUSTERUPGRADESTATUSTYPE_MAJOR_UPGRADE_RUNNING
 		cmp := compareCrdbVersions(stateVersion, planVersion, &resp.Diagnostics)
 		if cmp < 0 {
 			// Make sure we're rolling back to the previous version.
@@ -528,7 +530,7 @@ func (r *clusterResource) Update(
 				resp.Diagnostics.AddError("Invalid rollback version", "Can only roll back to the previous version.")
 				return
 			}
-			upgradeStatus = client.CLUSTERUPGRADESTATUS_ROLLBACK_RUNNING
+			upgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_ROLLBACK_RUNNING
 		} else if cmp > 1 {
 			resp.Diagnostics.AddError("Invalid upgrade version", "Can't skip versions. Upgrades must be performed one version at a time.")
 			return
@@ -555,7 +557,9 @@ func (r *clusterResource) Update(
 
 	clusterReq := client.NewUpdateClusterSpecification()
 	if plan.ServerlessConfig != nil {
-		serverless := client.NewServerlessClusterUpdateSpecification(int32(plan.ServerlessConfig.SpendLimit.ValueInt64()))
+		serverless := client.NewServerlessClusterUpdateSpecification()
+		spendLimit := int32(plan.ServerlessConfig.SpendLimit.ValueInt64())
+		serverless.SpendLimit = &spendLimit
 		clusterReq.SetServerless(*serverless)
 	} else if cfg := plan.DedicatedConfig; cfg != nil {
 		dedicated := client.NewDedicatedClusterUpdateSpecification()
@@ -712,7 +716,7 @@ func loadClusterToTerraformState(
 
 	if clusterObj.Config.Serverless != nil {
 		state.ServerlessConfig = &ServerlessClusterConfig{
-			SpendLimit: types.Int64Value(int64(clusterObj.Config.Serverless.SpendLimit)),
+			SpendLimit: types.Int64Value(int64(clusterObj.Config.Serverless.GetSpendLimit())),
 			RoutingId:  types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
 	} else if clusterObj.Config.Dedicated != nil {
@@ -722,7 +726,7 @@ func loadClusterToTerraformState(
 			StorageGib:               types.Int64Value(int64(clusterObj.Config.Dedicated.StorageGib)),
 			MemoryGib:                types.Float64Value(float64(clusterObj.Config.Dedicated.MemoryGib)),
 			DiskIops:                 types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
-			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBLITY_PRIVATE),
+			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
 		}
 	}
 }

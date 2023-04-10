@@ -44,7 +44,9 @@ type privateEndpointConnectionResource struct {
 	provider *provider
 }
 
-func (r *privateEndpointConnectionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *privateEndpointConnectionResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "AWS PrivateLink Endpoint Connection",
 		Attributes: map[string]schema.Attribute{
@@ -89,11 +91,15 @@ func (r *privateEndpointConnectionResource) Schema(_ context.Context, _ resource
 	}
 }
 
-func (r *privateEndpointConnectionResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *privateEndpointConnectionResource) Metadata(
+	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_private_endpoint_connection"
 }
 
-func (r *privateEndpointConnectionResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *privateEndpointConnectionResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -104,7 +110,9 @@ func (r *privateEndpointConnectionResource) Configure(_ context.Context, req res
 	}
 }
 
-func (r *privateEndpointConnectionResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *privateEndpointConnectionResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -132,7 +140,7 @@ func (r *privateEndpointConnectionResource) Create(ctx context.Context, req reso
 			"Private endpoint services are only available for dedicated clusters",
 		)
 		return
-	} else if cluster.CloudProvider != client.APICLOUDPROVIDER_AWS {
+	} else if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster cloud provider",
 			"Private endpoint services are only available for AWS clusters",
@@ -140,9 +148,8 @@ func (r *privateEndpointConnectionResource) Create(ctx context.Context, req reso
 		return
 	}
 
-	status := client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE
-	connectionStateRequest := client.CockroachCloudSetAwsEndpointConnectionStateRequest{
-		Status: &status,
+	connectionStateRequest := client.SetAwsEndpointConnectionStateRequest{
+		Status: client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE,
 	}
 
 	_, _, err = r.provider.service.SetAwsEndpointConnectionState(ctx, plan.ClusterID.ValueString(), plan.EndpointID.ValueString(), &connectionStateRequest)
@@ -178,7 +185,9 @@ func (r *privateEndpointConnectionResource) Create(ctx context.Context, req reso
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *privateEndpointConnectionResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *privateEndpointConnectionResource) Read(
+	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -210,7 +219,9 @@ func (r *privateEndpointConnectionResource) Read(ctx context.Context, req resour
 	resp.State.RemoveResource(ctx)
 }
 
-func loadEndpointConnectionIntoTerraformState(apiConnection *client.AwsEndpointConnection, state *PrivateEndpointConnection) {
+func loadEndpointConnectionIntoTerraformState(
+	apiConnection *client.AwsEndpointConnection, state *PrivateEndpointConnection,
+) {
 	state.EndpointID = types.StringValue(apiConnection.GetEndpointId())
 	state.ID = types.StringValue(fmt.Sprintf(
 		privateEndpointConnectionIDFmt,
@@ -221,11 +232,15 @@ func loadEndpointConnectionIntoTerraformState(apiConnection *client.AwsEndpointC
 	state.RegionName = types.StringValue(apiConnection.GetRegionName())
 }
 
-func (r *privateEndpointConnectionResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
+func (r *privateEndpointConnectionResource) Update(
+	_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse,
+) {
 	// No-op. Contains only requires-replace or computed fields.
 }
 
-func (r *privateEndpointConnectionResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *privateEndpointConnectionResource) Delete(
+	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	var state PrivateEndpointConnection
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -233,13 +248,12 @@ func (r *privateEndpointConnectionResource) Delete(ctx context.Context, req reso
 		return
 	}
 
-	status := client.AWSENDPOINTCONNECTIONSTATUS_REJECTED
 	_, httpResp, err := r.provider.service.SetAwsEndpointConnectionState(
 		ctx,
 		state.ClusterID.ValueString(),
 		state.EndpointID.ValueString(),
-		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
-			Status: &status,
+		&client.SetAwsEndpointConnectionStateRequest{
+			Status: client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED,
 		})
 	if err != nil && httpResp != nil && httpResp.StatusCode != http.StatusNotFound {
 		diags.AddError("Couldn't delete connection",
@@ -250,7 +264,9 @@ func (r *privateEndpointConnectionResource) Delete(ctx context.Context, req reso
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *privateEndpointConnectionResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *privateEndpointConnectionResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
 	// Since an endpoint connection is uniquely identified by two fields, the cluster ID
 	// and the endpoint ID, we serialize them both into the ID field. To make import
 	// work, we need to deserialize an ID back into endpoint ID and cluster ID.
@@ -272,7 +288,12 @@ func (r *privateEndpointConnectionResource) ImportState(ctx context.Context, req
 	resp.Diagnostics = resp.State.Set(ctx, &connection)
 }
 
-func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpointID string, cl client.Service, connection *client.AwsEndpointConnection) sdk_resource.RetryFunc {
+func waitForEndpointConnectionCreatedFunc(
+	ctx context.Context,
+	clusterID, endpointID string,
+	cl client.Service,
+	connection *client.AwsEndpointConnection,
+) sdk_resource.RetryFunc {
 	return func() *sdk_resource.RetryError {
 		connections, httpResp, err := cl.ListAwsEndpointConnections(ctx, clusterID)
 		if err != nil {
@@ -286,10 +307,10 @@ func waitForEndpointConnectionCreatedFunc(ctx context.Context, clusterID, endpoi
 		for _, *connection = range connections.GetConnections() {
 			if connection.GetEndpointId() == endpointID {
 				switch status := connection.GetStatus(); status {
-				case client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE:
+				case client.AWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE:
 					return nil
-				case client.AWSENDPOINTCONNECTIONSTATUS_PENDING,
-					client.AWSENDPOINTCONNECTIONSTATUS_PENDING_ACCEPTANCE:
+				case client.AWSENDPOINTCONNECTIONSTATUSTYPE_PENDING,
+					client.AWSENDPOINTCONNECTIONSTATUSTYPE_PENDING_ACCEPTANCE:
 					return sdk_resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
 				default:
 					return sdk_resource.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))

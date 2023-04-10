@@ -177,7 +177,7 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
-	if cluster.GetCloudProvider() == client.APICLOUDPROVIDER_AWS &&
+	if cluster.GetCloudProvider() == client.CLOUDPROVIDERTYPE_AWS &&
 		*configType != client.LOGEXPORTTYPE_AWS_CLOUDWATCH {
 		resp.Diagnostics.AddError(
 			"Incompatible log export type",
@@ -186,7 +186,7 @@ func (r *logExportConfigResource) Create(
 		)
 		return
 	}
-	if cluster.GetCloudProvider() == client.APICLOUDPROVIDER_GCP &&
+	if cluster.GetCloudProvider() == client.CLOUDPROVIDERTYPE_GCP &&
 		*configType != client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING {
 		resp.Diagnostics.AddError(
 			"Incompatible log export type",
@@ -250,7 +250,7 @@ func loadLogExportIntoTerraformState(
 				groupRedact = types.BoolValue(apiGroup.GetRedact())
 			}
 			var groupMinLevel types.String
-			if apiGroup.GetMinLevel() == client.LOGLEVEL_LOG_LEVEL_UNSPECIFIED {
+			if apiGroup.GetMinLevel() == client.LOGLEVELTYPE_UNSPECIFIED {
 				groupMinLevel = types.StringNull()
 			} else {
 				groupMinLevel = types.StringValue(string(apiGroup.GetMinLevel()))
@@ -394,9 +394,9 @@ func logExportGroupToClientGroup(group LogExportGroup) (*client.LogExportGroup, 
 	}
 
 	if group.MinLevel.IsNull() {
-		clientGroup.SetMinLevel(client.LOGLEVEL_LOG_LEVEL_UNSPECIFIED)
+		clientGroup.SetMinLevel(client.LOGLEVELTYPE_UNSPECIFIED)
 	} else {
-		minLevel, err := client.NewLogLevelFromValue(group.MinLevel.ValueString())
+		minLevel, err := client.NewLogLevelTypeFromValue(group.MinLevel.ValueString())
 		if err != nil {
 			return nil, err
 		}

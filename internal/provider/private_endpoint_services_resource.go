@@ -40,7 +40,9 @@ type privateEndpointServicesResource struct {
 
 const endpointServicesCreateTimeout = time.Hour
 
-func (r *privateEndpointServicesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *privateEndpointServicesResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)",
 		Attributes: map[string]schema.Attribute{
@@ -99,11 +101,15 @@ func (r *privateEndpointServicesResource) Schema(_ context.Context, _ resource.S
 	}
 }
 
-func (r *privateEndpointServicesResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+func (r *privateEndpointServicesResource) Metadata(
+	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_private_endpoint_services"
 }
 
-func (r *privateEndpointServicesResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *privateEndpointServicesResource) Configure(
+	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -114,7 +120,9 @@ func (r *privateEndpointServicesResource) Configure(_ context.Context, req resou
 	}
 }
 
-func (r *privateEndpointServicesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+func (r *privateEndpointServicesResource) Create(
+	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -142,7 +150,7 @@ func (r *privateEndpointServicesResource) Create(ctx context.Context, req resour
 			"Private endpoint services are only available for dedicated clusters",
 		)
 		return
-	} else if cluster.CloudProvider != client.APICLOUDPROVIDER_AWS {
+	} else if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster cloud provider",
 			"Private endpoint services are currently only available for AWS clusters",
@@ -150,10 +158,9 @@ func (r *privateEndpointServicesResource) Create(ctx context.Context, req resour
 		return
 	}
 
-	body := make(map[string]interface{}, 0)
 	// If private endpoint services already exist for this cluster,
 	// this is a no-op. The API will gracefully return the existing services.
-	_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.ValueString(), &body)
+	_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -180,7 +187,9 @@ func (r *privateEndpointServicesResource) Create(ctx context.Context, req resour
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *privateEndpointServicesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+func (r *privateEndpointServicesResource) Read(
+	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
+) {
 	if r.provider == nil || !r.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -210,7 +219,9 @@ func (r *privateEndpointServicesResource) Read(ctx context.Context, req resource
 	resp.Diagnostics.Append(diags...)
 }
 
-func loadEndpointServicesIntoTerraformState(apiServices *client.PrivateEndpointServices, state *PrivateEndpointServices) {
+func loadEndpointServicesIntoTerraformState(
+	apiServices *client.PrivateEndpointServices, state *PrivateEndpointServices,
+) {
 	serviceList := apiServices.GetServices()
 	state.Services = make([]PrivateEndpointService, len(serviceList))
 	for i, service := range serviceList {
@@ -232,14 +243,18 @@ func loadEndpointServicesIntoTerraformState(apiServices *client.PrivateEndpointS
 	}
 }
 
-func (r *privateEndpointServicesResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
+func (r *privateEndpointServicesResource) Update(
+	_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse,
+) {
 	// no-op - Endpoint services cannot be updated
 
 	// The only non-computed field is the cluster ID, which requires replace,
 	// so no extra warning is necessary here.
 }
 
-func (r *privateEndpointServicesResource) Delete(_ context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse) {
+func (r *privateEndpointServicesResource) Delete(
+	_ context.Context, _ resource.DeleteRequest, resp *resource.DeleteResponse,
+) {
 	// no-op - Endpoint services cannot be deleted
 	resp.Diagnostics.AddWarning("Cannot remove endpoint services",
 		"Endpoint Services resources can't be deleted once established."+
@@ -247,11 +262,18 @@ func (r *privateEndpointServicesResource) Delete(_ context.Context, _ resource.D
 	)
 }
 
-func (r *privateEndpointServicesResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+func (r *privateEndpointServicesResource) ImportState(
+	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
+) {
 	resource.ImportStatePassthroughID(ctx, path.Root("cluster_id"), req, resp)
 }
 
-func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, cl client.Service, services *client.PrivateEndpointServices) sdk_resource.RetryFunc {
+func waitForEndpointServicesCreatedFunc(
+	ctx context.Context,
+	clusterID string,
+	cl client.Service,
+	services *client.PrivateEndpointServices,
+) sdk_resource.RetryFunc {
 	return func() *sdk_resource.RetryError {
 		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
@@ -267,9 +289,9 @@ func waitForEndpointServicesCreatedFunc(ctx context.Context, clusterID string, c
 		// If any have failed or have any other non-available status, something went wrong.
 		// If all the services have been created, we're done.
 		for _, service := range services.GetServices() {
-			if service.GetStatus() == client.PRIVATEENDPOINTSERVICESTATUS_CREATING {
+			if service.GetStatus() == client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING {
 				creating = true
-			} else if service.GetStatus() != client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE {
+			} else if service.GetStatus() != client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE {
 				return sdk_resource.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
 			}
 		}

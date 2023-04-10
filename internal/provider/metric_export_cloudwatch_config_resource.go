@@ -127,7 +127,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 		return
 	}
 
-	if cluster.GetCloudProvider() != client.APICLOUDPROVIDER_AWS {
+	if cluster.GetCloudProvider() != client.CLOUDPROVIDERTYPE_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster type",
 			"CloudWatch metric export services are only available for AWS clusters",
@@ -209,13 +209,13 @@ func waitForCloudWatchMetricExportReadyFunc(
 
 		*cloudWatchMetricExportInfo = *apiObj
 		switch cloudWatchMetricExportInfo.GetStatus() {
-		case client.METRICEXPORTSTATUS_ERROR:
+		case client.METRICEXPORTSTATUSTYPE_ERROR:
 			errMsg := "an error occurred during CloudWatch metric export config update"
 			if cloudWatchMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, cloudWatchMetricExportInfo.GetUserMessage())
 			}
 			return sdk_resource.NonRetryableError(fmt.Errorf(errMsg))
-		case client.METRICEXPORTSTATUS_ENABLING, client.METRICEXPORTSTATUS_DISABLING:
+		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
 			return sdk_resource.RetryableError(fmt.Errorf("the CloudWatch metric export is not ready yet"))
 		default:
 			return nil

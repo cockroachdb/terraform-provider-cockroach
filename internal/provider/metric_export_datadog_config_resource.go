@@ -122,7 +122,7 @@ func (r *metricExportDatadogConfigResource) Create(
 		return
 	}
 
-	site, err := client.NewApiDatadogSiteFromValue(plan.Site.ValueString())
+	site, err := client.NewDatadogSiteTypeFromValue(plan.Site.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error preparing Datadog metric export config",
@@ -191,13 +191,13 @@ func waitForDatdogMetricExportReadyFunc(
 
 		*datadogMetricExportInfo = *apiObj
 		switch datadogMetricExportInfo.GetStatus() {
-		case client.METRICEXPORTSTATUS_ERROR:
+		case client.METRICEXPORTSTATUSTYPE_ERROR:
 			errMsg := "an error occurred during Datadog metric export config update"
 			if datadogMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, datadogMetricExportInfo.GetUserMessage())
 			}
 			return sdk_resource.NonRetryableError(fmt.Errorf(errMsg))
-		case client.METRICEXPORTSTATUS_ENABLING, client.METRICEXPORTSTATUS_DISABLING:
+		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
 			return sdk_resource.RetryableError(fmt.Errorf("the Datadog metric export is not ready yet"))
 		default:
 			return nil
@@ -264,7 +264,7 @@ func (r *metricExportDatadogConfigResource) Update(
 		return
 	}
 
-	site, err := client.NewApiDatadogSiteFromValue(plan.Site.ValueString())
+	site, err := client.NewDatadogSiteTypeFromValue(plan.Site.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error preparing Datadog metric export config",

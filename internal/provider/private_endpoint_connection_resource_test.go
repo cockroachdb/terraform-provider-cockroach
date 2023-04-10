@@ -73,7 +73,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			{
 				RegionName:    "us-east-1",
 				CloudProvider: "AWS",
-				Status:        client.PRIVATEENDPOINTSERVICESTATUS_AVAILABLE,
+				Status:        client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
 				Aws: client.AWSPrivateLinkServiceDetail{
 					ServiceName:         "service-name",
 					ServiceId:           "service-id",
@@ -85,7 +85,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 	connection := client.AwsEndpointConnection{
 		RegionName:    "us-east-1",
 		CloudProvider: "AWS",
-		Status:        client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE,
+		Status:        client.AWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE,
 		EndpointId:    endpointID,
 		ServiceId:     "service-id",
 	}
@@ -97,30 +97,30 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(4)
-	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID, gomock.Any()).
+	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
 		Return(services, nil, nil)
 	s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
 		Return(services, nil, nil).
 		Times(2)
-	available := client.AWSENDPOINTCONNECTIONSTATUS_AVAILABLE
+	available := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE
 	s.EXPECT().SetAwsEndpointConnectionState(
 		gomock.Any(),
 		clusterID,
 		endpointID,
-		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
-			Status: &available,
+		&client.SetAwsEndpointConnectionStateRequest{
+			Status: available,
 		}).
 		Return(&connection, nil, nil)
 	s.EXPECT().ListAwsEndpointConnections(gomock.Any(), clusterID).
 		Return(connections, nil, nil).
 		Times(2)
-	rejected := client.AWSENDPOINTCONNECTIONSTATUS_REJECTED
+	rejected := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED
 	s.EXPECT().SetAwsEndpointConnectionState(
 		gomock.Any(),
 		clusterID,
 		endpointID,
-		&client.CockroachCloudSetAwsEndpointConnectionStateRequest{
-			Status: &rejected,
+		&client.SetAwsEndpointConnectionStateRequest{
+			Status: rejected,
 		}).
 		Return(&connection, nil, nil)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)

@@ -45,8 +45,8 @@ provider "cockroach" {
 }
 
 resource "cockroach_cluster" "example" {
-  name              = var.cluster_name
-  cloud_provider    = var.cloud_provider
+  name           = var.cluster_name
+  cloud_provider = var.cloud_provider
   dedicated = {
     storage_gib  = var.storage_gib
     machine_type = var.machine_type
@@ -60,6 +60,6 @@ resource "cockroach_cluster" "example" {
 }
 
 resource "cockroach_client_ca_cert" "example" {
-  id = cockroach_cluster.example.id
+  id            = cockroach_cluster.example.id
   x509_pem_cert = file("client-ca.crt")
 }

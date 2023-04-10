@@ -56,6 +56,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
+	spendLimit := int32(1)
 	true_val := true
 	cases := []struct {
 		name         string
@@ -73,7 +74,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				State:            "CREATED",
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: 1,
+						SpendLimit: &spendLimit,
 						RoutingId:  "routing-id",
 					},
 				},
@@ -96,7 +97,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				State:            "CREATED",
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: 1,
+						SpendLimit: &spendLimit,
 						RoutingId:  "routing-id",
 					},
 				},
@@ -222,10 +223,10 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.1.0",
-		Plan:             client.PLAN_DEDICATED,
-		CloudProvider:    client.APICLOUDPROVIDER_GCP,
+		Plan:             client.PLANTYPE_DEDICATED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_GCP,
 		State:            client.CLUSTERSTATETYPE_CREATED,
-		UpgradeStatus:    client.CLUSTERUPGRADESTATUS_UPGRADE_AVAILABLE,
+		UpgradeStatus:    client.CLUSTERUPGRADESTATUSTYPE_UPGRADE_AVAILABLE,
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
 				MachineType:    "n1-standard-2",
@@ -244,13 +245,13 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 
 	upgradingCluster := cluster
 	upgradingCluster.CockroachVersion = "v22.2.0"
-	upgradingCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUS_MAJOR_UPGRADE_RUNNING
+	upgradingCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_MAJOR_UPGRADE_RUNNING
 
 	pendingCluster := upgradingCluster
-	pendingCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUS_PENDING_FINALIZATION
+	pendingCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_PENDING_FINALIZATION
 
 	finalizedCluster := upgradingCluster
-	finalizedCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUS_FINALIZED
+	finalizedCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_FINALIZED
 
 	// Creation
 
@@ -325,7 +326,9 @@ func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool
 	})
 }
 
-func testCheckCockroachClusterExists(resourceName string, cluster *client.Cluster) resource.TestCheckFunc {
+func testCheckCockroachClusterExists(
+	resourceName string, cluster *client.Cluster,
+) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p := testAccProvider.(*provider)
 		p.service = NewService(cl)

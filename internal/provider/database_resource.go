@@ -211,13 +211,13 @@ func (r *databaseResource) Update(
 		return
 	}
 
-	updateReq := client.UpdateDatabaseRequest{
-		Name:    state.Name.ValueString(),
+	updateReq := client.UpdateDatabaseRequest1{
 		NewName: plan.Name.ValueString(),
 	}
 	clusterID := plan.ClusterId.ValueString()
+	databaseName := state.Name.ValueString()
 
-	databaseObj, _, err := r.provider.service.EditDatabase(ctx, clusterID, &updateReq)
+	databaseObj, _, err := r.provider.service.EditDatabase(ctx, clusterID, databaseName, &updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating database name",

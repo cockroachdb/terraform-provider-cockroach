@@ -65,6 +65,7 @@ Required:
 Optional:
 
 - `node_count` (Number)
+- `primary` (Boolean)
 
 Read-Only:
 

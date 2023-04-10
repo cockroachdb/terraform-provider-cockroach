@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -270,11 +271,11 @@ func NewRoleResource() resource.Resource {
 
 func fromRoleToBuiltInRole(role Role) (*client.BuiltInRole, error) {
 	apiId := role.ResourceId.ValueString()
-	apiType, err := client.NewResourceTypeFromValue(role.ResourceType.ValueString())
+	apiType, err := client.NewResourceTypeTypeFromValue(role.ResourceType.ValueString())
 	if err != nil {
 		return nil, err
 	}
-	apiRoleName, err := client.NewOrganizationUserRoleFromValue(role.RoleName.ValueString())
+	apiRoleName, err := client.NewOrganizationUserRoleTypeFromValue(role.RoleName.ValueString())
 	if err != nil {
 		return nil, err
 	}
@@ -289,7 +290,9 @@ func fromRoleToBuiltInRole(role Role) (*client.BuiltInRole, error) {
 	return &apiRole, nil
 }
 
-func loadRolesToTerraformState(userId string, roles *client.GetAllRolesForUserResponse, state *RoleGrant) {
+func loadRolesToTerraformState(
+	userId string, roles *client.GetAllRolesForUserResponse, state *RoleGrant,
+) {
 	roleGrants := &client.UserRoleGrants{
 		Roles:  roles.GetRoles(),
 		UserId: userId,

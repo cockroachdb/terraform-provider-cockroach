@@ -80,7 +80,7 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 		},
 	}
 
-	enabledStatus := client.METRICEXPORTSTATUS_ENABLED
+	enabledStatus := client.METRICEXPORTSTATUSTYPE_ENABLED
 	arn := "test-role-arn"
 	logGroupName := "example"
 	emptyString := ""

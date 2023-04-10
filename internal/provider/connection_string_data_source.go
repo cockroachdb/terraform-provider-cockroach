@@ -34,7 +34,9 @@ type connectionStringDataSource struct {
 	provider *provider
 }
 
-func (d *connectionStringDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *connectionStringDataSource) Schema(
+	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -76,11 +78,15 @@ func (d *connectionStringDataSource) Schema(_ context.Context, _ datasource.Sche
 	}
 }
 
-func (d *connectionStringDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *connectionStringDataSource) Metadata(
+	_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_connection_string"
 }
 
-func (d *connectionStringDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *connectionStringDataSource) Configure(
+	_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -91,7 +97,9 @@ func (d *connectionStringDataSource) Configure(_ context.Context, req datasource
 	}
 }
 
-func (d *connectionStringDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *connectionStringDataSource) Read(
+	ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse,
+) {
 	if d.provider == nil || !d.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -118,16 +126,16 @@ func (d *connectionStringDataSource) Read(ctx context.Context, req datasource.Re
 	}
 	var os string
 	if !config.OS.IsNull() {
-		os = fmt.Sprintf("OS_%s", config.OS.ValueString())
+		os = config.OS.ValueString()
 	} else {
 		switch runtime.GOOS {
 		case "windows":
-			os = "OS_WINDOWS"
+			os = "WINDOWS"
 		case "darwin":
-			os = "OS_MAC"
+			os = "MAC"
 		default:
 			// Likely some other POSIX variant that we can treat like Linux.
-			os = "OS_LINUX"
+			os = "LINUX"
 		}
 	}
 

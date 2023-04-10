@@ -51,6 +51,7 @@ Read-Only:
 
 - `name` (String)
 - `node_count` (Number)
+- `primary` (Boolean)
 - `sql_dns` (String)
 - `ui_dns` (String)
 

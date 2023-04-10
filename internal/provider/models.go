@@ -63,6 +63,9 @@ type APIErrorMessage struct {
 	HttpCode int
 }
 
+// CockroachCluster is used by the cluster resource
+// and the cluster data source. Changes to this model
+// should be supported by both.
 type CockroachCluster struct {
 	ID               types.String             `tfsdk:"id"`
 	Name             types.String             `tfsdk:"name"`

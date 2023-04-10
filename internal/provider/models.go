@@ -177,6 +177,11 @@ type Organization struct {
 	CreatedAt types.String `tfsdk:"created_at"`
 }
 
+type PersonUser struct {
+	ID    types.String `tfsdk:"id"`
+	Email types.String `tfsdk:"email"`
+}
+
 type LogExportGroup struct {
 	LogName  types.String   `tfsdk:"log_name"`
 	Channels []types.String `tfsdk:"channels"`

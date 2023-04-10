@@ -85,7 +85,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	logName := "test"
 	region := "us-east-1"
 	trueBool := true
-	minLevel, _ := client.NewLogLevelFromValue("WARNING")
+	minLevel, _ := client.NewLogLevelTypeFromValue("WARNING")
 	createdGroups := []client.LogExportGroup{
 		{LogName: "sql", Channels: []string{"SQL_SCHEMA", "SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
 	}

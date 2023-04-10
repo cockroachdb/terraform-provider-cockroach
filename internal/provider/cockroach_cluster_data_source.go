@@ -31,7 +31,9 @@ type clusterDataSource struct {
 	provider *provider
 }
 
-func (d *clusterDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *clusterDataSource) Schema(
+	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
+) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -123,11 +125,15 @@ func (d *clusterDataSource) Schema(_ context.Context, _ datasource.SchemaRequest
 	}
 }
 
-func (d *clusterDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+func (d *clusterDataSource) Metadata(
+	_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse,
+) {
 	resp.TypeName = req.ProviderTypeName + "_cluster"
 }
 
-func (d *clusterDataSource) Configure(_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
+func (d *clusterDataSource) Configure(
+	_ context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse,
+) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -138,7 +144,9 @@ func (d *clusterDataSource) Configure(_ context.Context, req datasource.Configur
 	}
 }
 
-func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+func (d *clusterDataSource) Read(
+	ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse,
+) {
 	if d.provider == nil || !d.provider.configured {
 		addConfigureProviderErr(&resp.Diagnostics)
 		return
@@ -192,7 +200,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 	cluster.UpgradeStatus = types.StringValue(string(cockroachCluster.UpgradeStatus))
 	if cockroachCluster.Config.Serverless != nil {
 		cluster.ServerlessConfig = &ServerlessClusterConfig{
-			SpendLimit: types.Int64Value(int64(cockroachCluster.Config.Serverless.SpendLimit)),
+			SpendLimit: types.Int64Value(int64(cockroachCluster.Config.Serverless.GetSpendLimit())),
 			RoutingId:  types.StringValue(cockroachCluster.Config.Serverless.RoutingId),
 		}
 	}
@@ -203,7 +211,7 @@ func (d *clusterDataSource) Read(ctx context.Context, req datasource.ReadRequest
 			StorageGib:               types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
 			MemoryGib:                types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
 			DiskIops:                 types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
-			PrivateNetworkVisibility: types.BoolValue(cockroachCluster.GetNetworkVisibility() == client.NETWORKVISIBLITY_PRIVATE),
+			PrivateNetworkVisibility: types.BoolValue(cockroachCluster.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
 		}
 	}
 

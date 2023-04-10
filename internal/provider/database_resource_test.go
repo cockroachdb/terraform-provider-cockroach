@@ -59,13 +59,14 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
 		return s
 	})()
+	spendLimit := int32(1)
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            uuid.Nil.String(),
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: 1,
+				SpendLimit: &spendLimit,
 			},
 		},
 		State: "CREATED",
@@ -103,7 +104,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		Times(2)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{database}}, nil, nil)
-	s.EXPECT().EditDatabase(gomock.Any(), clusterID, &client.UpdateDatabaseRequest{Name: databaseName, NewName: newDatabaseName}).
+	s.EXPECT().EditDatabase(gomock.Any(), clusterID, databaseName, &client.UpdateDatabaseRequest1{NewName: newDatabaseName}).
 		Return(&updatedDatabase, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{updatedDatabase}}, nil, nil).

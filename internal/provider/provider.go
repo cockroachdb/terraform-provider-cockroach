@@ -135,6 +135,7 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 		NewClusterCertDataSource,
 		NewConnectionStringDataSource,
 		NewOrganizationDataSource,
+		NewPersonUserDataSource,
 	}
 }
 

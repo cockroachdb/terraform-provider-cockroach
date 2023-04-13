@@ -229,10 +229,10 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		UpgradeStatus:    client.CLUSTERUPGRADESTATUSTYPE_UPGRADE_AVAILABLE,
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
-				MachineType:    "n1-standard-4",
-				NumVirtualCpus: 4,
-				StorageGib:     35,
-				MemoryGib:      15,
+				MachineType:    "n1-standard-2",
+				NumVirtualCpus: 2,
+				StorageGib:     15,
+				MemoryGib:      8,
 			},
 		},
 		Regions: []client.Region{
@@ -399,8 +399,8 @@ resource "cockroach_cluster" "dedicated" {
     cloud_provider = "GCP"
     cockroach_version = "%s"
     dedicated = {
-	  storage_gib = 35
-	  machine_type = "n1-standard-4"
+	  storage_gib = 15
+	  machine_type = "n1-standard-2"
     }
 	regions = [{
 		name: "us-central1"

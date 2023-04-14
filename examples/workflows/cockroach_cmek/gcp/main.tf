@@ -67,6 +67,8 @@ provider "google" {
   zone    = var.gcp_zone
 }
 
+provider "time" {}
+
 resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = "GCP"
@@ -86,8 +88,8 @@ resource "google_service_account" "example" {
   account_id = "${var.cluster_name}-cmek"
 }
 
-resource "google_service_account_iam_binding" "example" {
-  members            = ["serviceAccount:crl-kms-user-${substr(cockroach_cluster.example.id, -12, -1)}@${cockroach_cluster.example.account_id}.iam.gserviceaccount.com"]
+resource "google_service_account_iam_member" "example" {
+  member             = "serviceAccount:crl-kms-user-${substr(cockroach_cluster.example.id, -12, -1)}@${cockroach_cluster.example.account_id}.iam.gserviceaccount.com"
   role               = "roles/iam.serviceAccountTokenCreator"
   service_account_id = google_service_account.example.name
 }
@@ -107,13 +109,21 @@ resource "google_kms_crypto_key" "example" {
   }
 }
 
-resource "google_kms_crypto_key_iam_binding" "example" {
+resource "google_kms_crypto_key_iam_member" "example" {
   crypto_key_id = google_kms_crypto_key.example.id
   role          = "roles/cloudkms.cryptoKeyEncrypterDecrypter"
-  members       = ["serviceAccount:${google_service_account.example.email}"]
+  member        = "serviceAccount:${google_service_account.example.email}"
+}
+
+# It can take time for policy changes to propagate, so the CMEK resource
+# may fail if created immediately after the policy member.
+resource "time_sleep" "enable_policy_wait" {
+  depends_on = [google_service_account_iam_member.example]
+  create_duration = "3m"
 }
 
 resource "cockroach_cmek" "example" {
+  depends_on = [time_sleep.enable_policy_wait]
   id = cockroach_cluster.example.id
   regions = /*concat(*/ [
     {

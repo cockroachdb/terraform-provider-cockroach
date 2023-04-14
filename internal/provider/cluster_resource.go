@@ -38,6 +38,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
@@ -492,6 +493,11 @@ func (r *clusterResource) Update(
 		return
 	}
 
+	waitForClusterLock(ctx, state, r.provider.service, &resp.Diagnostics)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	// CRDB Versions
 	if !plan.CockroachVersion.IsNull() && plan.CockroachVersion != state.CockroachVersion {
 		// Validate that the target version is valid.
@@ -626,6 +632,11 @@ func (r *clusterResource) Delete(
 	var state CockroachCluster
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	waitForClusterLock(ctx, state, r.provider.service, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -780,6 +791,24 @@ func waitForClusterReadyFunc(
 			return sdk_resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
 		return sdk_resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
+	}
+}
+
+// waitForClusterLock checks to see if the cluster is locked by any sort of automatic job,
+// and waits if necessary before proceeding.
+func waitForClusterLock(ctx context.Context, state CockroachCluster, s client.Service, diags *diag.Diagnostics) {
+	if state.State.ValueString() == string(client.CLUSTERSTATETYPE_LOCKED) {
+		tflog.Info(ctx, "Cluster is locked. Waiting for the operation to finish.")
+		clusterObj, _, err := s.GetCluster(ctx, state.ID.ValueString())
+		if err != nil {
+			diags.AddError("Couldn't retrieve cluster info", formatAPIErrorMessage(err))
+			return
+		}
+		err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+			waitForClusterReadyFunc(ctx, clusterObj.Id, s, clusterObj))
+		if err != nil {
+			diags.AddError("Cluster is not ready", err.Error())
+		}
 	}
 }
 

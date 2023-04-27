@@ -24,8 +24,8 @@ import (
 
 // ApiDatabase struct for ApiDatabase.
 type ApiDatabase struct {
-	Name       string  `json:"name"`
-	TableCount *string `json:"table_count,omitempty"`
+	Name       string `json:"name"`
+	TableCount *int64 `json:"table_count,omitempty,string"`
 }
 
 // NewApiDatabase instantiates a new ApiDatabase object.
@@ -62,16 +62,16 @@ func (o *ApiDatabase) SetName(v string) {
 }
 
 // GetTableCount returns the TableCount field value if set, zero value otherwise.
-func (o *ApiDatabase) GetTableCount() string {
+func (o *ApiDatabase) GetTableCount() int64 {
 	if o == nil || o.TableCount == nil {
-		var ret string
+		var ret int64
 		return ret
 	}
 	return *o.TableCount
 }
 
-// SetTableCount gets a reference to the given string and assigns it to the TableCount field.
-func (o *ApiDatabase) SetTableCount(v string) {
+// SetTableCount gets a reference to the given int64 and assigns it to the TableCount field.
+func (o *ApiDatabase) SetTableCount(v int64) {
 	o.TableCount = &v
 }
 

@@ -11,6 +11,10 @@ default: install
 build:
 	go build -o ${BINARY}
 
+# Generate Terraform Provider docs.
+generate:
+	go generate
+
 update-sdk:
 	go get github.com/cockroachdb/cockroach-cloud-sdk-go
 	go generate ./mock

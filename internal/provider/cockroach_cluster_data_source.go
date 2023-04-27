@@ -63,6 +63,17 @@ func (d *clusterDataSource) Schema(
 					"spend_limit": schema.Int64Attribute{
 						Computed: true,
 					},
+					"usage_limits": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"request_unit_limit": schema.Int64Attribute{
+								Computed: true,
+							},
+							"storage_mib_limit": schema.Int64Attribute{
+								Computed: true,
+							},
+						},
+					},
 					"routing_id": schema.StringAttribute{
 						Computed: true,
 					},

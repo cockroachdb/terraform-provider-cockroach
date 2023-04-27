@@ -19,17 +19,14 @@ package provider
 import (
 	"context"
 	"fmt"
-	"net/http"
-	"regexp"
-	"strconv"
-
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"net/http"
+	"regexp"
 )
 
 type databaseResource struct {
@@ -300,12 +297,7 @@ func loadDatabaseToTerraformState(
 	// Get the unique ID (required by terraform framework) by combining
 	// the cluster ID and database name.
 	state.ID = types.StringValue(fmt.Sprintf(databaseIDFmt, clusterID, databaseObj.GetName()))
-	tableCountStr := databaseObj.GetTableCount()
-	if tableCountStr != "" {
-		// The API returns an int64 string for table count.
-		tableCountInt, err := strconv.ParseInt(tableCountStr, 10, 64)
-		if err == nil {
-			state.TableCount = basetypes.NewInt64Value(tableCountInt)
-		}
+	if databaseObj.TableCount != nil {
+		state.TableCount = types.Int64Value(*databaseObj.TableCount)
 	}
 }

@@ -63,5 +63,14 @@ Read-Only:
 
 - `routing_id` (String)
 - `spend_limit` (Number)
+- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
+
+<a id="nestedatt--serverless--usage_limits"></a>
+### Nested Schema for `serverless.usage_limits`
+
+Read-Only:
+
+- `request_unit_limit` (Number)
+- `storage_mib_limit` (Number)
 
 

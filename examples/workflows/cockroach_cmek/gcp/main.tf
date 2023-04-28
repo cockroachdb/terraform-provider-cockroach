@@ -118,13 +118,13 @@ resource "google_kms_crypto_key_iam_member" "example" {
 # It can take time for policy changes to propagate, so the CMEK resource
 # may fail if created immediately after the policy member.
 resource "time_sleep" "enable_policy_wait" {
-  depends_on = [google_service_account_iam_member.example]
+  depends_on      = [google_service_account_iam_member.example]
   create_duration = "3m"
 }
 
 resource "cockroach_cmek" "example" {
   depends_on = [time_sleep.enable_policy_wait]
-  id = cockroach_cluster.example.id
+  id         = cockroach_cluster.example.id
   regions = /*concat(*/ [
     {
       region : var.gcp_region

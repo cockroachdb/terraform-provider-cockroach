@@ -222,7 +222,6 @@ func testCMEKResource(t *testing.T, clusterName string, useMock bool) {
 	var (
 		clusterResourceName = "cockroach_cluster.test"
 		cmekResourceName    = "cockroach_cmek.test"
-		cluster             client.Cluster
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -233,7 +232,7 @@ func testCMEKResource(t *testing.T, clusterName string, useMock bool) {
 			{
 				Config: getTestCMEKResourceCreateConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					testCheckCockroachClusterExists(clusterResourceName, &cluster),
+					testCheckCockroachClusterExists(clusterResourceName),
 				),
 			},
 			{

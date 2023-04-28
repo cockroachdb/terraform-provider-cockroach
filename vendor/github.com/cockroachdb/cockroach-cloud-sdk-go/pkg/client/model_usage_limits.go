@@ -25,16 +25,16 @@ import (
 // UsageLimits struct for UsageLimits.
 type UsageLimits struct {
 	// request_unit_limit is the maximum number of request units that the cluster can consume during the month. If this limit is exceeded, then the cluster is disabled until the limit is increased, or until the beginning of the next month when more free request units are granted. It is an error for this to be zero.
-	RequestUnitLimit string `json:"request_unit_limit"`
-	// storage_mib_limit is the maximum number of Mebibytes of storage that the cluster can have at any time during the month. If this limit is exceeded, then the cluster is throttled; only one SQL connection is allowed at a time, with the expectation that it is used to delete data to reduce storage usage. If is an error for this to be zero.
-	StorageMibLimit string `json:"storage_mib_limit"`
+	RequestUnitLimit int64 `json:"request_unit_limit,string"`
+	// storage_mib_limit is the maximum number of Mebibytes of storage that the cluster can have at any time during the month. If this limit is exceeded, then the cluster is throttled; only one SQL connection is allowed at a time, with the expectation that it is used to delete data to reduce storage usage. It is an error for this to be zero.
+	StorageMibLimit int64 `json:"storage_mib_limit,string"`
 }
 
 // NewUsageLimits instantiates a new UsageLimits object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUsageLimits(requestUnitLimit string, storageMibLimit string) *UsageLimits {
+func NewUsageLimits(requestUnitLimit int64, storageMibLimit int64) *UsageLimits {
 	p := UsageLimits{}
 	p.RequestUnitLimit = requestUnitLimit
 	p.StorageMibLimit = storageMibLimit
@@ -50,9 +50,9 @@ func NewUsageLimitsWithDefaults() *UsageLimits {
 }
 
 // GetRequestUnitLimit returns the RequestUnitLimit field value.
-func (o *UsageLimits) GetRequestUnitLimit() string {
+func (o *UsageLimits) GetRequestUnitLimit() int64 {
 	if o == nil {
-		var ret string
+		var ret int64
 		return ret
 	}
 
@@ -60,14 +60,14 @@ func (o *UsageLimits) GetRequestUnitLimit() string {
 }
 
 // SetRequestUnitLimit sets field value.
-func (o *UsageLimits) SetRequestUnitLimit(v string) {
+func (o *UsageLimits) SetRequestUnitLimit(v int64) {
 	o.RequestUnitLimit = v
 }
 
 // GetStorageMibLimit returns the StorageMibLimit field value.
-func (o *UsageLimits) GetStorageMibLimit() string {
+func (o *UsageLimits) GetStorageMibLimit() int64 {
 	if o == nil {
-		var ret string
+		var ret int64
 		return ret
 	}
 
@@ -75,7 +75,7 @@ func (o *UsageLimits) GetStorageMibLimit() string {
 }
 
 // SetStorageMibLimit sets field value.
-func (o *UsageLimits) SetStorageMibLimit(v string) {
+func (o *UsageLimits) SetStorageMibLimit(v int64) {
 	o.StorageMibLimit = v
 }
 

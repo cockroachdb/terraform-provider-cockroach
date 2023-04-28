@@ -46,8 +46,14 @@ type DedicatedClusterConfig struct {
 }
 
 type ServerlessClusterConfig struct {
-	SpendLimit types.Int64  `tfsdk:"spend_limit"`
-	RoutingId  types.String `tfsdk:"routing_id"`
+	SpendLimit  types.Int64  `tfsdk:"spend_limit"`
+	RoutingId   types.String `tfsdk:"routing_id"`
+	UsageLimits *UsageLimits `tfsdk:"usage_limits"`
+}
+
+type UsageLimits struct {
+	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
+	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
 }
 
 type SQLUser struct {

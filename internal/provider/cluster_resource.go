@@ -124,11 +124,27 @@ func (r *clusterResource) Schema(
 				},
 				Attributes: map[string]schema.Attribute{
 					"spend_limit": schema.Int64Attribute{
-						Required: true,
-						PlanModifiers: []planmodifier.Int64{
-							int64planmodifier.UseStateForUnknown(),
+						Optional:            true,
+						MarkdownDescription: "Spend limit in US cents.",
+					},
+					"usage_limits": schema.SingleNestedAttribute{
+						Optional: true,
+						Attributes: map[string]schema.Attribute{
+							"request_unit_limit": schema.Int64Attribute{
+								Required: true,
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "Maximum number of request units that the cluster can consume during the month.",
+							},
+							"storage_mib_limit": schema.Int64Attribute{
+								Required: true,
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
 						},
-						MarkdownDescription: "Spend limit in US cents",
 					},
 					"routing_id": schema.StringAttribute{
 						Computed: true,
@@ -231,6 +247,10 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("dedicated").AtName("num_virtual_cpus"),
 			path.MatchRoot("dedicated").AtName("machine_type"),
 		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("serverless").AtName("spend_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits"),
+		),
 	}
 }
 
@@ -270,8 +290,18 @@ func (r *clusterResource) Create(
 		if primaryRegion != "" {
 			serverless.PrimaryRegion = &primaryRegion
 		}
-		spendLimit := int32(plan.ServerlessConfig.SpendLimit.ValueInt64())
-		serverless.SpendLimit = &spendLimit
+
+		usageLimits := plan.ServerlessConfig.UsageLimits
+		if usageLimits != nil {
+			serverless.UsageLimits = client.NewUsageLimits(
+				usageLimits.RequestUnitLimit.ValueInt64(), usageLimits.StorageMibLimit.ValueInt64())
+		} else {
+			spendLimit := plan.ServerlessConfig.SpendLimit
+			if !spendLimit.IsNull() {
+				val := int32(spendLimit.ValueInt64())
+				serverless.SpendLimit = &val
+			}
+		}
 
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
@@ -564,8 +594,22 @@ func (r *clusterResource) Update(
 	clusterReq := client.NewUpdateClusterSpecification()
 	if plan.ServerlessConfig != nil {
 		serverless := client.NewServerlessClusterUpdateSpecification()
-		spendLimit := int32(plan.ServerlessConfig.SpendLimit.ValueInt64())
-		serverless.SpendLimit = &spendLimit
+
+		// Set either usage limits or spend limit.
+		usageLimits := plan.ServerlessConfig.UsageLimits
+		if usageLimits != nil {
+			serverless.UsageLimits = client.NewUsageLimits(
+				usageLimits.RequestUnitLimit.ValueInt64(), usageLimits.StorageMibLimit.ValueInt64())
+		} else {
+			// Always set a spend limit. If it's unknown/null, still set it to
+			// zero so that the server will clear limits.
+			// TODO(andyk): Update this code once there is a better way of telling
+			// the server to clear limits. Today, the Go SDK cannot distinguish
+			// between null values that mean "clear limits" and null values that
+			// mean "ignore these fields".
+			val := int32(plan.ServerlessConfig.SpendLimit.ValueInt64())
+			serverless.SpendLimit = &val
+		}
 		clusterReq.SetServerless(*serverless)
 	} else if cfg := plan.DedicatedConfig; cfg != nil {
 		dedicated := client.NewDedicatedClusterUpdateSpecification()
@@ -726,10 +770,22 @@ func loadClusterToTerraformState(
 	state.UpgradeStatus = types.StringValue(string(clusterObj.UpgradeStatus))
 
 	if clusterObj.Config.Serverless != nil {
-		state.ServerlessConfig = &ServerlessClusterConfig{
-			SpendLimit: types.Int64Value(int64(clusterObj.Config.Serverless.GetSpendLimit())),
-			RoutingId:  types.StringValue(clusterObj.Config.Serverless.RoutingId),
+		serverlessConfig := &ServerlessClusterConfig{
+			RoutingId: types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
+
+		// Set either the spend limit or usage limits, depending on which the plan
+		// requested. Both options are returned by the API.
+		if plan.ServerlessConfig.UsageLimits != nil {
+			usageLimits := clusterObj.Config.Serverless.UsageLimits
+			serverlessConfig.UsageLimits = &UsageLimits{
+				RequestUnitLimit: types.Int64Value(usageLimits.RequestUnitLimit),
+				StorageMibLimit:  types.Int64Value(usageLimits.StorageMibLimit),
+			}
+		} else if !plan.ServerlessConfig.SpendLimit.IsNull() {
+			serverlessConfig.SpendLimit = types.Int64Value(int64(clusterObj.Config.Serverless.GetSpendLimit()))
+		}
+		state.ServerlessConfig = serverlessConfig
 	} else if clusterObj.Config.Dedicated != nil {
 		state.DedicatedConfig = &DedicatedClusterConfig{
 			MachineType:              types.StringValue(clusterObj.Config.Dedicated.MachineType),

@@ -74,12 +74,21 @@ Read-Only:
 <a id="nestedatt--serverless"></a>
 ### Nested Schema for `serverless`
 
-Required:
+Optional:
 
-- `spend_limit` (Number) Spend limit in US cents
+- `spend_limit` (Number) Spend limit in US cents.
+- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
 
 Read-Only:
 
 - `routing_id` (String)
+
+<a id="nestedatt--serverless--usage_limits"></a>
+### Nested Schema for `serverless.usage_limits`
+
+Required:
+
+- `request_unit_limit` (Number) Maximum number of request units that the cluster can consume during the month.
+- `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
 
 

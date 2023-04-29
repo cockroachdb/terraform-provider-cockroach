@@ -613,3 +613,18 @@ func TestSortRegionsByPlan(t *testing.T) {
 		sortRegionsByPlan(&regions, plan)
 	})
 }
+
+func TestSimplifyClusterVersion(t *testing.T) {
+	t.Run("Normal version", func(t *testing.T) {
+		require.Equal(t, "v22.2", simplifyClusterVersion("v22.2.10", false))
+	})
+	t.Run("Normal version, plan uses preview", func(t *testing.T) {
+		require.Equal(t, "v22.2", simplifyClusterVersion("v22.2.10", true))
+	})
+	t.Run("Preview version", func(t *testing.T) {
+		require.Equal(t, "v23.1", simplifyClusterVersion("v23.1.0-beta1", false))
+	})
+	t.Run("Preview version, plan uses preview", func(t *testing.T) {
+		require.Equal(t, "preview", simplifyClusterVersion("v23.1.0-beta1", true))
+	})
+}

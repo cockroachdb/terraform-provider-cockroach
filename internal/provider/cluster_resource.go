@@ -45,6 +45,8 @@ import (
 const (
 	clusterCreateTimeout = time.Hour
 	clusterUpdateTimeout = time.Hour * 2
+
+	clusterVersionPreview = "preview"
 )
 
 type clusterResource struct {
@@ -722,13 +724,16 @@ var versionRE = regexp.MustCompile(
 	// ^major           ^minor           ^patch         ^preRelease       ^metadata
 )
 
-func simplifyClusterVersion(version string) string {
+// simplifyClusterVersion returns the cluster's major version. If planSpecifiesPreviewString
+// is true and the full cluster version has a preview component, returns the magic string
+// "preview".
+func simplifyClusterVersion(version string, planSpecifiesPreviewString bool) string {
 	parts := versionRE.FindStringSubmatch(version)
 	if parts == nil {
 		return version
 	}
-	if parts[4] != "" {
-		return "preview"
+	if planSpecifiesPreviewString && parts[4] != "" {
+		return clusterVersionPreview
 	}
 	return fmt.Sprintf("v%s.%s", parts[1], parts[2])
 }
@@ -756,7 +761,8 @@ func loadClusterToTerraformState(
 	state.ID = types.StringValue(clusterObj.Id)
 	state.Name = types.StringValue(clusterObj.Name)
 	state.CloudProvider = types.StringValue(string(clusterObj.CloudProvider))
-	state.CockroachVersion = types.StringValue(simplifyClusterVersion(clusterObj.CockroachVersion))
+	planSpecifiesPreviewString := plan != nil && plan.CockroachVersion.ValueString() == clusterVersionPreview
+	state.CockroachVersion = types.StringValue(simplifyClusterVersion(clusterObj.CockroachVersion, planSpecifiesPreviewString))
 	state.Plan = types.StringValue(string(clusterObj.Plan))
 	if clusterObj.AccountId == nil {
 		state.AccountId = types.StringNull()

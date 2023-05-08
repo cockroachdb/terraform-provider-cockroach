@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // EnableLogExportRequest struct for EnableLogExportRequest.
 type EnableLogExportRequest struct {
 	// auth_principal is either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging.
@@ -142,27 +138,4 @@ func (o *EnableLogExportRequest) GetType() LogExportType {
 // SetType sets field value.
 func (o *EnableLogExportRequest) SetType(v LogExportType) {
 	o.Type = v
-}
-
-func (o EnableLogExportRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["auth_principal"] = o.AuthPrincipal
-	}
-	if o.Groups != nil {
-		toSerialize["groups"] = o.Groups
-	}
-	if true {
-		toSerialize["log_name"] = o.LogName
-	}
-	if o.Redact != nil {
-		toSerialize["redact"] = o.Redact
-	}
-	if o.Region != nil {
-		toSerialize["region"] = o.Region
-	}
-	if true {
-		toSerialize["type"] = o.Type
-	}
-	return json.Marshal(toSerialize)
 }

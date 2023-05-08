@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // GetAllRolesForUserResponse struct for GetAllRolesForUserResponse.
 type GetAllRolesForUserResponse struct {
 	Roles *[]BuiltInRole `json:"roles,omitempty"`
@@ -48,12 +44,4 @@ func (o *GetAllRolesForUserResponse) GetRoles() []BuiltInRole {
 // SetRoles gets a reference to the given []BuiltInRole and assigns it to the Roles field.
 func (o *GetAllRolesForUserResponse) SetRoles(v []BuiltInRole) {
 	o.Roles = &v
-}
-
-func (o GetAllRolesForUserResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Roles != nil {
-		toSerialize["roles"] = o.Roles
-	}
-	return json.Marshal(toSerialize)
 }

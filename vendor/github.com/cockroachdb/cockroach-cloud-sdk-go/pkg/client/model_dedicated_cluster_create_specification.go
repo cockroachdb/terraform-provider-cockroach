@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DedicatedClusterCreateSpecification struct for DedicatedClusterCreateSpecification.
 type DedicatedClusterCreateSpecification struct {
 	// The CockroachDB version for the cluster. The current version is used if omitted.
@@ -123,24 +119,4 @@ func (o *DedicatedClusterCreateSpecification) GetRestrictEgressTraffic() bool {
 // SetRestrictEgressTraffic gets a reference to the given bool and assigns it to the RestrictEgressTraffic field.
 func (o *DedicatedClusterCreateSpecification) SetRestrictEgressTraffic(v bool) {
 	o.RestrictEgressTraffic = &v
-}
-
-func (o DedicatedClusterCreateSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.CockroachVersion != nil {
-		toSerialize["cockroach_version"] = o.CockroachVersion
-	}
-	if true {
-		toSerialize["hardware"] = o.Hardware
-	}
-	if o.NetworkVisibility != nil {
-		toSerialize["network_visibility"] = o.NetworkVisibility
-	}
-	if true {
-		toSerialize["region_nodes"] = o.RegionNodes
-	}
-	if o.RestrictEgressTraffic != nil {
-		toSerialize["restrict_egress_traffic"] = o.RestrictEgressTraffic
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AwsEndpointConnection struct for AwsEndpointConnection.
 type AwsEndpointConnection struct {
 	CloudProvider CloudProviderType `json:"cloud_provider"`
@@ -129,24 +125,4 @@ func (o *AwsEndpointConnection) GetStatus() AWSEndpointConnectionStatusType {
 // SetStatus sets field value.
 func (o *AwsEndpointConnection) SetStatus(v AWSEndpointConnectionStatusType) {
 	o.Status = v
-}
-
-func (o AwsEndpointConnection) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["cloud_provider"] = o.CloudProvider
-	}
-	if true {
-		toSerialize["endpoint_id"] = o.EndpointId
-	}
-	if true {
-		toSerialize["region_name"] = o.RegionName
-	}
-	if true {
-		toSerialize["service_id"] = o.ServiceId
-	}
-	if true {
-		toSerialize["status"] = o.Status
-	}
-	return json.Marshal(toSerialize)
 }

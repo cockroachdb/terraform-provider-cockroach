@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -335,63 +334,4 @@ func (o *Cluster) GetUpgradeStatus() ClusterUpgradeStatusType {
 // SetUpgradeStatus sets field value.
 func (o *Cluster) SetUpgradeStatus(v ClusterUpgradeStatusType) {
 	o.UpgradeStatus = v
-}
-
-func (o Cluster) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.AccountId != nil {
-		toSerialize["account_id"] = o.AccountId
-	}
-	if true {
-		toSerialize["cloud_provider"] = o.CloudProvider
-	}
-	if true {
-		toSerialize["cockroach_version"] = o.CockroachVersion
-	}
-	if true {
-		toSerialize["config"] = o.Config
-	}
-	if o.CreatedAt != nil {
-		toSerialize["created_at"] = o.CreatedAt
-	}
-	if true {
-		toSerialize["creator_id"] = o.CreatorId
-	}
-	if o.DeletedAt != nil {
-		toSerialize["deleted_at"] = o.DeletedAt
-	}
-	if o.EgressTrafficPolicy != nil {
-		toSerialize["egress_traffic_policy"] = o.EgressTrafficPolicy
-	}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if o.NetworkVisibility != nil {
-		toSerialize["network_visibility"] = o.NetworkVisibility
-	}
-	if true {
-		toSerialize["operation_status"] = o.OperationStatus
-	}
-	if true {
-		toSerialize["plan"] = o.Plan
-	}
-	if true {
-		toSerialize["regions"] = o.Regions
-	}
-	if o.SqlDns != nil {
-		toSerialize["sql_dns"] = o.SqlDns
-	}
-	if true {
-		toSerialize["state"] = o.State
-	}
-	if o.UpdatedAt != nil {
-		toSerialize["updated_at"] = o.UpdatedAt
-	}
-	if true {
-		toSerialize["upgrade_status"] = o.UpgradeStatus
-	}
-	return json.Marshal(toSerialize)
 }

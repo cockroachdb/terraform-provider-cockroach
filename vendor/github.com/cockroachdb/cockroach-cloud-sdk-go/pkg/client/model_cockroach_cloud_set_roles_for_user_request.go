@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CockroachCloudSetRolesForUserRequest struct for CockroachCloudSetRolesForUserRequest.
 type CockroachCloudSetRolesForUserRequest struct {
 	Roles []BuiltInRole `json:"roles"`
@@ -58,12 +54,4 @@ func (o *CockroachCloudSetRolesForUserRequest) GetRoles() []BuiltInRole {
 // SetRoles sets field value.
 func (o *CockroachCloudSetRolesForUserRequest) SetRoles(v []BuiltInRole) {
 	o.Roles = v
-}
-
-func (o CockroachCloudSetRolesForUserRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["roles"] = o.Roles
-	}
-	return json.Marshal(toSerialize)
 }

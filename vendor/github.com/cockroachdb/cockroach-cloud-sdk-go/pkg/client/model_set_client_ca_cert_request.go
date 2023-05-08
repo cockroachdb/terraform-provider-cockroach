@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // SetClientCACertRequest struct for SetClientCACertRequest.
 type SetClientCACertRequest struct {
 	X509PemCert string `json:"x509_pem_cert"`
@@ -58,12 +54,4 @@ func (o *SetClientCACertRequest) GetX509PemCert() string {
 // SetX509PemCert sets field value.
 func (o *SetClientCACertRequest) SetX509PemCert(v string) {
 	o.X509PemCert = v
-}
-
-func (o SetClientCACertRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["x509_pem_cert"] = o.X509PemCert
-	}
-	return json.Marshal(toSerialize)
 }

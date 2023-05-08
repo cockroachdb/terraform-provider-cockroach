@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -110,21 +109,4 @@ func (o *Organization) GetName() string {
 // SetName sets field value.
 func (o *Organization) SetName(v string) {
 	o.Name = v
-}
-
-func (o Organization) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["created_at"] = o.CreatedAt
-	}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["label"] = o.Label
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	return json.Marshal(toSerialize)
 }

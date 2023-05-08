@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CMEKClusterSpecification struct for CMEKClusterSpecification.
 type CMEKClusterSpecification struct {
 	RegionSpecs []CMEKRegionSpecification `json:"region_specs"`
@@ -58,12 +54,4 @@ func (o *CMEKClusterSpecification) GetRegionSpecs() []CMEKRegionSpecification {
 // SetRegionSpecs sets field value.
 func (o *CMEKClusterSpecification) SetRegionSpecs(v []CMEKRegionSpecification) {
 	o.RegionSpecs = v
-}
-
-func (o CMEKClusterSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["region_specs"] = o.RegionSpecs
-	}
-	return json.Marshal(toSerialize)
 }

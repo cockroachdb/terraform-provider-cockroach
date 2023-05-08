@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // EnableCloudWatchMetricExportRequest struct for EnableCloudWatchMetricExportRequest.
 type EnableCloudWatchMetricExportRequest struct {
 	// log_group_name is the customized log group name.
@@ -91,18 +87,4 @@ func (o *EnableCloudWatchMetricExportRequest) GetTargetRegion() string {
 // SetTargetRegion gets a reference to the given string and assigns it to the TargetRegion field.
 func (o *EnableCloudWatchMetricExportRequest) SetTargetRegion(v string) {
 	o.TargetRegion = &v
-}
-
-func (o EnableCloudWatchMetricExportRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.LogGroupName != nil {
-		toSerialize["log_group_name"] = o.LogGroupName
-	}
-	if true {
-		toSerialize["role_arn"] = o.RoleArn
-	}
-	if o.TargetRegion != nil {
-		toSerialize["target_region"] = o.TargetRegion
-	}
-	return json.Marshal(toSerialize)
 }

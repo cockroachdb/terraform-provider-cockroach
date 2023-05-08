@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListAllowlistEntriesResponse struct for ListAllowlistEntriesResponse.
 type ListAllowlistEntriesResponse struct {
 	Allowlist   []AllowlistEntry          `json:"allowlist"`
@@ -90,18 +86,4 @@ func (o *ListAllowlistEntriesResponse) GetPropagating() bool {
 // SetPropagating sets field value.
 func (o *ListAllowlistEntriesResponse) SetPropagating(v bool) {
 	o.Propagating = v
-}
-
-func (o ListAllowlistEntriesResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["allowlist"] = o.Allowlist
-	}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	if true {
-		toSerialize["propagating"] = o.Propagating
-	}
-	return json.Marshal(toSerialize)
 }

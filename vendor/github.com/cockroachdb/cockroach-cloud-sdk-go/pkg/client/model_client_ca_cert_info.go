@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ClientCACertInfo struct for ClientCACertInfo.
 type ClientCACertInfo struct {
 	Status      *ClientCACertStatus `json:"status,omitempty"`
@@ -63,15 +59,4 @@ func (o *ClientCACertInfo) GetX509PemCert() string {
 // SetX509PemCert gets a reference to the given string and assigns it to the X509PemCert field.
 func (o *ClientCACertInfo) SetX509PemCert(v string) {
 	o.X509PemCert = &v
-}
-
-func (o ClientCACertInfo) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Status != nil {
-		toSerialize["status"] = o.Status
-	}
-	if o.X509PemCert != nil {
-		toSerialize["x509_pem_cert"] = o.X509PemCert
-	}
-	return json.Marshal(toSerialize)
 }

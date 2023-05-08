@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // KeysetPaginationResponse struct for KeysetPaginationResponse.
 type KeysetPaginationResponse struct {
 	NextPage     *string `json:"next_page,omitempty"`
@@ -63,15 +59,4 @@ func (o *KeysetPaginationResponse) GetPreviousPage() string {
 // SetPreviousPage gets a reference to the given string and assigns it to the PreviousPage field.
 func (o *KeysetPaginationResponse) SetPreviousPage(v string) {
 	o.PreviousPage = &v
-}
-
-func (o KeysetPaginationResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.NextPage != nil {
-		toSerialize["next_page"] = o.NextPage
-	}
-	if o.PreviousPage != nil {
-		toSerialize["previous_page"] = o.PreviousPage
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DedicatedMachineTypeSpecification struct for DedicatedMachineTypeSpecification.
 type DedicatedMachineTypeSpecification struct {
 	// machine_type is the machine type identifier within the given cloud provider, ex. m5.xlarge, n2-standard-4.
@@ -65,15 +61,4 @@ func (o *DedicatedMachineTypeSpecification) GetNumVirtualCpus() int32 {
 // SetNumVirtualCpus gets a reference to the given int32 and assigns it to the NumVirtualCpus field.
 func (o *DedicatedMachineTypeSpecification) SetNumVirtualCpus(v int32) {
 	o.NumVirtualCpus = &v
-}
-
-func (o DedicatedMachineTypeSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.MachineType != nil {
-		toSerialize["machine_type"] = o.MachineType
-	}
-	if o.NumVirtualCpus != nil {
-		toSerialize["num_virtual_cpus"] = o.NumVirtualCpus
-	}
-	return json.Marshal(toSerialize)
 }

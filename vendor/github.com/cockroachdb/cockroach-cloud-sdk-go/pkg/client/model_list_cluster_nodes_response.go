@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListClusterNodesResponse struct for ListClusterNodesResponse.
 type ListClusterNodesResponse struct {
 	Nodes      []Node                    `json:"nodes"`
@@ -73,15 +69,4 @@ func (o *ListClusterNodesResponse) GetPagination() KeysetPaginationResponse {
 // SetPagination gets a reference to the given KeysetPaginationResponse and assigns it to the Pagination field.
 func (o *ListClusterNodesResponse) SetPagination(v KeysetPaginationResponse) {
 	o.Pagination = &v
-}
-
-func (o ListClusterNodesResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["nodes"] = o.Nodes
-	}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	return json.Marshal(toSerialize)
 }

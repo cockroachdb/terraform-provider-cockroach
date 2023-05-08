@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListEgressRulesResponse ListEgressRulesResponse is the output for the ListEgressRules RPC..
 type ListEgressRulesResponse struct {
 	Pagination *KeysetPaginationResponse `json:"pagination,omitempty"`
@@ -64,15 +60,4 @@ func (o *ListEgressRulesResponse) GetRules() []EgressRule {
 // SetRules gets a reference to the given []EgressRule and assigns it to the Rules field.
 func (o *ListEgressRulesResponse) SetRules(v []EgressRule) {
 	o.Rules = &v
-}
-
-func (o ListEgressRulesResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	if o.Rules != nil {
-		toSerialize["rules"] = o.Rules
-	}
-	return json.Marshal(toSerialize)
 }

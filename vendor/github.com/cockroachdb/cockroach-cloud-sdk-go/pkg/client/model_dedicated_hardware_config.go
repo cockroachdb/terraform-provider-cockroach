@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DedicatedHardwareConfig struct for DedicatedHardwareConfig.
 type DedicatedHardwareConfig struct {
 	// disk_iops is the number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
@@ -131,24 +127,4 @@ func (o *DedicatedHardwareConfig) GetStorageGib() int32 {
 // SetStorageGib sets field value.
 func (o *DedicatedHardwareConfig) SetStorageGib(v int32) {
 	o.StorageGib = v
-}
-
-func (o DedicatedHardwareConfig) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["disk_iops"] = o.DiskIops
-	}
-	if true {
-		toSerialize["machine_type"] = o.MachineType
-	}
-	if true {
-		toSerialize["memory_gib"] = o.MemoryGib
-	}
-	if true {
-		toSerialize["num_virtual_cpus"] = o.NumVirtualCpus
-	}
-	if true {
-		toSerialize["storage_gib"] = o.StorageGib
-	}
-	return json.Marshal(toSerialize)
 }

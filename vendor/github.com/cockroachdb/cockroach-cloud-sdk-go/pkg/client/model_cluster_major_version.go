@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ClusterMajorVersion For more information about CockroachDB cluster version support, see https://www.cockroachlabs.com/docs/releases/release-support-policy.html.
 type ClusterMajorVersion struct {
 	SupportStatus ClusterMajorVersionSupportStatusType `json:"support_status"`
@@ -75,15 +71,4 @@ func (o *ClusterMajorVersion) GetVersion() string {
 // SetVersion sets field value.
 func (o *ClusterMajorVersion) SetVersion(v string) {
 	o.Version = v
-}
-
-func (o ClusterMajorVersion) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["support_status"] = o.SupportStatus
-	}
-	if true {
-		toSerialize["version"] = o.Version
-	}
-	return json.Marshal(toSerialize)
 }

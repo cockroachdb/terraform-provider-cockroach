@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AddEgressRuleResponse AddEgressRuleResponse is the response message of the AddEgressRule RPC..
 type AddEgressRuleResponse struct {
 	Rule *EgressRule `json:"Rule,omitempty"`
@@ -48,12 +44,4 @@ func (o *AddEgressRuleResponse) GetRule() EgressRule {
 // SetRule gets a reference to the given EgressRule and assigns it to the Rule field.
 func (o *AddEgressRuleResponse) SetRule(v EgressRule) {
 	o.Rule = &v
-}
-
-func (o AddEgressRuleResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Rule != nil {
-		toSerialize["Rule"] = o.Rule
-	}
-	return json.Marshal(toSerialize)
 }

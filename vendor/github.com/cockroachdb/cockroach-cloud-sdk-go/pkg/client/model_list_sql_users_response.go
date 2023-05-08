@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListSQLUsersResponse struct for ListSQLUsersResponse.
 type ListSQLUsersResponse struct {
 	Pagination *KeysetPaginationResponse `json:"pagination,omitempty"`
@@ -73,15 +69,4 @@ func (o *ListSQLUsersResponse) GetUsers() []SQLUser {
 // SetUsers sets field value.
 func (o *ListSQLUsersResponse) SetUsers(v []SQLUser) {
 	o.Users = v
-}
-
-func (o ListSQLUsersResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	if true {
-		toSerialize["users"] = o.Users
-	}
-	return json.Marshal(toSerialize)
 }

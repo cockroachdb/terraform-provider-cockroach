@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ApiListDatabasesResponse struct for ApiListDatabasesResponse.
 type ApiListDatabasesResponse struct {
 	Databases  []ApiDatabase             `json:"databases"`
@@ -73,15 +69,4 @@ func (o *ApiListDatabasesResponse) GetPagination() KeysetPaginationResponse {
 // SetPagination gets a reference to the given KeysetPaginationResponse and assigns it to the Pagination field.
 func (o *ApiListDatabasesResponse) SetPagination(v KeysetPaginationResponse) {
 	o.Pagination = &v
-}
-
-func (o ApiListDatabasesResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["databases"] = o.Databases
-	}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CurrencyAmount struct for CurrencyAmount.
 type CurrencyAmount struct {
 	// amount is the quantity of currency. Internally, currency amounts are tracked and stored using an arbitrary-precision decimal representation, but are serialized as 64-bit floating point numbers. There may be minor rounding discrepancies when parsed as a 32-bit float.
@@ -64,15 +60,4 @@ func (o *CurrencyAmount) GetCurrency() CurrencyType {
 // SetCurrency gets a reference to the given CurrencyType and assigns it to the Currency field.
 func (o *CurrencyAmount) SetCurrency(v CurrencyType) {
 	o.Currency = &v
-}
-
-func (o CurrencyAmount) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Amount != nil {
-		toSerialize["amount"] = o.Amount
-	}
-	if o.Currency != nil {
-		toSerialize["currency"] = o.Currency
-	}
-	return json.Marshal(toSerialize)
 }

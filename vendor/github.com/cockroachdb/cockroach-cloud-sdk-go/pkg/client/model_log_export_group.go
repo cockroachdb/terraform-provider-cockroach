@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // LogExportGroup LogExportGroup contains an export configuration for a single log group which can route logs for a subset of CRDB channels..
 type LogExportGroup struct {
 	// channels is a list of CRDB log channels to include in this group.
@@ -108,21 +104,4 @@ func (o *LogExportGroup) GetRedact() bool {
 // SetRedact gets a reference to the given bool and assigns it to the Redact field.
 func (o *LogExportGroup) SetRedact(v bool) {
 	o.Redact = &v
-}
-
-func (o LogExportGroup) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["channels"] = o.Channels
-	}
-	if true {
-		toSerialize["log_name"] = o.LogName
-	}
-	if o.MinLevel != nil {
-		toSerialize["min_level"] = o.MinLevel
-	}
-	if o.Redact != nil {
-		toSerialize["redact"] = o.Redact
-	}
-	return json.Marshal(toSerialize)
 }

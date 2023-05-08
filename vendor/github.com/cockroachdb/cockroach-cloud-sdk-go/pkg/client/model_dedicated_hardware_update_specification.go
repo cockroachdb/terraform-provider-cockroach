@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DedicatedHardwareUpdateSpecification struct for DedicatedHardwareUpdateSpecification.
 type DedicatedHardwareUpdateSpecification struct {
 	// disk_iops is the number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default. Only available for AWS clusters.
@@ -80,18 +76,4 @@ func (o *DedicatedHardwareUpdateSpecification) GetStorageGib() int32 {
 // SetStorageGib gets a reference to the given int32 and assigns it to the StorageGib field.
 func (o *DedicatedHardwareUpdateSpecification) SetStorageGib(v int32) {
 	o.StorageGib = &v
-}
-
-func (o DedicatedHardwareUpdateSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.DiskIops != nil {
-		toSerialize["disk_iops"] = o.DiskIops
-	}
-	if o.MachineSpec != nil {
-		toSerialize["machine_spec"] = o.MachineSpec
-	}
-	if o.StorageGib != nil {
-		toSerialize["storage_gib"] = o.StorageGib
-	}
-	return json.Marshal(toSerialize)
 }

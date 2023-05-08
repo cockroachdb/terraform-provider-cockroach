@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // PrivateEndpointServices struct for PrivateEndpointServices.
 type PrivateEndpointServices struct {
 	// services contains a list of all cluster related services.
@@ -59,12 +55,4 @@ func (o *PrivateEndpointServices) GetServices() []PrivateEndpointService {
 // SetServices sets field value.
 func (o *PrivateEndpointServices) SetServices(v []PrivateEndpointService) {
 	o.Services = v
-}
-
-func (o PrivateEndpointServices) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["services"] = o.Services
-	}
-	return json.Marshal(toSerialize)
 }

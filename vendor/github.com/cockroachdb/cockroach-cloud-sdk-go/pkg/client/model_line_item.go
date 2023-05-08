@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // LineItem struct for LineItem.
 type LineItem struct {
 	// description contains the details of the line item (i.e t3 micro).
@@ -129,24 +125,4 @@ func (o *LineItem) GetUnitCost() float64 {
 // SetUnitCost sets field value.
 func (o *LineItem) SetUnitCost(v float64) {
 	o.UnitCost = v
-}
-
-func (o LineItem) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["description"] = o.Description
-	}
-	if true {
-		toSerialize["quantity"] = o.Quantity
-	}
-	if true {
-		toSerialize["quantity_unit"] = o.QuantityUnit
-	}
-	if true {
-		toSerialize["total"] = o.Total
-	}
-	if true {
-		toSerialize["unit_cost"] = o.UnitCost
-	}
-	return json.Marshal(toSerialize)
 }

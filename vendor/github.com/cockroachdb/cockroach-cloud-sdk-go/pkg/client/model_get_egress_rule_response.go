@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // GetEgressRuleResponse GetEgressRuleResponse is the response message to the GetEgressRule RPC..
 type GetEgressRuleResponse struct {
 	Rule EgressRule `json:"rule"`
@@ -58,12 +54,4 @@ func (o *GetEgressRuleResponse) GetRule() EgressRule {
 // SetRule sets field value.
 func (o *GetEgressRuleResponse) SetRule(v EgressRule) {
 	o.Rule = v
-}
-
-func (o GetEgressRuleResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["rule"] = o.Rule
-	}
-	return json.Marshal(toSerialize)
 }

@@ -19,7 +19,7 @@ github.com/armon/go-radix
 # github.com/bgentry/speakeasy v0.1.0
 ## explicit
 github.com/bgentry/speakeasy
-# github.com/cockroachdb/cockroach-cloud-sdk-go v1.0.2
+# github.com/cockroachdb/cockroach-cloud-sdk-go v1.0.3
 ## explicit; go 1.17
 github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client
 # github.com/davecgh/go-spew v1.1.1

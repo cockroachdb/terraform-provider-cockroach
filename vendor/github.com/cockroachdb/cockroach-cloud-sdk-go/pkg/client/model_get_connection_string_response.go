@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // GetConnectionStringResponse struct for GetConnectionStringResponse.
 type GetConnectionStringResponse struct {
 	// connection_string contains the full connection string with parameters formatted inline.
@@ -65,15 +61,4 @@ func (o *GetConnectionStringResponse) GetParams() map[string]string {
 // SetParams gets a reference to the given map[string]string and assigns it to the Params field.
 func (o *GetConnectionStringResponse) SetParams(v map[string]string) {
 	o.Params = &v
-}
-
-func (o GetConnectionStringResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.ConnectionString != nil {
-		toSerialize["connection_string"] = o.ConnectionString
-	}
-	if o.Params != nil {
-		toSerialize["params"] = o.Params
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // InvoiceAdjustment struct for InvoiceAdjustment.
 type InvoiceAdjustment struct {
 	Amount CurrencyAmount `json:"amount"`
@@ -76,15 +72,4 @@ func (o *InvoiceAdjustment) GetName() string {
 // SetName sets field value.
 func (o *InvoiceAdjustment) SetName(v string) {
 	o.Name = v
-}
-
-func (o InvoiceAdjustment) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["amount"] = o.Amount
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	return json.Marshal(toSerialize)
 }

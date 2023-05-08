@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // UpdateDatabaseRequest struct for UpdateDatabaseRequest.
 type UpdateDatabaseRequest struct {
 	Name    string `json:"name"`
@@ -75,15 +71,4 @@ func (o *UpdateDatabaseRequest) GetNewName() string {
 // SetNewName sets field value.
 func (o *UpdateDatabaseRequest) SetNewName(v string) {
 	o.NewName = v
-}
-
-func (o UpdateDatabaseRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["new_name"] = o.NewName
-	}
-	return json.Marshal(toSerialize)
 }

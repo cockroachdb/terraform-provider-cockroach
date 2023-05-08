@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // SetEgressTrafficPolicyRequest SetEgressTrafficPolicyRequest is the input for the SetEgressTrafficPolicy RPC..
 type SetEgressTrafficPolicyRequest struct {
 	// allow_all, if true results in unrestricted egress traffic. If false, egress traffic is set to default-deny and is managed via the Egress Rule Management API.
@@ -75,15 +71,4 @@ func (o *SetEgressTrafficPolicyRequest) GetIdempotencyKey() string {
 // SetIdempotencyKey gets a reference to the given string and assigns it to the IdempotencyKey field.
 func (o *SetEgressTrafficPolicyRequest) SetIdempotencyKey(v string) {
 	o.IdempotencyKey = &v
-}
-
-func (o SetEgressTrafficPolicyRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["allow_all"] = o.AllowAll
-	}
-	if o.IdempotencyKey != nil {
-		toSerialize["idempotency_key"] = o.IdempotencyKey
-	}
-	return json.Marshal(toSerialize)
 }

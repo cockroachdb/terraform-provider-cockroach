@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AWSPrivateLinkServiceDetail struct for AWSPrivateLinkServiceDetail.
 type AWSPrivateLinkServiceDetail struct {
 	// availability_zone_ids are the identifiers for the availability zones that the service is available in.
@@ -95,18 +91,4 @@ func (o *AWSPrivateLinkServiceDetail) GetServiceName() string {
 // SetServiceName sets field value.
 func (o *AWSPrivateLinkServiceDetail) SetServiceName(v string) {
 	o.ServiceName = v
-}
-
-func (o AWSPrivateLinkServiceDetail) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["availability_zone_ids"] = o.AvailabilityZoneIds
-	}
-	if true {
-		toSerialize["service_id"] = o.ServiceId
-	}
-	if true {
-		toSerialize["service_name"] = o.ServiceName
-	}
-	return json.Marshal(toSerialize)
 }

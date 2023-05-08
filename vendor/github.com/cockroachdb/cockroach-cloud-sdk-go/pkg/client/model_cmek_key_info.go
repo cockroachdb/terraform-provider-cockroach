@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -109,24 +108,4 @@ func (o *CMEKKeyInfo) GetUserMessage() string {
 // SetUserMessage gets a reference to the given string and assigns it to the UserMessage field.
 func (o *CMEKKeyInfo) SetUserMessage(v string) {
 	o.UserMessage = &v
-}
-
-func (o CMEKKeyInfo) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.CreatedAt != nil {
-		toSerialize["created_at"] = o.CreatedAt
-	}
-	if o.Spec != nil {
-		toSerialize["spec"] = o.Spec
-	}
-	if o.Status != nil {
-		toSerialize["status"] = o.Status
-	}
-	if o.UpdatedAt != nil {
-		toSerialize["updated_at"] = o.UpdatedAt
-	}
-	if o.UserMessage != nil {
-		toSerialize["user_message"] = o.UserMessage
-	}
-	return json.Marshal(toSerialize)
 }

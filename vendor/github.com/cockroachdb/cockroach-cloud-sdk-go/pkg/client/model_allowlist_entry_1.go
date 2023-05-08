@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AllowlistEntry1 struct for AllowlistEntry1.
 type AllowlistEntry1 struct {
 	Name *string `json:"name,omitempty"`
@@ -90,18 +86,4 @@ func (o *AllowlistEntry1) GetUi() bool {
 // SetUi sets field value.
 func (o *AllowlistEntry1) SetUi(v bool) {
 	o.Ui = v
-}
-
-func (o AllowlistEntry1) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Name != nil {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["sql"] = o.Sql
-	}
-	if true {
-		toSerialize["ui"] = o.Ui
-	}
-	return json.Marshal(toSerialize)
 }

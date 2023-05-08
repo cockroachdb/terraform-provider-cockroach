@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // Node struct for Node.
 type Node struct {
 	Name       string         `json:"name"`
@@ -92,18 +88,4 @@ func (o *Node) GetStatus() NodeStatusType {
 // SetStatus sets field value.
 func (o *Node) SetStatus(v NodeStatusType) {
 	o.Status = v
-}
-
-func (o Node) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["region_name"] = o.RegionName
-	}
-	if true {
-		toSerialize["status"] = o.Status
-	}
-	return json.Marshal(toSerialize)
 }

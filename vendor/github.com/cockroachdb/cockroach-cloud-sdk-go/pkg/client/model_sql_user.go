@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // SQLUser struct for SQLUser.
 type SQLUser struct {
 	Name string `json:"name"`
@@ -58,12 +54,4 @@ func (o *SQLUser) GetName() string {
 // SetName sets field value.
 func (o *SQLUser) SetName(v string) {
 	o.Name = v
-}
-
-func (o SQLUser) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	return json.Marshal(toSerialize)
 }

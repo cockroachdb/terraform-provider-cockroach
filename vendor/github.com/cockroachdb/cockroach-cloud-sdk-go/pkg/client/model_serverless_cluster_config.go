@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ServerlessClusterConfig struct for ServerlessClusterConfig.
 type ServerlessClusterConfig struct {
 	// routing_id is used to identify the cluster in a connection string.
@@ -90,18 +86,4 @@ func (o *ServerlessClusterConfig) GetUsageLimits() UsageLimits {
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
 func (o *ServerlessClusterConfig) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
-}
-
-func (o ServerlessClusterConfig) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["routing_id"] = o.RoutingId
-	}
-	if o.SpendLimit != nil {
-		toSerialize["spend_limit"] = o.SpendLimit
-	}
-	if o.UsageLimits != nil {
-		toSerialize["usage_limits"] = o.UsageLimits
-	}
-	return json.Marshal(toSerialize)
 }

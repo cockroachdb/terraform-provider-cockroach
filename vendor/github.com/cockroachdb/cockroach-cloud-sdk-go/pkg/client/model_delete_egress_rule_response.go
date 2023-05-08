@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DeleteEgressRuleResponse DeleteEgressRuleResponse is the output for the DeleteEgressRule RPC..
 type DeleteEgressRuleResponse struct {
 	Rule *EgressRule `json:"Rule,omitempty"`
@@ -48,12 +44,4 @@ func (o *DeleteEgressRuleResponse) GetRule() EgressRule {
 // SetRule gets a reference to the given EgressRule and assigns it to the Rule field.
 func (o *DeleteEgressRuleResponse) SetRule(v EgressRule) {
 	o.Rule = &v
-}
-
-func (o DeleteEgressRuleResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Rule != nil {
-		toSerialize["Rule"] = o.Rule
-	}
-	return json.Marshal(toSerialize)
 }

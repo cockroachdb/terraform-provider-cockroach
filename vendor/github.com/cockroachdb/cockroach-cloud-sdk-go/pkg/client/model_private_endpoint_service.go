@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // PrivateEndpointService struct for PrivateEndpointService.
 type PrivateEndpointService struct {
 	Aws           AWSPrivateLinkServiceDetail `json:"aws"`
@@ -110,21 +106,4 @@ func (o *PrivateEndpointService) GetStatus() PrivateEndpointServiceStatusType {
 // SetStatus sets field value.
 func (o *PrivateEndpointService) SetStatus(v PrivateEndpointServiceStatusType) {
 	o.Status = v
-}
-
-func (o PrivateEndpointService) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["aws"] = o.Aws
-	}
-	if true {
-		toSerialize["cloud_provider"] = o.CloudProvider
-	}
-	if true {
-		toSerialize["region_name"] = o.RegionName
-	}
-	if true {
-		toSerialize["status"] = o.Status
-	}
-	return json.Marshal(toSerialize)
 }

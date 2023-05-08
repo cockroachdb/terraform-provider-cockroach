@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListInvoicesResponse struct for ListInvoicesResponse.
 type ListInvoicesResponse struct {
 	// invoices are sorted by period_start time.
@@ -59,12 +55,4 @@ func (o *ListInvoicesResponse) GetInvoices() []Invoice {
 // SetInvoices sets field value.
 func (o *ListInvoicesResponse) SetInvoices(v []Invoice) {
 	o.Invoices = v
-}
-
-func (o ListInvoicesResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["invoices"] = o.Invoices
-	}
-	return json.Marshal(toSerialize)
 }

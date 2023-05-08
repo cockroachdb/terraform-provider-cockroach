@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // SetAwsEndpointConnectionStateRequest struct for SetAwsEndpointConnectionStateRequest.
 type SetAwsEndpointConnectionStateRequest struct {
 	Status SetAWSEndpointConnectionStatusType `json:"status"`
@@ -58,12 +54,4 @@ func (o *SetAwsEndpointConnectionStateRequest) GetStatus() SetAWSEndpointConnect
 // SetStatus sets field value.
 func (o *SetAwsEndpointConnectionStateRequest) SetStatus(v SetAWSEndpointConnectionStatusType) {
 	o.Status = v
-}
-
-func (o SetAwsEndpointConnectionStateRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["status"] = o.Status
-	}
-	return json.Marshal(toSerialize)
 }

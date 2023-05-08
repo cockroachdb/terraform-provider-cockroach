@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListRoleGrantsResponse struct for ListRoleGrantsResponse.
 type ListRoleGrantsResponse struct {
 	Grants     *[]UserRoleGrants         `json:"grants,omitempty"`
@@ -63,15 +59,4 @@ func (o *ListRoleGrantsResponse) GetPagination() KeysetPaginationResponse {
 // SetPagination gets a reference to the given KeysetPaginationResponse and assigns it to the Pagination field.
 func (o *ListRoleGrantsResponse) SetPagination(v KeysetPaginationResponse) {
 	o.Pagination = &v
-}
-
-func (o ListRoleGrantsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Grants != nil {
-		toSerialize["grants"] = o.Grants
-	}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	return json.Marshal(toSerialize)
 }

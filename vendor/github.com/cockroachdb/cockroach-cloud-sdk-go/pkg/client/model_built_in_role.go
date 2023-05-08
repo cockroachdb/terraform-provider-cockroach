@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // BuiltInRole struct for BuiltInRole.
 type BuiltInRole struct {
 	Name     OrganizationUserRoleType `json:"name"`
@@ -75,15 +71,4 @@ func (o *BuiltInRole) GetResource() Resource {
 // SetResource sets field value.
 func (o *BuiltInRole) SetResource(v Resource) {
 	o.Resource = v
-}
-
-func (o BuiltInRole) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["resource"] = o.Resource
-	}
-	return json.Marshal(toSerialize)
 }

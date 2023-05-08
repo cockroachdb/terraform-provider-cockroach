@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CreateClusterSpecification struct for CreateClusterSpecification.
 type CreateClusterSpecification struct {
 	Dedicated  *DedicatedClusterCreateSpecification  `json:"dedicated,omitempty"`
@@ -63,15 +59,4 @@ func (o *CreateClusterSpecification) GetServerless() ServerlessClusterCreateSpec
 // SetServerless gets a reference to the given ServerlessClusterCreateSpecification and assigns it to the Serverless field.
 func (o *CreateClusterSpecification) SetServerless(v ServerlessClusterCreateSpecification) {
 	o.Serverless = &v
-}
-
-func (o CreateClusterSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Dedicated != nil {
-		toSerialize["dedicated"] = o.Dedicated
-	}
-	if o.Serverless != nil {
-		toSerialize["serverless"] = o.Serverless
-	}
-	return json.Marshal(toSerialize)
 }

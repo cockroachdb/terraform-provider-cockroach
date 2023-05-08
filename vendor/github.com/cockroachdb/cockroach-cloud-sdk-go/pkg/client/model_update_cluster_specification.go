@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // UpdateClusterSpecification Set `upgrade_status` to 'UPGRADE_RUNNING' to start an upgrade. Multi-node clusters will undergo a rolling upgrade and will remain available, but single-node clusters will be briefly unavailable while the upgrade takes place. Upgrades will be finalized automatically after 72 hours, or can be manually finalized by setting the value to 'FINALIZED'. Before the cluster is finalized, it can be rolled back by setting the value to 'ROLLBACK_RUNNING'. Version upgrade operations cannot be performed simultaneously with other update operations..
 type UpdateClusterSpecification struct {
 	Dedicated     *DedicatedClusterUpdateSpecification  `json:"dedicated,omitempty"`
@@ -78,18 +74,4 @@ func (o *UpdateClusterSpecification) GetUpgradeStatus() ClusterUpgradeStatusType
 // SetUpgradeStatus gets a reference to the given ClusterUpgradeStatusType and assigns it to the UpgradeStatus field.
 func (o *UpdateClusterSpecification) SetUpgradeStatus(v ClusterUpgradeStatusType) {
 	o.UpgradeStatus = &v
-}
-
-func (o UpdateClusterSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Dedicated != nil {
-		toSerialize["dedicated"] = o.Dedicated
-	}
-	if o.Serverless != nil {
-		toSerialize["serverless"] = o.Serverless
-	}
-	if o.UpgradeStatus != nil {
-		toSerialize["upgrade_status"] = o.UpgradeStatus
-	}
-	return json.Marshal(toSerialize)
 }

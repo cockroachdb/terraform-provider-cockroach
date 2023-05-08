@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // LogExportClusterSpecification LogExportClusterSpecification contains all the data necessary to configure log export for an individual cluster. Users would supply this data via the API and also receive it back when inspecting the state of their log export configuration..
 type LogExportClusterSpecification struct {
 	// auth_principal is either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging.
@@ -128,27 +124,4 @@ func (o *LogExportClusterSpecification) GetType() LogExportType {
 // SetType gets a reference to the given LogExportType and assigns it to the Type field.
 func (o *LogExportClusterSpecification) SetType(v LogExportType) {
 	o.Type = &v
-}
-
-func (o LogExportClusterSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.AuthPrincipal != nil {
-		toSerialize["auth_principal"] = o.AuthPrincipal
-	}
-	if o.Groups != nil {
-		toSerialize["groups"] = o.Groups
-	}
-	if o.LogName != nil {
-		toSerialize["log_name"] = o.LogName
-	}
-	if o.Redact != nil {
-		toSerialize["redact"] = o.Redact
-	}
-	if o.Region != nil {
-		toSerialize["region"] = o.Region
-	}
-	if o.Type != nil {
-		toSerialize["type"] = o.Type
-	}
-	return json.Marshal(toSerialize)
 }

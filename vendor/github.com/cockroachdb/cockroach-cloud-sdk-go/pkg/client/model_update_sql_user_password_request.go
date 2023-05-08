@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // UpdateSQLUserPasswordRequest struct for UpdateSQLUserPasswordRequest.
 type UpdateSQLUserPasswordRequest struct {
 	Password string `json:"password"`
@@ -58,12 +54,4 @@ func (o *UpdateSQLUserPasswordRequest) GetPassword() string {
 // SetPassword sets field value.
 func (o *UpdateSQLUserPasswordRequest) SetPassword(v string) {
 	o.Password = v
-}
-
-func (o UpdateSQLUserPasswordRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["password"] = o.Password
-	}
-	return json.Marshal(toSerialize)
 }

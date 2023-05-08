@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AddEgressRuleRequest AddEgressRuleRequest is the input for the rpc AddEgressRule()..
 type AddEgressRuleRequest struct {
 	// description is text that serves to document the rules purpose.
@@ -161,30 +157,4 @@ func (o *AddEgressRuleRequest) GetType() string {
 // SetType sets field value.
 func (o *AddEgressRuleRequest) SetType(v string) {
 	o.Type = v
-}
-
-func (o AddEgressRuleRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["description"] = o.Description
-	}
-	if true {
-		toSerialize["destination"] = o.Destination
-	}
-	if o.IdempotencyKey != nil {
-		toSerialize["idempotency_key"] = o.IdempotencyKey
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if o.Paths != nil {
-		toSerialize["paths"] = o.Paths
-	}
-	if o.Ports != nil {
-		toSerialize["ports"] = o.Ports
-	}
-	if true {
-		toSerialize["type"] = o.Type
-	}
-	return json.Marshal(toSerialize)
 }

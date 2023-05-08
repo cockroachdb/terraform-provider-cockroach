@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // EditEgressRuleRequest EditEgressRuleRequest is the input message to the EditEgressRule RPC..
 type EditEgressRuleRequest struct {
 	// description is text that serves to document the rules purpose.
@@ -129,27 +125,4 @@ func (o *EditEgressRuleRequest) GetType() string {
 // SetType gets a reference to the given string and assigns it to the Type field.
 func (o *EditEgressRuleRequest) SetType(v string) {
 	o.Type = &v
-}
-
-func (o EditEgressRuleRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Description != nil {
-		toSerialize["description"] = o.Description
-	}
-	if o.Destination != nil {
-		toSerialize["destination"] = o.Destination
-	}
-	if o.IdempotencyKey != nil {
-		toSerialize["idempotency_key"] = o.IdempotencyKey
-	}
-	if o.Paths != nil {
-		toSerialize["paths"] = o.Paths
-	}
-	if o.Ports != nil {
-		toSerialize["ports"] = o.Ports
-	}
-	if o.Type != nil {
-		toSerialize["type"] = o.Type
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CloudProviderRegion struct for CloudProviderRegion.
 type CloudProviderRegion struct {
 	// Distance in miles, based on client IP address.
@@ -127,24 +123,4 @@ func (o *CloudProviderRegion) GetServerless() bool {
 // SetServerless sets field value.
 func (o *CloudProviderRegion) SetServerless(v bool) {
 	o.Serverless = v
-}
-
-func (o CloudProviderRegion) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["distance"] = o.Distance
-	}
-	if true {
-		toSerialize["location"] = o.Location
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["provider"] = o.Provider
-	}
-	if true {
-		toSerialize["serverless"] = o.Serverless
-	}
-	return json.Marshal(toSerialize)
 }

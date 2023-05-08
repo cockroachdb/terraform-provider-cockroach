@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // UserRoleGrants struct for UserRoleGrants.
 type UserRoleGrants struct {
 	Roles  []BuiltInRole `json:"roles"`
@@ -75,15 +71,4 @@ func (o *UserRoleGrants) GetUserId() string {
 // SetUserId sets field value.
 func (o *UserRoleGrants) SetUserId(v string) {
 	o.UserId = v
-}
-
-func (o UserRoleGrants) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["roles"] = o.Roles
-	}
-	if true {
-		toSerialize["user_id"] = o.UserId
-	}
-	return json.Marshal(toSerialize)
 }

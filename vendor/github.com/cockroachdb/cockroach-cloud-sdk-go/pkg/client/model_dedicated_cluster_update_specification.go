@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DedicatedClusterUpdateSpecification struct for DedicatedClusterUpdateSpecification.
 type DedicatedClusterUpdateSpecification struct {
 	// This field should contain the CMEK specs for newly added regions. If a CMEK spec is provided for an existing region, the request is invalid and will fail.
@@ -80,18 +76,4 @@ func (o *DedicatedClusterUpdateSpecification) GetRegionNodes() map[string]int32 
 // SetRegionNodes gets a reference to the given map[string]int32 and assigns it to the RegionNodes field.
 func (o *DedicatedClusterUpdateSpecification) SetRegionNodes(v map[string]int32) {
 	o.RegionNodes = &v
-}
-
-func (o DedicatedClusterUpdateSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.CmekRegionSpecs != nil {
-		toSerialize["cmek_region_specs"] = o.CmekRegionSpecs
-	}
-	if o.Hardware != nil {
-		toSerialize["hardware"] = o.Hardware
-	}
-	if o.RegionNodes != nil {
-		toSerialize["region_nodes"] = o.RegionNodes
-	}
-	return json.Marshal(toSerialize)
 }

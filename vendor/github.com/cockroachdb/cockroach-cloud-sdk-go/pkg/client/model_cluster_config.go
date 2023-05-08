@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ClusterConfig struct for ClusterConfig.
 type ClusterConfig struct {
 	Dedicated  *DedicatedHardwareConfig `json:"dedicated,omitempty"`
@@ -63,15 +59,4 @@ func (o *ClusterConfig) GetServerless() ServerlessClusterConfig {
 // SetServerless gets a reference to the given ServerlessClusterConfig and assigns it to the Serverless field.
 func (o *ClusterConfig) SetServerless(v ServerlessClusterConfig) {
 	o.Serverless = &v
-}
-
-func (o ClusterConfig) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Dedicated != nil {
-		toSerialize["dedicated"] = o.Dedicated
-	}
-	if o.Serverless != nil {
-		toSerialize["serverless"] = o.Serverless
-	}
-	return json.Marshal(toSerialize)
 }

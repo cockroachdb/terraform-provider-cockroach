@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -234,42 +233,4 @@ func (o *EgressRule) GetType() string {
 // SetType sets field value.
 func (o *EgressRule) SetType(v string) {
 	o.Type = v
-}
-
-func (o EgressRule) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["cluster_id"] = o.ClusterId
-	}
-	if o.CreatedAt != nil {
-		toSerialize["created_at"] = o.CreatedAt
-	}
-	if true {
-		toSerialize["crl_managed"] = o.CrlManaged
-	}
-	if true {
-		toSerialize["description"] = o.Description
-	}
-	if true {
-		toSerialize["destination"] = o.Destination
-	}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if o.Paths != nil {
-		toSerialize["paths"] = o.Paths
-	}
-	if o.Ports != nil {
-		toSerialize["ports"] = o.Ports
-	}
-	if true {
-		toSerialize["state"] = o.State
-	}
-	if true {
-		toSerialize["type"] = o.Type
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AwsEndpointConnections struct for AwsEndpointConnections.
 type AwsEndpointConnections struct {
 	// Connections is a list of private endpoints.
@@ -59,12 +55,4 @@ func (o *AwsEndpointConnections) GetConnections() []AwsEndpointConnection {
 // SetConnections sets field value.
 func (o *AwsEndpointConnections) SetConnections(v []AwsEndpointConnection) {
 	o.Connections = v
-}
-
-func (o AwsEndpointConnections) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["connections"] = o.Connections
-	}
-	return json.Marshal(toSerialize)
 }

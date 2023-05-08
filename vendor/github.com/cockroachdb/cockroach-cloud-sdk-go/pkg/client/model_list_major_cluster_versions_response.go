@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListMajorClusterVersionsResponse struct for ListMajorClusterVersionsResponse.
 type ListMajorClusterVersionsResponse struct {
 	Pagination *KeysetPaginationResponse `json:"pagination,omitempty"`
@@ -73,15 +69,4 @@ func (o *ListMajorClusterVersionsResponse) GetVersions() []ClusterMajorVersion {
 // SetVersions sets field value.
 func (o *ListMajorClusterVersionsResponse) SetVersions(v []ClusterMajorVersion) {
 	o.Versions = v
-}
-
-func (o ListMajorClusterVersionsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	if true {
-		toSerialize["versions"] = o.Versions
-	}
-	return json.Marshal(toSerialize)
 }

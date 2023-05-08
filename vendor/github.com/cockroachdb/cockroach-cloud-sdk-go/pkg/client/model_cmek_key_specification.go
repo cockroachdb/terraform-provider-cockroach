@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CMEKKeySpecification CMEKKeySpecification contains all the details necessary to use a customer-provided encryption key.  This involves the type/location of the key and the principal to authenticate as  when accessing it..
 type CMEKKeySpecification struct {
 	AuthPrincipal *string      `json:"auth_principal,omitempty"`
@@ -78,18 +74,4 @@ func (o *CMEKKeySpecification) GetUri() string {
 // SetUri gets a reference to the given string and assigns it to the Uri field.
 func (o *CMEKKeySpecification) SetUri(v string) {
 	o.Uri = &v
-}
-
-func (o CMEKKeySpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.AuthPrincipal != nil {
-		toSerialize["auth_principal"] = o.AuthPrincipal
-	}
-	if o.Type != nil {
-		toSerialize["type"] = o.Type
-	}
-	if o.Uri != nil {
-		toSerialize["uri"] = o.Uri
-	}
-	return json.Marshal(toSerialize)
 }

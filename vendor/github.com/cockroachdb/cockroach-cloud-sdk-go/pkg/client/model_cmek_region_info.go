@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CMEKRegionInfo CMEKRegionInfo contains the status of CMEK within a region.  This includes current and past key specifications used within the region,  as well as the status of those specifications.
 type CMEKRegionInfo struct {
 	KeyInfos *[]CMEKKeyInfo `json:"key_infos,omitempty"`
@@ -78,18 +74,4 @@ func (o *CMEKRegionInfo) GetStatus() CMEKStatus {
 // SetStatus gets a reference to the given CMEKStatus and assigns it to the Status field.
 func (o *CMEKRegionInfo) SetStatus(v CMEKStatus) {
 	o.Status = &v
-}
-
-func (o CMEKRegionInfo) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.KeyInfos != nil {
-		toSerialize["key_infos"] = o.KeyInfos
-	}
-	if o.Region != nil {
-		toSerialize["region"] = o.Region
-	}
-	if o.Status != nil {
-		toSerialize["status"] = o.Status
-	}
-	return json.Marshal(toSerialize)
 }

@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -94,21 +93,4 @@ func (o *KeysetPaginationRequest) GetSortOrder() SortOrder {
 // SetSortOrder gets a reference to the given SortOrder and assigns it to the SortOrder field.
 func (o *KeysetPaginationRequest) SetSortOrder(v SortOrder) {
 	o.SortOrder = &v
-}
-
-func (o KeysetPaginationRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.AsOfTime != nil {
-		toSerialize["as_of_time"] = o.AsOfTime
-	}
-	if o.Limit != nil {
-		toSerialize["limit"] = o.Limit
-	}
-	if o.Page != nil {
-		toSerialize["page"] = o.Page
-	}
-	if o.SortOrder != nil {
-		toSerialize["sort_order"] = o.SortOrder
-	}
-	return json.Marshal(toSerialize)
 }

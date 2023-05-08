@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DatadogMetricExportInfo struct for DatadogMetricExportInfo.
 type DatadogMetricExportInfo struct {
 	// api_key is the last 4 digits of a Datadog API key.
@@ -121,24 +117,4 @@ func (o *DatadogMetricExportInfo) GetUserMessage() string {
 // SetUserMessage gets a reference to the given string and assigns it to the UserMessage field.
 func (o *DatadogMetricExportInfo) SetUserMessage(v string) {
 	o.UserMessage = &v
-}
-
-func (o DatadogMetricExportInfo) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.ApiKey != nil {
-		toSerialize["api_key"] = o.ApiKey
-	}
-	if true {
-		toSerialize["cluster_id"] = o.ClusterId
-	}
-	if true {
-		toSerialize["site"] = o.Site
-	}
-	if o.Status != nil {
-		toSerialize["status"] = o.Status
-	}
-	if o.UserMessage != nil {
-		toSerialize["user_message"] = o.UserMessage
-	}
-	return json.Marshal(toSerialize)
 }

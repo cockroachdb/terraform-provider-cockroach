@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ApiDatabase struct for ApiDatabase.
 type ApiDatabase struct {
 	Name       string `json:"name"`
@@ -73,15 +69,4 @@ func (o *ApiDatabase) GetTableCount() int64 {
 // SetTableCount gets a reference to the given int64 and assigns it to the TableCount field.
 func (o *ApiDatabase) SetTableCount(v int64) {
 	o.TableCount = &v
-}
-
-func (o ApiDatabase) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if o.TableCount != nil {
-		toSerialize["table_count"] = o.TableCount
-	}
-	return json.Marshal(toSerialize)
 }

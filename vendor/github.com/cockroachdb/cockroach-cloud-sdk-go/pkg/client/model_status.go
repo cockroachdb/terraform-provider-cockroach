@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // Status struct for Status.
 type Status struct {
 	Code    *int32  `json:"code,omitempty"`
@@ -78,18 +74,4 @@ func (o *Status) GetMessage() string {
 // SetMessage gets a reference to the given string and assigns it to the Message field.
 func (o *Status) SetMessage(v string) {
 	o.Message = &v
-}
-
-func (o Status) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Code != nil {
-		toSerialize["code"] = o.Code
-	}
-	if o.Details != nil {
-		toSerialize["details"] = o.Details
-	}
-	if o.Message != nil {
-		toSerialize["message"] = o.Message
-	}
-	return json.Marshal(toSerialize)
 }

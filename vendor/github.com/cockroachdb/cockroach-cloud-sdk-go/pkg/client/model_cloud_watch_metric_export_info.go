@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CloudWatchMetricExportInfo struct for CloudWatchMetricExportInfo.
 type CloudWatchMetricExportInfo struct {
 	ClusterId string `json:"cluster_id"`
@@ -138,27 +134,4 @@ func (o *CloudWatchMetricExportInfo) GetUserMessage() string {
 // SetUserMessage gets a reference to the given string and assigns it to the UserMessage field.
 func (o *CloudWatchMetricExportInfo) SetUserMessage(v string) {
 	o.UserMessage = &v
-}
-
-func (o CloudWatchMetricExportInfo) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["cluster_id"] = o.ClusterId
-	}
-	if o.LogGroupName != nil {
-		toSerialize["log_group_name"] = o.LogGroupName
-	}
-	if true {
-		toSerialize["role_arn"] = o.RoleArn
-	}
-	if o.Status != nil {
-		toSerialize["status"] = o.Status
-	}
-	if o.TargetRegion != nil {
-		toSerialize["target_region"] = o.TargetRegion
-	}
-	if o.UserMessage != nil {
-		toSerialize["user_message"] = o.UserMessage
-	}
-	return json.Marshal(toSerialize)
 }

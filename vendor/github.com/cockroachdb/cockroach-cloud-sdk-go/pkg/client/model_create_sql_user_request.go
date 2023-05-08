@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CreateSQLUserRequest struct for CreateSQLUserRequest.
 type CreateSQLUserRequest struct {
 	Name     string `json:"name"`
@@ -75,15 +71,4 @@ func (o *CreateSQLUserRequest) GetPassword() string {
 // SetPassword sets field value.
 func (o *CreateSQLUserRequest) SetPassword(v string) {
 	o.Password = v
-}
-
-func (o CreateSQLUserRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["password"] = o.Password
-	}
-	return json.Marshal(toSerialize)
 }

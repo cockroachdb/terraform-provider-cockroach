@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ServerlessClusterCreateSpecification struct for ServerlessClusterCreateSpecification.
 type ServerlessClusterCreateSpecification struct {
 	// Preview: Specify which region should be made the primary region. This is only applicable to multi-region Serverless clusters. This field is required if you create the cluster in more than one region.
@@ -106,21 +102,4 @@ func (o *ServerlessClusterCreateSpecification) GetUsageLimits() UsageLimits {
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
 func (o *ServerlessClusterCreateSpecification) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
-}
-
-func (o ServerlessClusterCreateSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.PrimaryRegion != nil {
-		toSerialize["primary_region"] = o.PrimaryRegion
-	}
-	if true {
-		toSerialize["regions"] = o.Regions
-	}
-	if o.SpendLimit != nil {
-		toSerialize["spend_limit"] = o.SpendLimit
-	}
-	if o.UsageLimits != nil {
-		toSerialize["usage_limits"] = o.UsageLimits
-	}
-	return json.Marshal(toSerialize)
 }

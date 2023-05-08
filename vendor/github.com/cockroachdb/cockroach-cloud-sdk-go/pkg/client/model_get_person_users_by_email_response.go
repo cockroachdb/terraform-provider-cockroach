@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // GetPersonUsersByEmailResponse struct for GetPersonUsersByEmailResponse.
 type GetPersonUsersByEmailResponse struct {
 	User *PersonUserInfo `json:"user,omitempty"`
@@ -48,12 +44,4 @@ func (o *GetPersonUsersByEmailResponse) GetUser() PersonUserInfo {
 // SetUser gets a reference to the given PersonUserInfo and assigns it to the User field.
 func (o *GetPersonUsersByEmailResponse) SetUser(v PersonUserInfo) {
 	o.User = &v
-}
-
-func (o GetPersonUsersByEmailResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.User != nil {
-		toSerialize["user"] = o.User
-	}
-	return json.Marshal(toSerialize)
 }

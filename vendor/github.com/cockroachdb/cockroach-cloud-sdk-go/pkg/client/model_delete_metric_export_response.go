@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // DeleteMetricExportResponse struct for DeleteMetricExportResponse.
 type DeleteMetricExportResponse struct {
 	ClusterId string                  `json:"cluster_id"`
@@ -73,15 +69,4 @@ func (o *DeleteMetricExportResponse) GetStatus() MetricExportStatusType {
 // SetStatus gets a reference to the given MetricExportStatusType and assigns it to the Status field.
 func (o *DeleteMetricExportResponse) SetStatus(v MetricExportStatusType) {
 	o.Status = &v
-}
-
-func (o DeleteMetricExportResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["cluster_id"] = o.ClusterId
-	}
-	if o.Status != nil {
-		toSerialize["status"] = o.Status
-	}
-	return json.Marshal(toSerialize)
 }

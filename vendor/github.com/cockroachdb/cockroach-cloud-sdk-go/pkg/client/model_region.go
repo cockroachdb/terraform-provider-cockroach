@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // Region struct for Region.
 type Region struct {
 	// internal_dns is the internal DNS name of the cluster within the cloud provider's network. It is used to connect to the cluster with PrivateLink or VPC peering.
@@ -146,27 +142,4 @@ func (o *Region) GetUiDns() string {
 // SetUiDns sets field value.
 func (o *Region) SetUiDns(v string) {
 	o.UiDns = v
-}
-
-func (o Region) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["internal_dns"] = o.InternalDns
-	}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["node_count"] = o.NodeCount
-	}
-	if o.Primary != nil {
-		toSerialize["primary"] = o.Primary
-	}
-	if true {
-		toSerialize["sql_dns"] = o.SqlDns
-	}
-	if true {
-		toSerialize["ui_dns"] = o.UiDns
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CreateClusterRequest struct for CreateClusterRequest.
 type CreateClusterRequest struct {
 	// Name must be 6-20 characters in length and can include numbers, lowercase letters, and dashes (but no leading or trailing dashes).
@@ -93,18 +89,4 @@ func (o *CreateClusterRequest) GetSpec() CreateClusterSpecification {
 // SetSpec sets field value.
 func (o *CreateClusterRequest) SetSpec(v CreateClusterSpecification) {
 	o.Spec = v
-}
-
-func (o CreateClusterRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["provider"] = o.Provider
-	}
-	if true {
-		toSerialize["spec"] = o.Spec
-	}
-	return json.Marshal(toSerialize)
 }

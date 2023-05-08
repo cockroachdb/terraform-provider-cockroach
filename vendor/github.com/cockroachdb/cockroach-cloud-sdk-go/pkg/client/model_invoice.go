@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -166,30 +165,4 @@ func (o *Invoice) GetTotals() []CurrencyAmount {
 // SetTotals sets field value.
 func (o *Invoice) SetTotals(v []CurrencyAmount) {
 	o.Totals = v
-}
-
-func (o Invoice) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Adjustments != nil {
-		toSerialize["adjustments"] = o.Adjustments
-	}
-	if true {
-		toSerialize["balances"] = o.Balances
-	}
-	if true {
-		toSerialize["invoice_id"] = o.InvoiceId
-	}
-	if true {
-		toSerialize["invoice_items"] = o.InvoiceItems
-	}
-	if true {
-		toSerialize["period_end"] = o.PeriodEnd
-	}
-	if true {
-		toSerialize["period_start"] = o.PeriodStart
-	}
-	if true {
-		toSerialize["totals"] = o.Totals
-	}
-	return json.Marshal(toSerialize)
 }

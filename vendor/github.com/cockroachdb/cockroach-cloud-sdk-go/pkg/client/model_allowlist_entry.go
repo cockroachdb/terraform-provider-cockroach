@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // AllowlistEntry struct for AllowlistEntry.
 type AllowlistEntry struct {
 	CidrIp   string  `json:"cidr_ip"`
@@ -124,24 +120,4 @@ func (o *AllowlistEntry) GetUi() bool {
 // SetUi sets field value.
 func (o *AllowlistEntry) SetUi(v bool) {
 	o.Ui = v
-}
-
-func (o AllowlistEntry) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["cidr_ip"] = o.CidrIp
-	}
-	if true {
-		toSerialize["cidr_mask"] = o.CidrMask
-	}
-	if o.Name != nil {
-		toSerialize["name"] = o.Name
-	}
-	if true {
-		toSerialize["sql"] = o.Sql
-	}
-	if true {
-		toSerialize["ui"] = o.Ui
-	}
-	return json.Marshal(toSerialize)
 }

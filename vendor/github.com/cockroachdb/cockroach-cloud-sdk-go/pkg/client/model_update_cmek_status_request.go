@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // UpdateCMEKStatusRequest struct for UpdateCMEKStatusRequest.
 type UpdateCMEKStatusRequest struct {
 	Action CMEKCustomerAction `json:"action"`
@@ -58,12 +54,4 @@ func (o *UpdateCMEKStatusRequest) GetAction() CMEKCustomerAction {
 // SetAction sets field value.
 func (o *UpdateCMEKStatusRequest) SetAction(v CMEKCustomerAction) {
 	o.Action = v
-}
-
-func (o UpdateCMEKStatusRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["action"] = o.Action
-	}
-	return json.Marshal(toSerialize)
 }

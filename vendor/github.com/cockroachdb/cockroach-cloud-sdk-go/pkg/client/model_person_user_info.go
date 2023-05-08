@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // PersonUserInfo struct for PersonUserInfo.
 type PersonUserInfo struct {
 	// email is an email address.
@@ -75,15 +71,4 @@ func (o *PersonUserInfo) GetId() string {
 // SetId sets field value.
 func (o *PersonUserInfo) SetId(v string) {
 	o.Id = v
-}
-
-func (o PersonUserInfo) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Email != nil {
-		toSerialize["email"] = o.Email
-	}
-	if true {
-		toSerialize["id"] = o.Id
-	}
-	return json.Marshal(toSerialize)
 }

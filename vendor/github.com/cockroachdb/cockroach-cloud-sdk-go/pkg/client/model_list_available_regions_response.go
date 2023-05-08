@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ListAvailableRegionsResponse struct for ListAvailableRegionsResponse.
 type ListAvailableRegionsResponse struct {
 	Pagination *KeysetPaginationResponse `json:"pagination,omitempty"`
@@ -73,15 +69,4 @@ func (o *ListAvailableRegionsResponse) GetRegions() []CloudProviderRegion {
 // SetRegions sets field value.
 func (o *ListAvailableRegionsResponse) SetRegions(v []CloudProviderRegion) {
 	o.Regions = v
-}
-
-func (o ListAvailableRegionsResponse) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Pagination != nil {
-		toSerialize["pagination"] = o.Pagination
-	}
-	if true {
-		toSerialize["regions"] = o.Regions
-	}
-	return json.Marshal(toSerialize)
 }

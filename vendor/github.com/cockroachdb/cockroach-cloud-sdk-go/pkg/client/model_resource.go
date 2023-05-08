@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // Resource struct for Resource.
 type Resource struct {
 	Id   *string          `json:"id,omitempty"`
@@ -73,15 +69,4 @@ func (o *Resource) GetType() ResourceTypeType {
 // SetType sets field value.
 func (o *Resource) SetType(v ResourceTypeType) {
 	o.Type = v
-}
-
-func (o Resource) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.Id != nil {
-		toSerialize["id"] = o.Id
-	}
-	if true {
-		toSerialize["type"] = o.Type
-	}
-	return json.Marshal(toSerialize)
 }

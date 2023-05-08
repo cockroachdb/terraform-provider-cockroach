@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // EnableDatadogMetricExportRequest struct for EnableDatadogMetricExportRequest.
 type EnableDatadogMetricExportRequest struct {
 	// api_key is a Datadog API key.
@@ -76,15 +72,4 @@ func (o *EnableDatadogMetricExportRequest) GetSite() DatadogSiteType {
 // SetSite sets field value.
 func (o *EnableDatadogMetricExportRequest) SetSite(v DatadogSiteType) {
 	o.Site = v
-}
-
-func (o EnableDatadogMetricExportRequest) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["api_key"] = o.ApiKey
-	}
-	if true {
-		toSerialize["site"] = o.Site
-	}
-	return json.Marshal(toSerialize)
 }

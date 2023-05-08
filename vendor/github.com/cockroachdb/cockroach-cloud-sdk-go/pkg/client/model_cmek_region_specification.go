@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // CMEKRegionSpecification CMEKRegionSpecification declares the customer-provided key specification that should be used in a given region..
 type CMEKRegionSpecification struct {
 	KeySpec *CMEKKeySpecification `json:"key_spec,omitempty"`
@@ -63,15 +59,4 @@ func (o *CMEKRegionSpecification) GetRegion() string {
 // SetRegion gets a reference to the given string and assigns it to the Region field.
 func (o *CMEKRegionSpecification) SetRegion(v string) {
 	o.Region = &v
-}
-
-func (o CMEKRegionSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.KeySpec != nil {
-		toSerialize["key_spec"] = o.KeySpec
-	}
-	if o.Region != nil {
-		toSerialize["region"] = o.Region
-	}
-	return json.Marshal(toSerialize)
 }

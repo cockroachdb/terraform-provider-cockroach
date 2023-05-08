@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // InvoiceItem struct for InvoiceItem.
 type InvoiceItem struct {
 	Cluster Cluster `json:"cluster"`
@@ -94,18 +90,4 @@ func (o *InvoiceItem) GetTotals() []CurrencyAmount {
 // SetTotals sets field value.
 func (o *InvoiceItem) SetTotals(v []CurrencyAmount) {
 	o.Totals = v
-}
-
-func (o InvoiceItem) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["cluster"] = o.Cluster
-	}
-	if true {
-		toSerialize["line_items"] = o.LineItems
-	}
-	if true {
-		toSerialize["totals"] = o.Totals
-	}
-	return json.Marshal(toSerialize)
 }

@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // UsageLimits struct for UsageLimits.
 type UsageLimits struct {
 	// request_unit_limit is the maximum number of request units that the cluster can consume during the month. If this limit is exceeded, then the cluster is disabled until the limit is increased, or until the beginning of the next month when more free request units are granted. It is an error for this to be zero.
@@ -77,15 +73,4 @@ func (o *UsageLimits) GetStorageMibLimit() int64 {
 // SetStorageMibLimit sets field value.
 func (o *UsageLimits) SetStorageMibLimit(v int64) {
 	o.StorageMibLimit = v
-}
-
-func (o UsageLimits) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if true {
-		toSerialize["request_unit_limit"] = o.RequestUnitLimit
-	}
-	if true {
-		toSerialize["storage_mib_limit"] = o.StorageMibLimit
-	}
-	return json.Marshal(toSerialize)
 }

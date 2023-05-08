@@ -18,10 +18,6 @@
 
 package client
 
-import (
-	"encoding/json"
-)
-
 // ServerlessClusterUpdateSpecification struct for ServerlessClusterUpdateSpecification.
 type ServerlessClusterUpdateSpecification struct {
 	// spend_limit is the maximum monthly charge for a cluster, in US cents. We recommend using usage_limits instead, since spend_limit will be deprecated in the future.
@@ -64,15 +60,4 @@ func (o *ServerlessClusterUpdateSpecification) GetUsageLimits() UsageLimits {
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
 func (o *ServerlessClusterUpdateSpecification) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
-}
-
-func (o ServerlessClusterUpdateSpecification) MarshalJSON() ([]byte, error) {
-	toSerialize := map[string]interface{}{}
-	if o.SpendLimit != nil {
-		toSerialize["spend_limit"] = o.SpendLimit
-	}
-	if o.UsageLimits != nil {
-		toSerialize["usage_limits"] = o.UsageLimits
-	}
-	return json.Marshal(toSerialize)
 }

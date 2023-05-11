@@ -341,6 +341,9 @@ func (r *clusterResource) Create(
 			if cfg.PrivateNetworkVisibility.ValueBool() {
 				visibilityPrivate := client.NETWORKVISIBILITYTYPE_PRIVATE
 				dedicated.NetworkVisibility = &visibilityPrivate
+			} else {
+				visibilityPublic := client.NETWORKVISIBILITYTYPE_PUBLIC
+				dedicated.NetworkVisibility = &visibilityPublic
 			}
 		}
 		clusterSpec.SetDedicated(dedicated)

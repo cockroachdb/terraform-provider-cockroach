@@ -20,8 +20,9 @@ package client
 
 // ListRoleGrantsResponse struct for ListRoleGrantsResponse.
 type ListRoleGrantsResponse struct {
-	Grants     *[]UserRoleGrants         `json:"grants,omitempty"`
-	Pagination *KeysetPaginationResponse `json:"pagination,omitempty"`
+	Grants          *[]UserRoleGrants         `json:"grants,omitempty"`
+	Pagination      *KeysetPaginationResponse `json:"pagination,omitempty"`
+	UserGroupGrants *[]UserGroupRoleGrant     `json:"user_group_grants,omitempty"`
 }
 
 // NewListRoleGrantsResponse instantiates a new ListRoleGrantsResponse object.
@@ -59,4 +60,18 @@ func (o *ListRoleGrantsResponse) GetPagination() KeysetPaginationResponse {
 // SetPagination gets a reference to the given KeysetPaginationResponse and assigns it to the Pagination field.
 func (o *ListRoleGrantsResponse) SetPagination(v KeysetPaginationResponse) {
 	o.Pagination = &v
+}
+
+// GetUserGroupGrants returns the UserGroupGrants field value if set, zero value otherwise.
+func (o *ListRoleGrantsResponse) GetUserGroupGrants() []UserGroupRoleGrant {
+	if o == nil || o.UserGroupGrants == nil {
+		var ret []UserGroupRoleGrant
+		return ret
+	}
+	return *o.UserGroupGrants
+}
+
+// SetUserGroupGrants gets a reference to the given []UserGroupRoleGrant and assigns it to the UserGroupGrants field.
+func (o *ListRoleGrantsResponse) SetUserGroupGrants(v []UserGroupRoleGrant) {
+	o.UserGroupGrants = &v
 }

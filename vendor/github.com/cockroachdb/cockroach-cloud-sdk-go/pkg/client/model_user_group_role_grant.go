@@ -18,23 +18,23 @@
 
 package client
 
-// GetAllRolesForUserResponse struct for GetAllRolesForUserResponse.
-type GetAllRolesForUserResponse struct {
+// UserGroupRoleGrant struct for UserGroupRoleGrant.
+type UserGroupRoleGrant struct {
 	GroupRoles *[]BuiltInFromGroups `json:"group_roles,omitempty"`
-	Roles      *[]BuiltInRole       `json:"roles,omitempty"`
+	UserId     *string              `json:"user_id,omitempty"`
 }
 
-// NewGetAllRolesForUserResponse instantiates a new GetAllRolesForUserResponse object.
+// NewUserGroupRoleGrant instantiates a new UserGroupRoleGrant object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewGetAllRolesForUserResponse() *GetAllRolesForUserResponse {
-	p := GetAllRolesForUserResponse{}
+func NewUserGroupRoleGrant() *UserGroupRoleGrant {
+	p := UserGroupRoleGrant{}
 	return &p
 }
 
 // GetGroupRoles returns the GroupRoles field value if set, zero value otherwise.
-func (o *GetAllRolesForUserResponse) GetGroupRoles() []BuiltInFromGroups {
+func (o *UserGroupRoleGrant) GetGroupRoles() []BuiltInFromGroups {
 	if o == nil || o.GroupRoles == nil {
 		var ret []BuiltInFromGroups
 		return ret
@@ -43,20 +43,20 @@ func (o *GetAllRolesForUserResponse) GetGroupRoles() []BuiltInFromGroups {
 }
 
 // SetGroupRoles gets a reference to the given []BuiltInFromGroups and assigns it to the GroupRoles field.
-func (o *GetAllRolesForUserResponse) SetGroupRoles(v []BuiltInFromGroups) {
+func (o *UserGroupRoleGrant) SetGroupRoles(v []BuiltInFromGroups) {
 	o.GroupRoles = &v
 }
 
-// GetRoles returns the Roles field value if set, zero value otherwise.
-func (o *GetAllRolesForUserResponse) GetRoles() []BuiltInRole {
-	if o == nil || o.Roles == nil {
-		var ret []BuiltInRole
+// GetUserId returns the UserId field value if set, zero value otherwise.
+func (o *UserGroupRoleGrant) GetUserId() string {
+	if o == nil || o.UserId == nil {
+		var ret string
 		return ret
 	}
-	return *o.Roles
+	return *o.UserId
 }
 
-// SetRoles gets a reference to the given []BuiltInRole and assigns it to the Roles field.
-func (o *GetAllRolesForUserResponse) SetRoles(v []BuiltInRole) {
-	o.Roles = &v
+// SetUserId gets a reference to the given string and assigns it to the UserId field.
+func (o *UserGroupRoleGrant) SetUserId(v string) {
+	o.UserId = &v
 }

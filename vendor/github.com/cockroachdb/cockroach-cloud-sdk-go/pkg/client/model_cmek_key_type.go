@@ -23,7 +23,7 @@ import (
 	"fmt"
 )
 
-// CMEKKeyType - UNKNOWN_KEY_TYPE: UNKNOWN should never be used; if it is used, it indicates a bug.
+// CMEKKeyType the model 'CMEKKeyType'.
 type CMEKKeyType string
 
 // List of CMEKKeyType.

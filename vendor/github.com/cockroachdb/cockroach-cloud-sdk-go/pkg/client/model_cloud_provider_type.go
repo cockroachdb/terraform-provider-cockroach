@@ -23,19 +23,21 @@ import (
 	"fmt"
 )
 
-// CloudProviderType  - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.
+// CloudProviderType  - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.  - AZURE: Limited Access: The Azure cloud provider.
 type CloudProviderType string
 
 // List of CloudProvider.Type.
 const (
-	CLOUDPROVIDERTYPE_GCP CloudProviderType = "GCP"
-	CLOUDPROVIDERTYPE_AWS CloudProviderType = "AWS"
+	CLOUDPROVIDERTYPE_GCP   CloudProviderType = "GCP"
+	CLOUDPROVIDERTYPE_AWS   CloudProviderType = "AWS"
+	CLOUDPROVIDERTYPE_AZURE CloudProviderType = "AZURE"
 )
 
 // All allowed values of CloudProviderType enum.
 var AllowedCloudProviderTypeEnumValues = []CloudProviderType{
 	"GCP",
 	"AWS",
+	"AZURE",
 }
 
 func (v *CloudProviderType) UnmarshalJSON(src []byte) error {

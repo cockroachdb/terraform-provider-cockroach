@@ -111,20 +111,23 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
 
     ~~~
     cluster_name = "<cluster name>"
+    database = "<database name>"
     sql_user_name = "<SQL user name>"
     sql_user_password = "<SQL user password>"
     cloud_provider = "<cloud provider>"
-    cloud_provider_region = ["<cloud provider region>"]
-    cluster_nodes = <number of nodes>
+    cloud_provider_regions = ["<cloud provider region>"]
+    cluster_node_count = <number of nodes>
     storage_gib = <storage in GiB>
     machine_type = "<cloud provider machine type>"
     allow_list_name = "<allow list name>"
     cidr_ip = "<allow list CIDR IP>"
-    cidr_mask = <allow list CIDR mask>
+    cidr_mask = <allow list CIDR prefix>
+    os = "<OS name>"
     ~~~
 
     Where:
         - `<cluster name>` is the name of the cluster you want to create.
+        - `<database name>` is the name that will be used for the database created within the cluster. This database is in addition to defaultdb which is created by default.
         - `<SQL user name>` is the name of the SQL user you want to create.
         - `<SQL user password>` is the password for the SQL user you want to create.
         - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS`.
@@ -134,7 +137,8 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
         - `<cloud provider machine type>` is the machine type for the cloud infrastructure provider.
         - `<allow list name>` is the name for the IP allow list. Use a descriptive name to identify the IP allow list.
         - `<allow list CIDR IP>` is the Classless Inter-Domain Routing (CIDR) IP address base.
-        - `<allow list CIDR mask>` is the CIDR mask.
+        - `<allow list CIDR prefix>` is the CIDR prefix. This should be a number from 0 to 32. Use 32 to only allow the single IP Address passed in cidr_ip.
+        - `<OS name>` is the name of the OS that will be used to connect from for connection string output. Possible values are ('WINDOWS', 'MAC', and 'LINUX').
 
 1. Initialize the provider.
 

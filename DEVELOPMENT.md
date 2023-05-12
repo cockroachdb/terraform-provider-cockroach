@@ -19,3 +19,13 @@
     ~~~ shell
     make install
     ~~~
+
+## Environment Variables
+
+To override the hostname of the cockroach cloud api server used by the
+terraform provider
+
+~~~shell
+# no trailing slash!
+export COCKROACH_SERVER=https://qaserver.com
+~~~

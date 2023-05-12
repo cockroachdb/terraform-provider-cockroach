@@ -130,7 +130,7 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
         - `<database name>` is the name that will be used for the database created within the cluster. This database is in addition to defaultdb which is created by default.
         - `<SQL user name>` is the name of the SQL user you want to create.
         - `<SQL user password>` is the password for the SQL user you want to create.
-        - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS`.
+        - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS` or `AZURE` (limited access).
         - `<cloud provider region>` is the region code or codes for the cloud infrastructure provider. For multi-region clusters, separate each region with a comma.
         - `<number of nodes>` is the number of nodes in each region. Cockroach Labs recommends at least 3 nodes per region, and the same number of nodes in each region for multi-region clusters.
         - `<storage in GiB>` is the amount of storage specified in GiB.

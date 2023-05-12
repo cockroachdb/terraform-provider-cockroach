@@ -132,6 +132,22 @@ func (mr *MockServiceMockRecorder) CreateDatabase(arg0, arg1, arg2 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDatabase", reflect.TypeOf((*MockService)(nil).CreateDatabase), arg0, arg1, arg2)
 }
 
+// CreateGroup mocks base method.
+func (m *MockService) CreateGroup(arg0 context.Context, arg1 *client.CreateGroupRequest) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateGroup", arg0, arg1)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateGroup indicates an expected call of CreateGroup.
+func (mr *MockServiceMockRecorder) CreateGroup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockService)(nil).CreateGroup), arg0, arg1)
+}
+
 // CreatePrivateEndpointServices mocks base method.
 func (m *MockService) CreatePrivateEndpointServices(arg0 context.Context, arg1 string) (*client.PrivateEndpointServices, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -162,6 +178,22 @@ func (m *MockService) CreateSQLUser(arg0 context.Context, arg1 string, arg2 *cli
 func (mr *MockServiceMockRecorder) CreateSQLUser(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateSQLUser", reflect.TypeOf((*MockService)(nil).CreateSQLUser), arg0, arg1, arg2)
+}
+
+// CreateUser mocks base method.
+func (m *MockService) CreateUser(arg0 context.Context, arg1 *client.CreateUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateUser indicates an expected call of CreateUser.
+func (mr *MockServiceMockRecorder) CreateUser(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateUser", reflect.TypeOf((*MockService)(nil).CreateUser), arg0, arg1)
 }
 
 // DeleteAllowlistEntry mocks base method.
@@ -276,6 +308,21 @@ func (mr *MockServiceMockRecorder) DeleteEgressRule(arg0, arg1, arg2, arg3 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEgressRule", reflect.TypeOf((*MockService)(nil).DeleteEgressRule), arg0, arg1, arg2, arg3)
 }
 
+// DeleteGroup mocks base method.
+func (m *MockService) DeleteGroup(arg0 context.Context, arg1 string) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteGroup", arg0, arg1)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteGroup indicates an expected call of DeleteGroup.
+func (mr *MockServiceMockRecorder) DeleteGroup(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteGroup", reflect.TypeOf((*MockService)(nil).DeleteGroup), arg0, arg1)
+}
+
 // DeleteLogExport mocks base method.
 func (m *MockService) DeleteLogExport(arg0 context.Context, arg1 string) (*client.LogExportClusterInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -306,6 +353,21 @@ func (m *MockService) DeleteSQLUser(arg0 context.Context, arg1, arg2 string) (*c
 func (mr *MockServiceMockRecorder) DeleteSQLUser(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteSQLUser", reflect.TypeOf((*MockService)(nil).DeleteSQLUser), arg0, arg1, arg2)
+}
+
+// DeleteUser mocks base method.
+func (m *MockService) DeleteUser(arg0 context.Context, arg1 string) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteUser", arg0, arg1)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteUser indicates an expected call of DeleteUser.
+func (mr *MockServiceMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteUser", reflect.TypeOf((*MockService)(nil).DeleteUser), arg0, arg1)
 }
 
 // EditDatabase mocks base method.
@@ -548,6 +610,70 @@ func (mr *MockServiceMockRecorder) GetEgressRule(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEgressRule", reflect.TypeOf((*MockService)(nil).GetEgressRule), arg0, arg1, arg2)
 }
 
+// GetGroup mocks base method.
+func (m *MockService) GetGroup(arg0 context.Context, arg1 string, arg2 *client.GetGroupOptions) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetGroup indicates an expected call of GetGroup.
+func (mr *MockServiceMockRecorder) GetGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroup", reflect.TypeOf((*MockService)(nil).GetGroup), arg0, arg1, arg2)
+}
+
+// GetGroup2 mocks base method.
+func (m *MockService) GetGroup2(arg0 context.Context, arg1 string, arg2 *client.GetGroupRequest) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroup2", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetGroup2 indicates an expected call of GetGroup2.
+func (mr *MockServiceMockRecorder) GetGroup2(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroup2", reflect.TypeOf((*MockService)(nil).GetGroup2), arg0, arg1, arg2)
+}
+
+// GetGroups mocks base method.
+func (m *MockService) GetGroups(arg0 context.Context, arg1 *client.GetGroupsOptions) (*client.GetGroupsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroups", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetGroupsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetGroups indicates an expected call of GetGroups.
+func (mr *MockServiceMockRecorder) GetGroups(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroups", reflect.TypeOf((*MockService)(nil).GetGroups), arg0, arg1)
+}
+
+// GetGroups2 mocks base method.
+func (m *MockService) GetGroups2(arg0 context.Context, arg1 *client.GetGroupsRequest) (*client.GetGroupsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetGroups2", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetGroupsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetGroups2 indicates an expected call of GetGroups2.
+func (mr *MockServiceMockRecorder) GetGroups2(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetGroups2", reflect.TypeOf((*MockService)(nil).GetGroups2), arg0, arg1)
+}
+
 // GetInvoice mocks base method.
 func (m *MockService) GetInvoice(arg0 context.Context, arg1 string) (*client.Invoice, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -612,6 +738,150 @@ func (mr *MockServiceMockRecorder) GetPersonUsersByEmail(arg0, arg1 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonUsersByEmail", reflect.TypeOf((*MockService)(nil).GetPersonUsersByEmail), arg0, arg1)
 }
 
+// GetResourceType mocks base method.
+func (m *MockService) GetResourceType(arg0 context.Context, arg1 string, arg2 *client.GetResourceTypeOptions) (*client.ScimResourceType, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceType", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimResourceType)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetResourceType indicates an expected call of GetResourceType.
+func (mr *MockServiceMockRecorder) GetResourceType(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceType", reflect.TypeOf((*MockService)(nil).GetResourceType), arg0, arg1, arg2)
+}
+
+// GetResourceTypes mocks base method.
+func (m *MockService) GetResourceTypes(arg0 context.Context, arg1 *client.GetResourceTypesOptions) (*client.GetResourceTypesResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResourceTypes", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetResourceTypesResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetResourceTypes indicates an expected call of GetResourceTypes.
+func (mr *MockServiceMockRecorder) GetResourceTypes(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceTypes", reflect.TypeOf((*MockService)(nil).GetResourceTypes), arg0, arg1)
+}
+
+// GetSchema mocks base method.
+func (m *MockService) GetSchema(arg0 context.Context, arg1 string, arg2 *client.GetSchemaOptions) (*client.ScimSchema, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSchema", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimSchema)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetSchema indicates an expected call of GetSchema.
+func (mr *MockServiceMockRecorder) GetSchema(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSchema", reflect.TypeOf((*MockService)(nil).GetSchema), arg0, arg1, arg2)
+}
+
+// GetSchemas mocks base method.
+func (m *MockService) GetSchemas(arg0 context.Context, arg1 *client.GetSchemasOptions) (*client.GetSchemasResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetSchemas", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetSchemasResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetSchemas indicates an expected call of GetSchemas.
+func (mr *MockServiceMockRecorder) GetSchemas(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSchemas", reflect.TypeOf((*MockService)(nil).GetSchemas), arg0, arg1)
+}
+
+// GetServiceProviderConfig mocks base method.
+func (m *MockService) GetServiceProviderConfig(arg0 context.Context) (*client.GetServiceProviderConfigResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetServiceProviderConfig", arg0)
+	ret0, _ := ret[0].(*client.GetServiceProviderConfigResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetServiceProviderConfig indicates an expected call of GetServiceProviderConfig.
+func (mr *MockServiceMockRecorder) GetServiceProviderConfig(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetServiceProviderConfig", reflect.TypeOf((*MockService)(nil).GetServiceProviderConfig), arg0)
+}
+
+// GetUser mocks base method.
+func (m *MockService) GetUser(arg0 context.Context, arg1 string, arg2 *client.GetUserOptions) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetUser indicates an expected call of GetUser.
+func (mr *MockServiceMockRecorder) GetUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser", reflect.TypeOf((*MockService)(nil).GetUser), arg0, arg1, arg2)
+}
+
+// GetUser2 mocks base method.
+func (m *MockService) GetUser2(arg0 context.Context, arg1 string, arg2 *client.GetUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUser2", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetUser2 indicates an expected call of GetUser2.
+func (mr *MockServiceMockRecorder) GetUser2(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUser2", reflect.TypeOf((*MockService)(nil).GetUser2), arg0, arg1, arg2)
+}
+
+// GetUsers mocks base method.
+func (m *MockService) GetUsers(arg0 context.Context, arg1 *client.GetUsersOptions) (*client.GetUsersResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsers", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetUsersResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetUsers indicates an expected call of GetUsers.
+func (mr *MockServiceMockRecorder) GetUsers(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers", reflect.TypeOf((*MockService)(nil).GetUsers), arg0, arg1)
+}
+
+// GetUsers2 mocks base method.
+func (m *MockService) GetUsers2(arg0 context.Context, arg1 *client.GetUsersRequest) (*client.GetUsersResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUsers2", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetUsersResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetUsers2 indicates an expected call of GetUsers2.
+func (mr *MockServiceMockRecorder) GetUsers2(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUsers2", reflect.TypeOf((*MockService)(nil).GetUsers2), arg0, arg1)
+}
+
 // ListAllowlistEntries mocks base method.
 func (m *MockService) ListAllowlistEntries(arg0 context.Context, arg1 string, arg2 *client.ListAllowlistEntriesOptions) (*client.ListAllowlistEntriesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -626,6 +896,22 @@ func (m *MockService) ListAllowlistEntries(arg0 context.Context, arg1 string, ar
 func (mr *MockServiceMockRecorder) ListAllowlistEntries(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllowlistEntries", reflect.TypeOf((*MockService)(nil).ListAllowlistEntries), arg0, arg1, arg2)
+}
+
+// ListAuditLogs mocks base method.
+func (m *MockService) ListAuditLogs(arg0 context.Context, arg1 *client.ListAuditLogsOptions) (*client.ListAuditLogsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListAuditLogs", arg0, arg1)
+	ret0, _ := ret[0].(*client.ListAuditLogsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListAuditLogs indicates an expected call of ListAuditLogs.
+func (mr *MockServiceMockRecorder) ListAuditLogs(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAuditLogs", reflect.TypeOf((*MockService)(nil).ListAuditLogs), arg0, arg1)
 }
 
 // ListAvailableRegions mocks base method.
@@ -804,6 +1090,38 @@ func (mr *MockServiceMockRecorder) ListSQLUsers(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSQLUsers", reflect.TypeOf((*MockService)(nil).ListSQLUsers), arg0, arg1, arg2)
 }
 
+// PatchGroup mocks base method.
+func (m *MockService) PatchGroup(arg0 context.Context, arg1 string, arg2 *client.PatchGroupRequest) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// PatchGroup indicates an expected call of PatchGroup.
+func (mr *MockServiceMockRecorder) PatchGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchGroup", reflect.TypeOf((*MockService)(nil).PatchGroup), arg0, arg1, arg2)
+}
+
+// PatchUser mocks base method.
+func (m *MockService) PatchUser(arg0 context.Context, arg1 string, arg2 *client.PatchUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// PatchUser indicates an expected call of PatchUser.
+func (mr *MockServiceMockRecorder) PatchUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchUser", reflect.TypeOf((*MockService)(nil).PatchUser), arg0, arg1, arg2)
+}
+
 // RemoveUserFromRole mocks base method.
 func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -963,6 +1281,22 @@ func (mr *MockServiceMockRecorder) UpdateCluster(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockService)(nil).UpdateCluster), arg0, arg1, arg2)
 }
 
+// UpdateGroup mocks base method.
+func (m *MockService) UpdateGroup(arg0 context.Context, arg1 string, arg2 *client.UpdateGroupRequest) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateGroup indicates an expected call of UpdateGroup.
+func (mr *MockServiceMockRecorder) UpdateGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateGroup", reflect.TypeOf((*MockService)(nil).UpdateGroup), arg0, arg1, arg2)
+}
+
 // UpdateSQLUserPassword mocks base method.
 func (m *MockService) UpdateSQLUserPassword(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateSQLUserPasswordRequest) (*client.SQLUser, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -977,4 +1311,20 @@ func (m *MockService) UpdateSQLUserPassword(arg0 context.Context, arg1, arg2 str
 func (mr *MockServiceMockRecorder) UpdateSQLUserPassword(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateSQLUserPassword", reflect.TypeOf((*MockService)(nil).UpdateSQLUserPassword), arg0, arg1, arg2, arg3)
+}
+
+// UpdateUser mocks base method.
+func (m *MockService) UpdateUser(arg0 context.Context, arg1 string, arg2 *client.UpdateUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateUser indicates an expected call of UpdateUser.
+func (mr *MockServiceMockRecorder) UpdateUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockService)(nil).UpdateUser), arg0, arg1, arg2)
 }

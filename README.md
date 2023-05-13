@@ -46,10 +46,10 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
     sql_user_password = "<SQL user password>"
     ~~~
 
-    Where:
-        - `<cluster name>` is the name of the cluster you want to create.
-        - `<SQL user name>` is the name of the SQL user you want to create.
-        - `<SQL user password>` is the password for the SQL user you want to create.
+    Where:  
+        - `<cluster name>` is the name of the cluster you want to create.  
+        - `<SQL user name>` is the name of the SQL user you want to create.  
+        - `<SQL user password>` is the password for the SQL user you want to create.  
 
 1. Initialize the provider.
 
@@ -125,20 +125,20 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
     os = "<OS name>"
     ~~~
 
-    Where:
-        - `<cluster name>` is the name of the cluster you want to create.
-        - `<database name>` is the name that will be used for the database created within the cluster. This database is in addition to defaultdb which is created by default.
-        - `<SQL user name>` is the name of the SQL user you want to create.
-        - `<SQL user password>` is the password for the SQL user you want to create.
-        - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS` or `AZURE` (limited access).
-        - `<cloud provider region>` is the region code or codes for the cloud infrastructure provider. For multi-region clusters, separate each region with a comma.
-        - `<number of nodes>` is the number of nodes in each region. Cockroach Labs recommends at least 3 nodes per region, and the same number of nodes in each region for multi-region clusters.
-        - `<storage in GiB>` is the amount of storage specified in GiB.
-        - `<cloud provider machine type>` is the machine type for the cloud infrastructure provider.
-        - `<allow list name>` is the name for the IP allow list. Use a descriptive name to identify the IP allow list.
-        - `<allow list CIDR IP>` is the Classless Inter-Domain Routing (CIDR) IP address base.
-        - `<allow list CIDR prefix>` is the CIDR prefix. This should be a number from 0 to 32. Use 32 to only allow the single IP Address passed in cidr_ip.
-        - `<OS name>` is the name of the OS that will be used to connect from for connection string output. Possible values are ('WINDOWS', 'MAC', and 'LINUX').
+    Where:  
+        - `<cluster name>` is the name of the cluster you want to create.  
+        - `<database name>` is the name that will be used for the database created within the cluster. This database is in addition to defaultdb which is created by default.  
+        - `<SQL user name>` is the name of the SQL user you want to create.  
+        - `<SQL user password>` is the password for the SQL user you want to create.  
+        - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS` or `AZURE` (limited access).  
+        - `<cloud provider region>` is the region code or codes for the cloud infrastructure provider. For multi-region clusters, separate each region with a comma.  
+        - `<number of nodes>` is the number of nodes in each region. Cockroach Labs recommends at least 3 nodes per region, and the same number of nodes in each region for multi-region clusters.  
+        - `<storage in GiB>` is the amount of storage specified in GiB.  
+        - `<cloud provider machine type>` is the machine type for the cloud infrastructure provider.  
+        - `<allow list name>` is the name for the IP allow list. Use a descriptive name to identify the IP allow list.  
+        - `<allow list CIDR IP>` is the Classless Inter-Domain Routing (CIDR) IP address base.  
+        - `<allow list CIDR prefix>` is the CIDR prefix. This should be a number from 0 to 32. Use 32 to only allow the single IP Address passed in cidr_ip.  
+        - `<OS name>` is the name of the OS that will be used to connect from for connection string output. Possible values are ('WINDOWS', 'MAC', and 'LINUX').  
 
 1. Initialize the provider.
 

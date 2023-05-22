@@ -47,7 +47,7 @@ Required:
 Optional:
 
 - `node_count` (Number)
-- `primary` (Boolean)
+- `primary` (Boolean) Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
 
 Read-Only:
 

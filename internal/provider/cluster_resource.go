@@ -72,8 +72,9 @@ var regionSchema = schema.NestedAttributeObject{
 			},
 		},
 		"primary": schema.BoolAttribute{
-			Optional: true,
-			Computed: true,
+			Optional:    true,
+			Computed:    true,
+			Description: "Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
 			PlanModifiers: []planmodifier.Bool{
 				boolplanmodifier.UseStateForUnknown(),
 			},
@@ -252,6 +253,10 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 		resourcevalidator.Conflicting(
 			path.MatchRoot("serverless").AtName("spend_limit"),
 			path.MatchRoot("serverless").AtName("usage_limits"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("regions").AtAnyListIndex().AtName("primary"),
+			path.MatchRoot("dedicated"),
 		),
 	}
 }

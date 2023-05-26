@@ -30,7 +30,7 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
     cd examples/workflows/cockroach_serverless_cluster
     ~~~
 
-1. The provider requires an API key set in an environment variable named `COCKROACH_API_KEY`. Copy the [API key](https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management#api-access) from the CockroachDB Cloud console and create the `COCKROACH_API_KEY` environment variable.
+1. The provider requires an API key set in an environment variable named `COCKROACH_API_KEY`. Copy the [API key](https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management.html#api-access) from the CockroachDB Cloud console and create the `COCKROACH_API_KEY` environment variable.
 
     ~~~ shell
     export COCKROACH_API_KEY=<YOUR_API_KEY>
@@ -99,7 +99,7 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
     cd examples/workflows/cockroach_dedicated_cluster
     ~~~
 
-1. The provider requires an API key set in an environment variable named `COCKROACH_API_KEY`. Copy the [API key](https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management#api-access) from the CockroachDB Cloud console and create the `COCKROACH_API_KEY` environment variable.
+1. The provider requires an API key set in an environment variable named `COCKROACH_API_KEY`. Copy the [API key](https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management.html#api-access) from the CockroachDB Cloud console and create the `COCKROACH_API_KEY` environment variable.
 
     ~~~ shell
     export COCKROACH_API_KEY=<YOUR_API_KEY>

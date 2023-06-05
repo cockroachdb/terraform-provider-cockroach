@@ -224,7 +224,6 @@ func (r *sqlUserResource) Read(
 		if pagination.NextPage != nil && *pagination.NextPage != "" {
 			page = *pagination.NextPage
 		} else {
-			// If NextPage is nil, it means there are no more pages, so break the loop
 			break
 		}
 	}

@@ -41,6 +41,7 @@ type sqlUserResource struct {
 const sqlUserIDFmt = "%s:%s"
 const sqlUserNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
 const passwordLength = 32
+const paginationLimit = 100
 
 var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegexString, sqlUserNameRegex))
 
@@ -190,23 +191,44 @@ func (r *sqlUserResource) Read(
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual user list and make sure this one is in there.
-	apiResp, httpResp, err := r.provider.service.ListSQLUsers(ctx, state.ClusterId.ValueString(), &client.ListSQLUsersOptions{})
-	if err != nil {
-		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
-			resp.Diagnostics.AddWarning(
-				"Cluster not found",
-				fmt.Sprintf("SQL User's parent cluster with clusterID %s is not found. Removing from state.",
-					state.ClusterId.ValueString()))
-			resp.State.RemoveResource(ctx)
-		} else {
-			resp.Diagnostics.AddError(
-				"Couldn't retrieve SQL users",
-				fmt.Sprintf("Unexpected error retrieving SQL users: %s", formatAPIErrorMessage(err)),
-			)
+	var allSQLUsers []client.SQLUser
+	var page string
+	limit := int32(paginationLimit)
+
+	for {
+		options := &client.ListSQLUsersOptions{
+			PaginationPage:  &page,
+			PaginationLimit: &limit,
 		}
-		return
+
+		apiResp, httpResp, err := r.provider.service.ListSQLUsers(ctx, state.ClusterId.ValueString(), options)
+		if err != nil {
+			if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+				resp.Diagnostics.AddWarning(
+					"Cluster not found",
+					fmt.Sprintf("SQL User's parent cluster with clusterID %s is not found. Removing from state.",
+						state.ClusterId.ValueString()))
+				resp.State.RemoveResource(ctx)
+			} else {
+				resp.Diagnostics.AddError(
+					"Couldn't retrieve SQL users",
+					fmt.Sprintf("Unexpected error retrieving SQL users: %s", formatAPIErrorMessage(err)),
+				)
+			}
+			return
+		}
+
+		allSQLUsers = append(allSQLUsers, apiResp.GetUsers()...)
+
+		pagination := apiResp.GetPagination()
+		if pagination.NextPage != nil && *pagination.NextPage != "" {
+			page = *pagination.NextPage
+		} else {
+			break
+		}
 	}
-	for _, user := range apiResp.GetUsers() {
+
+	for _, user := range allSQLUsers {
 		if user.GetName() == state.Name.ValueString() {
 			return
 		}

@@ -26,6 +26,8 @@ type EnableLogExportRequest struct {
 	Groups *[]LogExportGroup `json:"groups,omitempty"`
 	// log_name is an identifier for the logs in the customer's log sink.
 	LogName string `json:"log_name"`
+	// omitted_channels is a list of channels that the user does not want to export logs for.
+	OmittedChannels *[]string `json:"omitted_channels,omitempty"`
 	// redact allows the customer to set a default redaction policy for logs before they are exported to the target sink. If a group config omits a redact flag and this one is set to `true`, then that group will receive redacted logs.
 	Redact *bool `json:"redact,omitempty"`
 	// region allows the customer to override the destination region for all logs for a cluster.
@@ -95,6 +97,20 @@ func (o *EnableLogExportRequest) GetLogName() string {
 // SetLogName sets field value.
 func (o *EnableLogExportRequest) SetLogName(v string) {
 	o.LogName = v
+}
+
+// GetOmittedChannels returns the OmittedChannels field value if set, zero value otherwise.
+func (o *EnableLogExportRequest) GetOmittedChannels() []string {
+	if o == nil || o.OmittedChannels == nil {
+		var ret []string
+		return ret
+	}
+	return *o.OmittedChannels
+}
+
+// SetOmittedChannels gets a reference to the given []string and assigns it to the OmittedChannels field.
+func (o *EnableLogExportRequest) SetOmittedChannels(v []string) {
+	o.OmittedChannels = &v
 }
 
 // GetRedact returns the Redact field value if set, zero value otherwise.

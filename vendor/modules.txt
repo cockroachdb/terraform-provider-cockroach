@@ -313,7 +313,13 @@ golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
+<<<<<<< HEAD
 # golang.org/x/net v0.11.0
+=======
+# golang.org/x/mod v0.8.0
+## explicit; go 1.17
+# golang.org/x/net v0.8.0
+>>>>>>> 041259d ([CC-24379] Add folder resource and folder CRUD functionality)
 ## explicit; go 1.17
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
@@ -337,6 +343,8 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+# golang.org/x/tools v0.6.0
+## explicit; go 1.18
 # google.golang.org/appengine v1.6.7
 ## explicit; go 1.11
 google.golang.org/appengine

@@ -264,6 +264,12 @@ type RoleGrant struct {
 	Roles  []Role       `tfsdk:"roles"`
 }
 
+type Folder struct {
+	ID       types.String `tfsdk:"id"`
+	Name     types.String `tfsdk:"name"`
+	ParentId types.String `tfsdk:"parent_id"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

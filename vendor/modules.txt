@@ -19,7 +19,7 @@ github.com/armon/go-radix
 # github.com/bgentry/speakeasy v0.1.0
 ## explicit
 github.com/bgentry/speakeasy
-# github.com/cockroachdb/cockroach-cloud-sdk-go v1.2.0
+# github.com/cockroachdb/cockroach-cloud-sdk-go v1.2.0 => ../cockroach-cloud-sdk-go
 ## explicit; go 1.17
 github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client
 # github.com/davecgh/go-spew v1.1.1
@@ -311,6 +311,8 @@ golang.org/x/crypto/openpgp/packet
 golang.org/x/crypto/openpgp/s2k
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/scrypt
+# golang.org/x/mod v0.8.0
+## explicit; go 1.17
 # golang.org/x/net v0.8.0
 ## explicit; go 1.17
 golang.org/x/net/context
@@ -335,6 +337,8 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
+# golang.org/x/tools v0.6.0
+## explicit; go 1.18
 # google.golang.org/appengine v1.6.7
 ## explicit; go 1.11
 google.golang.org/appengine

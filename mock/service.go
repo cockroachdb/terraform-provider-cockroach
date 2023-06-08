@@ -132,6 +132,22 @@ func (mr *MockServiceMockRecorder) CreateDatabase(arg0, arg1, arg2 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDatabase", reflect.TypeOf((*MockService)(nil).CreateDatabase), arg0, arg1, arg2)
 }
 
+// CreateFolder mocks base method.
+func (m *MockService) CreateFolder(arg0 context.Context, arg1 *client.CreateFolderRequest) (*client.FolderResource, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateFolder", arg0, arg1)
+	ret0, _ := ret[0].(*client.FolderResource)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateFolder indicates an expected call of CreateFolder.
+func (mr *MockServiceMockRecorder) CreateFolder(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateFolder", reflect.TypeOf((*MockService)(nil).CreateFolder), arg0, arg1)
+}
+
 // CreateGroup mocks base method.
 func (m *MockService) CreateGroup(arg0 context.Context, arg1 *client.CreateGroupRequest) (*client.ScimGroup, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -306,6 +322,21 @@ func (m *MockService) DeleteEgressRule(arg0 context.Context, arg1, arg2 string, 
 func (mr *MockServiceMockRecorder) DeleteEgressRule(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEgressRule", reflect.TypeOf((*MockService)(nil).DeleteEgressRule), arg0, arg1, arg2, arg3)
+}
+
+// DeleteFolder mocks base method.
+func (m *MockService) DeleteFolder(arg0 context.Context, arg1 string) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteFolder", arg0, arg1)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteFolder indicates an expected call of DeleteFolder.
+func (mr *MockServiceMockRecorder) DeleteFolder(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteFolder", reflect.TypeOf((*MockService)(nil).DeleteFolder), arg0, arg1)
 }
 
 // DeleteGroup mocks base method.
@@ -640,6 +671,38 @@ func (m *MockService) GetEgressRule(arg0 context.Context, arg1, arg2 string) (*c
 func (mr *MockServiceMockRecorder) GetEgressRule(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEgressRule", reflect.TypeOf((*MockService)(nil).GetEgressRule), arg0, arg1, arg2)
+}
+
+// GetFolder mocks base method.
+func (m *MockService) GetFolder(arg0 context.Context, arg1 string) (*client.FolderResource, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFolder", arg0, arg1)
+	ret0, _ := ret[0].(*client.FolderResource)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetFolder indicates an expected call of GetFolder.
+func (mr *MockServiceMockRecorder) GetFolder(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolder", reflect.TypeOf((*MockService)(nil).GetFolder), arg0, arg1)
+}
+
+// GetFolderTopLevel mocks base method.
+func (m *MockService) GetFolderTopLevel(arg0 context.Context, arg1 *client.GetFolderTopLevelOptions) (*client.FolderResourceList, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFolderTopLevel", arg0, arg1)
+	ret0, _ := ret[0].(*client.FolderResourceList)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetFolderTopLevel indicates an expected call of GetFolderTopLevel.
+func (mr *MockServiceMockRecorder) GetFolderTopLevel(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolderTopLevel", reflect.TypeOf((*MockService)(nil).GetFolderTopLevel), arg0, arg1)
 }
 
 // GetGroup mocks base method.
@@ -1058,6 +1121,22 @@ func (mr *MockServiceMockRecorder) ListEgressRules(arg0, arg1, arg2 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEgressRules", reflect.TypeOf((*MockService)(nil).ListEgressRules), arg0, arg1, arg2)
 }
 
+// ListFolderContents mocks base method.
+func (m *MockService) ListFolderContents(arg0 context.Context, arg1 string, arg2 *client.ListFolderContentsOptions) (*client.FolderResourceList, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFolderContents", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.FolderResourceList)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListFolderContents indicates an expected call of ListFolderContents.
+func (mr *MockServiceMockRecorder) ListFolderContents(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFolderContents", reflect.TypeOf((*MockService)(nil).ListFolderContents), arg0, arg1, arg2)
+}
+
 // ListInvoices mocks base method.
 func (m *MockService) ListInvoices(arg0 context.Context) (*client.ListInvoicesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1327,6 +1406,22 @@ func (m *MockService) UpdateCluster(arg0 context.Context, arg1 string, arg2 *cli
 func (mr *MockServiceMockRecorder) UpdateCluster(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockService)(nil).UpdateCluster), arg0, arg1, arg2)
+}
+
+// UpdateFolder mocks base method.
+func (m *MockService) UpdateFolder(arg0 context.Context, arg1 string, arg2 *client.UpdateFolderSpecification) (*client.FolderResource, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateFolder", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.FolderResource)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateFolder indicates an expected call of UpdateFolder.
+func (mr *MockServiceMockRecorder) UpdateFolder(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateFolder", reflect.TypeOf((*MockService)(nil).UpdateFolder), arg0, arg1, arg2)
 }
 
 // UpdateGroup mocks base method.

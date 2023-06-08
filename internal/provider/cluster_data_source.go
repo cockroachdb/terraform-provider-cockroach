@@ -161,6 +161,10 @@ func (d *clusterDataSource) Schema(
 				Computed:    true,
 				Description: "Describes the status of any in-progress CockroachDB upgrade or rollback.",
 			},
+			"parent_id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.",
+			},
 		},
 	}
 }

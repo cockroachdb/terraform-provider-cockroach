@@ -87,6 +87,7 @@ type CockroachCluster struct {
 	CreatorId        types.String             `tfsdk:"creator_id"`
 	OperationStatus  types.String             `tfsdk:"operation_status"`
 	UpgradeStatus    types.String             `tfsdk:"upgrade_status"`
+	ParentId         types.String             `tfsdk:"parent_id"`
 }
 
 type AllowlistEntry struct {
@@ -262,6 +263,12 @@ type RoleGrant struct {
 	ID     types.String `tfsdk:"id"`
 	UserId types.String `tfsdk:"user_id"`
 	Roles  []Role       `tfsdk:"roles"`
+}
+
+type Folder struct {
+	ID       types.String `tfsdk:"id"`
+	Name     types.String `tfsdk:"name"`
+	ParentId types.String `tfsdk:"parent_id"`
 }
 
 func (e *APIErrorMessage) String() string {

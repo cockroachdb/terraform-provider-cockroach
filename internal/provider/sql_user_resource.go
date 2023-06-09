@@ -38,10 +38,13 @@ type sqlUserResource struct {
 }
 
 // clusterID:name
-const sqlUserIDFmt = "%s:%s"
-const sqlUserNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
-const passwordLength = 32
-const paginationLimit = 100
+const (
+	sqlUserIDFmt     = "%s:%s"
+	sqlUserNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
+	passwordLength   = 32
+	// SQL users are lightweight, so we can use a large page size.
+	sqlUserPaginationLimit = 500
+)
 
 var sqlUserIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegexString, sqlUserNameRegex))
 
@@ -191,9 +194,8 @@ func (r *sqlUserResource) Read(
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual user list and make sure this one is in there.
-	var allSQLUsers []client.SQLUser
 	var page string
-	limit := int32(paginationLimit)
+	limit := int32(sqlUserPaginationLimit)
 
 	for {
 		options := &client.ListSQLUsersOptions{
@@ -218,7 +220,11 @@ func (r *sqlUserResource) Read(
 			return
 		}
 
-		allSQLUsers = append(allSQLUsers, apiResp.GetUsers()...)
+		for _, user := range apiResp.GetUsers() {
+			if user.GetName() == state.Name.ValueString() {
+				return
+			}
+		}
 
 		pagination := apiResp.GetPagination()
 		if pagination.NextPage != nil && *pagination.NextPage != "" {
@@ -228,11 +234,6 @@ func (r *sqlUserResource) Read(
 		}
 	}
 
-	for _, user := range allSQLUsers {
-		if user.GetName() == state.Name.ValueString() {
-			return
-		}
-	}
 	resp.Diagnostics.AddWarning(
 		"Couldn't find user.",
 		fmt.Sprintf("This cluster doesn't have a SQL user named '%v'. Removing from state.", state.Name.ValueString()),

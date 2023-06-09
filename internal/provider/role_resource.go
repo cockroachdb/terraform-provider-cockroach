@@ -29,6 +29,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+const roleGrantPaginationLimit = 100
+
 type roleResource struct {
 	provider *provider
 }
@@ -159,22 +161,38 @@ func (r *roleResource) Read(
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual user list and make sure this one is in there.
-	options := &client.ListRoleGrantsOptions{}
-	apiResp, _, err := r.provider.service.ListRoleGrants(ctx, options)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error listing user roles",
-			fmt.Sprintf("Unexpected error retrieving user roles: %s", formatAPIErrorMessage(err)),
-		)
-		return
-	}
-	for _, grant := range apiResp.GetGrants() {
-		if grant.GetUserId() == state.UserId.ValueString() {
-			loadListRolesToTerraformState(state.UserId.ValueString(), &grant, &state)
-			state.ID = state.UserId
-			diags = resp.State.Set(ctx, state)
-			resp.Diagnostics.Append(diags...)
+	var page string
+	limit := int32(roleGrantPaginationLimit)
+
+	for {
+		options := &client.ListRoleGrantsOptions{
+			PaginationPage:  &page,
+			PaginationLimit: &limit,
+		}
+		apiResp, _, err := r.provider.service.ListRoleGrants(ctx, options)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error listing user roles",
+				fmt.Sprintf("Unexpected error retrieving user roles: %s", formatAPIErrorMessage(err)),
+			)
 			return
+		}
+
+		for _, grant := range apiResp.GetGrants() {
+			if grant.GetUserId() == state.UserId.ValueString() {
+				loadListRolesToTerraformState(state.UserId.ValueString(), &grant, &state)
+				state.ID = state.UserId
+				diags = resp.State.Set(ctx, state)
+				resp.Diagnostics.Append(diags...)
+				return
+			}
+		}
+
+		pagination := apiResp.GetPagination()
+		if pagination.NextPage != nil && *pagination.NextPage != "" {
+			page = *pagination.NextPage
+		} else {
+			break
 		}
 	}
 	resp.Diagnostics.AddWarning(

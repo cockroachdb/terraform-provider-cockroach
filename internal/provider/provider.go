@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
@@ -96,6 +97,16 @@ func (p *provider) Configure(
 		cfg.ServerURL = server
 	}
 	cfg.UserAgent = UserAgent
+
+	// retryablehttp gives us automatic retries with exponential backoff.
+	httpClient := retryablehttp.NewClient()
+	// The TF framework will pick up the default global logger.
+	// HTTP requests are logged at DEBUG level.
+	httpClient.Logger = &leveledTFLogger{baseCtx: ctx}
+	httpClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
+	httpClient.CheckRetry = retryGetRequestsOnly
+	cfg.HTTPClient = httpClient.StandardClient()
+
 	cl := client.NewClient(cfg)
 	p.service = NewService(cl)
 	resp.ResourceData = p

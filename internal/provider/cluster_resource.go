@@ -857,13 +857,18 @@ func waitForClusterReadyFunc(
 		if cluster.State == client.CLUSTERSTATETYPE_CREATION_FAILED {
 			return sdk_resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
+		if cluster.State == client.CLUSTERSTATETYPE_DELETED {
+			return sdk_resource.NonRetryableError(fmt.Errorf("cluster was deleted"))
+		}
 		return sdk_resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
 	}
 }
 
 // waitForClusterLock checks to see if the cluster is locked by any sort of automatic job,
 // and waits if necessary before proceeding.
-func waitForClusterLock(ctx context.Context, state CockroachCluster, s client.Service, diags *diag.Diagnostics) {
+func waitForClusterLock(
+	ctx context.Context, state CockroachCluster, s client.Service, diags *diag.Diagnostics,
+) {
 	if state.State.ValueString() == string(client.CLUSTERSTATETYPE_LOCKED) {
 		tflog.Info(ctx, "Cluster is locked. Waiting for the operation to finish.")
 		clusterObj, _, err := s.GetCluster(ctx, state.ID.ValueString())

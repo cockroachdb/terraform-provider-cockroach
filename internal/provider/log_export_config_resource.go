@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -150,8 +151,9 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
+	clusterID := plan.ID.ValueString()
 	// Check cluster
-	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ID.ValueString())
+	cluster, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
@@ -205,17 +207,20 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
-	apiLogExportObj, _, err := r.provider.service.EnableLogExport(ctx, plan.ID.ValueString(), logExportRequest)
+	apiLogExportObj := &client.LogExportClusterInfo{}
+	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
+		ctx, clusterUpdateTimeout, r.provider.service,
+		clusterID, cluster, logExportRequest, apiLogExportObj,
+	))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error enabling log export",
-			fmt.Sprintf("Could not enable log export: %v", formatAPIErrorMessage(err)),
+			"Error enabling log export", err.Error(),
 		)
 		return
 	}
 
 	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
-		waitForLogExportReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, apiLogExportObj))
+		waitForLogExportReadyFunc(ctx, clusterID, r.provider.service, apiLogExportObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling log export",
@@ -228,6 +233,38 @@ func (r *logExportConfigResource) Create(
 	loadLogExportIntoTerraformState(apiLogExportObj, &state)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
+}
+
+func retryEnableLogExport(
+	ctx context.Context,
+	timeout time.Duration,
+	cl client.Service,
+	clusterID string,
+	cluster *client.Cluster,
+	logExportRequest *client.EnableLogExportRequest,
+	apiLogExportObj *client.LogExportClusterInfo,
+) sdk_resource.RetryFunc {
+	return func() *sdk_resource.RetryError {
+		apiResp, httpResp, err := cl.EnableLogExport(ctx, clusterID, logExportRequest)
+		if err != nil {
+			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
+				// Wait for cluster to be ready.
+				clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
+				if clusterErr != nil {
+					return sdk_resource.NonRetryableError(
+						fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
+				}
+				return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+			}
+
+			return sdk_resource.NonRetryableError(
+				fmt.Errorf("could not enable log export: %v", formatAPIErrorMessage(err)),
+			)
+		}
+		*apiLogExportObj = *apiResp
+		return nil
+	}
 }
 
 func loadLogExportIntoTerraformState(
@@ -310,10 +347,41 @@ func (r *logExportConfigResource) Read(
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
-				"log export config not found",
-				fmt.Sprintf("log export config with cluster ID %s is not found. Removing from state.", clusterID))
+				"Log export config not found",
+				fmt.Sprintf("The log export config with cluster ID %s is not found. Removing from state.", clusterID))
 			resp.State.RemoveResource(ctx)
+			return
 		} else {
+			// Check cluster existence.
+			cluster, clusterHttpResp, clusterErr := r.provider.service.GetCluster(ctx, clusterID)
+			if clusterErr != nil {
+				if clusterHttpResp != nil && clusterHttpResp.StatusCode == http.StatusNotFound {
+					resp.Diagnostics.AddWarning(
+						"Cluster not found",
+						fmt.Sprintf("The log export config's cluster with ID %s is not found. Removing from state.",
+							clusterID,
+						))
+					resp.State.RemoveResource(ctx)
+					return
+				} else {
+					resp.Diagnostics.AddError(
+						"Error getting cluster",
+						fmt.Sprintf("Unexpected error retrieving the log export config's cluster: %s",
+							formatAPIErrorMessage(clusterErr),
+						))
+				}
+			}
+
+			if cluster.State == client.CLUSTERSTATETYPE_DELETED {
+				resp.Diagnostics.AddWarning(
+					"Cluster deleted",
+					fmt.Sprintf("The log export config's cluster with ID %s was deleted. Removing from state.",
+						clusterID,
+					))
+				resp.State.RemoveResource(ctx)
+				return
+			}
+
 			resp.Diagnostics.AddError(
 				"Error getting log export info",
 				fmt.Sprintf("Unexpected error retrieving log export info: %s", formatAPIErrorMessage(err)))
@@ -354,17 +422,22 @@ func (r *logExportConfigResource) Update(
 		return
 	}
 
-	apiLogExportObj, _, err := r.provider.service.EnableLogExport(ctx, plan.ID.ValueString(), logExportRequest)
+	clusterID := plan.ID.ValueString()
+	cluster := &client.Cluster{}
+	apiLogExportObj := &client.LogExportClusterInfo{}
+	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
+		ctx, clusterUpdateTimeout, r.provider.service,
+		clusterID, cluster, logExportRequest, apiLogExportObj,
+	))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating log export config",
-			fmt.Sprintf("Could not update log export config: %v", formatAPIErrorMessage(err)),
+			"Error updating log export config", err.Error(),
 		)
 		return
 	}
 
 	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
-		waitForLogExportReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, apiLogExportObj))
+		waitForLogExportReadyFunc(ctx, clusterID, r.provider.service, apiLogExportObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating log export config",
@@ -450,17 +523,40 @@ func (r *logExportConfigResource) Delete(
 	}
 
 	clusterID := state.ID.ValueString()
-	_, httpResp, err := r.provider.service.DeleteLogExport(ctx, clusterID)
-	if err != nil {
-		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
-			// Log export config or cluster is already gone. Swallow the error.
-		} else {
-			resp.Diagnostics.AddError(
-				"Error deleting log export config",
-				fmt.Sprintf("Could not delete log export config: %s", formatAPIErrorMessage(err)),
-			)
-			return
+	cluster := &client.Cluster{}
+	retry := func() sdk_resource.RetryFunc {
+		return func() *sdk_resource.RetryError {
+			_, httpResp, err := r.provider.service.DeleteLogExport(ctx, clusterID)
+			if err != nil {
+				if httpResp != nil {
+					if httpResp.StatusCode == http.StatusNotFound {
+						// Log export config or cluster is already gone. Swallow the error.
+						return nil
+					}
+					if httpResp.StatusCode == http.StatusServiceUnavailable {
+						// Wait for cluster to be ready.
+						clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
+						if clusterErr != nil {
+							return sdk_resource.NonRetryableError(
+								fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
+						}
+						return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+					}
+				}
+				return sdk_resource.NonRetryableError(
+					fmt.Errorf("could not delete log export config: %v", formatAPIErrorMessage(err)))
+			}
+			return nil
 		}
+	}
+
+	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retry())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error deleting log export config", err.Error(),
+		)
+		return
 	}
 
 	// Remove resource from state

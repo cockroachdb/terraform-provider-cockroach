@@ -34,6 +34,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	// The patch versions are just for mocks. They don't need to be the actual
+	// latest available patch versions; they just need to resolve to the correct
+	// major versions.
+	minSupportedClusterMajorVersion = "v22.2"
+	minSupportedClusterPatchVersion = "v22.2.0"
+	latestClusterMajorVersion       = "v23.1"
+	latestClusterPatchVersion       = "v23.1.0"
+)
+
 // TestAccClusterResource attempts to create, check, update, and destroy
 // a real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccServerlessClusterResource(t *testing.T) {
@@ -79,7 +89,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	initialCluster := client.Cluster{
 		Id:               uuid.Nil.String(),
 		Name:             fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2)),
-		CockroachVersion: "v22.1.0",
+		CockroachVersion: latestClusterPatchVersion,
 		Plan:             "SERVERLESS",
 		CloudProvider:    "GCP",
 		State:            "CREATED",
@@ -106,7 +116,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			client.Cluster{
 				Id:               uuid.Nil.String(),
 				Name:             initialCluster.Name,
-				CockroachVersion: "v22.1.0",
+				CockroachVersion: latestClusterPatchVersion,
 				Plan:             "SERVERLESS",
 				CloudProvider:    "GCP",
 				State:            "CREATED",
@@ -132,7 +142,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			client.Cluster{
 				Id:               uuid.Nil.String(),
 				Name:             initialCluster.Name,
-				CockroachVersion: "v22.1.0",
+				CockroachVersion: latestClusterPatchVersion,
 				Plan:             "SERVERLESS",
 				CloudProvider:    "GCP",
 				State:            "CREATED",
@@ -154,7 +164,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			client.Cluster{
 				Id:               uuid.Nil.String(),
 				Name:             initialCluster.Name,
-				CockroachVersion: "v22.1.0",
+				CockroachVersion: latestClusterPatchVersion,
 				Plan:             "SERVERLESS",
 				CloudProvider:    "GCP",
 				State:            "CREATED",
@@ -177,7 +187,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			client.Cluster{
 				Id:               uuid.Nil.String(),
 				Name:             initialCluster.Name,
-				CockroachVersion: "v22.1.0",
+				CockroachVersion: latestClusterPatchVersion,
 				Plan:             "SERVERLESS",
 				CloudProvider:    "GCP",
 				State:            "CREATED",
@@ -411,7 +421,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	cluster := client.Cluster{
 		Id:               clusterID,
 		Name:             clusterName,
-		CockroachVersion: "v22.1.0",
+		CockroachVersion: minSupportedClusterPatchVersion,
 		Plan:             client.PLANTYPE_DEDICATED,
 		CloudProvider:    client.CLOUDPROVIDERTYPE_GCP,
 		State:            client.CLUSTERSTATETYPE_CREATED,
@@ -433,7 +443,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	}
 
 	upgradingCluster := cluster
-	upgradingCluster.CockroachVersion = "v22.2.0"
+	upgradingCluster.CockroachVersion = latestClusterPatchVersion
 	upgradingCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_MAJOR_UPGRADE_RUNNING
 
 	pendingCluster := upgradingCluster
@@ -455,10 +465,10 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	s.EXPECT().ListMajorClusterVersions(gomock.Any(), gomock.Any()).Return(&client.ListMajorClusterVersionsResponse{
 		Versions: []client.ClusterMajorVersion{
 			{
-				Version: "v22.1",
+				Version: minSupportedClusterMajorVersion,
 			},
 			{
-				Version: "v22.2",
+				Version: latestClusterMajorVersion,
 			},
 		},
 	}, nil, nil)
@@ -497,7 +507,7 @@ func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestDedicatedClusterResourceConfig(clusterName, "v22.1", false),
+				Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckCockroachClusterExists(resourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", clusterName),
@@ -507,8 +517,8 @@ func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool
 				),
 			},
 			{
-				Config: getTestDedicatedClusterResourceConfig(clusterName, "v22.2", true),
-				Check:  resource.TestCheckResourceAttr(resourceName, "cockroach_version", "v22.2"),
+				Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true),
+				Check:  resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
 			},
 		},
 	})

@@ -35,8 +35,12 @@ type databaseResource struct {
 }
 
 // clusterID:name
-const databaseIDFmt = "%s:%s"
-const databaseNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
+const (
+	databaseIDFmt     = "%s:%s"
+	databaseNameRegex = "[A-Za-z0-9_][A-Za-z0-9\\._\\-]{0,62}"
+	// Databases are lightweight, so we can use a large page size.
+	databasePaginationLimit = 500
+)
 
 var databaseIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):(%s)$", uuidRegexString, databaseNameRegex))
 
@@ -149,35 +153,51 @@ func (r *databaseResource) Read(
 		return
 	}
 	clusterID := state.ClusterId.ValueString()
+
 	// Retrieve the actual database list and make sure this one is in there.
-	apiResp, httpResp, err := r.provider.service.ListDatabases(
-		ctx, clusterID, &client.ListDatabasesOptions{},
-	)
-	if err != nil {
-		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
-			resp.Diagnostics.AddWarning(
-				"Cluster not found",
-				fmt.Sprintf(
-					"Database's parent cluster with clusterID %s is not found. Removing from state.",
-					state.ClusterId.ValueString(),
-				),
-			)
-			resp.State.RemoveResource(ctx)
-		} else {
-			resp.Diagnostics.AddError(
-				"Couldn't retrieve databases",
-				fmt.Sprintf("Unexpected error retrieving databases: %s", formatAPIErrorMessage(err)),
-			)
-		}
-		return
-	}
-	for _, database := range apiResp.GetDatabases() {
-		if database.GetName() == state.Name.ValueString() {
-			// Computed values may have changed.
-			loadDatabaseToTerraformState(clusterID, &database, &state)
-			diags = resp.State.Set(ctx, state)
-			resp.Diagnostics.Append(diags...)
+	var page string
+	limit := int32(databasePaginationLimit)
+	for {
+		apiResp, httpResp, err := r.provider.service.ListDatabases(
+			ctx, clusterID, &client.ListDatabasesOptions{
+				PaginationPage:  &page,
+				PaginationLimit: &limit,
+			},
+		)
+		if err != nil {
+			if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+				resp.Diagnostics.AddWarning(
+					"Cluster not found",
+					fmt.Sprintf(
+						"Database's parent cluster with clusterID %s is not found. Removing from state.",
+						state.ClusterId.ValueString(),
+					),
+				)
+				resp.State.RemoveResource(ctx)
+			} else {
+				resp.Diagnostics.AddError(
+					"Couldn't retrieve databases",
+					fmt.Sprintf("Unexpected error retrieving databases: %s", formatAPIErrorMessage(err)),
+				)
+			}
 			return
+		}
+
+		for _, database := range apiResp.GetDatabases() {
+			if database.GetName() == state.Name.ValueString() {
+				// Computed values may have changed.
+				loadDatabaseToTerraformState(clusterID, &database, &state)
+				diags = resp.State.Set(ctx, state)
+				resp.Diagnostics.Append(diags...)
+				return
+			}
+		}
+
+		pagination := apiResp.GetPagination()
+		if pagination.NextPage != nil && *pagination.NextPage != "" {
+			page = *pagination.NextPage
+		} else {
+			break
 		}
 	}
 	resp.Diagnostics.AddWarning(

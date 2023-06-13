@@ -33,8 +33,12 @@ import (
 )
 
 // clusterID:ip/mask
-const allowListIDFmt = "%s:%s/%d"
-const allowlistEntryRegex = `(([0-9]{1,3}\.){3}[0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])`
+const (
+	allowListIDFmt      = "%s:%s/%d"
+	allowlistEntryRegex = `(([0-9]{1,3}\.){3}[0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])`
+	// Allowlist entries are lightweight, so we can use a large limit.
+	allowlistEntryPaginationLimit = 500
+)
 
 var allowlistIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):%s$", uuidRegexString, allowlistEntryRegex))
 
@@ -189,43 +193,58 @@ func (r *allowListResource) Read(
 
 	// Since the state may have come from an import, we need to retrieve
 	// the actual entry list and make sure this one is in there.
-	apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(
-		ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{},
-	)
-	if err != nil {
-		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
-			resp.Diagnostics.AddWarning(
-				"Cluster not found",
-				fmt.Sprintf(
-					"Allowlist's parent cluster with clusterID %s is not found. Removing from state.",
-					state.ClusterId.ValueString()),
-			)
-			resp.State.RemoveResource(ctx)
-		} else {
-			resp.Diagnostics.AddError(
-				"Couldn't retrieve allowlist entries",
-				fmt.Sprintf("Unexpected error retrieving allowlist entries: %s", formatAPIErrorMessage(err)),
-			)
-		}
-		return
-	}
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	for _, entry := range apiResp.GetAllowlist() {
-		if entry.GetCidrIp() == state.CidrIp.ValueString() &&
-			int64(entry.GetCidrMask()) == state.CidrMask.ValueInt64() {
-			// Update flags in case they've changed externally.
-			state.Sql = types.BoolValue(entry.GetSql())
-			state.Ui = types.BoolValue(entry.GetUi())
-			if entry.Name == nil {
-				state.Name = types.StringNull()
+	var page string
+	limit := int32(allowlistEntryPaginationLimit)
+	for {
+		apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(
+			ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{
+				PaginationPage:  &page,
+				PaginationLimit: &limit,
+			},
+		)
+		if err != nil {
+			if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+				resp.Diagnostics.AddWarning(
+					"Cluster not found",
+					fmt.Sprintf(
+						"Allowlist's parent cluster with clusterID %s is not found. Removing from state.",
+						state.ClusterId.ValueString()),
+				)
+				resp.State.RemoveResource(ctx)
 			} else {
-				state.Name = types.StringValue(entry.GetName())
+				resp.Diagnostics.AddError(
+					"Couldn't retrieve allowlist entries",
+					fmt.Sprintf("Unexpected error retrieving allowlist entries: %s", formatAPIErrorMessage(err)),
+				)
 			}
-			diags = resp.State.Set(ctx, &state)
-			resp.Diagnostics.Append(diags...)
 			return
+		}
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		for _, entry := range apiResp.GetAllowlist() {
+			if entry.GetCidrIp() == state.CidrIp.ValueString() &&
+				int64(entry.GetCidrMask()) == state.CidrMask.ValueInt64() {
+				// Update flags in case they've changed externally.
+				state.Sql = types.BoolValue(entry.GetSql())
+				state.Ui = types.BoolValue(entry.GetUi())
+				if entry.Name == nil {
+					state.Name = types.StringNull()
+				} else {
+					state.Name = types.StringValue(entry.GetName())
+				}
+				diags = resp.State.Set(ctx, &state)
+				resp.Diagnostics.Append(diags...)
+				return
+			}
+		}
+
+		pagination := apiResp.GetPagination()
+		if pagination.NextPage != nil && *pagination.NextPage != "" {
+			page = *pagination.NextPage
+		} else {
+			break
 		}
 	}
 	resp.Diagnostics.AddWarning(

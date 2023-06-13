@@ -339,6 +339,22 @@ func (mr *MockServiceMockRecorder) DeleteLogExport(arg0, arg1 interface{}) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteLogExport", reflect.TypeOf((*MockService)(nil).DeleteLogExport), arg0, arg1)
 }
 
+// DeleteMaintenanceWindow mocks base method.
+func (m *MockService) DeleteMaintenanceWindow(arg0 context.Context, arg1 string) (*client.MaintenanceWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteMaintenanceWindow", arg0, arg1)
+	ret0, _ := ret[0].(*client.MaintenanceWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteMaintenanceWindow indicates an expected call of DeleteMaintenanceWindow.
+func (mr *MockServiceMockRecorder) DeleteMaintenanceWindow(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMaintenanceWindow", reflect.TypeOf((*MockService)(nil).DeleteMaintenanceWindow), arg0, arg1)
+}
+
 // DeleteSQLUser mocks base method.
 func (m *MockService) DeleteSQLUser(arg0 context.Context, arg1, arg2 string) (*client.SQLUser, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -704,6 +720,22 @@ func (m *MockService) GetLogExportInfo(arg0 context.Context, arg1 string) (*clie
 func (mr *MockServiceMockRecorder) GetLogExportInfo(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogExportInfo", reflect.TypeOf((*MockService)(nil).GetLogExportInfo), arg0, arg1)
+}
+
+// GetMaintenanceWindow mocks base method.
+func (m *MockService) GetMaintenanceWindow(arg0 context.Context, arg1 string) (*client.MaintenanceWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMaintenanceWindow", arg0, arg1)
+	ret0, _ := ret[0].(*client.MaintenanceWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetMaintenanceWindow indicates an expected call of GetMaintenanceWindow.
+func (mr *MockServiceMockRecorder) GetMaintenanceWindow(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMaintenanceWindow", reflect.TypeOf((*MockService)(nil).GetMaintenanceWindow), arg0, arg1)
 }
 
 // GetOrganizationInfo mocks base method.
@@ -1183,6 +1215,22 @@ func (m *MockService) SetEgressTrafficPolicy(arg0 context.Context, arg1 string, 
 func (mr *MockServiceMockRecorder) SetEgressTrafficPolicy(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetEgressTrafficPolicy", reflect.TypeOf((*MockService)(nil).SetEgressTrafficPolicy), arg0, arg1, arg2)
+}
+
+// SetMaintenanceWindow mocks base method.
+func (m *MockService) SetMaintenanceWindow(arg0 context.Context, arg1 string, arg2 *client.MaintenanceWindow) (*client.MaintenanceWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetMaintenanceWindow", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.MaintenanceWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SetMaintenanceWindow indicates an expected call of SetMaintenanceWindow.
+func (mr *MockServiceMockRecorder) SetMaintenanceWindow(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetMaintenanceWindow", reflect.TypeOf((*MockService)(nil).SetMaintenanceWindow), arg0, arg1, arg2)
 }
 
 // SetRolesForUser mocks base method.

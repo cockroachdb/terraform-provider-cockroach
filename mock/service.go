@@ -578,6 +578,22 @@ func (mr *MockServiceMockRecorder) GetCluster(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*MockService)(nil).GetCluster), arg0, arg1)
 }
 
+// GetClusterVersionDeferral mocks base method.
+func (m *MockService) GetClusterVersionDeferral(arg0 context.Context, arg1 string) (*client.ClusterVersionDeferral, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterVersionDeferral", arg0, arg1)
+	ret0, _ := ret[0].(*client.ClusterVersionDeferral)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetClusterVersionDeferral indicates an expected call of GetClusterVersionDeferral.
+func (mr *MockServiceMockRecorder) GetClusterVersionDeferral(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterVersionDeferral", reflect.TypeOf((*MockService)(nil).GetClusterVersionDeferral), arg0, arg1)
+}
+
 // GetConnectionString mocks base method.
 func (m *MockService) GetConnectionString(arg0 context.Context, arg1 string, arg2 *client.GetConnectionStringOptions) (*client.GetConnectionStringResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1122,38 +1138,6 @@ func (mr *MockServiceMockRecorder) ListSQLUsers(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSQLUsers", reflect.TypeOf((*MockService)(nil).ListSQLUsers), arg0, arg1, arg2)
 }
 
-// PatchGroup mocks base method.
-func (m *MockService) PatchGroup(arg0 context.Context, arg1 string, arg2 *client.PatchGroupRequest) (*client.ScimGroup, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PatchGroup", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ScimGroup)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// PatchGroup indicates an expected call of PatchGroup.
-func (mr *MockServiceMockRecorder) PatchGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchGroup", reflect.TypeOf((*MockService)(nil).PatchGroup), arg0, arg1, arg2)
-}
-
-// PatchUser mocks base method.
-func (m *MockService) PatchUser(arg0 context.Context, arg1 string, arg2 *client.PatchUserRequest) (*client.ScimUser, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PatchUser", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ScimUser)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// PatchUser indicates an expected call of PatchUser.
-func (mr *MockServiceMockRecorder) PatchUser(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchUser", reflect.TypeOf((*MockService)(nil).PatchUser), arg0, arg1, arg2)
-}
-
 // RemoveUserFromRole mocks base method.
 func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1200,6 +1184,22 @@ func (m *MockService) SetClientCACert(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) SetClientCACert(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetClientCACert", reflect.TypeOf((*MockService)(nil).SetClientCACert), arg0, arg1, arg2)
+}
+
+// SetClusterVersionDeferral mocks base method.
+func (m *MockService) SetClusterVersionDeferral(arg0 context.Context, arg1 string, arg2 *client.ClusterVersionDeferral) (*client.ClusterVersionDeferral, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SetClusterVersionDeferral", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ClusterVersionDeferral)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SetClusterVersionDeferral indicates an expected call of SetClusterVersionDeferral.
+func (mr *MockServiceMockRecorder) SetClusterVersionDeferral(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetClusterVersionDeferral", reflect.TypeOf((*MockService)(nil).SetClusterVersionDeferral), arg0, arg1, arg2)
 }
 
 // SetEgressTrafficPolicy mocks base method.

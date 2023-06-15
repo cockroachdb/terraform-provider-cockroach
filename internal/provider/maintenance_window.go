@@ -122,8 +122,6 @@ func (r *maintenanceWindowResource) Read(
 				"Error getting maintenance window",
 				fmt.Sprintf("Unexpected error retrieving maintenance window: %s", formatAPIErrorMessage(err)))
 		}
-	}
-	if resp.Diagnostics.HasError() {
 		return
 	}
 	state.OffsetDuration = basetypes.NewStringValue(mwinObj.OffsetDuration)

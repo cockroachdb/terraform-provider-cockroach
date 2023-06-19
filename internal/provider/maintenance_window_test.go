@@ -29,16 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-// TestAccMaintenanceWindowResource attempts to create, check, and destroy a
-// real cluster. It will be skipped if TF_ACC isn't set.
-func TestAccMaintenanceWindowResource(t *testing.T) {
-	t.Skip("Skipping until we can either integrate the AWS provider " +
-		"or import a permanent test fixture.")
-	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-mwin-%s", GenerateRandomString(4))
-	testMaintenanceWindowResource(t, clusterName, false)
-}
-
 // TestIntegrationMaintenanceWindowResource attempts to create, check, and
 // destroy a cluster, but uses a mocked API service.
 func TestIntegrationMaintenanceWindowResource(t *testing.T) {

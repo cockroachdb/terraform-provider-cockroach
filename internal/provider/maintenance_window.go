@@ -115,7 +115,7 @@ func (r *maintenanceWindowResource) Read(
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
 				"Maintenance window not found",
-				fmt.Sprintf("Maintenance window for cluster ID %s not found.", clusterID))
+				fmt.Sprintf("Maintenance window for cluster ID %s not found. Maintenance window will be removed from state.", clusterID))
 			resp.State.RemoveResource(ctx)
 		} else {
 			resp.Diagnostics.AddError(
@@ -168,12 +168,20 @@ func (r *maintenanceWindowResource) Delete(
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	_, _, err := r.provider.service.DeleteMaintenanceWindow(ctx, state.ID.ValueString())
+	clusterID := state.ID.ValueString()
+	_, httpResp, err := r.provider.service.DeleteMaintenanceWindow(ctx, clusterID)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error deleting maintenance window",
-			fmt.Sprintf("Could not delete maintenance window: %v", formatAPIErrorMessage(err)),
-		)
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.Diagnostics.AddWarning(
+				"Maintenance window not found",
+				fmt.Sprintf("Maintenance window for cluster ID %s not found. Maintenance window will be removed from state.", clusterID))
+			resp.State.RemoveResource(ctx)
+		} else {
+			resp.Diagnostics.AddError(
+				"Error deleting maintenance window",
+				fmt.Sprintf("Could not delete maintenance window: %v", formatAPIErrorMessage(err)),
+			)
+		}
 		return
 	}
 }

@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -35,11 +37,11 @@ var maintenanceWindowAttributes = map[string]schema.Attribute{
 		Required:            true,
 		MarkdownDescription: "Cluster ID",
 	},
-	"offset_duration": schema.StringAttribute{
+	"offset_duration": schema.Int64Attribute{
 		Required:            true,
 		MarkdownDescription: "The offset duration is the duration in seconds from the beginning of each Monday (UTC) after which the maintenance window starts.",
 	},
-	"window_duration": schema.StringAttribute{
+	"window_duration": schema.Int64Attribute{
 		Required:            true,
 		MarkdownDescription: "The window duration is the duration in seconds that the maintenance window will remain active for after it starts.",
 	},
@@ -124,8 +126,38 @@ func (r *maintenanceWindowResource) Read(
 		}
 		return
 	}
-	state.OffsetDuration = basetypes.NewStringValue(mwinObj.OffsetDuration)
-	state.WindowDuration = basetypes.NewStringValue(mwinObj.WindowDuration)
+
+	// API returns the JSON mapping of
+	// google.golang.org/protobuf/types/known/durationpb.Duration.
+	//
+	// https://pkg.go.dev/google.golang.org/protobuf/types/known/durationpb#hdr-JSON_Mapping.
+	if mwinObj.OffsetDuration != "" {
+		offsetDuration, err := strconv.ParseFloat(strings.TrimSuffix(mwinObj.OffsetDuration, "s"), 64)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to parse offset duration",
+				fmt.Sprintf("The offset duration returned by the API could not be parsed: %v", err),
+			)
+			return
+		}
+		state.OffsetDuration = basetypes.NewInt64Value(int64(offsetDuration))
+	} else {
+		state.OffsetDuration = basetypes.NewInt64Null()
+	}
+	if mwinObj.WindowDuration != "" {
+		windowDuration, err := strconv.ParseFloat(strings.TrimSuffix(mwinObj.WindowDuration, "s"), 64)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Failed to parse window duration",
+				fmt.Sprintf("The window duration returned by the API could not be parsed: %v", err),
+			)
+			return
+		}
+		state.WindowDuration = basetypes.NewInt64Value(int64(windowDuration))
+	} else {
+		state.WindowDuration = basetypes.NewInt64Null()
+	}
+
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -145,9 +177,13 @@ func (r *maintenanceWindowResource) Update(
 func (r *maintenanceWindowResource) setMaintenanceWindow(
 	ctx context.Context, state *tfsdk.State, diags *diag.Diagnostics, maintenanceWindow ClusterMaintenanceWindow,
 ) {
+	// API expects the JSON mapping of
+	// google.golang.org/protobuf/types/known/durationpb.Duration.
+	//
+	// https://pkg.go.dev/google.golang.org/protobuf/types/known/durationpb#hdr-JSON_Mapping.
 	clientMaintenanceWindow := client.NewMaintenanceWindowWithDefaults()
-	clientMaintenanceWindow.OffsetDuration = maintenanceWindow.OffsetDuration.ValueString()
-	clientMaintenanceWindow.WindowDuration = maintenanceWindow.WindowDuration.ValueString()
+	clientMaintenanceWindow.OffsetDuration = fmt.Sprintf("%ds", maintenanceWindow.OffsetDuration.ValueInt64())
+	clientMaintenanceWindow.WindowDuration = fmt.Sprintf("%ds", maintenanceWindow.WindowDuration.ValueInt64())
 	_, _, err := r.provider.service.SetMaintenanceWindow(ctx, maintenanceWindow.ID.ValueString(), clientMaintenanceWindow)
 	if err != nil {
 		diags.AddError(

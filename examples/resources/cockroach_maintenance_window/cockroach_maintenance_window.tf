@@ -3,15 +3,15 @@ variable "cluster_id" {
 }
 
 variable "offset_duration" {
-  type = string
+  type = number
   # 2 days, i.e. window starts at WED 00:00 UTC.
-  default = "172800s"
+  default = 172800
 }
 
 variable "window_duration" {
-  type = string
+  type = number
   # 6 hours.
-  default = "21600s"
+  default = 21600
 }
 
 resource "cockroach_maintenance_window" "example" {

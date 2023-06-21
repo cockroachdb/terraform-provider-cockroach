@@ -29,6 +29,14 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
+// TestAccMaintenanceWindowResource attempts to create, check, and destroy a
+// real cluster. It will be skipped if TF_ACC isn't set.
+func TestAccMaintenanceWindowResource(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("tftest-mwin-%s", GenerateRandomString(4))
+	testMaintenanceWindowResource(t, clusterName, false)
+}
+
 // TestIntegrationMaintenanceWindowResource attempts to create, check, and
 // destroy a cluster, but uses a mocked API service.
 func TestIntegrationMaintenanceWindowResource(t *testing.T) {
@@ -119,16 +127,16 @@ func testMaintenanceWindowResource(t *testing.T, clusterName string, useMock boo
 				Config: getTestMaintenanceWindowResourceCreateConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckCockroachClusterExists(clusterResourceName),
-					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration", "1010s"),
-					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration", "101010s"),
+					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration_seconds", "1010"),
+					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration_seconds", "101010"),
 				),
 			},
 			{
 				Config: getTestMaintenanceWindowResourceUpdateConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckCockroachClusterExists(clusterResourceName),
-					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration", "1100s"),
-					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration", "110011s"),
+					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration_seconds", "1100"),
+					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration_seconds", "110011"),
 				),
 			},
 		},
@@ -152,8 +160,8 @@ resource "cockroach_cluster" "test" {
 
 resource "cockroach_maintenance_window" "test" {
   id              = cockroach_cluster.test.id
-  offset_duration = "1010s"
-  window_duration = "101010s"
+  offset_duration_seconds = 1010
+  window_duration_seconds = 101010
 }
 `, name)
 }
@@ -175,8 +183,8 @@ resource "cockroach_cluster" "test" {
 
 resource "cockroach_maintenance_window" "test" {
   id              = cockroach_cluster.test.id
-  offset_duration = "1100s"
-  window_duration = "110011s"
+  offset_duration_seconds = 1100
+  window_duration_seconds = 110011
 }
 `, name)
 }

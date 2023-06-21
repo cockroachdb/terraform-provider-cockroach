@@ -227,9 +227,9 @@ type ClusterDatadogMetricExportConfig struct {
 }
 
 type ClusterMaintenanceWindow struct {
-	ID             types.String `tfsdk:"id"`
-	OffsetDuration types.String `tfsdk:"offset_duration"`
-	WindowDuration types.String `tfsdk:"window_duration"`
+	ID                    types.String `tfsdk:"id"`
+	OffsetDurationSeconds types.Int64  `tfsdk:"offset_duration_seconds"`
+	WindowDurationSeconds types.Int64  `tfsdk:"window_duration_seconds"`
 }
 
 type ClientCACertResourceModel struct {

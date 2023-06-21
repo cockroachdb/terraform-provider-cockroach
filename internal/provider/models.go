@@ -226,6 +226,12 @@ type ClusterDatadogMetricExportConfig struct {
 	Status      types.String `tfsdk:"status"`
 }
 
+type ClusterMaintenanceWindow struct {
+	ID             types.String `tfsdk:"id"`
+	OffsetDuration types.Int64  `tfsdk:"offset_duration"`
+	WindowDuration types.Int64  `tfsdk:"window_duration"`
+}
+
 type ClientCACertResourceModel struct {
 	ID          types.String `tfsdk:"id"`
 	X509PemCert types.String `tfsdk:"x509_pem_cert"`

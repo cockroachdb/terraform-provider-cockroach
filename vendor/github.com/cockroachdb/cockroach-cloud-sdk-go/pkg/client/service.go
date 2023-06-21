@@ -29,50 +29,91 @@ import (
 )
 
 type Service interface {
-	AddAllowlistEntry(ctx _context.Context, clusterId string, allowlistEntry *AllowlistEntry) (*AllowlistEntry, *_nethttp.Response, error)
-	AddAllowlistEntry2(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
-	AddEgressRule(ctx _context.Context, clusterId string, addEgressRuleRequest *AddEgressRuleRequest) (*AddEgressRuleResponse, *_nethttp.Response, error)
-	AddUserToRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
-	CreateCluster(ctx _context.Context, createClusterRequest *CreateClusterRequest) (*Cluster, *_nethttp.Response, error)
-	CreateDatabase(ctx _context.Context, clusterId string, createDatabaseRequest *CreateDatabaseRequest) (*ApiDatabase, *_nethttp.Response, error)
-	CreateGroup(ctx _context.Context, createGroupRequest *CreateGroupRequest) (*ScimGroup, *_nethttp.Response, error)
-	CreatePrivateEndpointServices(ctx _context.Context, clusterId string) (*PrivateEndpointServices, *_nethttp.Response, error)
-	CreateSQLUser(ctx _context.Context, clusterId string, createSQLUserRequest *CreateSQLUserRequest) (*SQLUser, *_nethttp.Response, error)
-	CreateUser(ctx _context.Context, createUserRequest *CreateUserRequest) (*ScimUser, *_nethttp.Response, error)
-	DeleteAllowlistEntry(ctx _context.Context, clusterId string, cidrIp string, cidrMask int32) (*AllowlistEntry, *_nethttp.Response, error)
+	// AuditLogs
+	ListAuditLogs(ctx _context.Context, options *ListAuditLogsOptions) (*ListAuditLogsResponse, *_nethttp.Response, error)
+	// Billing
+	GetInvoice(ctx _context.Context, invoiceId string) (*Invoice, *_nethttp.Response, error)
+	ListInvoices(ctx _context.Context) (*ListInvoicesResponse, *_nethttp.Response, error)
+	// ClientCACertificates
 	DeleteClientCACert(ctx _context.Context, clusterId string) (*ClientCACertInfo, *_nethttp.Response, error)
-	DeleteCloudWatchMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
-	DeleteCluster(ctx _context.Context, clusterId string) (*Cluster, *_nethttp.Response, error)
-	DeleteDatabase(ctx _context.Context, clusterId string, name string) (*ApiDatabase, *_nethttp.Response, error)
-	DeleteDatadogMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
-	DeleteEgressRule(ctx _context.Context, clusterId string, ruleId string, options *DeleteEgressRuleOptions) (*DeleteEgressRuleResponse, *_nethttp.Response, error)
-	DeleteGroup(ctx _context.Context, id string) (*_nethttp.Response, error)
-	DeleteLogExport(ctx _context.Context, clusterId string) (*LogExportClusterInfo, *_nethttp.Response, error)
-	DeleteSQLUser(ctx _context.Context, clusterId string, name string) (*SQLUser, *_nethttp.Response, error)
-	DeleteUser(ctx _context.Context, id string) (*_nethttp.Response, error)
-	EditDatabase(ctx _context.Context, clusterId string, name string, updateDatabaseRequest1 *UpdateDatabaseRequest1) (*ApiDatabase, *_nethttp.Response, error)
-	EditDatabase2(ctx _context.Context, clusterId string, updateDatabaseRequest *UpdateDatabaseRequest) (*ApiDatabase, *_nethttp.Response, error)
-	EditEgressRule(ctx _context.Context, clusterId string, ruleId string, editEgressRuleRequest *EditEgressRuleRequest) (*EditEgressRuleResponse, *_nethttp.Response, error)
-	EnableCMEKSpec(ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification) (*CMEKClusterInfo, *_nethttp.Response, error)
-	EnableCloudWatchMetricExport(ctx _context.Context, clusterId string, enableCloudWatchMetricExportRequest *EnableCloudWatchMetricExportRequest) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
-	EnableDatadogMetricExport(ctx _context.Context, clusterId string, enableDatadogMetricExportRequest *EnableDatadogMetricExportRequest) (*DatadogMetricExportInfo, *_nethttp.Response, error)
-	EnableLogExport(ctx _context.Context, clusterId string, enableLogExportRequest *EnableLogExportRequest) (*LogExportClusterInfo, *_nethttp.Response, error)
-	GetAllRolesForUser(ctx _context.Context, userId string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
-	GetCMEKClusterInfo(ctx _context.Context, clusterId string) (*CMEKClusterInfo, *_nethttp.Response, error)
 	GetClientCACert(ctx _context.Context, clusterId string) (*ClientCACertInfo, *_nethttp.Response, error)
-	GetCloudWatchMetricExportInfo(ctx _context.Context, clusterId string) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
+	SetClientCACert(ctx _context.Context, clusterId string, setClientCACertRequest *SetClientCACertRequest) (*ClientCACertInfo, *_nethttp.Response, error)
+	UpdateClientCACert(ctx _context.Context, clusterId string, updateClientCACertRequest *UpdateClientCACertRequest) (*ClientCACertInfo, *_nethttp.Response, error)
+	// Clusters
+	CreateCluster(ctx _context.Context, createClusterRequest *CreateClusterRequest) (*Cluster, *_nethttp.Response, error)
+	DeleteCluster(ctx _context.Context, clusterId string) (*Cluster, *_nethttp.Response, error)
 	GetCluster(ctx _context.Context, clusterId string) (*Cluster, *_nethttp.Response, error)
 	GetConnectionString(ctx _context.Context, clusterId string, options *GetConnectionStringOptions) (*GetConnectionStringResponse, *_nethttp.Response, error)
-	GetDatadogMetricExportInfo(ctx _context.Context, clusterId string) (*DatadogMetricExportInfo, *_nethttp.Response, error)
+	ListAvailableRegions(ctx _context.Context, options *ListAvailableRegionsOptions) (*ListAvailableRegionsResponse, *_nethttp.Response, error)
+	ListClusterNodes(ctx _context.Context, clusterId string, options *ListClusterNodesOptions) (*ListClusterNodesResponse, *_nethttp.Response, error)
+	ListClusters(ctx _context.Context, options *ListClustersOptions) (*ListClustersResponse, *_nethttp.Response, error)
+	ListMajorClusterVersions(ctx _context.Context, options *ListMajorClusterVersionsOptions) (*ListMajorClusterVersionsResponse, *_nethttp.Response, error)
+	UpdateCluster(ctx _context.Context, clusterId string, updateClusterSpecification *UpdateClusterSpecification) (*Cluster, *_nethttp.Response, error)
+	// CustomerManagedEncryptionKeys
+	EnableCMEKSpec(ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification) (*CMEKClusterInfo, *_nethttp.Response, error)
+	GetCMEKClusterInfo(ctx _context.Context, clusterId string) (*CMEKClusterInfo, *_nethttp.Response, error)
+	UpdateCMEKSpec(ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification) (*CMEKClusterInfo, *_nethttp.Response, error)
+	UpdateCMEKStatus(ctx _context.Context, clusterId string, updateCMEKStatusRequest *UpdateCMEKStatusRequest) (*CMEKClusterInfo, *_nethttp.Response, error)
+	// Databases
+	CreateDatabase(ctx _context.Context, clusterId string, createDatabaseRequest *CreateDatabaseRequest) (*ApiDatabase, *_nethttp.Response, error)
+	DeleteDatabase(ctx _context.Context, clusterId string, name string) (*ApiDatabase, *_nethttp.Response, error)
+	EditDatabase(ctx _context.Context, clusterId string, name string, updateDatabaseRequest1 *UpdateDatabaseRequest1) (*ApiDatabase, *_nethttp.Response, error)
+	EditDatabase2(ctx _context.Context, clusterId string, updateDatabaseRequest *UpdateDatabaseRequest) (*ApiDatabase, *_nethttp.Response, error)
+	ListDatabases(ctx _context.Context, clusterId string, options *ListDatabasesOptions) (*ApiListDatabasesResponse, *_nethttp.Response, error)
+	// Default
+	GetClusterVersionDeferral(ctx _context.Context, clusterId string) (*ClusterVersionDeferral, *_nethttp.Response, error)
+	SetClusterVersionDeferral(ctx _context.Context, clusterId string, clusterVersionDeferral *ClusterVersionDeferral) (*ClusterVersionDeferral, *_nethttp.Response, error)
+	// EgressRules
+	AddEgressRule(ctx _context.Context, clusterId string, addEgressRuleRequest *AddEgressRuleRequest) (*AddEgressRuleResponse, *_nethttp.Response, error)
+	DeleteEgressRule(ctx _context.Context, clusterId string, ruleId string, options *DeleteEgressRuleOptions) (*DeleteEgressRuleResponse, *_nethttp.Response, error)
+	EditEgressRule(ctx _context.Context, clusterId string, ruleId string, editEgressRuleRequest *EditEgressRuleRequest) (*EditEgressRuleResponse, *_nethttp.Response, error)
 	GetEgressRule(ctx _context.Context, clusterId string, ruleId string) (*GetEgressRuleResponse, *_nethttp.Response, error)
+	ListEgressRules(ctx _context.Context, clusterId string, options *ListEgressRulesOptions) (*ListEgressRulesResponse, *_nethttp.Response, error)
+	SetEgressTrafficPolicy(ctx _context.Context, clusterId string, setEgressTrafficPolicyRequest *SetEgressTrafficPolicyRequest) (*_nethttp.Response, error)
+	// IPAllowlists
+	AddAllowlistEntry(ctx _context.Context, clusterId string, allowlistEntry *AllowlistEntry) (*AllowlistEntry, *_nethttp.Response, error)
+	AddAllowlistEntry2(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+	DeleteAllowlistEntry(ctx _context.Context, clusterId string, cidrIp string, cidrMask int32) (*AllowlistEntry, *_nethttp.Response, error)
+	ListAllowlistEntries(ctx _context.Context, clusterId string, options *ListAllowlistEntriesOptions) (*ListAllowlistEntriesResponse, *_nethttp.Response, error)
+	UpdateAllowlistEntry(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+	// LogExport
+	DeleteLogExport(ctx _context.Context, clusterId string) (*LogExportClusterInfo, *_nethttp.Response, error)
+	EnableLogExport(ctx _context.Context, clusterId string, enableLogExportRequest *EnableLogExportRequest) (*LogExportClusterInfo, *_nethttp.Response, error)
+	GetLogExportInfo(ctx _context.Context, clusterId string) (*LogExportClusterInfo, *_nethttp.Response, error)
+	// MaintenanceWindows
+	DeleteMaintenanceWindow(ctx _context.Context, clusterId string) (*MaintenanceWindow, *_nethttp.Response, error)
+	GetMaintenanceWindow(ctx _context.Context, clusterId string) (*MaintenanceWindow, *_nethttp.Response, error)
+	SetMaintenanceWindow(ctx _context.Context, clusterId string, maintenanceWindow *MaintenanceWindow) (*MaintenanceWindow, *_nethttp.Response, error)
+	// MetricExport
+	DeleteCloudWatchMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
+	DeleteDatadogMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
+	EnableCloudWatchMetricExport(ctx _context.Context, clusterId string, enableCloudWatchMetricExportRequest *EnableCloudWatchMetricExportRequest) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
+	EnableDatadogMetricExport(ctx _context.Context, clusterId string, enableDatadogMetricExportRequest *EnableDatadogMetricExportRequest) (*DatadogMetricExportInfo, *_nethttp.Response, error)
+	GetCloudWatchMetricExportInfo(ctx _context.Context, clusterId string) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
+	GetDatadogMetricExportInfo(ctx _context.Context, clusterId string) (*DatadogMetricExportInfo, *_nethttp.Response, error)
+	// Organizations
+	GetOrganizationInfo(ctx _context.Context) (*Organization, *_nethttp.Response, error)
+	// PrivateEndpointServices
+	CreatePrivateEndpointServices(ctx _context.Context, clusterId string) (*PrivateEndpointServices, *_nethttp.Response, error)
+	ListAwsEndpointConnections(ctx _context.Context, clusterId string) (*AwsEndpointConnections, *_nethttp.Response, error)
+	ListPrivateEndpointServices(ctx _context.Context, clusterId string) (*PrivateEndpointServices, *_nethttp.Response, error)
+	SetAwsEndpointConnectionState(ctx _context.Context, clusterId string, endpointId string, setAwsEndpointConnectionStateRequest *SetAwsEndpointConnectionStateRequest) (*AwsEndpointConnection, *_nethttp.Response, error)
+	// RoleManagement
+	AddUserToRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	GetAllRolesForUser(ctx _context.Context, userId string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	GetPersonUsersByEmail(ctx _context.Context, email *string) (*GetPersonUsersByEmailResponse, *_nethttp.Response, error)
+	ListRoleGrants(ctx _context.Context, options *ListRoleGrantsOptions) (*ListRoleGrantsResponse, *_nethttp.Response, error)
+	RemoveUserFromRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	SetRolesForUser(ctx _context.Context, userId string, cockroachCloudSetRolesForUserRequest *CockroachCloudSetRolesForUserRequest) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	// SCIM
+	CreateGroup(ctx _context.Context, createGroupRequest *CreateGroupRequest) (*ScimGroup, *_nethttp.Response, error)
+	CreateUser(ctx _context.Context, createUserRequest *CreateUserRequest) (*ScimUser, *_nethttp.Response, error)
+	DeleteGroup(ctx _context.Context, id string) (*_nethttp.Response, error)
+	DeleteUser(ctx _context.Context, id string) (*_nethttp.Response, error)
 	GetGroup(ctx _context.Context, id string, options *GetGroupOptions) (*ScimGroup, *_nethttp.Response, error)
 	GetGroup2(ctx _context.Context, id string, getGroupRequest *GetGroupRequest) (*ScimGroup, *_nethttp.Response, error)
 	GetGroups(ctx _context.Context, options *GetGroupsOptions) (*GetGroupsResponse, *_nethttp.Response, error)
 	GetGroups2(ctx _context.Context, getGroupsRequest *GetGroupsRequest) (*GetGroupsResponse, *_nethttp.Response, error)
-	GetInvoice(ctx _context.Context, invoiceId string) (*Invoice, *_nethttp.Response, error)
-	GetLogExportInfo(ctx _context.Context, clusterId string) (*LogExportClusterInfo, *_nethttp.Response, error)
-	GetOrganizationInfo(ctx _context.Context) (*Organization, *_nethttp.Response, error)
-	GetPersonUsersByEmail(ctx _context.Context, email *string) (*GetPersonUsersByEmailResponse, *_nethttp.Response, error)
 	GetResourceType(ctx _context.Context, resourceId string, options *GetResourceTypeOptions) (*ScimResourceType, *_nethttp.Response, error)
 	GetResourceTypes(ctx _context.Context, options *GetResourceTypesOptions) (*GetResourceTypesResponse, *_nethttp.Response, error)
 	GetSchema(ctx _context.Context, schemaId string, options *GetSchemaOptions) (*ScimSchema, *_nethttp.Response, error)
@@ -82,34 +123,13 @@ type Service interface {
 	GetUser2(ctx _context.Context, id string, getUserRequest *GetUserRequest) (*ScimUser, *_nethttp.Response, error)
 	GetUsers(ctx _context.Context, options *GetUsersOptions) (*GetUsersResponse, *_nethttp.Response, error)
 	GetUsers2(ctx _context.Context, getUsersRequest *GetUsersRequest) (*GetUsersResponse, *_nethttp.Response, error)
-	ListAllowlistEntries(ctx _context.Context, clusterId string, options *ListAllowlistEntriesOptions) (*ListAllowlistEntriesResponse, *_nethttp.Response, error)
-	ListAuditLogs(ctx _context.Context, options *ListAuditLogsOptions) (*ListAuditLogsResponse, *_nethttp.Response, error)
-	ListAvailableRegions(ctx _context.Context, options *ListAvailableRegionsOptions) (*ListAvailableRegionsResponse, *_nethttp.Response, error)
-	ListAwsEndpointConnections(ctx _context.Context, clusterId string) (*AwsEndpointConnections, *_nethttp.Response, error)
-	ListClusterNodes(ctx _context.Context, clusterId string, options *ListClusterNodesOptions) (*ListClusterNodesResponse, *_nethttp.Response, error)
-	ListClusters(ctx _context.Context, options *ListClustersOptions) (*ListClustersResponse, *_nethttp.Response, error)
-	ListDatabases(ctx _context.Context, clusterId string, options *ListDatabasesOptions) (*ApiListDatabasesResponse, *_nethttp.Response, error)
-	ListEgressRules(ctx _context.Context, clusterId string, options *ListEgressRulesOptions) (*ListEgressRulesResponse, *_nethttp.Response, error)
-	ListInvoices(ctx _context.Context) (*ListInvoicesResponse, *_nethttp.Response, error)
-	ListMajorClusterVersions(ctx _context.Context, options *ListMajorClusterVersionsOptions) (*ListMajorClusterVersionsResponse, *_nethttp.Response, error)
-	ListPrivateEndpointServices(ctx _context.Context, clusterId string) (*PrivateEndpointServices, *_nethttp.Response, error)
-	ListRoleGrants(ctx _context.Context, options *ListRoleGrantsOptions) (*ListRoleGrantsResponse, *_nethttp.Response, error)
-	ListSQLUsers(ctx _context.Context, clusterId string, options *ListSQLUsersOptions) (*ListSQLUsersResponse, *_nethttp.Response, error)
-	PatchGroup(ctx _context.Context, id string, patchGroupRequest *PatchGroupRequest) (*ScimGroup, *_nethttp.Response, error)
-	PatchUser(ctx _context.Context, id string, patchUserRequest *PatchUserRequest) (*ScimUser, *_nethttp.Response, error)
-	RemoveUserFromRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
-	SetAwsEndpointConnectionState(ctx _context.Context, clusterId string, endpointId string, setAwsEndpointConnectionStateRequest *SetAwsEndpointConnectionStateRequest) (*AwsEndpointConnection, *_nethttp.Response, error)
-	SetClientCACert(ctx _context.Context, clusterId string, setClientCACertRequest *SetClientCACertRequest) (*ClientCACertInfo, *_nethttp.Response, error)
-	SetEgressTrafficPolicy(ctx _context.Context, clusterId string, setEgressTrafficPolicyRequest *SetEgressTrafficPolicyRequest) (*_nethttp.Response, error)
-	SetRolesForUser(ctx _context.Context, userId string, cockroachCloudSetRolesForUserRequest *CockroachCloudSetRolesForUserRequest) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
-	UpdateAllowlistEntry(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
-	UpdateCMEKSpec(ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification) (*CMEKClusterInfo, *_nethttp.Response, error)
-	UpdateCMEKStatus(ctx _context.Context, clusterId string, updateCMEKStatusRequest *UpdateCMEKStatusRequest) (*CMEKClusterInfo, *_nethttp.Response, error)
-	UpdateClientCACert(ctx _context.Context, clusterId string, updateClientCACertRequest *UpdateClientCACertRequest) (*ClientCACertInfo, *_nethttp.Response, error)
-	UpdateCluster(ctx _context.Context, clusterId string, updateClusterSpecification *UpdateClusterSpecification) (*Cluster, *_nethttp.Response, error)
 	UpdateGroup(ctx _context.Context, id string, updateGroupRequest *UpdateGroupRequest) (*ScimGroup, *_nethttp.Response, error)
-	UpdateSQLUserPassword(ctx _context.Context, clusterId string, name string, updateSQLUserPasswordRequest *UpdateSQLUserPasswordRequest) (*SQLUser, *_nethttp.Response, error)
 	UpdateUser(ctx _context.Context, id string, updateUserRequest *UpdateUserRequest) (*ScimUser, *_nethttp.Response, error)
+	// SQLUsers
+	CreateSQLUser(ctx _context.Context, clusterId string, createSQLUserRequest *CreateSQLUserRequest) (*SQLUser, *_nethttp.Response, error)
+	DeleteSQLUser(ctx _context.Context, clusterId string, name string) (*SQLUser, *_nethttp.Response, error)
+	ListSQLUsers(ctx _context.Context, clusterId string, options *ListSQLUsersOptions) (*ListSQLUsersResponse, *_nethttp.Response, error)
+	UpdateSQLUserPassword(ctx _context.Context, clusterId string, name string, updateSQLUserPasswordRequest *UpdateSQLUserPasswordRequest) (*SQLUser, *_nethttp.Response, error)
 }
 
 // Service for the Cockroach DB Cloud API
@@ -122,12 +142,24 @@ func NewService(c *Client) Service {
 	return &ServiceImpl{client: c}
 }
 
-// AddAllowlistEntry executes the request.
-func (a *ServiceImpl) AddAllowlistEntry(
-	ctx _context.Context, clusterId string, allowlistEntry *AllowlistEntry,
-) (*AllowlistEntry, *_nethttp.Response, error) {
+// ListAuditLogsOptions contains optional parameters for ListAuditLogs.
+type ListAuditLogsOptions struct {
+	// starting_from is the (exclusive) timestamp from which log entries will be returned in the response based on their created_at time, respecting the sort order specified in pagination. If unset, the default will be the current time if results are returned in descending order and the beginning of time if results are in ascending order.
+	StartingFrom *time.Time
+
+	// sort_order is the direction of pagination, with starting_from as the start point. If unset, the default is ascending order.   - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	SortOrder *string
+
+	// limit is the number of entries requested in the response. Note that the response may still contain slightly more results, since the response will always contain every entry at a particular timestamp.
+	Limit *int32
+}
+
+// ListAuditLogs executes the request.
+func (a *ServiceImpl) ListAuditLogs(
+	ctx _context.Context, options *ListAuditLogsOptions,
+) (*ListAuditLogsResponse, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
@@ -136,18 +168,23 @@ func (a *ServiceImpl) AddAllowlistEntry(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath := localBasePath + "/api/v1/auditlogevents"
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
-	if allowlistEntry == nil {
-		return nil, nil, reportError("allowlistEntry is required and must be specified")
-	}
 
+	if options.StartingFrom != nil {
+		localVarQueryParams.Add("starting_from", parameterToString(*options.StartingFrom, ""))
+	}
+	if options.SortOrder != nil {
+		localVarQueryParams.Add("sort_order", parameterToString(*options.SortOrder, ""))
+	}
+	if options.Limit != nil {
+		localVarQueryParams.Add("limit", parameterToString(*options.Limit, ""))
+	}
 	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// Set Content-Type header.
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -163,8 +200,6 @@ func (a *ServiceImpl) AddAllowlistEntry(
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// Body params.
-	localVarPostBody = allowlistEntry
 	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, nil, err
@@ -247,7 +282,7 @@ func (a *ServiceImpl) AddAllowlistEntry(
 		return nil, localVarHTTPResponse, newErr
 	}
 
-	var localVarReturnValue AllowlistEntry
+	var localVarReturnValue ListAuditLogsResponse
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -260,12 +295,12 @@ func (a *ServiceImpl) AddAllowlistEntry(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// AddAllowlistEntry2 executes the request.
-func (a *ServiceImpl) AddAllowlistEntry2(
-	ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1,
-) (*AllowlistEntry, *_nethttp.Response, error) {
+// GetInvoice executes the request.
+func (a *ServiceImpl) GetInvoice(
+	ctx _context.Context, invoiceId string,
+) (*Invoice, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
@@ -274,289 +309,8 @@ func (a *ServiceImpl) AddAllowlistEntry2(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{entry.cidr_ip}/{entry.cidr_mask}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_ip"+"}", _neturl.PathEscape(parameterToString(entryCidrIp, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_mask"+"}", _neturl.PathEscape(parameterToString(entryCidrMask, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if allowlistEntry1 == nil {
-		return nil, nil, reportError("allowlistEntry1 is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = allowlistEntry1
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue AllowlistEntry
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// AddEgressRule executes the request.
-func (a *ServiceImpl) AddEgressRule(
-	ctx _context.Context, clusterId string, addEgressRuleRequest *AddEgressRuleRequest,
-) (*AddEgressRuleResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if addEgressRuleRequest == nil {
-		return nil, nil, reportError("addEgressRuleRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = addEgressRuleRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue AddEgressRuleResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// AddUserToRole executes the request.
-func (a *ServiceImpl) AddUserToRole(
-	ctx _context.Context, userId string, resourceType string, resourceId string, roleName string,
-) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/roles/{user_id}/{resource_type}/{resource_id}/{role_name}"
-	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", _neturl.PathEscape(parameterToString(resourceType, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", _neturl.PathEscape(parameterToString(resourceId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"role_name"+"}", _neturl.PathEscape(parameterToString(roleName, "")), -1)
+	localVarPath := localBasePath + "/api/v1/invoices/{invoice_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"invoice_id"+"}", _neturl.PathEscape(parameterToString(invoiceId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -661,7 +415,681 @@ func (a *ServiceImpl) AddUserToRole(
 		return nil, localVarHTTPResponse, newErr
 	}
 
-	var localVarReturnValue GetAllRolesForUserResponse
+	var localVarReturnValue Invoice
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListInvoices executes the request.
+func (a *ServiceImpl) ListInvoices(
+	ctx _context.Context,
+) (*ListInvoicesResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/invoices"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListInvoicesResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteClientCACert executes the request.
+func (a *ServiceImpl) DeleteClientCACert(
+	ctx _context.Context, clusterId string,
+) (*ClientCACertInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ClientCACertInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetClientCACert executes the request.
+func (a *ServiceImpl) GetClientCACert(
+	ctx _context.Context, clusterId string,
+) (*ClientCACertInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ClientCACertInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SetClientCACert executes the request.
+func (a *ServiceImpl) SetClientCACert(
+	ctx _context.Context, clusterId string, setClientCACertRequest *SetClientCACertRequest,
+) (*ClientCACertInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if setClientCACertRequest == nil {
+		return nil, nil, reportError("setClientCACertRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = setClientCACertRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ClientCACertInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateClientCACert executes the request.
+func (a *ServiceImpl) UpdateClientCACert(
+	ctx _context.Context, clusterId string, updateClientCACertRequest *UpdateClientCACertRequest,
+) (*ClientCACertInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateClientCACertRequest == nil {
+		return nil, nil, reportError("updateClientCACertRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateClientCACertRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ClientCACertInfo
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -811,1090 +1239,6 @@ func (a *ServiceImpl) CreateCluster(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// CreateDatabase executes the request.
-func (a *ServiceImpl) CreateDatabase(
-	ctx _context.Context, clusterId string, createDatabaseRequest *CreateDatabaseRequest,
-) (*ApiDatabase, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if createDatabaseRequest == nil {
-		return nil, nil, reportError("createDatabaseRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = createDatabaseRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ApiDatabase
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// CreateGroup executes the request.
-func (a *ServiceImpl) CreateGroup(
-	ctx _context.Context, createGroupRequest *CreateGroupRequest,
-) (*ScimGroup, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Groups"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if createGroupRequest == nil {
-		return nil, nil, reportError("createGroupRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = createGroupRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ScimGroup
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// CreatePrivateEndpointServices executes the request.
-func (a *ServiceImpl) CreatePrivateEndpointServices(
-	ctx _context.Context, clusterId string,
-) (*PrivateEndpointServices, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/private-endpoint-services"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue PrivateEndpointServices
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// CreateSQLUser executes the request.
-func (a *ServiceImpl) CreateSQLUser(
-	ctx _context.Context, clusterId string, createSQLUserRequest *CreateSQLUserRequest,
-) (*SQLUser, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/sql-users"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if createSQLUserRequest == nil {
-		return nil, nil, reportError("createSQLUserRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = createSQLUserRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue SQLUser
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// CreateUser executes the request.
-func (a *ServiceImpl) CreateUser(
-	ctx _context.Context, createUserRequest *CreateUserRequest,
-) (*ScimUser, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Users"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if createUserRequest == nil {
-		return nil, nil, reportError("createUserRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = createUserRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ScimUser
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteAllowlistEntry executes the request.
-func (a *ServiceImpl) DeleteAllowlistEntry(
-	ctx _context.Context, clusterId string, cidrIp string, cidrMask int32,
-) (*AllowlistEntry, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{cidr_ip}/{cidr_mask}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"cidr_ip"+"}", _neturl.PathEscape(parameterToString(cidrIp, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"cidr_mask"+"}", _neturl.PathEscape(parameterToString(cidrMask, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue AllowlistEntry
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteClientCACert executes the request.
-func (a *ServiceImpl) DeleteClientCACert(
-	ctx _context.Context, clusterId string,
-) (*ClientCACertInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ClientCACertInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteCloudWatchMetricExport executes the request.
-func (a *ServiceImpl) DeleteCloudWatchMetricExport(
-	ctx _context.Context, clusterId string,
-) (*DeleteMetricExportResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/cloudwatch"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue DeleteMetricExportResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
 // DeleteCluster executes the request.
 func (a *ServiceImpl) DeleteCluster(
 	ctx _context.Context, clusterId string,
@@ -2016,2429 +1360,6 @@ func (a *ServiceImpl) DeleteCluster(
 	}
 
 	var localVarReturnValue Cluster
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteDatabase executes the request.
-func (a *ServiceImpl) DeleteDatabase(
-	ctx _context.Context, clusterId string, name string,
-) (*ApiDatabase, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases/{name}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", _neturl.PathEscape(parameterToString(name, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ApiDatabase
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteDatadogMetricExport executes the request.
-func (a *ServiceImpl) DeleteDatadogMetricExport(
-	ctx _context.Context, clusterId string,
-) (*DeleteMetricExportResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/datadog"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue DeleteMetricExportResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteEgressRuleOptions contains optional parameters for DeleteEgressRule.
-type DeleteEgressRuleOptions struct {
-	// idempotency_key uniquely identifies this request. If not set, it will be set by the server.
-	IdempotencyKey *string
-}
-
-// DeleteEgressRule executes the request.
-func (a *ServiceImpl) DeleteEgressRule(
-	ctx _context.Context, clusterId string, ruleId string, options *DeleteEgressRuleOptions,
-) (*DeleteEgressRuleResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules/{rule_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"rule_id"+"}", _neturl.PathEscape(parameterToString(ruleId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.IdempotencyKey != nil {
-		localVarQueryParams.Add("idempotency_key", parameterToString(*options.IdempotencyKey, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue DeleteEgressRuleResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteGroup executes the request.
-func (a *ServiceImpl) DeleteGroup(
-	ctx _context.Context, id string,
-) (*_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Groups/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-// DeleteLogExport executes the request.
-func (a *ServiceImpl) DeleteLogExport(
-	ctx _context.Context, clusterId string,
-) (*LogExportClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/logexport"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue LogExportClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteSQLUser executes the request.
-func (a *ServiceImpl) DeleteSQLUser(
-	ctx _context.Context, clusterId string, name string,
-) (*SQLUser, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/sql-users/{name}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", _neturl.PathEscape(parameterToString(name, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue SQLUser
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// DeleteUser executes the request.
-func (a *ServiceImpl) DeleteUser(
-	ctx _context.Context, id string,
-) (*_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Users/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-// EditDatabase executes the request.
-func (a *ServiceImpl) EditDatabase(
-	ctx _context.Context, clusterId string, name string, updateDatabaseRequest1 *UpdateDatabaseRequest1,
-) (*ApiDatabase, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases/{name}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", _neturl.PathEscape(parameterToString(name, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateDatabaseRequest1 == nil {
-		return nil, nil, reportError("updateDatabaseRequest1 is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateDatabaseRequest1
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ApiDatabase
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// EditDatabase2 executes the request.
-func (a *ServiceImpl) EditDatabase2(
-	ctx _context.Context, clusterId string, updateDatabaseRequest *UpdateDatabaseRequest,
-) (*ApiDatabase, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateDatabaseRequest == nil {
-		return nil, nil, reportError("updateDatabaseRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateDatabaseRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ApiDatabase
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// EditEgressRule executes the request.
-func (a *ServiceImpl) EditEgressRule(
-	ctx _context.Context, clusterId string, ruleId string, editEgressRuleRequest *EditEgressRuleRequest,
-) (*EditEgressRuleResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules/{rule_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"rule_id"+"}", _neturl.PathEscape(parameterToString(ruleId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if editEgressRuleRequest == nil {
-		return nil, nil, reportError("editEgressRuleRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = editEgressRuleRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue EditEgressRuleResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// EnableCMEKSpec executes the request.
-func (a *ServiceImpl) EnableCMEKSpec(
-	ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification,
-) (*CMEKClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if cMEKClusterSpecification == nil {
-		return nil, nil, reportError("cMEKClusterSpecification is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = cMEKClusterSpecification
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue CMEKClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// EnableCloudWatchMetricExport executes the request.
-func (a *ServiceImpl) EnableCloudWatchMetricExport(
-	ctx _context.Context, clusterId string, enableCloudWatchMetricExportRequest *EnableCloudWatchMetricExportRequest,
-) (*CloudWatchMetricExportInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/cloudwatch"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if enableCloudWatchMetricExportRequest == nil {
-		return nil, nil, reportError("enableCloudWatchMetricExportRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = enableCloudWatchMetricExportRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue CloudWatchMetricExportInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// EnableDatadogMetricExport executes the request.
-func (a *ServiceImpl) EnableDatadogMetricExport(
-	ctx _context.Context, clusterId string, enableDatadogMetricExportRequest *EnableDatadogMetricExportRequest,
-) (*DatadogMetricExportInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/datadog"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if enableDatadogMetricExportRequest == nil {
-		return nil, nil, reportError("enableDatadogMetricExportRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = enableDatadogMetricExportRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue DatadogMetricExportInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// EnableLogExport executes the request.
-func (a *ServiceImpl) EnableLogExport(
-	ctx _context.Context, clusterId string, enableLogExportRequest *EnableLogExportRequest,
-) (*LogExportClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/logexport"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if enableLogExportRequest == nil {
-		return nil, nil, reportError("enableLogExportRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = enableLogExportRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue LogExportClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetAllRolesForUser executes the request.
-func (a *ServiceImpl) GetAllRolesForUser(
-	ctx _context.Context, userId string,
-) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/roles/{user_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue GetAllRolesForUserResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetCMEKClusterInfo executes the request.
-func (a *ServiceImpl) GetCMEKClusterInfo(
-	ctx _context.Context, clusterId string,
-) (*CMEKClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue CMEKClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetClientCACert executes the request.
-func (a *ServiceImpl) GetClientCACert(
-	ctx _context.Context, clusterId string,
-) (*ClientCACertInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ClientCACertInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetCloudWatchMetricExportInfo executes the request.
-func (a *ServiceImpl) GetCloudWatchMetricExportInfo(
-	ctx _context.Context, clusterId string,
-) (*CloudWatchMetricExportInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/cloudwatch"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue CloudWatchMetricExportInfo
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -4736,10 +1657,28 @@ func (a *ServiceImpl) GetConnectionString(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// GetDatadogMetricExportInfo executes the request.
-func (a *ServiceImpl) GetDatadogMetricExportInfo(
-	ctx _context.Context, clusterId string,
-) (*DatadogMetricExportInfo, *_nethttp.Response, error) {
+// ListAvailableRegionsOptions contains optional parameters for ListAvailableRegions.
+type ListAvailableRegionsOptions struct {
+	// Optional CloudProvider for filtering.   - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.  - AZURE: Limited Access: The Azure cloud provider.
+	Provider *string
+
+	// Optional filter to only show regions available for serverless clusters.
+	Serverless *bool
+
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListAvailableRegions executes the request.
+func (a *ServiceImpl) ListAvailableRegions(
+	ctx _context.Context, options *ListAvailableRegionsOptions,
+) (*ListAvailableRegionsResponse, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -4750,7 +1689,914 @@ func (a *ServiceImpl) GetDatadogMetricExportInfo(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/datadog"
+	localVarPath := localBasePath + "/api/v1/clusters/available-regions"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.Provider != nil {
+		localVarQueryParams.Add("provider", parameterToString(*options.Provider, ""))
+	}
+	if options.Serverless != nil {
+		localVarQueryParams.Add("serverless", parameterToString(*options.Serverless, ""))
+	}
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListAvailableRegionsResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListClusterNodesOptions contains optional parameters for ListClusterNodes.
+type ListClusterNodesOptions struct {
+	// Optional filter to limit response to a single region.
+	RegionName *string
+
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListClusterNodes executes the request.
+func (a *ServiceImpl) ListClusterNodes(
+	ctx _context.Context, clusterId string, options *ListClusterNodesOptions,
+) (*ListClusterNodesResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/nodes"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.RegionName != nil {
+		localVarQueryParams.Add("region_name", parameterToString(*options.RegionName, ""))
+	}
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListClusterNodesResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListClustersOptions contains optional parameters for ListClusters.
+type ListClustersOptions struct {
+	// If `true`, show clusters that have been deleted or failed to initialize.
+	ShowInactive *bool
+
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListClusters executes the request.
+func (a *ServiceImpl) ListClusters(
+	ctx _context.Context, options *ListClustersOptions,
+) (*ListClustersResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.ShowInactive != nil {
+		localVarQueryParams.Add("show_inactive", parameterToString(*options.ShowInactive, ""))
+	}
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListClustersResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListMajorClusterVersionsOptions contains optional parameters for ListMajorClusterVersions.
+type ListMajorClusterVersionsOptions struct {
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListMajorClusterVersions executes the request.
+func (a *ServiceImpl) ListMajorClusterVersions(
+	ctx _context.Context, options *ListMajorClusterVersionsOptions,
+) (*ListMajorClusterVersionsResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/cluster-versions"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListMajorClusterVersionsResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateCluster executes the request.
+func (a *ServiceImpl) UpdateCluster(
+	ctx _context.Context, clusterId string, updateClusterSpecification *UpdateClusterSpecification,
+) (*Cluster, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateClusterSpecification == nil {
+		return nil, nil, reportError("updateClusterSpecification is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateClusterSpecification
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue Cluster
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EnableCMEKSpec executes the request.
+func (a *ServiceImpl) EnableCMEKSpec(
+	ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification,
+) (*CMEKClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if cMEKClusterSpecification == nil {
+		return nil, nil, reportError("cMEKClusterSpecification is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = cMEKClusterSpecification
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue CMEKClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetCMEKClusterInfo executes the request.
+func (a *ServiceImpl) GetCMEKClusterInfo(
+	ctx _context.Context, clusterId string,
+) (*CMEKClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
 	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
@@ -4856,7 +2702,1680 @@ func (a *ServiceImpl) GetDatadogMetricExportInfo(
 		return nil, localVarHTTPResponse, newErr
 	}
 
-	var localVarReturnValue DatadogMetricExportInfo
+	var localVarReturnValue CMEKClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateCMEKSpec executes the request.
+func (a *ServiceImpl) UpdateCMEKSpec(
+	ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification,
+) (*CMEKClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if cMEKClusterSpecification == nil {
+		return nil, nil, reportError("cMEKClusterSpecification is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = cMEKClusterSpecification
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue CMEKClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateCMEKStatus executes the request.
+func (a *ServiceImpl) UpdateCMEKStatus(
+	ctx _context.Context, clusterId string, updateCMEKStatusRequest *UpdateCMEKStatusRequest,
+) (*CMEKClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateCMEKStatusRequest == nil {
+		return nil, nil, reportError("updateCMEKStatusRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateCMEKStatusRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue CMEKClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// CreateDatabase executes the request.
+func (a *ServiceImpl) CreateDatabase(
+	ctx _context.Context, clusterId string, createDatabaseRequest *CreateDatabaseRequest,
+) (*ApiDatabase, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if createDatabaseRequest == nil {
+		return nil, nil, reportError("createDatabaseRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = createDatabaseRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ApiDatabase
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteDatabase executes the request.
+func (a *ServiceImpl) DeleteDatabase(
+	ctx _context.Context, clusterId string, name string,
+) (*ApiDatabase, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases/{name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", _neturl.PathEscape(parameterToString(name, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ApiDatabase
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EditDatabase executes the request.
+func (a *ServiceImpl) EditDatabase(
+	ctx _context.Context, clusterId string, name string, updateDatabaseRequest1 *UpdateDatabaseRequest1,
+) (*ApiDatabase, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases/{name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", _neturl.PathEscape(parameterToString(name, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateDatabaseRequest1 == nil {
+		return nil, nil, reportError("updateDatabaseRequest1 is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateDatabaseRequest1
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ApiDatabase
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EditDatabase2 executes the request.
+func (a *ServiceImpl) EditDatabase2(
+	ctx _context.Context, clusterId string, updateDatabaseRequest *UpdateDatabaseRequest,
+) (*ApiDatabase, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateDatabaseRequest == nil {
+		return nil, nil, reportError("updateDatabaseRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateDatabaseRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ApiDatabase
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListDatabasesOptions contains optional parameters for ListDatabases.
+type ListDatabasesOptions struct {
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListDatabases executes the request.
+func (a *ServiceImpl) ListDatabases(
+	ctx _context.Context, clusterId string, options *ListDatabasesOptions,
+) (*ApiListDatabasesResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ApiListDatabasesResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetClusterVersionDeferral executes the request.
+func (a *ServiceImpl) GetClusterVersionDeferral(
+	ctx _context.Context, clusterId string,
+) (*ClusterVersionDeferral, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/version-deferral"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ClusterVersionDeferral
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SetClusterVersionDeferral executes the request.
+func (a *ServiceImpl) SetClusterVersionDeferral(
+	ctx _context.Context, clusterId string, clusterVersionDeferral *ClusterVersionDeferral,
+) (*ClusterVersionDeferral, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/version-deferral"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if clusterVersionDeferral == nil {
+		return nil, nil, reportError("clusterVersionDeferral is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = clusterVersionDeferral
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ClusterVersionDeferral
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// AddEgressRule executes the request.
+func (a *ServiceImpl) AddEgressRule(
+	ctx _context.Context, clusterId string, addEgressRuleRequest *AddEgressRuleRequest,
+) (*AddEgressRuleResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if addEgressRuleRequest == nil {
+		return nil, nil, reportError("addEgressRuleRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = addEgressRuleRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AddEgressRuleResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteEgressRuleOptions contains optional parameters for DeleteEgressRule.
+type DeleteEgressRuleOptions struct {
+	// idempotency_key uniquely identifies this request. If not set, it will be set by the server.
+	IdempotencyKey *string
+}
+
+// DeleteEgressRule executes the request.
+func (a *ServiceImpl) DeleteEgressRule(
+	ctx _context.Context, clusterId string, ruleId string, options *DeleteEgressRuleOptions,
+) (*DeleteEgressRuleResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules/{rule_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"rule_id"+"}", _neturl.PathEscape(parameterToString(ruleId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.IdempotencyKey != nil {
+		localVarQueryParams.Add("idempotency_key", parameterToString(*options.IdempotencyKey, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue DeleteEgressRuleResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EditEgressRule executes the request.
+func (a *ServiceImpl) EditEgressRule(
+	ctx _context.Context, clusterId string, ruleId string, editEgressRuleRequest *EditEgressRuleRequest,
+) (*EditEgressRuleResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules/{rule_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"rule_id"+"}", _neturl.PathEscape(parameterToString(ruleId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if editEgressRuleRequest == nil {
+		return nil, nil, reportError("editEgressRuleRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = editEgressRuleRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue EditEgressRuleResponse
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -5001,6 +4520,4642 @@ func (a *ServiceImpl) GetEgressRule(
 	}
 
 	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListEgressRulesOptions contains optional parameters for ListEgressRules.
+type ListEgressRulesOptions struct {
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListEgressRules executes the request.
+func (a *ServiceImpl) ListEgressRules(
+	ctx _context.Context, clusterId string, options *ListEgressRulesOptions,
+) (*ListEgressRulesResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListEgressRulesResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SetEgressTrafficPolicy executes the request.
+func (a *ServiceImpl) SetEgressTrafficPolicy(
+	ctx _context.Context, clusterId string, setEgressTrafficPolicyRequest *SetEgressTrafficPolicyRequest,
+) (*_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules/egress-traffic-policy"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if setEgressTrafficPolicyRequest == nil {
+		return nil, reportError("setEgressTrafficPolicyRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = setEgressTrafficPolicyRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+// AddAllowlistEntry executes the request.
+func (a *ServiceImpl) AddAllowlistEntry(
+	ctx _context.Context, clusterId string, allowlistEntry *AllowlistEntry,
+) (*AllowlistEntry, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if allowlistEntry == nil {
+		return nil, nil, reportError("allowlistEntry is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = allowlistEntry
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AllowlistEntry
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// AddAllowlistEntry2 executes the request.
+func (a *ServiceImpl) AddAllowlistEntry2(
+	ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1,
+) (*AllowlistEntry, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{entry.cidr_ip}/{entry.cidr_mask}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_ip"+"}", _neturl.PathEscape(parameterToString(entryCidrIp, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_mask"+"}", _neturl.PathEscape(parameterToString(entryCidrMask, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if allowlistEntry1 == nil {
+		return nil, nil, reportError("allowlistEntry1 is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = allowlistEntry1
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AllowlistEntry
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteAllowlistEntry executes the request.
+func (a *ServiceImpl) DeleteAllowlistEntry(
+	ctx _context.Context, clusterId string, cidrIp string, cidrMask int32,
+) (*AllowlistEntry, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{cidr_ip}/{cidr_mask}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cidr_ip"+"}", _neturl.PathEscape(parameterToString(cidrIp, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cidr_mask"+"}", _neturl.PathEscape(parameterToString(cidrMask, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AllowlistEntry
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListAllowlistEntriesOptions contains optional parameters for ListAllowlistEntries.
+type ListAllowlistEntriesOptions struct {
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListAllowlistEntries executes the request.
+func (a *ServiceImpl) ListAllowlistEntries(
+	ctx _context.Context, clusterId string, options *ListAllowlistEntriesOptions,
+) (*ListAllowlistEntriesResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListAllowlistEntriesResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateAllowlistEntry executes the request.
+func (a *ServiceImpl) UpdateAllowlistEntry(
+	ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1,
+) (*AllowlistEntry, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{entry.cidr_ip}/{entry.cidr_mask}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_ip"+"}", _neturl.PathEscape(parameterToString(entryCidrIp, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_mask"+"}", _neturl.PathEscape(parameterToString(entryCidrMask, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if allowlistEntry1 == nil {
+		return nil, nil, reportError("allowlistEntry1 is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = allowlistEntry1
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AllowlistEntry
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteLogExport executes the request.
+func (a *ServiceImpl) DeleteLogExport(
+	ctx _context.Context, clusterId string,
+) (*LogExportClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/logexport"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue LogExportClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EnableLogExport executes the request.
+func (a *ServiceImpl) EnableLogExport(
+	ctx _context.Context, clusterId string, enableLogExportRequest *EnableLogExportRequest,
+) (*LogExportClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/logexport"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if enableLogExportRequest == nil {
+		return nil, nil, reportError("enableLogExportRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = enableLogExportRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue LogExportClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetLogExportInfo executes the request.
+func (a *ServiceImpl) GetLogExportInfo(
+	ctx _context.Context, clusterId string,
+) (*LogExportClusterInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/logexport"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue LogExportClusterInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteMaintenanceWindow executes the request.
+func (a *ServiceImpl) DeleteMaintenanceWindow(
+	ctx _context.Context, clusterId string,
+) (*MaintenanceWindow, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/maintenance-window"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue MaintenanceWindow
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetMaintenanceWindow executes the request.
+func (a *ServiceImpl) GetMaintenanceWindow(
+	ctx _context.Context, clusterId string,
+) (*MaintenanceWindow, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/maintenance-window"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue MaintenanceWindow
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SetMaintenanceWindow executes the request.
+func (a *ServiceImpl) SetMaintenanceWindow(
+	ctx _context.Context, clusterId string, maintenanceWindow *MaintenanceWindow,
+) (*MaintenanceWindow, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/maintenance-window"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if maintenanceWindow == nil {
+		return nil, nil, reportError("maintenanceWindow is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = maintenanceWindow
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue MaintenanceWindow
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteCloudWatchMetricExport executes the request.
+func (a *ServiceImpl) DeleteCloudWatchMetricExport(
+	ctx _context.Context, clusterId string,
+) (*DeleteMetricExportResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/cloudwatch"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue DeleteMetricExportResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteDatadogMetricExport executes the request.
+func (a *ServiceImpl) DeleteDatadogMetricExport(
+	ctx _context.Context, clusterId string,
+) (*DeleteMetricExportResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/datadog"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue DeleteMetricExportResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EnableCloudWatchMetricExport executes the request.
+func (a *ServiceImpl) EnableCloudWatchMetricExport(
+	ctx _context.Context, clusterId string, enableCloudWatchMetricExportRequest *EnableCloudWatchMetricExportRequest,
+) (*CloudWatchMetricExportInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/cloudwatch"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if enableCloudWatchMetricExportRequest == nil {
+		return nil, nil, reportError("enableCloudWatchMetricExportRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = enableCloudWatchMetricExportRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue CloudWatchMetricExportInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EnableDatadogMetricExport executes the request.
+func (a *ServiceImpl) EnableDatadogMetricExport(
+	ctx _context.Context, clusterId string, enableDatadogMetricExportRequest *EnableDatadogMetricExportRequest,
+) (*DatadogMetricExportInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/datadog"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if enableDatadogMetricExportRequest == nil {
+		return nil, nil, reportError("enableDatadogMetricExportRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = enableDatadogMetricExportRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue DatadogMetricExportInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetCloudWatchMetricExportInfo executes the request.
+func (a *ServiceImpl) GetCloudWatchMetricExportInfo(
+	ctx _context.Context, clusterId string,
+) (*CloudWatchMetricExportInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/cloudwatch"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue CloudWatchMetricExportInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetDatadogMetricExportInfo executes the request.
+func (a *ServiceImpl) GetDatadogMetricExportInfo(
+	ctx _context.Context, clusterId string,
+) (*DatadogMetricExportInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/metricexport/datadog"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue DatadogMetricExportInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetOrganizationInfo executes the request.
+func (a *ServiceImpl) GetOrganizationInfo(
+	ctx _context.Context,
+) (*Organization, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/organization"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue Organization
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// CreatePrivateEndpointServices executes the request.
+func (a *ServiceImpl) CreatePrivateEndpointServices(
+	ctx _context.Context, clusterId string,
+) (*PrivateEndpointServices, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/private-endpoint-services"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue PrivateEndpointServices
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListAwsEndpointConnections executes the request.
+func (a *ServiceImpl) ListAwsEndpointConnections(
+	ctx _context.Context, clusterId string,
+) (*AwsEndpointConnections, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/aws-endpoint-connections"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AwsEndpointConnections
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListPrivateEndpointServices executes the request.
+func (a *ServiceImpl) ListPrivateEndpointServices(
+	ctx _context.Context, clusterId string,
+) (*PrivateEndpointServices, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/private-endpoint-services"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue PrivateEndpointServices
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SetAwsEndpointConnectionState executes the request.
+func (a *ServiceImpl) SetAwsEndpointConnectionState(
+	ctx _context.Context, clusterId string, endpointId string, setAwsEndpointConnectionStateRequest *SetAwsEndpointConnectionStateRequest,
+) (*AwsEndpointConnection, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/aws-endpoint-connections/{endpoint_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"endpoint_id"+"}", _neturl.PathEscape(parameterToString(endpointId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if setAwsEndpointConnectionStateRequest == nil {
+		return nil, nil, reportError("setAwsEndpointConnectionStateRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = setAwsEndpointConnectionStateRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue AwsEndpointConnection
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// AddUserToRole executes the request.
+func (a *ServiceImpl) AddUserToRole(
+	ctx _context.Context, userId string, resourceType string, resourceId string, roleName string,
+) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/roles/{user_id}/{resource_type}/{resource_id}/{role_name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", _neturl.PathEscape(parameterToString(resourceType, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", _neturl.PathEscape(parameterToString(resourceId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_name"+"}", _neturl.PathEscape(parameterToString(roleName, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetAllRolesForUserResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetAllRolesForUser executes the request.
+func (a *ServiceImpl) GetAllRolesForUser(
+	ctx _context.Context, userId string,
+) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/roles/{user_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetAllRolesForUserResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetPersonUsersByEmail executes the request.
+func (a *ServiceImpl) GetPersonUsersByEmail(
+	ctx _context.Context, email *string,
+) (*GetPersonUsersByEmailResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/users/persons-by-email"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if email == nil {
+		return nil, nil, reportError("email is required and must be specified")
+	}
+
+	localVarQueryParams.Add("email", parameterToString(*email, ""))
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetPersonUsersByEmailResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListRoleGrantsOptions contains optional parameters for ListRoleGrants.
+type ListRoleGrantsOptions struct {
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListRoleGrants executes the request.
+func (a *ServiceImpl) ListRoleGrants(
+	ctx _context.Context, options *ListRoleGrantsOptions,
+) (*ListRoleGrantsResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/roles"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListRoleGrantsResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// RemoveUserFromRole executes the request.
+func (a *ServiceImpl) RemoveUserFromRole(
+	ctx _context.Context, userId string, resourceType string, resourceId string, roleName string,
+) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/roles/{user_id}/{resource_type}/{resource_id}/{role_name}"
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", _neturl.PathEscape(parameterToString(resourceType, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", _neturl.PathEscape(parameterToString(resourceId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"role_name"+"}", _neturl.PathEscape(parameterToString(roleName, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetAllRolesForUserResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SetRolesForUser executes the request.
+func (a *ServiceImpl) SetRolesForUser(
+	ctx _context.Context, userId string, cockroachCloudSetRolesForUserRequest *CockroachCloudSetRolesForUserRequest,
+) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/roles/{user_id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if cockroachCloudSetRolesForUserRequest == nil {
+		return nil, nil, reportError("cockroachCloudSetRolesForUserRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = cockroachCloudSetRolesForUserRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetAllRolesForUserResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// CreateGroup executes the request.
+func (a *ServiceImpl) CreateGroup(
+	ctx _context.Context, createGroupRequest *CreateGroupRequest,
+) (*ScimGroup, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Groups"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if createGroupRequest == nil {
+		return nil, nil, reportError("createGroupRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = createGroupRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ScimGroup
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// CreateUser executes the request.
+func (a *ServiceImpl) CreateUser(
+	ctx _context.Context, createUserRequest *CreateUserRequest,
+) (*ScimUser, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Users"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if createUserRequest == nil {
+		return nil, nil, reportError("createUserRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = createUserRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ScimUser
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteGroup executes the request.
+func (a *ServiceImpl) DeleteGroup(
+	ctx _context.Context, id string,
+) (*_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Groups/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+// DeleteUser executes the request.
+func (a *ServiceImpl) DeleteUser(
+	ctx _context.Context, id string,
+) (*_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Users/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
 }
 
 // GetGroupOptions contains optional parameters for GetGroup.
@@ -5557,540 +9712,6 @@ func (a *ServiceImpl) GetGroups2(
 	}
 
 	var localVarReturnValue GetGroupsResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetInvoice executes the request.
-func (a *ServiceImpl) GetInvoice(
-	ctx _context.Context, invoiceId string,
-) (*Invoice, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/invoices/{invoice_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"invoice_id"+"}", _neturl.PathEscape(parameterToString(invoiceId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue Invoice
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetLogExportInfo executes the request.
-func (a *ServiceImpl) GetLogExportInfo(
-	ctx _context.Context, clusterId string,
-) (*LogExportClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/logexport"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue LogExportClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetOrganizationInfo executes the request.
-func (a *ServiceImpl) GetOrganizationInfo(
-	ctx _context.Context,
-) (*Organization, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/organization"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue Organization
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// GetPersonUsersByEmail executes the request.
-func (a *ServiceImpl) GetPersonUsersByEmail(
-	ctx _context.Context, email *string,
-) (*GetPersonUsersByEmailResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/users/persons-by-email"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if email == nil {
-		return nil, nil, reportError("email is required and must be specified")
-	}
-
-	localVarQueryParams.Add("email", parameterToString(*email, ""))
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue GetPersonUsersByEmailResponse
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -7388,24 +11009,12 @@ func (a *ServiceImpl) GetUsers2(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// ListAllowlistEntriesOptions contains optional parameters for ListAllowlistEntries.
-type ListAllowlistEntriesOptions struct {
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListAllowlistEntries executes the request.
-func (a *ServiceImpl) ListAllowlistEntries(
-	ctx _context.Context, clusterId string, options *ListAllowlistEntriesOptions,
-) (*ListAllowlistEntriesResponse, *_nethttp.Response, error) {
+// UpdateGroup executes the request.
+func (a *ServiceImpl) UpdateGroup(
+	ctx _context.Context, id string, updateGroupRequest *UpdateGroupRequest,
+) (*ScimGroup, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarHTTPMethod   = _nethttp.MethodPut
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
@@ -7414,27 +11023,294 @@ func (a *ServiceImpl) ListAllowlistEntries(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist"
+	localVarPath := localBasePath + "/api/scim/v2/Groups/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateGroupRequest == nil {
+		return nil, nil, reportError("updateGroupRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateGroupRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ScimGroup
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateUser executes the request.
+func (a *ServiceImpl) UpdateUser(
+	ctx _context.Context, id string, updateUserRequest *UpdateUserRequest,
+) (*ScimUser, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Users/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateUserRequest == nil {
+		return nil, nil, reportError("updateUserRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateUserRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ScimUser
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// CreateSQLUser executes the request.
+func (a *ServiceImpl) CreateSQLUser(
+	ctx _context.Context, clusterId string, createSQLUserRequest *CreateSQLUserRequest,
+) (*SQLUser, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/sql-users"
 	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
+	if createSQLUserRequest == nil {
+		return nil, nil, reportError("createSQLUserRequest is required and must be specified")
+	}
 
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
 	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
+	localVarHTTPContentTypes := []string{"application/json"}
 
 	// Set Content-Type header.
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -7450,6 +11326,8 @@ func (a *ServiceImpl) ListAllowlistEntries(
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
+	// Body params.
+	localVarPostBody = createSQLUserRequest
 	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, nil, err
@@ -7532,7 +11410,7 @@ func (a *ServiceImpl) ListAllowlistEntries(
 		return nil, localVarHTTPResponse, newErr
 	}
 
-	var localVarReturnValue ListAllowlistEntriesResponse
+	var localVarReturnValue SQLUser
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -7545,24 +11423,12 @@ func (a *ServiceImpl) ListAllowlistEntries(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// ListAuditLogsOptions contains optional parameters for ListAuditLogs.
-type ListAuditLogsOptions struct {
-	// starting_from is the (exclusive) timestamp from which log entries will be returned in the response based on their created_at time, respecting the sort order specified in pagination. If unset, the default will be the current time if results are returned in descending order and the beginning of time if results are in ascending order.
-	StartingFrom *time.Time
-
-	// sort_order is the direction of pagination, with starting_from as the start point. If unset, the default is ascending order.   - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	SortOrder *string
-
-	// limit is the number of entries requested in the response. Note that the response may still contain slightly more results, since the response will always contain every entry at a particular timestamp.
-	Limit *int32
-}
-
-// ListAuditLogs executes the request.
-func (a *ServiceImpl) ListAuditLogs(
-	ctx _context.Context, options *ListAuditLogsOptions,
-) (*ListAuditLogsResponse, *_nethttp.Response, error) {
+// DeleteSQLUser executes the request.
+func (a *ServiceImpl) DeleteSQLUser(
+	ctx _context.Context, clusterId string, name string,
+) (*SQLUser, *_nethttp.Response, error) {
 	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarHTTPMethod   = _nethttp.MethodDelete
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string
@@ -7571,317 +11437,9 @@ func (a *ServiceImpl) ListAuditLogs(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/auditlogevents"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.StartingFrom != nil {
-		localVarQueryParams.Add("starting_from", parameterToString(*options.StartingFrom, ""))
-	}
-	if options.SortOrder != nil {
-		localVarQueryParams.Add("sort_order", parameterToString(*options.SortOrder, ""))
-	}
-	if options.Limit != nil {
-		localVarQueryParams.Add("limit", parameterToString(*options.Limit, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListAuditLogsResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListAvailableRegionsOptions contains optional parameters for ListAvailableRegions.
-type ListAvailableRegionsOptions struct {
-	// Optional CloudProvider for filtering.   - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.  - AZURE: Limited Access: The Azure cloud provider.
-	Provider *string
-
-	// Optional filter to only show regions available for serverless clusters.
-	Serverless *bool
-
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListAvailableRegions executes the request.
-func (a *ServiceImpl) ListAvailableRegions(
-	ctx _context.Context, options *ListAvailableRegionsOptions,
-) (*ListAvailableRegionsResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/available-regions"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.Provider != nil {
-		localVarQueryParams.Add("provider", parameterToString(*options.Provider, ""))
-	}
-	if options.Serverless != nil {
-		localVarQueryParams.Add("serverless", parameterToString(*options.Serverless, ""))
-	}
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListAvailableRegionsResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListAwsEndpointConnections executes the request.
-func (a *ServiceImpl) ListAwsEndpointConnections(
-	ctx _context.Context, clusterId string,
-) (*AwsEndpointConnections, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/aws-endpoint-connections"
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/sql-users/{name}"
 	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"name"+"}", _neturl.PathEscape(parameterToString(name, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -7986,1223 +11544,7 @@ func (a *ServiceImpl) ListAwsEndpointConnections(
 		return nil, localVarHTTPResponse, newErr
 	}
 
-	var localVarReturnValue AwsEndpointConnections
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListClusterNodesOptions contains optional parameters for ListClusterNodes.
-type ListClusterNodesOptions struct {
-	// Optional filter to limit response to a single region.
-	RegionName *string
-
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListClusterNodes executes the request.
-func (a *ServiceImpl) ListClusterNodes(
-	ctx _context.Context, clusterId string, options *ListClusterNodesOptions,
-) (*ListClusterNodesResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/nodes"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.RegionName != nil {
-		localVarQueryParams.Add("region_name", parameterToString(*options.RegionName, ""))
-	}
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListClusterNodesResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListClustersOptions contains optional parameters for ListClusters.
-type ListClustersOptions struct {
-	// If `true`, show clusters that have been deleted or failed to initialize.
-	ShowInactive *bool
-
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListClusters executes the request.
-func (a *ServiceImpl) ListClusters(
-	ctx _context.Context, options *ListClustersOptions,
-) (*ListClustersResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.ShowInactive != nil {
-		localVarQueryParams.Add("show_inactive", parameterToString(*options.ShowInactive, ""))
-	}
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListClustersResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListDatabasesOptions contains optional parameters for ListDatabases.
-type ListDatabasesOptions struct {
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListDatabases executes the request.
-func (a *ServiceImpl) ListDatabases(
-	ctx _context.Context, clusterId string, options *ListDatabasesOptions,
-) (*ApiListDatabasesResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/databases"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ApiListDatabasesResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListEgressRulesOptions contains optional parameters for ListEgressRules.
-type ListEgressRulesOptions struct {
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListEgressRules executes the request.
-func (a *ServiceImpl) ListEgressRules(
-	ctx _context.Context, clusterId string, options *ListEgressRulesOptions,
-) (*ListEgressRulesResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListEgressRulesResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListInvoices executes the request.
-func (a *ServiceImpl) ListInvoices(
-	ctx _context.Context,
-) (*ListInvoicesResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/invoices"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListInvoicesResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListMajorClusterVersionsOptions contains optional parameters for ListMajorClusterVersions.
-type ListMajorClusterVersionsOptions struct {
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListMajorClusterVersions executes the request.
-func (a *ServiceImpl) ListMajorClusterVersions(
-	ctx _context.Context, options *ListMajorClusterVersionsOptions,
-) (*ListMajorClusterVersionsResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/cluster-versions"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListMajorClusterVersionsResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListPrivateEndpointServices executes the request.
-func (a *ServiceImpl) ListPrivateEndpointServices(
-	ctx _context.Context, clusterId string,
-) (*PrivateEndpointServices, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/private-endpoint-services"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue PrivateEndpointServices
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// ListRoleGrantsOptions contains optional parameters for ListRoleGrants.
-type ListRoleGrantsOptions struct {
-	PaginationPage *string
-
-	PaginationLimit *int32
-
-	PaginationAsOfTime *time.Time
-
-	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
-	PaginationSortOrder *string
-}
-
-// ListRoleGrants executes the request.
-func (a *ServiceImpl) ListRoleGrants(
-	ctx _context.Context, options *ListRoleGrantsOptions,
-) (*ListRoleGrantsResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodGet
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/roles"
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	if options.PaginationPage != nil {
-		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
-	}
-	if options.PaginationLimit != nil {
-		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
-	}
-	if options.PaginationAsOfTime != nil {
-		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
-	}
-	if options.PaginationSortOrder != nil {
-		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
-	}
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ListRoleGrantsResponse
+	var localVarReturnValue SQLUser
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -9372,1791 +11714,6 @@ func (a *ServiceImpl) ListSQLUsers(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// PatchGroup executes the request.
-func (a *ServiceImpl) PatchGroup(
-	ctx _context.Context, id string, patchGroupRequest *PatchGroupRequest,
-) (*ScimGroup, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Groups/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if patchGroupRequest == nil {
-		return nil, nil, reportError("patchGroupRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = patchGroupRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ScimGroup
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// PatchUser executes the request.
-func (a *ServiceImpl) PatchUser(
-	ctx _context.Context, id string, patchUserRequest *PatchUserRequest,
-) (*ScimUser, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Users/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if patchUserRequest == nil {
-		return nil, nil, reportError("patchUserRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = patchUserRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ScimUser
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// RemoveUserFromRole executes the request.
-func (a *ServiceImpl) RemoveUserFromRole(
-	ctx _context.Context, userId string, resourceType string, resourceId string, roleName string,
-) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodDelete
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/roles/{user_id}/{resource_type}/{resource_id}/{role_name}"
-	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_type"+"}", _neturl.PathEscape(parameterToString(resourceType, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"resource_id"+"}", _neturl.PathEscape(parameterToString(resourceId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"role_name"+"}", _neturl.PathEscape(parameterToString(roleName, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue GetAllRolesForUserResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// SetAwsEndpointConnectionState executes the request.
-func (a *ServiceImpl) SetAwsEndpointConnectionState(
-	ctx _context.Context, clusterId string, endpointId string, setAwsEndpointConnectionStateRequest *SetAwsEndpointConnectionStateRequest,
-) (*AwsEndpointConnection, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/aws-endpoint-connections/{endpoint_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"endpoint_id"+"}", _neturl.PathEscape(parameterToString(endpointId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if setAwsEndpointConnectionStateRequest == nil {
-		return nil, nil, reportError("setAwsEndpointConnectionStateRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = setAwsEndpointConnectionStateRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue AwsEndpointConnection
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// SetClientCACert executes the request.
-func (a *ServiceImpl) SetClientCACert(
-	ctx _context.Context, clusterId string, setClientCACertRequest *SetClientCACertRequest,
-) (*ClientCACertInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if setClientCACertRequest == nil {
-		return nil, nil, reportError("setClientCACertRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = setClientCACertRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ClientCACertInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// SetEgressTrafficPolicy executes the request.
-func (a *ServiceImpl) SetEgressTrafficPolicy(
-	ctx _context.Context, clusterId string, setEgressTrafficPolicyRequest *SetEgressTrafficPolicyRequest,
-) (*_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPost
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-rules/egress-traffic-policy"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if setEgressTrafficPolicyRequest == nil {
-		return nil, reportError("setEgressTrafficPolicyRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = setEgressTrafficPolicyRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return localVarHTTPResponse, newErr
-	}
-
-	return localVarHTTPResponse, nil
-}
-
-// SetRolesForUser executes the request.
-func (a *ServiceImpl) SetRolesForUser(
-	ctx _context.Context, userId string, cockroachCloudSetRolesForUserRequest *CockroachCloudSetRolesForUserRequest,
-) (*GetAllRolesForUserResponse, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/roles/{user_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"user_id"+"}", _neturl.PathEscape(parameterToString(userId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if cockroachCloudSetRolesForUserRequest == nil {
-		return nil, nil, reportError("cockroachCloudSetRolesForUserRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = cockroachCloudSetRolesForUserRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue GetAllRolesForUserResponse
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateAllowlistEntry executes the request.
-func (a *ServiceImpl) UpdateAllowlistEntry(
-	ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1,
-) (*AllowlistEntry, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{entry.cidr_ip}/{entry.cidr_mask}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_ip"+"}", _neturl.PathEscape(parameterToString(entryCidrIp, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_mask"+"}", _neturl.PathEscape(parameterToString(entryCidrMask, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if allowlistEntry1 == nil {
-		return nil, nil, reportError("allowlistEntry1 is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = allowlistEntry1
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue AllowlistEntry
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateCMEKSpec executes the request.
-func (a *ServiceImpl) UpdateCMEKSpec(
-	ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification,
-) (*CMEKClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if cMEKClusterSpecification == nil {
-		return nil, nil, reportError("cMEKClusterSpecification is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = cMEKClusterSpecification
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue CMEKClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateCMEKStatus executes the request.
-func (a *ServiceImpl) UpdateCMEKStatus(
-	ctx _context.Context, clusterId string, updateCMEKStatusRequest *UpdateCMEKStatusRequest,
-) (*CMEKClusterInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/cmek"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateCMEKStatusRequest == nil {
-		return nil, nil, reportError("updateCMEKStatusRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateCMEKStatusRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue CMEKClusterInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateClientCACert executes the request.
-func (a *ServiceImpl) UpdateClientCACert(
-	ctx _context.Context, clusterId string, updateClientCACertRequest *UpdateClientCACertRequest,
-) (*ClientCACertInfo, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/client-ca-cert"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateClientCACertRequest == nil {
-		return nil, nil, reportError("updateClientCACertRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateClientCACertRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ClientCACertInfo
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateCluster executes the request.
-func (a *ServiceImpl) UpdateCluster(
-	ctx _context.Context, clusterId string, updateClusterSpecification *UpdateClusterSpecification,
-) (*Cluster, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPatch
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateClusterSpecification == nil {
-		return nil, nil, reportError("updateClusterSpecification is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateClusterSpecification
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue Cluster
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateGroup executes the request.
-func (a *ServiceImpl) UpdateGroup(
-	ctx _context.Context, id string, updateGroupRequest *UpdateGroupRequest,
-) (*ScimGroup, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Groups/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateGroupRequest == nil {
-		return nil, nil, reportError("updateGroupRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateGroupRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ScimGroup
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
 // UpdateSQLUserPassword executes the request.
 func (a *ServiceImpl) UpdateSQLUserPassword(
 	ctx _context.Context, clusterId string, name string, updateSQLUserPasswordRequest *UpdateSQLUserPasswordRequest,
@@ -11284,144 +11841,6 @@ func (a *ServiceImpl) UpdateSQLUserPassword(
 	}
 
 	var localVarReturnValue SQLUser
-	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-	if err != nil {
-		newErr := Error{
-			body:  localVarBody,
-			error: err.Error(),
-		}
-		return &localVarReturnValue, localVarHTTPResponse, newErr
-	}
-
-	return &localVarReturnValue, localVarHTTPResponse, nil
-}
-
-// UpdateUser executes the request.
-func (a *ServiceImpl) UpdateUser(
-	ctx _context.Context, id string, updateUserRequest *UpdateUserRequest,
-) (*ScimUser, *_nethttp.Response, error) {
-	var (
-		localVarHTTPMethod   = _nethttp.MethodPut
-		localVarPostBody     interface{}
-		localVarFormFileName string
-		localVarFileName     string
-		localVarFileBytes    []byte
-	)
-
-	localBasePath := a.client.cfg.ServerURL
-
-	localVarPath := localBasePath + "/api/scim/v2/Users/{id}"
-	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
-
-	localVarHeaderParams := make(map[string]string)
-	localVarQueryParams := _neturl.Values{}
-	localVarFormParams := _neturl.Values{}
-	if updateUserRequest == nil {
-		return nil, nil, reportError("updateUserRequest is required and must be specified")
-	}
-
-	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
-
-	// Set Content-Type header.
-	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
-	if localVarHTTPContentType != "" {
-		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
-	}
-
-	// Determine the Accept header.
-	localVarHTTPHeaderAccepts := []string{"application/json"}
-
-	// Set Accept header.
-	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
-	if localVarHTTPHeaderAccept != "" {
-		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
-	}
-	// Body params.
-	localVarPostBody = updateUserRequest
-	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	localVarHTTPResponse, err := a.client.callAPI(req)
-	if err != nil || localVarHTTPResponse == nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
-	localVarHTTPResponse.Body.Close()
-	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
-	if err != nil {
-		return nil, localVarHTTPResponse, err
-	}
-
-	if localVarHTTPResponse.StatusCode >= 300 {
-		newErr := Error{
-			body:  localVarBody,
-			error: localVarHTTPResponse.Status,
-		}
-		if localVarHTTPResponse.StatusCode == 400 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 401 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 403 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 404 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		if localVarHTTPResponse.StatusCode == 500 {
-			var v interface{}
-			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-			if err != nil {
-				newErr.error = err.Error()
-				return nil, localVarHTTPResponse, newErr
-			}
-			newErr.model = v
-			return nil, localVarHTTPResponse, newErr
-		}
-		var v Status
-		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
-		if err != nil {
-			newErr.error = err.Error()
-			return nil, localVarHTTPResponse, newErr
-		}
-		newErr.model = v
-		return nil, localVarHTTPResponse, newErr
-	}
-
-	var localVarReturnValue ScimUser
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{

@@ -232,6 +232,11 @@ type ClusterMaintenanceWindow struct {
 	WindowDuration types.Int64  `tfsdk:"window_duration"`
 }
 
+type ClusterVersionDeferral struct {
+	ID             types.String `tfsdk:"id"`
+	DeferralPolicy types.String `tfsdk:"deferral_policy"`
+}
+
 type ClientCACertResourceModel struct {
 	ID          types.String `tfsdk:"id"`
 	X509PemCert types.String `tfsdk:"x509_pem_cert"`

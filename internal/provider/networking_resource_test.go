@@ -32,9 +32,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 )
 
-// TestAccAllowlistEntryResource attempts to create, check, and destroy
-// a real cluster and allowlist entry. It will be skipped if TF_ACC isn't set.
-func TestAccAllowlistEntryResource(t *testing.T) {
+// TestAccDedicatedAllowlistEntryResource attempts to create, check, and destroy
+// a real dedicated cluster and allowlist entry. It will be skipped if TF_ACC
+// isn't set.
+func TestAccDedicatedAllowlistEntryResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
 	entryName := "default-allow-list"
@@ -53,11 +54,36 @@ func TestAccAllowlistEntryResource(t *testing.T) {
 		Sql:      false,
 		Ui:       false,
 	}
-	testAllowlistEntryResource(t, clusterName, entry, newEntry, false)
+	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, false /* isServerless */)
 }
 
-// TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
-// a cluster and allowlist entry, but uses a mocked API service.
+// TestAccServerlessAllowlistEntryResource attempts to create, check, and destroy
+// a real serverless cluster and allowlist entry. It will be skipped if TF_ACC
+// isn't set.
+func TestAccServerlessAllowlistEntryResource(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+	entryName := "default-allow-list"
+	entry := client.AllowlistEntry{
+		Name:     &entryName,
+		CidrIp:   "192.168.3.42",
+		CidrMask: 32,
+		Sql:      true,
+		Ui:       false,
+	}
+	newEntryName := "update-test"
+	newEntry := client.AllowlistEntry{
+		Name:     &newEntryName,
+		CidrIp:   "192.168.3.42",
+		CidrMask: 32,
+		Sql:      false,
+		Ui:       false,
+	}
+	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, true /* isServerless */)
+}
+
+// TestIntegrationAllowlistEntryResource attempts to create, check, and
+// destroy a cluster and allowlist entry, but uses a mocked API service.
 func TestIntegrationAllowlistEntryResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
@@ -89,72 +115,126 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
 
-	ctrl := gomock.NewController(t)
-	s := mock_client.NewMockService(ctrl)
-	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
-		return s
-	})()
-	cluster := client.Cluster{
-		Name:          clusterName,
-		Id:            uuid.Nil.String(),
-		CloudProvider: "AWS",
-		Config: client.ClusterConfig{
-			Dedicated: &client.DedicatedHardwareConfig{
-				StorageGib:  15,
-				MachineType: "m5.large",
+	zeroSpendLimit := int32(0)
+	cases := []struct {
+		name         string
+		finalCluster client.Cluster
+	}{
+		{
+			"dedicated cluster",
+			client.Cluster{
+				Name:          clusterName,
+				Id:            uuid.Nil.String(),
+				CloudProvider: "AWS",
+				Config: client.ClusterConfig{
+					Dedicated: &client.DedicatedHardwareConfig{
+						StorageGib:  15,
+						MachineType: "m5.large",
+					},
+				},
+				State: "CREATED",
+				Regions: []client.Region{
+					{
+						Name:      "ap-south-1",
+						NodeCount: 1,
+					},
+				},
 			},
 		},
-		State: "CREATED",
-		Regions: []client.Region{
-			{
-				Name:      "ap-south-1",
-				NodeCount: 1,
+		{
+			"serverless cluster",
+			client.Cluster{
+				Name:          clusterName,
+				Id:            uuid.Nil.String(),
+				Plan:          "SERVERLESS",
+				CloudProvider: "GCP",
+				State:         "CREATED",
+				Config: client.ClusterConfig{
+					Serverless: &client.ServerlessClusterConfig{
+						SpendLimit: &zeroSpendLimit,
+						RoutingId:  "routing-id",
+					},
+				},
+				Regions: []client.Region{
+					{
+						Name: "us-central1",
+					},
+				},
 			},
 		},
 	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
 
-	// Create
-	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
-		Return(&cluster, nil, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(5)
-	s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
-	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
-		&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).
-		Times(3)
+			cluster := c.finalCluster
 
-	// Update
-	// The OpenAPI generator does something weird when part of an object lives in the URL
-	// and the rest in the request body, and it winds up as a partial object.
-	newEntryForUpdate := &client.AllowlistEntry1{
-		Name: newEntry.Name,
-		Sql:  newEntry.Sql,
-		Ui:   newEntry.Ui,
+			// Create
+			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+				Return(&cluster, nil, nil)
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+				Times(4)
+			s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).
+				Times(3)
+
+			// Update
+			// The OpenAPI generator does something weird when part of an object lives in the URL
+			// and the rest in the request body, and it winds up as a partial object.
+			newEntryForUpdate := &client.AllowlistEntry1{
+				Name: newEntry.Name,
+				Sql:  newEntry.Sql,
+				Ui:   newEntry.Ui,
+			}
+			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntryForUpdate).
+				Return(&newEntry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).
+				Times(2)
+
+			// Delete
+			s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
+			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+			testAllowlistEntryResource(t, clusterName, entry, newEntry, true /* useMock */, cluster.Config.Dedicated == nil /* isServerless */)
+		})
 	}
-	s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntryForUpdate).
-		Return(&newEntry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-	s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-		Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).
-		Times(2)
-
-	// Delete
-	s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
-	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
-
-	testAllowlistEntryResource(t, clusterName, entry, newEntry, true)
 }
 
-func testAllowlistEntryResource(t *testing.T, clusterName string, entry, newEntry client.AllowlistEntry, useMock bool) {
-	clusterResourceName := "cockroach_cluster.dedicated"
-	resourceName := "cockroach_allow_list.network_list"
+func testAllowlistEntryResource(
+	t *testing.T,
+	clusterName string,
+	entry, newEntry client.AllowlistEntry,
+	useMock bool,
+	isServerless bool,
+) {
+	const (
+		dedicatedClusterResourceName  = "cockroach_cluster.dedicated"
+		serverlessClusterResourceName = "cockroach_cluster.serverless"
+		resourceName                  = "cockroach_allow_list.network_list"
+	)
+	var clusterResourceName string
+	var allowlistEntryResourceConfigFn func(string, *client.AllowlistEntry) string
+	if isServerless {
+		clusterResourceName = serverlessClusterResourceName
+		allowlistEntryResourceConfigFn = allowlistEntryResourceConfigForServerless
+	} else {
+		clusterResourceName = dedicatedClusterResourceName
+		allowlistEntryResourceConfigFn = allowlistEntryResourceConfigForDedicated
+	}
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestAllowlistEntryResourceConfig(clusterName, &entry),
+				Config: allowlistEntryResourceConfigFn(clusterName, &entry),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", *entry.Name),
@@ -165,7 +245,7 @@ func testAllowlistEntryResource(t *testing.T, clusterName string, entry, newEntr
 				),
 			},
 			{
-				Config: getTestAllowlistEntryResourceConfig(clusterName, &newEntry),
+				Config: allowlistEntryResourceConfigFn(clusterName, &newEntry),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", *newEntry.Name),
@@ -214,27 +294,54 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 	}
 }
 
-func getTestAllowlistEntryResourceConfig(clusterName string, entry *client.AllowlistEntry) string {
+func allowlistEntryResourceConfigForDedicated(
+	clusterName string, entry *client.AllowlistEntry,
+) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
     cloud_provider = "AWS"
     dedicated = {
-	  storage_gib = 15
-	  machine_type = "m5.large"
+        storage_gib = 15
+        machine_type = "m5.large"
     }
-	regions = [{
-		name: "ap-south-1"
-		node_count: 1
-	}]
+    regions = [{
+        name: "ap-south-1"
+        node_count: 1
+    }]
 }
- resource "cockroach_allow_list" "network_list" {
+resource "cockroach_allow_list" "network_list" {
     name = "%s"
     cidr_ip = "%s"
     cidr_mask = %d
     ui = %v
     sql = %v
     cluster_id = cockroach_cluster.dedicated.id
+}
+`, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
+}
+
+func allowlistEntryResourceConfigForServerless(
+	clusterName string, entry *client.AllowlistEntry,
+) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "serverless" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    serverless = {
+        spend_limit = 0
+    }
+    regions = [{
+        name = "us-central1"
+    }]
+}
+resource "cockroach_allow_list" "network_list" {
+    name = "%s"
+    cidr_ip = "%s"
+    cidr_mask = %d
+    ui = %v
+    sql = %v
+    cluster_id = cockroach_cluster.serverless.id
 }
 `, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }

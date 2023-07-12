@@ -760,6 +760,11 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 	})
 }
 
+// loadCLusterToTerraformState translates the cluster from an API response into the
+// TF provider model. It's used in both the cluster resource and data source. The plan,
+// if available, is used to determine the sort order of the cluster's regions, as well as
+// special formatting of certain attribute values (e.g. "preview" for `cockroach_version`).
+// When reading a datasource or importing a resource, `plan` will be nil.
 func loadClusterToTerraformState(
 	clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster,
 ) {
@@ -777,7 +782,11 @@ func loadClusterToTerraformState(
 	state.State = types.StringValue(string(clusterObj.State))
 	state.CreatorId = types.StringValue(clusterObj.CreatorId)
 	state.OperationStatus = types.StringValue(string(clusterObj.OperationStatus))
-	state.Regions = getManagedRegions(&clusterObj.Regions, plan.Regions)
+	var planRegions []Region
+	if plan != nil {
+		planRegions = plan.Regions
+	}
+	state.Regions = getManagedRegions(&clusterObj.Regions, planRegions)
 	state.UpgradeStatus = types.StringValue(string(clusterObj.UpgradeStatus))
 
 	if clusterObj.Config.Serverless != nil {
@@ -822,9 +831,9 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 	for _, region := range plan {
 		planRegions[region.Name.ValueString()] = true
 	}
-	isImport := len(plan) == 0
+	isDatasourceOrImport := len(plan) == 0
 	for _, x := range *apiRegions {
-		if isImport || planRegions[x.Name] {
+		if isDatasourceOrImport || planRegions[x.Name] {
 			rg := Region{
 				Name:      types.StringValue(x.Name),
 				SqlDns:    types.StringValue(x.SqlDns),

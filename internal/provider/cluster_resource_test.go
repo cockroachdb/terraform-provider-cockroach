@@ -28,6 +28,8 @@ import (
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	framework_resource "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -240,10 +242,10 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				Return(&c.finalCluster, nil, nil)
 			s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).
 				Return(&initialCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-				Times(4)
+				Times(8)
 			s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).
 				Return(&c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-				Times(3)
+				Times(8)
 			s.EXPECT().DeleteCluster(gomock.Any(), c.finalCluster.Id)
 
 			resource.Test(t, resource.TestCase{
@@ -257,7 +259,10 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 }
 
 func serverlessClusterWithSpendLimit(clusterName string) resource.TestStep {
-	const resourceName = "cockroach_cluster.serverless"
+	const (
+		resourceName   = "cockroach_cluster.serverless"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
 	return resource.TestStep{
 		// Cluster with spend limit.
 		Config: fmt.Sprintf(`
@@ -271,6 +276,10 @@ func serverlessClusterWithSpendLimit(clusterName string) resource.TestStep {
 					name = "us-central1"
 				}]
 			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.serverless.id
+			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
 			testCheckCockroachClusterExists(resourceName),
@@ -282,12 +291,23 @@ func serverlessClusterWithSpendLimit(clusterName string) resource.TestStep {
 			resource.TestCheckResourceAttr(resourceName, "regions.#", "1"),
 			resource.TestCheckResourceAttr(resourceName, "serverless.spend_limit", "1"),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.usage_limits"),
+			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+			resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
+			resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
+			resource.TestCheckResourceAttr(dataSourceName, "plan", "SERVERLESS"),
+			resource.TestCheckResourceAttr(dataSourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.spend_limit", "1"),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.usage_limits"),
 		),
 	}
 }
 
 func serverlessClusterWithResourceLimits(clusterName string) resource.TestStep {
-	const resourceName = "cockroach_cluster.serverless"
+	const (
+		resourceName   = "cockroach_cluster.serverless"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
 	return resource.TestStep{
 		// Update cluster to use resource limits.
 		Config: fmt.Sprintf(`
@@ -304,18 +324,29 @@ func serverlessClusterWithResourceLimits(clusterName string) resource.TestStep {
 					name = "us-central1"
 				}]
 			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.serverless.id
+			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceName, "name", clusterName),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.spend_limit"),
 			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
 			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.storage_mib_limit", "102400"),
+			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.storage_mib_limit", "102400"),
 		),
 	}
 }
 
 func serverlessClusterWithNoLimits(clusterName string) resource.TestStep {
-	const resourceName = "cockroach_cluster.serverless"
+	const (
+		resourceName   = "cockroach_cluster.serverless"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
 	return resource.TestStep{
 		// Update cluster to have no limits.
 		Config: fmt.Sprintf(`
@@ -329,17 +360,27 @@ func serverlessClusterWithNoLimits(clusterName string) resource.TestStep {
 					name = "us-central1"
 				}]
 			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.serverless.id
+			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceName, "name", clusterName),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.spend_limit"),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.usage_limits"),
+			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.usage_limits"),
 		),
 	}
 }
 
 func serverlessClusterWithZeroSpendLimit(clusterName string) resource.TestStep {
-	const resourceName = "cockroach_cluster.serverless"
+	const (
+		resourceName   = "cockroach_cluster.serverless"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
 	return resource.TestStep{
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "serverless" {
@@ -352,17 +393,27 @@ func serverlessClusterWithZeroSpendLimit(clusterName string) resource.TestStep {
 					name = "us-central1"
 				}]
 			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.serverless.id
+			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceName, "name", clusterName),
 			resource.TestCheckResourceAttr(resourceName, "serverless.spend_limit", "0"),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.usage_limits"),
+			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.spend_limit", "0"),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.usage_limits"),
 		),
 	}
 }
 
 func multiRegionServerlessClusterResource(clusterName string) resource.TestStep {
-	const resourceName = "cockroach_cluster.serverless"
+	const (
+		resourceName   = "cockroach_cluster.serverless"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
 	return resource.TestStep{
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "serverless" {
@@ -387,6 +438,10 @@ func multiRegionServerlessClusterResource(clusterName string) resource.TestStep 
 					},
 				]
 			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.serverless.id
+			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(resourceName, "name", clusterName),
@@ -404,6 +459,21 @@ func multiRegionServerlessClusterResource(clusterName string) resource.TestStep 
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.spend_limit"),
 			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
 			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.storage_mib_limit", "102400"),
+			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+			resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
+			resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
+			resource.TestCheckResourceAttr(dataSourceName, "plan", "SERVERLESS"),
+			resource.TestCheckResourceAttr(dataSourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.#", "3"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.0.name", "us-west2"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.0.primary", "false"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.1.name", "us-east1"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.1.primary", "true"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.2.name", "europe-west1"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.2.primary", "false"),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.storage_mib_limit", "102400"),
 		),
 	}
 }
@@ -467,7 +537,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
+		Times(8)
 
 	// Upgrade
 
@@ -481,7 +551,6 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 			},
 		},
 	}, nil, nil)
-	// Upgrade
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &upgradingCluster.UpgradeStatus}).
 		Return(&upgradingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
@@ -491,7 +560,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Return(&pendingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&pendingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(2)
+		Times(3)
 	// Finalize
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &finalizedCluster.UpgradeStatus}).
 		Return(&finalizedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
@@ -499,15 +568,16 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	// Deletion
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&finalizedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+		Return(&finalizedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(6)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
 	testDedicatedClusterResource(t, clusterName, true)
 }
 
 func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool) {
-	var (
-		resourceName = "cockroach_cluster.dedicated"
+	const (
+		resourceName   = "cockroach_cluster.dedicated"
+		dataSourceName = "data.cockroach_cluster.test"
 	)
 
 	resource.Test(t, resource.TestCase{
@@ -523,11 +593,23 @@ func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool
 					resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
 					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
 					resource.TestCheckResourceAttr(resourceName, "plan", "DEDICATED"),
+					resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+					resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
+					resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
+					resource.TestCheckResourceAttr(dataSourceName, "plan", "DEDICATED"),
 				),
 			},
 			{
 				Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true),
-				Check:  resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
+					resource.TestCheckResourceAttr(dataSourceName, "cockroach_version", latestClusterMajorVersion),
+				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -571,6 +653,10 @@ resource "cockroach_cluster" "dedicated" {
 		name: "us-central1"
 		node_count: 1
 	}]
+}
+
+data "cockroach_cluster" "test" {
+    id = cockroach_cluster.dedicated.id
 }
 `, name, version)
 
@@ -646,4 +732,20 @@ func TestSimplifyClusterVersion(t *testing.T) {
 	t.Run("Preview version, plan uses preview", func(t *testing.T) {
 		require.Equal(t, "preview", simplifyClusterVersion("v23.1.0-beta1", true))
 	})
+}
+
+// TestClusterSchemaInSync ensures that if an attribute gets added to the cluster resource,
+// it also gets added to the datasource, and vice versa. The attribute properties can be different,
+// but the schemas should otherwise be the same.
+func TestClusterSchemaInSync(t *testing.T) {
+	r := NewClusterResource()
+	d := NewClusterDataSource()
+	var rSchema framework_resource.SchemaResponse
+	var dSchema datasource.SchemaResponse
+	r.Schema(context.Background(), framework_resource.SchemaRequest{}, &rSchema)
+	d.Schema(context.Background(), datasource.SchemaRequest{}, &dSchema)
+
+	rAttrs := rSchema.Schema.Attributes
+	dAttrs := dSchema.Schema.Attributes
+	CheckSchemaAttributesMatch(t, rAttrs, dAttrs)
 }

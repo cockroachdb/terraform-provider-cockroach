@@ -222,8 +222,17 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			})()
 
 			steps := []resource.TestStep{
+				// Create initial resource.
 				serverlessClusterWithSpendLimit(initialCluster.Name),
-				c.testStep(initialCluster.Name)}
+				// Apply an update.
+				c.testStep(initialCluster.Name),
+				// Import the resource.
+				{
+					ResourceName:      "cockroach_cluster.serverless",
+					ImportState:       true,
+					ImportStateVerify: true,
+				},
+			}
 
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&initialCluster, nil, nil)
@@ -234,7 +243,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				Times(4)
 			s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).
 				Return(&c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-				Times(2)
+				Times(3)
 			s.EXPECT().DeleteCluster(gomock.Any(), c.finalCluster.Id)
 
 			resource.Test(t, resource.TestCase{

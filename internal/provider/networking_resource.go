@@ -130,23 +130,6 @@ func (r *allowListResource) Create(
 		return
 	}
 
-	cluster, _, err := r.provider.service.GetCluster(ctx, entry.ClusterId.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error getting the cluster",
-			fmt.Sprintf("Could not get the cluster: %s", formatAPIErrorMessage(err)),
-		)
-		return
-	}
-
-	if cluster.Config.Serverless != nil {
-		resp.Diagnostics.AddError(
-			"Could not add network allowlist in serverless cluster",
-			"Network allowlists are only supported with dedicated clusters",
-		)
-		return
-	}
-
 	var allowList = client.AllowlistEntry{
 		CidrIp:   entry.CidrIp.ValueString(),
 		CidrMask: int32(entry.CidrMask.ValueInt64()),
@@ -159,7 +142,7 @@ func (r *allowListResource) Create(
 		allowList.Name = &name
 	}
 
-	_, _, err = r.provider.service.AddAllowlistEntry(ctx, entry.ClusterId.ValueString(), &allowList)
+	_, _, err := r.provider.service.AddAllowlistEntry(ctx, entry.ClusterId.ValueString(), &allowList)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error adding allowed IP range",

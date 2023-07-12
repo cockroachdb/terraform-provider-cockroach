@@ -29,12 +29,20 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
-func TestAccPrivateEndpointConnectionResource(t *testing.T) {
+func TestAccDedicatedPrivateEndpointConnectionResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
-	testPrivateEndpointConnectionResource(t, clusterName, false)
+	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, false /* isServerless */)
+}
+
+func TestAccServerlessPrivateEndpointConnectionResource(t *testing.T) {
+	t.Skip("Skipping until we can either integrate the AWS provider " +
+		"or import a permanent test fixture.")
+	t.Parallel()
+	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
+	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isServerless */)
 }
 
 func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
@@ -45,29 +53,6 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
 
-	ctrl := gomock.NewController(t)
-	s := mock_client.NewMockService(ctrl)
-	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
-		return s
-	})()
-	cluster := client.Cluster{
-		Name:          clusterName,
-		Id:            clusterID,
-		CloudProvider: "AWS",
-		Config: client.ClusterConfig{
-			Dedicated: &client.DedicatedHardwareConfig{
-				StorageGib:  15,
-				MachineType: "m5.large",
-			},
-		},
-		State: "CREATED",
-		Regions: []client.Region{
-			{
-				Name:      "us-east-1",
-				NodeCount: 1,
-			},
-		},
-	}
 	services := &client.PrivateEndpointServices{
 		Services: []client.PrivateEndpointService{
 			{
@@ -92,51 +77,127 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 	connections := &client.AwsEndpointConnections{
 		Connections: []client.AwsEndpointConnection{connection},
 	}
-	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
-		Return(&cluster, nil, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
-	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
-		Return(services, nil, nil)
-	s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
-		Return(services, nil, nil).
-		Times(2)
-	available := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE
-	s.EXPECT().SetAwsEndpointConnectionState(
-		gomock.Any(),
-		clusterID,
-		endpointID,
-		&client.SetAwsEndpointConnectionStateRequest{
-			Status: available,
-		}).
-		Return(&connection, nil, nil)
-	s.EXPECT().ListAwsEndpointConnections(gomock.Any(), clusterID).
-		Return(connections, nil, nil).
-		Times(2)
-	rejected := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED
-	s.EXPECT().SetAwsEndpointConnectionState(
-		gomock.Any(),
-		clusterID,
-		endpointID,
-		&client.SetAwsEndpointConnectionStateRequest{
-			Status: rejected,
-		}).
-		Return(&connection, nil, nil)
-	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testPrivateEndpointConnectionResource(t, clusterName, true)
+	zeroSpendLimit := int32(0)
+	cases := []struct {
+		name         string
+		finalCluster client.Cluster
+	}{
+		{
+			"dedicated cluster",
+			client.Cluster{
+				Name:          clusterName,
+				Id:            clusterID,
+				CloudProvider: "AWS",
+				Config: client.ClusterConfig{
+					Dedicated: &client.DedicatedHardwareConfig{
+						StorageGib:  15,
+						MachineType: "m5.large",
+					},
+				},
+				State: "CREATED",
+				Regions: []client.Region{
+					{
+						Name:      "us-east-1",
+						NodeCount: 1,
+					},
+				},
+			},
+		},
+		{
+			"serverless cluster",
+			client.Cluster{
+				Name:          clusterName,
+				Id:            uuid.Nil.String(),
+				Plan:          "SERVERLESS",
+				CloudProvider: "AWS",
+				State:         "CREATED",
+				Config: client.ClusterConfig{
+					Serverless: &client.ServerlessClusterConfig{
+						SpendLimit: &zeroSpendLimit,
+						RoutingId:  "routing-id",
+					},
+				},
+				Regions: []client.Region{
+					{
+						Name: "us-east-1",
+					},
+				},
+			},
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+			cluster := c.finalCluster
+			isServerless := cluster.Config.Dedicated == nil
+
+			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+				Return(&cluster, nil, nil)
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+				Times(4)
+			if !isServerless {
+				s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
+					Return(services, nil, nil)
+			}
+			s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
+				Return(services, nil, nil).
+				Times(2)
+			available := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE
+			s.EXPECT().SetAwsEndpointConnectionState(
+				gomock.Any(),
+				clusterID,
+				endpointID,
+				&client.SetAwsEndpointConnectionStateRequest{
+					Status: available,
+				}).
+				Return(&connection, nil, nil)
+			s.EXPECT().ListAwsEndpointConnections(gomock.Any(), clusterID).
+				Return(connections, nil, nil).
+				Times(2)
+			rejected := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED
+			s.EXPECT().SetAwsEndpointConnectionState(
+				gomock.Any(),
+				clusterID,
+				endpointID,
+				&client.SetAwsEndpointConnectionStateRequest{
+					Status: rejected,
+				}).
+				Return(&connection, nil, nil)
+			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+			testPrivateEndpointConnectionResource(
+				t,
+				clusterName,
+				true, /* useMock */
+				isServerless,
+			)
+		})
+	}
 }
 
-func testPrivateEndpointConnectionResource(t *testing.T, clusterName string, useMock bool) {
-	resourceName := "cockroach_private_endpoint_connection.connection"
+func testPrivateEndpointConnectionResource(
+	t *testing.T, clusterName string, useMock bool, isServerless bool,
+) {
+	const resourceName = "cockroach_private_endpoint_connection.connection"
+	var privateEndpointConnectionResourceConfigFn func(string) string
+	if isServerless {
+		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForServerless
+	} else {
+		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForDedicated
+	}
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestPrivateEndpointConnectionResourceConfig(clusterName),
+				Config: privateEndpointConnectionResourceConfigFn(clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(resourceName, "endpoint_id", "endpoint-id"),
 					resource.TestCheckResourceAttr(resourceName, "service_id", "service-id"),
@@ -149,19 +210,19 @@ func testPrivateEndpointConnectionResource(t *testing.T, clusterName string, use
 	})
 }
 
-func getTestPrivateEndpointConnectionResourceConfig(clusterName string) string {
+func getTestPrivateEndpointConnectionResourceConfigForDedicated(clusterName string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
     cloud_provider = "AWS"
     dedicated = {
-	  storage_gib = 15
-	  machine_type = "m5.large"
+        storage_gib = 15
+        machine_type = "m5.large"
     }
-	regions = [{
-		name: "us-east-1"
-		node_count: 1
-	}]
+    regions = [{
+        name: "us-east-1"
+        node_count: 1
+    }]
 }
 resource "cockroach_private_endpoint_services" "services" {
     cluster_id = cockroach_cluster.dedicated.id
@@ -169,7 +230,30 @@ resource "cockroach_private_endpoint_services" "services" {
 
 resource "cockroach_private_endpoint_connection" "connection" {
     cluster_id = cockroach_cluster.dedicated.id
-	endpoint_id = "endpoint-id"
+    endpoint_id = "endpoint-id"
+}
+`, clusterName)
+}
+
+func getTestPrivateEndpointConnectionResourceConfigForServerless(clusterName string) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "serverless" {
+    name           = "%s"
+    cloud_provider = "AWS"
+    serverless = {
+        spend_limit = 0
+    }
+    regions = [{
+        name = "us-east-1"
+    }]
+}
+resource "cockroach_private_endpoint_services" "services" {
+    cluster_id = cockroach_cluster.serverless.id
+}
+
+resource "cockroach_private_endpoint_connection" "connection" {
+    cluster_id = cockroach_cluster.serverless.id
+    endpoint_id = "endpoint-id"
 }
 `, clusterName)
 }

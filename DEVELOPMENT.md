@@ -11,7 +11,7 @@
 1. Navigate to the `terraform-provider-cockroach` directory.
 
     ~~~ shell
-    cd terraform-proivder-cockroach
+    cd terraform-provider-cockroach
     ~~~
 
 1. Build the binary and copy it to your path.

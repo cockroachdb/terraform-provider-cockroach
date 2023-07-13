@@ -88,13 +88,6 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	name := "default-allow-list"
-	entry := client.AllowlistEntry{
-		Name:     &name,
-		CidrIp:   "192.168.3.2",
-		CidrMask: 32,
-		Sql:      true,
-		Ui:       true,
-	}
 	// Return another entry in the List call to make sure we're selecting
 	// the right one.
 	otherName := "wrong-entry"
@@ -118,10 +111,18 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
+		entry        client.AllowlistEntry
 		finalCluster client.Cluster
 	}{
 		{
 			"dedicated cluster",
+			client.AllowlistEntry{
+				Name:     &name,
+				CidrIp:   "192.168.3.2",
+				CidrMask: 32,
+				Sql:      true,
+				Ui:       true,
+			},
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
@@ -143,6 +144,13 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		},
 		{
 			"serverless cluster",
+			client.AllowlistEntry{
+				Name:     &name,
+				CidrIp:   "192.168.3.2",
+				CidrMask: 32,
+				Sql:      true,
+				Ui:       false,
+			},
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
@@ -172,6 +180,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			})()
 
 			cluster := c.finalCluster
+			entry := c.entry
 
 			// Create
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
@@ -221,12 +230,15 @@ func testAllowlistEntryResource(
 	)
 	var clusterResourceName string
 	var allowlistEntryResourceConfigFn func(string, *client.AllowlistEntry) string
+	var uiVal string
 	if isServerless {
 		clusterResourceName = serverlessClusterResourceName
 		allowlistEntryResourceConfigFn = allowlistEntryResourceConfigForServerless
+		uiVal = "false"
 	} else {
 		clusterResourceName = dedicatedClusterResourceName
 		allowlistEntryResourceConfigFn = allowlistEntryResourceConfigForDedicated
+		uiVal = "true"
 	}
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
@@ -240,7 +252,7 @@ func testAllowlistEntryResource(
 					resource.TestCheckResourceAttr(resourceName, "name", *entry.Name),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
-					resource.TestCheckResourceAttr(resourceName, "ui", "true"),
+					resource.TestCheckResourceAttr(resourceName, "ui", uiVal),
 					resource.TestCheckResourceAttr(resourceName, "sql", "true"),
 				),
 			},
@@ -314,8 +326,8 @@ resource "cockroach_allow_list" "network_list" {
     name = "%s"
     cidr_ip = "%s"
     cidr_mask = %d
-    ui = %v
     sql = %v
+    ui = %v
     cluster_id = cockroach_cluster.dedicated.id
 }
 `, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
@@ -339,8 +351,8 @@ resource "cockroach_allow_list" "network_list" {
     name = "%s"
     cidr_ip = "%s"
     cidr_mask = %d
-    ui = %v
     sql = %v
+    ui = %v
     cluster_id = cockroach_cluster.serverless.id
 }
 `, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)

@@ -78,6 +78,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 		},
 	}
 
+	true_val := true
 	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
@@ -120,7 +121,11 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				},
 				Regions: []client.Region{
 					{
-						Name: "us-east-1",
+						Name:    "us-east-1",
+						Primary: &true_val,
+					},
+					{
+						Name: "eu-central-1",
 					},
 				},
 			},
@@ -210,6 +215,8 @@ resource "cockroach_private_endpoint_services" "services" {
 }
 
 func getTestPrivateEndpointServicesResourceConfigForServerless(clusterName string) string {
+	// Use two regions here so we end up creating the cluster on the multi-
+	// region host, which has PrivateLink enabled.
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
@@ -217,9 +224,10 @@ resource "cockroach_cluster" "serverless" {
     serverless = {
         spend_limit = 0
     }
-    regions = [{
-        name = "us-east-1"
-    }]
+    regions = [
+        { name = "us-east-1", primary = true },
+        { name = "eu-central-1" },
+    ]
 }
 resource "cockroach_private_endpoint_services" "services" {
     cluster_id = cockroach_cluster.serverless.id

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.7.0] - 2023-07-13
+
 ### Added
 
 - New cockroach_version_deferral resource allows users to defer automated minor version

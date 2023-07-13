@@ -146,7 +146,7 @@ resource "cockroach_cluster" "test" {
   cloud_provider = "AWS"
   dedicated = {
     storage_gib  = 35
-  	machine_type = "m5.xlarge"
+  	num_virtual_cpus = 4
   }
   regions = [{
     name = "us-east-1"
@@ -167,7 +167,7 @@ resource "cockroach_cluster" "test" {
   cloud_provider = "AWS"
   dedicated = {
     storage_gib  = 35
-  	machine_type = "m5.xlarge"
+  	num_virtual_cpus = 4
   }
   regions = [{
     name = "us-east-1"

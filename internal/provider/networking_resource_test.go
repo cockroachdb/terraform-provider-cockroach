@@ -233,11 +233,11 @@ func testAllowlistEntryResource(
 	var uiVal string
 	if isServerless {
 		clusterResourceName = serverlessClusterResourceName
-		allowlistEntryResourceConfigFn = allowlistEntryResourceConfigForServerless
+		allowlistEntryResourceConfigFn = getTestAllowlistEntryResourceConfigForServerless
 		uiVal = "false"
 	} else {
 		clusterResourceName = dedicatedClusterResourceName
-		allowlistEntryResourceConfigFn = allowlistEntryResourceConfigForDedicated
+		allowlistEntryResourceConfigFn = getTestAllowlistEntryResourceConfigForDedicated
 		uiVal = "true"
 	}
 	resource.Test(t, resource.TestCase{
@@ -306,7 +306,7 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 	}
 }
 
-func allowlistEntryResourceConfigForDedicated(
+func getTestAllowlistEntryResourceConfigForDedicated(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
 	return fmt.Sprintf(`
@@ -333,7 +333,7 @@ resource "cockroach_allow_list" "network_list" {
 `, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }
 
-func allowlistEntryResourceConfigForServerless(
+func getTestAllowlistEntryResourceConfigForServerless(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
 	return fmt.Sprintf(`

@@ -144,13 +144,7 @@ func (r *privateEndpointServicesResource) Create(
 		return
 	}
 
-	if cluster.Config.Serverless != nil {
-		resp.Diagnostics.AddError(
-			"Incompatible cluster type",
-			"Private endpoint services are only available for dedicated clusters",
-		)
-		return
-	} else if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
+	if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster cloud provider",
 			"Private endpoint services are currently only available for AWS clusters",
@@ -158,15 +152,20 @@ func (r *privateEndpointServicesResource) Create(
 		return
 	}
 
-	// If private endpoint services already exist for this cluster,
-	// this is a no-op. The API will gracefully return the existing services.
-	_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error enabling private endpoint services",
-			fmt.Sprintf("Could not enable private endpoint services: %s", formatAPIErrorMessage(err)),
-		)
-		return
+	// Only create an endpoint service if it is a dedicated cluster. Serverless
+	// clusters have endpoint services by default, and will error out if the
+	// Create API is called.
+	if cluster.Config.Serverless == nil {
+		// If private endpoint services already exist for this dedicated cluster,
+		// this is a no-op. The API will gracefully return the existing services.
+		_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.ValueString())
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error enabling private endpoint services",
+				fmt.Sprintf("Could not enable private endpoint services: %s", formatAPIErrorMessage(err)),
+			)
+			return
+		}
 	}
 	var services client.PrivateEndpointServices
 	err = sdk_resource.RetryContext(ctx, endpointServicesCreateTimeout,
@@ -178,7 +177,6 @@ func (r *privateEndpointServicesResource) Create(
 		)
 		return
 	}
-
 	var state PrivateEndpointServices
 	state.ClusterID = config.ClusterID
 	state.ID = config.ClusterID

@@ -134,13 +134,7 @@ func (r *privateEndpointConnectionResource) Create(
 		return
 	}
 
-	if cluster.Config.Serverless != nil {
-		resp.Diagnostics.AddError(
-			"Incompatible cluster type",
-			"Private endpoint services are only available for dedicated clusters",
-		)
-		return
-	} else if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
+	if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster cloud provider",
 			"Private endpoint services are only available for AWS clusters",

@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - New cockroach_version_deferral resource allows users to defer automated minor version
   upgrades by a fix 60-day interval.
+- Allowlists and AWS PrivateLink services are now supported for serverless clusters. PrivateLink for serverless clusters
+  is in [limited access](https://www.cockroachlabs.com/docs/v23.1/cockroachdb-feature-availability).
+
+### Fixed
+
+- Fixed an issue where the provider could crash when importing a serverless cluster.
+- Fixed an issue where usage limits weren't reported properly in cockroach_cluster data sources.
 
 ## [0.6.0] - 2023-06-21
 

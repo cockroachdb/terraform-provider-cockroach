@@ -4,13 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/hashicorp/go-retryablehttp"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"net/http"
 	"regexp"
+	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/go-retryablehttp"
+	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/stretchr/testify/require"
 )
 
 func addConfigureProviderErr(diagnostics *diag.Diagnostics) {
@@ -27,6 +31,34 @@ func HookGlobal[T any](ptr *T, val T) func() {
 	orig := *ptr
 	*ptr = val
 	return func() { *ptr = orig }
+}
+
+// CheckSchemaAttributesMatch is a test utility that can be used to make sure a resource's schema stays in sync with
+// its datasource counterpart. It compares attribute names and topology, but not properties.
+func CheckSchemaAttributesMatch(t *testing.T, rAttributes map[string]resource_schema.Attribute, dAttributes map[string]datasource_schema.Attribute) {
+	for name, rAttr := range rAttributes {
+		dAttr, ok := dAttributes[name]
+		require.True(t, ok)
+		if rNA, ok := rAttr.(resource_schema.NestedAttribute); ok {
+			dNA, ok := dAttr.(datasource_schema.NestedAttribute)
+			require.True(t, ok)
+
+			// Resource and datasource schemas implement the same base type,
+			// but that base type is /internal, so we need to go through some
+			// faff to get the raw attribute map.
+			rLen := len(rNA.GetNestedObject().GetAttributes())
+			require.Equal(t, rLen, len(dNA.GetNestedObject().GetAttributes()))
+			rAttrs := make(map[string]resource_schema.Attribute, rLen)
+			dAttrs := make(map[string]datasource_schema.Attribute, rLen)
+			for name, attr := range rNA.GetNestedObject().GetAttributes() {
+				rAttrs[name] = attr
+			}
+			for name, attr := range dNA.GetNestedObject().GetAttributes() {
+				dAttrs[name] = attr
+			}
+			CheckSchemaAttributesMatch(t, rAttrs, dAttrs)
+		}
+	}
 }
 
 func formatAPIErrorMessage(err error) string {

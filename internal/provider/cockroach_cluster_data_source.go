@@ -21,18 +21,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type clusterDataSource struct {
 	provider *provider
 }
 
-// TODO(jenngeorge): Add a test to make sure this data source and the
-// cluster resource stay in sync.
 func (d *clusterDataSource) Schema(
 	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
 ) {
@@ -207,40 +203,9 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
-	cluster.Name = types.StringValue(cockroachCluster.Name)
-	cluster.CloudProvider = types.StringValue(string(cockroachCluster.CloudProvider))
-	cluster.State = types.StringValue(string(cockroachCluster.State))
-	cluster.CockroachVersion = types.StringValue(cockroachCluster.CockroachVersion)
-	cluster.Plan = types.StringValue(string(cockroachCluster.Plan))
-	cluster.OperationStatus = types.StringValue(string(cockroachCluster.OperationStatus))
-	cluster.UpgradeStatus = types.StringValue(string(cockroachCluster.UpgradeStatus))
-	if cockroachCluster.Config.Serverless != nil {
-		cluster.ServerlessConfig = &ServerlessClusterConfig{
-			SpendLimit: types.Int64Value(int64(cockroachCluster.Config.Serverless.GetSpendLimit())),
-			RoutingId:  types.StringValue(cockroachCluster.Config.Serverless.RoutingId),
-		}
-	}
-	if cockroachCluster.Config.Dedicated != nil {
-		cluster.DedicatedConfig = &DedicatedClusterConfig{
-			MachineType:              types.StringValue(cockroachCluster.Config.Dedicated.MachineType),
-			NumVirtualCpus:           types.Int64Value(int64(cockroachCluster.Config.Dedicated.NumVirtualCpus)),
-			StorageGib:               types.Int64Value(int64(cockroachCluster.Config.Dedicated.StorageGib)),
-			MemoryGib:                types.Float64Value(float64(cockroachCluster.Config.Dedicated.MemoryGib)),
-			DiskIops:                 types.Int64Value(int64(cockroachCluster.Config.Dedicated.DiskIops)),
-			PrivateNetworkVisibility: types.BoolValue(cockroachCluster.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
-		}
-	}
-
-	for _, r := range cockroachCluster.Regions {
-		reg := Region{
-			Name:      types.StringValue(r.Name),
-			SqlDns:    types.StringValue(r.SqlDns),
-			UiDns:     types.StringValue(r.UiDns),
-			NodeCount: types.Int64Value(int64(r.NodeCount)),
-			Primary:   types.BoolValue(r.GetPrimary()),
-		}
-		cluster.Regions = append(cluster.Regions, reg)
-	}
+	// The concept of a plan doesn't apply to data sources.
+	// Using a nil plan means we won't try to re-sort the region list.
+	loadClusterToTerraformState(cockroachCluster, &cluster, nil)
 
 	diags = resp.State.Set(ctx, cluster)
 	resp.Diagnostics.Append(diags...)

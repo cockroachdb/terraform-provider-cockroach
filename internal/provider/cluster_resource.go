@@ -794,15 +794,22 @@ func loadClusterToTerraformState(
 			RoutingId: types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
 
-		// Set either the spend limit or usage limits, depending on the cluster
-		// object requested. Both options are returned by the API.
-		if clusterObj.Config.Serverless.UsageLimits != nil {
+		// The whole plan or just its serverless config can be nil.
+		var planConfig *ServerlessClusterConfig
+		if plan != nil {
+			planConfig = plan.ServerlessConfig
+		}
+
+		// Set either the spend limit or usage limits, depending on the plan.
+		// Both options are returned by the API. If there's no plan (import or
+		// data source), we default to usage limits.
+		if clusterObj.Config.Serverless.UsageLimits != nil && (planConfig == nil || planConfig.UsageLimits != nil) {
 			usageLimits := clusterObj.Config.Serverless.UsageLimits
 			serverlessConfig.UsageLimits = &UsageLimits{
 				RequestUnitLimit: types.Int64Value(usageLimits.RequestUnitLimit),
 				StorageMibLimit:  types.Int64Value(usageLimits.StorageMibLimit),
 			}
-		} else if clusterObj.Config.Serverless.SpendLimit != nil {
+		} else if clusterObj.Config.Serverless.SpendLimit != nil && planConfig != nil && !planConfig.SpendLimit.IsNull() {
 			serverlessConfig.SpendLimit = types.Int64Value(int64(clusterObj.Config.Serverless.GetSpendLimit()))
 		}
 		state.ServerlessConfig = serverlessConfig

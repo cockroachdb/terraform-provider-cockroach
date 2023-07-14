@@ -129,8 +129,9 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				CloudProvider: "AWS",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
-						StorageGib:  15,
-						MachineType: "m5.large",
+						StorageGib:     15,
+						MachineType:    "m5.large",
+						NumVirtualCpus: 2,
 					},
 				},
 				State: "CREATED",
@@ -315,7 +316,7 @@ resource "cockroach_cluster" "dedicated" {
     cloud_provider = "AWS"
     dedicated = {
         storage_gib = 15
-        machine_type = "m5.large"
+        num_virtual_cpus = 2
     }
     regions = [{
         name: "ap-south-1"

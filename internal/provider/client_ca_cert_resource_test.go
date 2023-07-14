@@ -67,8 +67,9 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 		State:         "CREATED",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
-				MachineType: "m5.xlarge",
-				StorageGib:  35,
+				MachineType:    "m5.xlarge",
+				NumVirtualCpus: 4,
+				StorageGib:     35,
 			},
 		},
 		Regions: []client.Region{
@@ -186,7 +187,7 @@ resource "cockroach_cluster" "test" {
 	cloud_provider = "AWS"
 	dedicated = {
 		storage_gib = 35
-		machine_type = "m5.xlarge"
+		num_virtual_cpus = 4
 	}
 	regions = [{
 		name = "us-west-2"

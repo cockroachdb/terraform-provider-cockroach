@@ -98,7 +98,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				SpendLimit: &spendLimit,
-				RoutingId:  "routing-id",
+				UsageLimits: &client.UsageLimits{
+					RequestUnitLimit: 1,
+					StorageMibLimit:  1,
+				},
+				RoutingId: "routing-id",
 			},
 		},
 		Regions: []client.Region{
@@ -109,9 +113,10 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	}
 
 	cases := []struct {
-		name         string
-		finalCluster client.Cluster
-		testStep     func(clusterName string) resource.TestStep
+		name             string
+		finalCluster     client.Cluster
+		testStep         func(clusterName string) resource.TestStep
+		skipVerifyImport bool
 	}{
 		{
 			"single-region serverless cluster with resource limits",
@@ -138,6 +143,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				},
 			},
 			serverlessClusterWithResourceLimits,
+			false,
 		},
 		{
 			"single-region serverless cluster with no limits",
@@ -160,6 +166,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				},
 			},
 			serverlessClusterWithNoLimits,
+			false,
 		},
 		{
 			"single-region serverless cluster with zero spend limit",
@@ -183,6 +190,8 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				},
 			},
 			serverlessClusterWithZeroSpendLimit,
+			// The plan specifies a spend limit, but import always uses usage limits.
+			true,
 		},
 		{
 			"multi-region serverless cluster",
@@ -213,6 +222,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				},
 			},
 			multiRegionServerlessClusterResource,
+			false,
 		},
 	}
 	for _, c := range cases {
@@ -230,6 +240,9 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				c.testStep(initialCluster.Name),
 				// Import the resource.
 				{
+					SkipFunc: func() (bool, error) {
+						return c.skipVerifyImport, nil
+					},
 					ResourceName:      "cockroach_cluster.serverless",
 					ImportState:       true,
 					ImportStateVerify: true,
@@ -245,7 +258,12 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				Times(8)
 			s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).
 				Return(&c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-				Times(8)
+				Times(6)
+			if !c.skipVerifyImport {
+				s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).
+					Return(&c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+					Times(2)
+			}
 			s.EXPECT().DeleteCluster(gomock.Any(), c.finalCluster.Id)
 
 			resource.Test(t, resource.TestCase{
@@ -297,8 +315,9 @@ func serverlessClusterWithSpendLimit(clusterName string) resource.TestStep {
 			resource.TestCheckResourceAttr(dataSourceName, "plan", "SERVERLESS"),
 			resource.TestCheckResourceAttr(dataSourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.#", "1"),
-			resource.TestCheckResourceAttr(dataSourceName, "serverless.spend_limit", "1"),
-			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.usage_limits"),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),
+			resource.TestCheckResourceAttrSet(dataSourceName, "serverless.usage_limits.request_unit_limit"),
+			resource.TestCheckResourceAttrSet(dataSourceName, "serverless.usage_limits.storage_mib_limit"),
 		),
 	}
 }
@@ -403,7 +422,6 @@ func serverlessClusterWithZeroSpendLimit(clusterName string) resource.TestStep {
 			resource.TestCheckResourceAttr(resourceName, "serverless.spend_limit", "0"),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.usage_limits"),
 			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
-			resource.TestCheckResourceAttr(dataSourceName, "serverless.spend_limit", "0"),
 			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.usage_limits"),
 		),
 	}
@@ -507,7 +525,6 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		UpgradeStatus:    client.CLUSTERUPGRADESTATUSTYPE_UPGRADE_AVAILABLE,
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
-				MachineType:    "n1-standard-2",
 				NumVirtualCpus: 2,
 				StorageGib:     15,
 				MemoryGib:      8,
@@ -647,7 +664,7 @@ resource "cockroach_cluster" "dedicated" {
     cockroach_version = "%s"
     dedicated = {
 	  storage_gib = 15
-	  machine_type = "n1-standard-2"
+	  num_virtual_cpus = 2
     }
 	regions = [{
 		name: "us-central1"

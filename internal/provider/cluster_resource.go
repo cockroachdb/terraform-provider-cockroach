@@ -602,6 +602,24 @@ func (r *clusterResource) Update(
 	if plan.ServerlessConfig != nil {
 		serverless := client.NewServerlessClusterUpdateSpecification()
 
+		if plan.Regions != nil {
+			var regions []string
+			var primaryRegion string
+			for _, region := range plan.Regions {
+				if region.Primary.ValueBool() {
+					primaryRegion = region.Name.ValueString()
+				}
+				regions = append(regions, region.Name.ValueString())
+			}
+			if len(regions) > 1 && primaryRegion == "" {
+				resp.Diagnostics.AddError("Primary region missing",
+					"One region must be marked primary when updating a multi-region Serverless cluster.")
+				return
+			}
+			serverless.SetPrimaryRegion(primaryRegion)
+			serverless.SetRegions(regions)
+		}
+
 		// Set either usage limits or spend limit.
 		usageLimits := plan.ServerlessConfig.UsageLimits
 		if usageLimits != nil {

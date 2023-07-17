@@ -20,6 +20,10 @@ package client
 
 // ServerlessClusterUpdateSpecification struct for ServerlessClusterUpdateSpecification.
 type ServerlessClusterUpdateSpecification struct {
+	// Preview: Specify which region should be made the primary region. This is only applicable to multi-region Serverless clusters. This field is required if the regions field contains more than one region.
+	PrimaryRegion *string `json:"primary_region,omitempty"`
+	// Region values should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. If this field is provided, the cluster's regions will be changed to match this list. Regions cannot currently be removed.
+	Regions *[]string `json:"regions,omitempty"`
 	// spend_limit is the maximum monthly charge for a cluster, in US cents. We recommend using usage_limits instead, since spend_limit will be deprecated in the future.
 	SpendLimit  *int32       `json:"spend_limit,omitempty"`
 	UsageLimits *UsageLimits `json:"usage_limits,omitempty"`
@@ -32,6 +36,34 @@ type ServerlessClusterUpdateSpecification struct {
 func NewServerlessClusterUpdateSpecification() *ServerlessClusterUpdateSpecification {
 	p := ServerlessClusterUpdateSpecification{}
 	return &p
+}
+
+// GetPrimaryRegion returns the PrimaryRegion field value if set, zero value otherwise.
+func (o *ServerlessClusterUpdateSpecification) GetPrimaryRegion() string {
+	if o == nil || o.PrimaryRegion == nil {
+		var ret string
+		return ret
+	}
+	return *o.PrimaryRegion
+}
+
+// SetPrimaryRegion gets a reference to the given string and assigns it to the PrimaryRegion field.
+func (o *ServerlessClusterUpdateSpecification) SetPrimaryRegion(v string) {
+	o.PrimaryRegion = &v
+}
+
+// GetRegions returns the Regions field value if set, zero value otherwise.
+func (o *ServerlessClusterUpdateSpecification) GetRegions() []string {
+	if o == nil || o.Regions == nil {
+		var ret []string
+		return ret
+	}
+	return *o.Regions
+}
+
+// SetRegions gets a reference to the given []string and assigns it to the Regions field.
+func (o *ServerlessClusterUpdateSpecification) SetRegions(v []string) {
+	o.Regions = &v
 }
 
 // GetSpendLimit returns the SpendLimit field value if set, zero value otherwise.

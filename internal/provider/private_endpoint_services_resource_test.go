@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -54,28 +55,6 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
-	}
-	finalService := client.PrivateEndpointService{
-		RegionName:    "us-east-1",
-		CloudProvider: "AWS",
-		Status:        client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
-		Aws: client.AWSPrivateLinkServiceDetail{
-			ServiceName:         "finalService-name",
-			ServiceId:           "finalService-id",
-			AvailabilityZoneIds: []string{},
-		},
-	}
-	initialService := finalService
-	initialService.Status = client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING
-	services := &client.PrivateEndpointServices{
-		Services: []client.PrivateEndpointService{
-			finalService,
-		},
-	}
-	initialServices := &client.PrivateEndpointServices{
-		Services: []client.PrivateEndpointService{
-			initialService,
-		},
 	}
 
 	true_val := true
@@ -147,7 +126,39 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(3)
+			var regions []string
+			if isServerless {
+				// TODO: Change this list to only include us-east-1 and eu-central-1 once https://github.com/cockroachlabs/managed-service/pull/13740 is released.
+				regions = []string{
+					"us-west-2",
+					"us-east-1",
+					"eu-central-1",
+					"ap-southeast-1",
+					"ap-south-1",
+					"eu-west-1",
+				}
+			} else {
+				regions = []string{"us-east-1"}
+			}
+			services := &client.PrivateEndpointServices{}
+			for _, region := range regions {
+				services.Services = append(services.Services, client.PrivateEndpointService{
+					RegionName:    region,
+					CloudProvider: "AWS",
+					Status:        client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
+					Aws: client.AWSPrivateLinkServiceDetail{
+						ServiceName:         "finalService-name",
+						ServiceId:           "finalService-id",
+						AvailabilityZoneIds: []string{},
+					},
+				})
+			}
 			if !isServerless {
+				initialServices := &client.PrivateEndpointServices{}
+				for _, service := range services.Services {
+					service.Status = client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING
+					initialServices.Services = append(initialServices.Services, service)
+				}
 				s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
 					Return(initialServices, nil, nil)
 			}
@@ -171,13 +182,28 @@ func testPrivateEndpointServicesResource(
 ) {
 	var clusterResourceName string
 	var privateEndpointServicesResourceConfigFn func(string) string
+	var numExpectedServices int
 	if isServerless {
 		clusterResourceName = "cockroach_cluster.serverless"
 		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForServerless
+		// TODO: Change the expected number of services to 2 after https://github.com/cockroachlabs/managed-service/pull/13740 is released.
+		numExpectedServices = 6
 	} else {
 		clusterResourceName = "cockroach_cluster.dedicated"
 		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForDedicated
+		numExpectedServices = 1
 	}
+
+	checks := []resource.TestCheckFunc{
+		resource.TestCheckResourceAttr(clusterResourceName, "name", clusterName),
+		resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", strconv.Itoa(numExpectedServices)),
+	}
+	for i := 0; i < numExpectedServices; i++ {
+		checks = append(checks,
+			resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", fmt.Sprintf("services.%d.status", i), string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
+		)
+	}
+
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -185,11 +211,7 @@ func testPrivateEndpointServicesResource(
 		Steps: []resource.TestStep{
 			{
 				Config: privateEndpointServicesResourceConfigFn(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(clusterResourceName, "name", clusterName),
-					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", "1"),
-					resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.0.status", string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
-				),
+				Check:  resource.ComposeTestCheckFunc(checks...),
 			},
 		},
 	})

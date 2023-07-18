@@ -445,14 +445,14 @@ func multiRegionServerlessClusterResource(clusterName string) resource.TestStep 
 				}
 				regions = [
 					{
-						name = "us-west2"
+						name = "europe-west1"
 					},
 					{
 						name = "us-east1"
 						primary = true
 					},
 					{
-						name = "europe-west1"
+						name = "us-west2"
 					},
 				]
 			}
@@ -468,11 +468,11 @@ func multiRegionServerlessClusterResource(clusterName string) resource.TestStep 
 			resource.TestCheckResourceAttr(resourceName, "plan", "SERVERLESS"),
 			resource.TestCheckResourceAttr(resourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
 			resource.TestCheckResourceAttr(resourceName, "regions.#", "3"),
-			resource.TestCheckResourceAttr(resourceName, "regions.0.name", "us-west2"),
+			resource.TestCheckResourceAttr(resourceName, "regions.0.name", "europe-west1"),
 			resource.TestCheckResourceAttr(resourceName, "regions.0.primary", "false"),
 			resource.TestCheckResourceAttr(resourceName, "regions.1.name", "us-east1"),
 			resource.TestCheckResourceAttr(resourceName, "regions.1.primary", "true"),
-			resource.TestCheckResourceAttr(resourceName, "regions.2.name", "europe-west1"),
+			resource.TestCheckResourceAttr(resourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(resourceName, "regions.2.primary", "false"),
 			resource.TestCheckNoResourceAttr(resourceName, "serverless.spend_limit"),
 			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
@@ -483,11 +483,11 @@ func multiRegionServerlessClusterResource(clusterName string) resource.TestStep 
 			resource.TestCheckResourceAttr(dataSourceName, "plan", "SERVERLESS"),
 			resource.TestCheckResourceAttr(dataSourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.#", "3"),
-			resource.TestCheckResourceAttr(dataSourceName, "regions.0.name", "us-west2"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.0.name", "europe-west1"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.0.primary", "false"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.1.name", "us-east1"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.1.primary", "true"),
-			resource.TestCheckResourceAttr(dataSourceName, "regions.2.name", "europe-west1"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.2.primary", "false"),
 			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),
 			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),

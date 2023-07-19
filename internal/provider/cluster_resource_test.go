@@ -64,7 +64,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 	})
 }
 
-// TestAccMultiRegionServerlessClusterResource attempts to create, check, and destroy
+// TestAccMultiRegionServerlessClusterResource attempts to create, update, check, and destroy
 // a real multi-region serverless cluster. It will be skipped if TF_ACC isn't set.
 func TestAccMultiRegionServerlessClusterResource(t *testing.T) {
 	t.Parallel()
@@ -75,6 +75,7 @@ func TestAccMultiRegionServerlessClusterResource(t *testing.T) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			multiRegionServerlessClusterResource(clusterName),
+			multiRegionServerlessClusterResourceRegionUpdate(clusterName),
 		},
 	})
 }
@@ -487,6 +488,75 @@ func multiRegionServerlessClusterResource(clusterName string) resource.TestStep 
 			resource.TestCheckResourceAttr(dataSourceName, "regions.0.primary", "false"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.1.name", "us-east1"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.1.primary", "true"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.2.name", "us-west2"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.2.primary", "false"),
+			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
+			resource.TestCheckResourceAttr(dataSourceName, "serverless.usage_limits.storage_mib_limit", "102400"),
+		),
+	}
+}
+
+func multiRegionServerlessClusterResourceRegionUpdate(clusterName string) resource.TestStep {
+	const (
+		resourceName   = "cockroach_cluster.serverless"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
+	return resource.TestStep{
+		Config: fmt.Sprintf(`
+			resource "cockroach_cluster" "serverless" {
+				name           = "%s"
+				cloud_provider = "GCP"
+				serverless = {
+					usage_limits = {
+						request_unit_limit = 10000000000
+						storage_mib_limit = 102400
+					}
+				}
+				regions = [
+					{
+						name = "europe-west1"
+						primary = true
+					},
+					{
+						name = "us-east1"
+					},
+					{
+						name = "us-west2"
+					},
+				]
+			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.serverless.id
+			}
+			`, clusterName),
+		Check: resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(resourceName, "name", clusterName),
+			resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
+			resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
+			resource.TestCheckResourceAttr(resourceName, "plan", "SERVERLESS"),
+			resource.TestCheckResourceAttr(resourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
+			resource.TestCheckResourceAttr(resourceName, "regions.#", "3"),
+			resource.TestCheckResourceAttr(resourceName, "regions.0.name", "europe-west1"),
+			resource.TestCheckResourceAttr(resourceName, "regions.0.primary", "true"),
+			resource.TestCheckResourceAttr(resourceName, "regions.1.name", "us-east1"),
+			resource.TestCheckResourceAttr(resourceName, "regions.1.primary", "false"),
+			resource.TestCheckResourceAttr(resourceName, "regions.2.name", "us-west2"),
+			resource.TestCheckResourceAttr(resourceName, "regions.2.primary", "false"),
+			resource.TestCheckNoResourceAttr(resourceName, "serverless.spend_limit"),
+			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.request_unit_limit", "10000000000"),
+			resource.TestCheckResourceAttr(resourceName, "serverless.usage_limits.storage_mib_limit", "102400"),
+			resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+			resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
+			resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
+			resource.TestCheckResourceAttr(dataSourceName, "plan", "SERVERLESS"),
+			resource.TestCheckResourceAttr(dataSourceName, "state", string(client.CLUSTERSTATETYPE_CREATED)),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.#", "3"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.0.name", "europe-west1"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.0.primary", "true"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.1.name", "us-east1"),
+			resource.TestCheckResourceAttr(dataSourceName, "regions.1.primary", "false"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(dataSourceName, "regions.2.primary", "false"),
 			resource.TestCheckNoResourceAttr(dataSourceName, "serverless.spend_limit"),

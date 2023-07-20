@@ -49,6 +49,7 @@ Read-Only:
 
 Read-Only:
 
+- `internal_dns` (String)
 - `name` (String)
 - `node_count` (Number)
 - `primary` (Boolean)

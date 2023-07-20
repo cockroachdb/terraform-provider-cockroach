@@ -29,11 +29,12 @@ const (
 )
 
 type Region struct {
-	Name      types.String `tfsdk:"name"`
-	SqlDns    types.String `tfsdk:"sql_dns"`
-	UiDns     types.String `tfsdk:"ui_dns"`
-	NodeCount types.Int64  `tfsdk:"node_count"`
-	Primary   types.Bool   `tfsdk:"primary"`
+	Name        types.String `tfsdk:"name"`
+	SqlDns      types.String `tfsdk:"sql_dns"`
+	UiDns       types.String `tfsdk:"ui_dns"`
+	InternalDns types.String `tfsdk:"internal_dns"`
+	NodeCount   types.Int64  `tfsdk:"node_count"`
+	Primary     types.Bool   `tfsdk:"primary"`
 }
 
 type DedicatedClusterConfig struct {

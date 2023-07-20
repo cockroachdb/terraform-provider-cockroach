@@ -111,6 +111,9 @@ func (d *clusterDataSource) Schema(
 						"ui_dns": schema.StringAttribute{
 							Computed: true,
 						},
+						"internal_dns": schema.StringAttribute{
+							Computed: true,
+						},
 						"node_count": schema.Int64Attribute{
 							Computed: true,
 						},

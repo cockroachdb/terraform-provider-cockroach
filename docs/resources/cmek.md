@@ -69,6 +69,7 @@ Optional:
 
 Read-Only:
 
+- `internal_dns` (String)
 - `sql_dns` (String)
 - `ui_dns` (String)
 

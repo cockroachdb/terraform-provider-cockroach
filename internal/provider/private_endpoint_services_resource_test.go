@@ -128,15 +128,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				Times(3)
 			var regions []string
 			if isServerless {
-				// TODO: Change this list to only include us-east-1 and eu-central-1 once https://github.com/cockroachlabs/managed-service/pull/13740 is released.
-				regions = []string{
-					"us-west-2",
-					"us-east-1",
-					"eu-central-1",
-					"ap-southeast-1",
-					"ap-south-1",
-					"eu-west-1",
-				}
+				regions = []string{"us-east-1", "eu-central-1"}
 			} else {
 				regions = []string{"us-east-1"}
 			}
@@ -186,8 +178,7 @@ func testPrivateEndpointServicesResource(
 	if isServerless {
 		clusterResourceName = "cockroach_cluster.serverless"
 		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForServerless
-		// TODO: Change the expected number of services to 2 after https://github.com/cockroachlabs/managed-service/pull/13740 is released.
-		numExpectedServices = 6
+		numExpectedServices = 2
 	} else {
 		clusterResourceName = "cockroach_cluster.dedicated"
 		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForDedicated

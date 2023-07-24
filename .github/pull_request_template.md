@@ -1,1 +1,6 @@
-_Add a description of the problem this PR addresses and an overview of how this PR works_.
+**Commit checklist**
+- [ ] Changelog
+- [ ] Doc gen (`make generate`)
+- [ ] Integration test(s)
+- [ ] Acceptance test(s)
+- [ ] Example(s)

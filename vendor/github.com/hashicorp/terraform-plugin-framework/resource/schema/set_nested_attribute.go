@@ -1,6 +1,10 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
@@ -8,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -16,9 +21,11 @@ import (
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ NestedAttribute                         = SetNestedAttribute{}
-	_ fwxschema.AttributeWithSetPlanModifiers = SetNestedAttribute{}
-	_ fwxschema.AttributeWithSetValidators    = SetNestedAttribute{}
+	_ NestedAttribute                              = SetNestedAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = SetNestedAttribute{}
+	_ fwschema.AttributeWithSetDefaultValue        = SetNestedAttribute{}
+	_ fwxschema.AttributeWithSetPlanModifiers      = SetNestedAttribute{}
+	_ fwxschema.AttributeWithSetValidators         = SetNestedAttribute{}
 )
 
 // SetNestedAttribute represents an attribute that is a set of objects where
@@ -153,6 +160,14 @@ type SetNestedAttribute struct {
 	//
 	// Any errors will prevent further execution of this sequence or modifiers.
 	PlanModifiers []planmodifier.Set
+
+	// Default defines a proposed new state (plan) value for the attribute
+	// if the configuration value is null. Default prevents the framework
+	// from automatically marking the value as unknown during planning when
+	// other proposed new state changes are detected. If the attribute is
+	// computed and the value could be altered by other changes then a default
+	// should be avoided and a plan modifier should be used instead.
+	Default defaults.Set
 }
 
 // ApplyTerraform5AttributePathStep returns the Attributes field value if step
@@ -170,11 +185,13 @@ func (a SetNestedAttribute) ApplyTerraform5AttributePathStep(step tftypes.Attrib
 // Equal returns true if the given Attribute is a SetNestedAttribute
 // and all fields are equal.
 func (a SetNestedAttribute) Equal(o fwschema.Attribute) bool {
-	if _, ok := o.(SetNestedAttribute); !ok {
+	other, ok := o.(SetNestedAttribute)
+
+	if !ok {
 		return false
 	}
 
-	return fwschema.AttributesEqual(a, o)
+	return fwschema.NestedAttributesEqual(a, other)
 }
 
 // GetDeprecationMessage returns the DeprecationMessage field value.
@@ -233,6 +250,11 @@ func (a SetNestedAttribute) IsSensitive() bool {
 	return a.Sensitive
 }
 
+// SetDefaultValue returns the Default field value.
+func (a SetNestedAttribute) SetDefaultValue() defaults.Set {
+	return a.Default
+}
+
 // SetPlanModifiers returns the PlanModifiers field value.
 func (a SetNestedAttribute) SetPlanModifiers() []planmodifier.Set {
 	return a.PlanModifiers
@@ -241,4 +263,14 @@ func (a SetNestedAttribute) SetPlanModifiers() []planmodifier.Set {
 // SetValidators returns the Validators field value.
 func (a SetNestedAttribute) SetValidators() []validator.Set {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a SetNestedAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if !a.IsComputed() && a.SetDefaultValue() != nil {
+		resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+	}
 }

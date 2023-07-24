@@ -1,23 +1,31 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
 	"fmt"
+
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 // Ensure the implementation satisifies the desired interfaces.
 var (
-	_ NestedAttribute                          = ListNestedAttribute{}
-	_ fwxschema.AttributeWithListPlanModifiers = ListNestedAttribute{}
-	_ fwxschema.AttributeWithListValidators    = ListNestedAttribute{}
+	_ NestedAttribute                              = ListNestedAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = ListNestedAttribute{}
+	_ fwschema.AttributeWithListDefaultValue       = ListNestedAttribute{}
+	_ fwxschema.AttributeWithListPlanModifiers     = ListNestedAttribute{}
+	_ fwxschema.AttributeWithListValidators        = ListNestedAttribute{}
 )
 
 // ListNestedAttribute represents an attribute that is a list of objects where
@@ -157,6 +165,14 @@ type ListNestedAttribute struct {
 	//
 	// Any errors will prevent further execution of this sequence or modifiers.
 	PlanModifiers []planmodifier.List
+
+	// Default defines a proposed new state (plan) value for the attribute
+	// if the configuration value is null. Default prevents the framework
+	// from automatically marking the value as unknown during planning when
+	// other proposed new state changes are detected. If the attribute is
+	// computed and the value could be altered by other changes then a default
+	// should be avoided and a plan modifier should be used instead.
+	Default defaults.List
 }
 
 // ApplyTerraform5AttributePathStep returns the Attributes field value if step
@@ -174,11 +190,13 @@ func (a ListNestedAttribute) ApplyTerraform5AttributePathStep(step tftypes.Attri
 // Equal returns true if the given Attribute is a ListNestedAttribute
 // and all fields are equal.
 func (a ListNestedAttribute) Equal(o fwschema.Attribute) bool {
-	if _, ok := o.(ListNestedAttribute); !ok {
+	other, ok := o.(ListNestedAttribute)
+
+	if !ok {
 		return false
 	}
 
-	return fwschema.AttributesEqual(a, o)
+	return fwschema.NestedAttributesEqual(a, other)
 }
 
 // GetDeprecationMessage returns the DeprecationMessage field value.
@@ -237,6 +255,11 @@ func (a ListNestedAttribute) IsSensitive() bool {
 	return a.Sensitive
 }
 
+// ListDefaultValue returns the Default field value.
+func (a ListNestedAttribute) ListDefaultValue() defaults.List {
+	return a.Default
+}
+
 // ListPlanModifiers returns the PlanModifiers field value.
 func (a ListNestedAttribute) ListPlanModifiers() []planmodifier.List {
 	return a.PlanModifiers
@@ -245,4 +268,14 @@ func (a ListNestedAttribute) ListPlanModifiers() []planmodifier.List {
 // ListValidators returns the Validators field value.
 func (a ListNestedAttribute) ListValidators() []validator.List {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a ListNestedAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if !a.IsComputed() && a.ListDefaultValue() != nil {
+		resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+	}
 }

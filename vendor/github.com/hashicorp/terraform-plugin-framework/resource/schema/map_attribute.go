@@ -1,21 +1,30 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-// Ensure the implementation satisifies the desired interfaces.
+// Ensure the implementation satisfies the desired interfaces.
 var (
-	_ Attribute                               = MapAttribute{}
-	_ fwxschema.AttributeWithMapPlanModifiers = MapAttribute{}
-	_ fwxschema.AttributeWithMapValidators    = MapAttribute{}
+	_ Attribute                                    = MapAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = MapAttribute{}
+	_ fwschema.AttributeWithMapDefaultValue        = MapAttribute{}
+	_ fwxschema.AttributeWithMapPlanModifiers      = MapAttribute{}
+	_ fwxschema.AttributeWithMapValidators         = MapAttribute{}
 )
 
 // MapAttribute represents a schema attribute that is a list with a single
@@ -149,6 +158,14 @@ type MapAttribute struct {
 	//
 	// Any errors will prevent further execution of this sequence or modifiers.
 	PlanModifiers []planmodifier.Map
+
+	// Default defines a proposed new state (plan) value for the attribute
+	// if the configuration value is null. Default prevents the framework
+	// from automatically marking the value as unknown during planning when
+	// other proposed new state changes are detected. If the attribute is
+	// computed and the value could be altered by other changes then a default
+	// should be avoided and a plan modifier should be used instead.
+	Default defaults.Map
 }
 
 // ApplyTerraform5AttributePathStep returns the result of stepping into a map
@@ -213,6 +230,11 @@ func (a MapAttribute) IsSensitive() bool {
 	return a.Sensitive
 }
 
+// MapDefaultValue returns the Default field value.
+func (a MapAttribute) MapDefaultValue() defaults.Map {
+	return a.Default
+}
+
 // MapPlanModifiers returns the PlanModifiers field value.
 func (a MapAttribute) MapPlanModifiers() []planmodifier.Map {
 	return a.PlanModifiers
@@ -221,4 +243,18 @@ func (a MapAttribute) MapPlanModifiers() []planmodifier.Map {
 // MapValidators returns the Validators field value.
 func (a MapAttribute) MapValidators() []validator.Map {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a MapAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if a.CustomType == nil && a.ElementType == nil {
+		resp.Diagnostics.Append(fwschema.AttributeMissingElementTypeDiag(req.Path))
+	}
+
+	if !a.IsComputed() && a.MapDefaultValue() != nil {
+		resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+	}
 }

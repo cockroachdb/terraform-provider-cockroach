@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -28,7 +31,7 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		return
 	}
 
-	if _, ok := req.DataSource.(datasource.DataSourceWithConfigure); ok {
+	if dataSourceWithConfigure, ok := req.DataSource.(datasource.DataSourceWithConfigure); ok {
 		logging.FrameworkTrace(ctx, "DataSource implements DataSourceWithConfigure")
 
 		configureReq := datasource.ConfigureRequest{
@@ -37,7 +40,7 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		configureResp := datasource.ConfigureResponse{}
 
 		logging.FrameworkDebug(ctx, "Calling provider defined DataSource Configure")
-		req.DataSource.(datasource.DataSourceWithConfigure).Configure(ctx, configureReq, &configureResp)
+		dataSourceWithConfigure.Configure(ctx, configureReq, &configureResp)
 		logging.FrameworkDebug(ctx, "Called provider defined DataSource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)

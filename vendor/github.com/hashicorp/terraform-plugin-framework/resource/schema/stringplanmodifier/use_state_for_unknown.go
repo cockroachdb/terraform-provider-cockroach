@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package stringplanmodifier
 
 import (
@@ -32,7 +35,7 @@ func (m useStateForUnknownModifier) MarkdownDescription(_ context.Context) strin
 }
 
 // PlanModifyString implements the plan modification logic.
-func (m useStateForUnknownModifier) PlanModifyString(_ context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+func (m useStateForUnknownModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
 	// Do nothing if there is no state value.
 	if req.StateValue.IsNull() {
 		return

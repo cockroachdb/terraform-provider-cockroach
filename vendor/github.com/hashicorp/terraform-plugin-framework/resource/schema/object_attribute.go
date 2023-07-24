@@ -1,21 +1,30 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
+	"context"
+
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema"
 	"github.com/hashicorp/terraform-plugin-framework/internal/fwschema/fwxschema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/defaults"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-// Ensure the implementation satisifies the desired interfaces.
+// Ensure the implementation satisfies the desired interfaces.
 var (
-	_ Attribute                                  = ObjectAttribute{}
-	_ fwxschema.AttributeWithObjectPlanModifiers = ObjectAttribute{}
-	_ fwxschema.AttributeWithObjectValidators    = ObjectAttribute{}
+	_ Attribute                                    = ObjectAttribute{}
+	_ fwschema.AttributeWithValidateImplementation = ObjectAttribute{}
+	_ fwschema.AttributeWithObjectDefaultValue     = ObjectAttribute{}
+	_ fwxschema.AttributeWithObjectPlanModifiers   = ObjectAttribute{}
+	_ fwxschema.AttributeWithObjectValidators      = ObjectAttribute{}
 )
 
 // ObjectAttribute represents a schema attribute that is an object with only
@@ -148,6 +157,14 @@ type ObjectAttribute struct {
 	//
 	// Any errors will prevent further execution of this sequence or modifiers.
 	PlanModifiers []planmodifier.Object
+
+	// Default defines a proposed new state (plan) value for the attribute
+	// if the configuration value is null. Default prevents the framework
+	// from automatically marking the value as unknown during planning when
+	// other proposed new state changes are detected. If the attribute is
+	// computed and the value could be altered by other changes then a default
+	// should be avoided and a plan modifier should be used instead.
+	Default defaults.Object
 }
 
 // ApplyTerraform5AttributePathStep returns the result of stepping into an
@@ -212,6 +229,11 @@ func (a ObjectAttribute) IsSensitive() bool {
 	return a.Sensitive
 }
 
+// ObjectDefaultValue returns the Default field value.
+func (a ObjectAttribute) ObjectDefaultValue() defaults.Object {
+	return a.Default
+}
+
 // ObjectPlanModifiers returns the PlanModifiers field value.
 func (a ObjectAttribute) ObjectPlanModifiers() []planmodifier.Object {
 	return a.PlanModifiers
@@ -220,4 +242,18 @@ func (a ObjectAttribute) ObjectPlanModifiers() []planmodifier.Object {
 // ObjectValidators returns the Validators field value.
 func (a ObjectAttribute) ObjectValidators() []validator.Object {
 	return a.Validators
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the attribute to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (a ObjectAttribute) ValidateImplementation(ctx context.Context, req fwschema.ValidateImplementationRequest, resp *fwschema.ValidateImplementationResponse) {
+	if a.AttributeTypes == nil && a.CustomType == nil {
+		resp.Diagnostics.Append(fwschema.AttributeMissingAttributeTypesDiag(req.Path))
+	}
+
+	if !a.IsComputed() && a.ObjectDefaultValue() != nil {
+		resp.Diagnostics.Append(nonComputedAttributeWithDefaultDiag(req.Path))
+	}
 }

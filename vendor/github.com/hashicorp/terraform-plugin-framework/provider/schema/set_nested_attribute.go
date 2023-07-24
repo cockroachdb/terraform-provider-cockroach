@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package schema
 
 import (
@@ -144,11 +147,13 @@ func (a SetNestedAttribute) ApplyTerraform5AttributePathStep(step tftypes.Attrib
 // Equal returns true if the given Attribute is a SetNestedAttribute
 // and all fields are equal.
 func (a SetNestedAttribute) Equal(o fwschema.Attribute) bool {
-	if _, ok := o.(SetNestedAttribute); !ok {
+	other, ok := o.(SetNestedAttribute)
+
+	if !ok {
 		return false
 	}
 
-	return fwschema.AttributesEqual(a, o)
+	return fwschema.NestedAttributesEqual(a, other)
 }
 
 // GetDeprecationMessage returns the DeprecationMessage field value.

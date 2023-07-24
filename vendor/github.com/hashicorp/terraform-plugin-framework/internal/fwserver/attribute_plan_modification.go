@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package fwserver
 
 import (
@@ -135,7 +138,25 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			return
 		}
 
-		planList, diags := coerceListValue(ctx, req.AttributePath, req.AttributePlan)
+		// Use response as the planned value may have been modified with list
+		// plan modifiers.
+		planListValuable, diags := coerceListValuable(ctx, req.AttributePath, resp.AttributePlan)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		typable, diags := coerceListTypable(ctx, req.AttributePath, planListValuable)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		planList, diags := planListValuable.ToListValue(ctx)
 
 		resp.Diagnostics.Append(diags...)
 
@@ -204,13 +225,26 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			resp.RequiresReplace.Append(objectResp.RequiresReplace...)
 		}
 
-		resp.AttributePlan, diags = types.ListValue(planList.ElementType(ctx), planElements)
+		respValue, diags := types.ListValue(planList.ElementType(ctx), planElements)
 
 		resp.Diagnostics.Append(diags...)
 
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		respValuable, diags := typable.ValueFromList(ctx, respValue)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.AttributePlan = respValuable
 	case fwschema.NestingModeSet:
 		configSet, diags := coerceSetValue(ctx, req.AttributePath, req.AttributeConfig)
 
@@ -220,7 +254,25 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			return
 		}
 
-		planSet, diags := coerceSetValue(ctx, req.AttributePath, req.AttributePlan)
+		// Use response as the planned value may have been modified with set
+		// plan modifiers.
+		planSetValuable, diags := coerceSetValuable(ctx, req.AttributePath, resp.AttributePlan)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		typable, diags := coerceSetTypable(ctx, req.AttributePath, planSetValuable)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		planSet, diags := planSetValuable.ToSetValue(ctx)
 
 		resp.Diagnostics.Append(diags...)
 
@@ -289,13 +341,26 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			resp.RequiresReplace.Append(objectResp.RequiresReplace...)
 		}
 
-		resp.AttributePlan, diags = types.SetValue(planSet.ElementType(ctx), planElements)
+		respValue, diags := types.SetValue(planSet.ElementType(ctx), planElements)
 
 		resp.Diagnostics.Append(diags...)
 
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		respValuable, diags := typable.ValueFromSet(ctx, respValue)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.AttributePlan = respValuable
 	case fwschema.NestingModeMap:
 		configMap, diags := coerceMapValue(ctx, req.AttributePath, req.AttributeConfig)
 
@@ -305,7 +370,25 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			return
 		}
 
-		planMap, diags := coerceMapValue(ctx, req.AttributePath, req.AttributePlan)
+		// Use response as the planned value may have been modified with map
+		// plan modifiers.
+		planMapValuable, diags := coerceMapValuable(ctx, req.AttributePath, resp.AttributePlan)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		typable, diags := coerceMapTypable(ctx, req.AttributePath, planMapValuable)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		planMap, diags := planMapValuable.ToMapValue(ctx)
 
 		resp.Diagnostics.Append(diags...)
 
@@ -374,13 +457,26 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			resp.RequiresReplace.Append(objectResp.RequiresReplace...)
 		}
 
-		resp.AttributePlan, diags = types.MapValue(planMap.ElementType(ctx), planElements)
+		respValue, diags := types.MapValue(planMap.ElementType(ctx), planElements)
 
 		resp.Diagnostics.Append(diags...)
 
 		if resp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		respValuable, diags := typable.ValueFromMap(ctx, respValue)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.AttributePlan = respValuable
 	case fwschema.NestingModeSingle:
 		configObject, diags := coerceObjectValue(ctx, req.AttributePath, req.AttributeConfig)
 
@@ -390,7 +486,25 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 			return
 		}
 
-		planObject, diags := coerceObjectValue(ctx, req.AttributePath, req.AttributePlan)
+		// Use response as the planned value may have been modified with object
+		// plan modifiers.
+		planObjectValuable, diags := coerceObjectValuable(ctx, req.AttributePath, resp.AttributePlan)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		typable, diags := coerceObjectTypable(ctx, req.AttributePath, planObjectValuable)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		planObject, diags := planObjectValuable.ToObjectValue(ctx)
 
 		resp.Diagnostics.Append(diags...)
 
@@ -424,10 +538,30 @@ func AttributeModifyPlan(ctx context.Context, a fwschema.Attribute, req ModifyAt
 
 		NestedAttributeObjectPlanModify(ctx, nestedAttributeObject, objectReq, objectResp)
 
-		resp.AttributePlan = objectResp.AttributePlan
 		resp.Diagnostics.Append(objectResp.Diagnostics...)
 		resp.Private = objectResp.Private
 		resp.RequiresReplace.Append(objectResp.RequiresReplace...)
+
+		respValue, diags := coerceObjectValue(ctx, req.AttributePath, objectResp.AttributePlan)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		respValuable, diags := typable.ValueFromObject(ctx, respValue)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		resp.AttributePlan = respValuable
 	default:
 		err := fmt.Errorf("unknown attribute nesting mode (%T: %v) at path: %s", nm, nm, req.AttributePath)
 		resp.Diagnostics.AddAttributeError(
@@ -521,6 +655,16 @@ func AttributePlanModifyBool(ctx context.Context, attribute fwxschema.AttributeW
 		return
 	}
 
+	typable, diags := coerceBoolTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.BoolRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -559,8 +703,9 @@ func AttributePlanModifyBool(ctx context.Context, attribute fwxschema.AttributeW
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -572,6 +717,20 @@ func AttributePlanModifyBool(ctx context.Context, attribute fwxschema.AttributeW
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromBool(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -656,6 +815,16 @@ func AttributePlanModifyFloat64(ctx context.Context, attribute fwxschema.Attribu
 		return
 	}
 
+	typable, diags := coerceFloat64Typable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.Float64Request{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -694,8 +863,9 @@ func AttributePlanModifyFloat64(ctx context.Context, attribute fwxschema.Attribu
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -707,6 +877,20 @@ func AttributePlanModifyFloat64(ctx context.Context, attribute fwxschema.Attribu
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromFloat64(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -791,6 +975,16 @@ func AttributePlanModifyInt64(ctx context.Context, attribute fwxschema.Attribute
 		return
 	}
 
+	typable, diags := coerceInt64Typable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.Int64Request{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -829,8 +1023,9 @@ func AttributePlanModifyInt64(ctx context.Context, attribute fwxschema.Attribute
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -842,6 +1037,20 @@ func AttributePlanModifyInt64(ctx context.Context, attribute fwxschema.Attribute
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromInt64(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -926,6 +1135,16 @@ func AttributePlanModifyList(ctx context.Context, attribute fwxschema.AttributeW
 		return
 	}
 
+	typable, diags := coerceListTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.ListRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -964,8 +1183,9 @@ func AttributePlanModifyList(ctx context.Context, attribute fwxschema.AttributeW
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -977,6 +1197,20 @@ func AttributePlanModifyList(ctx context.Context, attribute fwxschema.AttributeW
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromList(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -1061,6 +1295,16 @@ func AttributePlanModifyMap(ctx context.Context, attribute fwxschema.AttributeWi
 		return
 	}
 
+	typable, diags := coerceMapTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.MapRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -1099,8 +1343,9 @@ func AttributePlanModifyMap(ctx context.Context, attribute fwxschema.AttributeWi
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -1112,6 +1357,20 @@ func AttributePlanModifyMap(ctx context.Context, attribute fwxschema.AttributeWi
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromMap(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -1196,6 +1455,16 @@ func AttributePlanModifyNumber(ctx context.Context, attribute fwxschema.Attribut
 		return
 	}
 
+	typable, diags := coerceNumberTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.NumberRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -1234,8 +1503,9 @@ func AttributePlanModifyNumber(ctx context.Context, attribute fwxschema.Attribut
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -1247,6 +1517,20 @@ func AttributePlanModifyNumber(ctx context.Context, attribute fwxschema.Attribut
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromNumber(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -1331,6 +1615,16 @@ func AttributePlanModifyObject(ctx context.Context, attribute fwxschema.Attribut
 		return
 	}
 
+	typable, diags := coerceObjectTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.ObjectRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -1369,8 +1663,9 @@ func AttributePlanModifyObject(ctx context.Context, attribute fwxschema.Attribut
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -1382,6 +1677,20 @@ func AttributePlanModifyObject(ctx context.Context, attribute fwxschema.Attribut
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromObject(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -1466,6 +1775,16 @@ func AttributePlanModifySet(ctx context.Context, attribute fwxschema.AttributeWi
 		return
 	}
 
+	typable, diags := coerceSetTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.SetRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -1504,8 +1823,9 @@ func AttributePlanModifySet(ctx context.Context, attribute fwxschema.AttributeWi
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -1517,6 +1837,20 @@ func AttributePlanModifySet(ctx context.Context, attribute fwxschema.AttributeWi
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromSet(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
@@ -1601,6 +1935,16 @@ func AttributePlanModifyString(ctx context.Context, attribute fwxschema.Attribut
 		return
 	}
 
+	typable, diags := coerceStringTypable(ctx, req.AttributePath, planValuable)
+
+	resp.Diagnostics.Append(diags...)
+
+	// Only return early on new errors as the resp.Diagnostics may have errors
+	// from other attributes.
+	if diags.HasError() {
+		return
+	}
+
 	planModifyReq := planmodifier.StringRequest{
 		Config:         req.Config,
 		ConfigValue:    configValue,
@@ -1639,8 +1983,9 @@ func AttributePlanModifyString(ctx context.Context, attribute fwxschema.Attribut
 			},
 		)
 
+		// Prepare next request with base type.
 		planModifyReq.PlanValue = planModifyResp.PlanValue
-		resp.AttributePlan = planModifyResp.PlanValue
+
 		resp.Diagnostics.Append(planModifyResp.Diagnostics...)
 		resp.Private = planModifyResp.Private
 
@@ -1652,12 +1997,26 @@ func AttributePlanModifyString(ctx context.Context, attribute fwxschema.Attribut
 		if planModifyResp.Diagnostics.HasError() {
 			return
 		}
+
+		// A custom value type must be returned in the final response to prevent
+		// later correctness errors.
+		// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/754
+		valuable, valueFromDiags := typable.ValueFromString(ctx, planModifyResp.PlanValue)
+
+		resp.Diagnostics.Append(valueFromDiags...)
+
+		// Only on new errors.
+		if valueFromDiags.HasError() {
+			return
+		}
+
+		resp.AttributePlan = valuable
 	}
 }
 
 func NestedAttributeObjectPlanModify(ctx context.Context, o fwschema.NestedAttributeObject, req planmodifier.ObjectRequest, resp *ModifyAttributePlanResponse) {
 	if objectWithPlanModifiers, ok := o.(fwxschema.NestedAttributeObjectWithPlanModifiers); ok {
-		for _, objectValidator := range objectWithPlanModifiers.ObjectPlanModifiers() {
+		for _, objectPlanModifier := range objectWithPlanModifiers.ObjectPlanModifiers() {
 			// Instantiate a new response for each request to prevent plan modifiers
 			// from modifying or removing diagnostics.
 			planModifyResp := &planmodifier.ObjectResponse{
@@ -1669,17 +2028,17 @@ func NestedAttributeObjectPlanModify(ctx context.Context, o fwschema.NestedAttri
 				ctx,
 				"Calling provider defined planmodifier.Object",
 				map[string]interface{}{
-					logging.KeyDescription: objectValidator.Description(ctx),
+					logging.KeyDescription: objectPlanModifier.Description(ctx),
 				},
 			)
 
-			objectValidator.PlanModifyObject(ctx, req, planModifyResp)
+			objectPlanModifier.PlanModifyObject(ctx, req, planModifyResp)
 
 			logging.FrameworkDebug(
 				ctx,
 				"Called provider defined planmodifier.Object",
 				map[string]interface{}{
-					logging.KeyDescription: objectValidator.Description(ctx),
+					logging.KeyDescription: objectPlanModifier.Description(ctx),
 				},
 			)
 
@@ -1756,23 +2115,4 @@ func NestedAttributeObjectPlanModify(ctx context.Context, o fwschema.NestedAttri
 	resp.Diagnostics.Append(diags...)
 
 	resp.AttributePlan = newPlanValue
-}
-
-func attributePlanModificationValueError(ctx context.Context, value attr.Value, description fwschemadata.DataDescription, err error) diag.Diagnostic {
-	return diag.NewErrorDiagnostic(
-		"Attribute Plan Modification "+description.Title()+" Value Error",
-		"An unexpected error occurred while fetching a "+value.Type(ctx).String()+" element value in the "+description.String()+". "+
-			"This is an issue with the provider and should be reported to the provider developers.\n\n"+
-			"Original Error: "+err.Error(),
-	)
-}
-
-func attributePlanModificationWalkError(schemaPath path.Path, value attr.Value) diag.Diagnostic {
-	return diag.NewAttributeErrorDiagnostic(
-		schemaPath,
-		"Attribute Plan Modification Walk Error",
-		"An unexpected error occurred while walking the schema for attribute plan modification. "+
-			"This is an issue with terraform-plugin-framework and should be reported to the provider developers.\n\n"+
-			fmt.Sprintf("unknown attribute value type (%T) at path: %s", value, schemaPath),
-	)
 }

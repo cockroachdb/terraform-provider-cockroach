@@ -202,7 +202,7 @@ func TestIntegrationCMEKResource(t *testing.T) {
 		Return(initialCluster, nil, nil).
 		Times(2)
 	s.EXPECT().GetCMEKClusterInfo(gomock.Any(), clusterID).
-		Return(initialCMEKInfo, nil, nil)
+		Return(initialCMEKInfo, nil, nil).Times(2)
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, clusterUpdateSpec).
 		Return(updatedCluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
@@ -234,6 +234,12 @@ func testCMEKResource(t *testing.T, clusterName string, useMock bool) {
 				Check: resource.ComposeTestCheckFunc(
 					testCheckCockroachClusterExists(clusterResourceName),
 				),
+			},
+			{
+				// Test import functionality here, because an imported CMEK resource won't have additional_regions.
+				ResourceName:      cmekResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 			{
 				Config: getTestCMEKResourceUpdateConfig(clusterName),

@@ -131,7 +131,7 @@ func TestIntegrationMetricExportDatadogConfigResource(t *testing.T) {
 		Return(updatedDatadogClusterInfo, nil, nil)
 	s.EXPECT().GetDatadogMetricExportInfo(gomock.Any(), clusterID).
 		Return(updatedDatadogClusterInfo, nil, nil).
-		Times(3)
+		Times(4)
 
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
@@ -168,6 +168,15 @@ func testMetricExportDatadogConfigResource(t *testing.T, clusterName string, use
 					resource.TestCheckResourceAttr(metricExportDatadogConfigResourceName, "api_key", "test-api-key-updated"),
 					resource.TestCheckResourceAttr(metricExportDatadogConfigResourceName, "status", "ENABLED"),
 				),
+			},
+			{
+				ResourceName:      metricExportDatadogConfigResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					// The API key gets redacted and truncated by the API server.
+					"api_key",
+				},
 			},
 		},
 	})

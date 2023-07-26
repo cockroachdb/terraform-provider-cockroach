@@ -101,7 +101,8 @@ func TestIntegrationVersionDeferralResource(t *testing.T) {
 	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, updatedVersionDeferralInfo).
 		Return(updatedVersionDeferralInfo, nil, nil)
 	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
-		Return(updatedVersionDeferralInfo, nil, nil)
+		Return(updatedVersionDeferralInfo, nil, nil).
+		Times(2)
 
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
@@ -134,6 +135,11 @@ func testVersionDeferralResource(t *testing.T, clusterName string, useMock bool)
 					testCheckCockroachClusterExists(clusterResourceName),
 					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", "NOT_DEFERRED"),
 				),
+			},
+			{
+				ResourceName:      versionDeferralResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

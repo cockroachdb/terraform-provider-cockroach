@@ -69,7 +69,7 @@ func (d *clusterCertDataSource) Configure(_ context.Context, req datasource.Conf
 	}
 }
 
-func downloadCert(cluster *client.Cluster, diags *diag.Diagnostics) []byte {
+var DownloadClusterCert = func(cluster *client.Cluster, diags *diag.Diagnostics) []byte {
 	serverURL := client.DefaultServerURL
 	if value, found := os.LookupEnv(APIServerURLKey); found {
 		serverURL = value
@@ -107,7 +107,7 @@ func (d *clusterCertDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
-	certContents := downloadCert(cluster, &resp.Diagnostics)
+	certContents := DownloadClusterCert(cluster, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}

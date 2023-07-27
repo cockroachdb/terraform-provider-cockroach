@@ -274,7 +274,7 @@ func (r *clusterResource) Create(
 
 	var plan CockroachCluster
 
-	diags := req.Config.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {

@@ -113,9 +113,9 @@ type PrivateEndpointService struct {
 }
 
 type PrivateEndpointServices struct {
-	ClusterID types.String             `tfsdk:"cluster_id"`
-	Services  []PrivateEndpointService `tfsdk:"services"`
-	ID        types.String             `tfsdk:"id"`
+	ClusterID types.String `tfsdk:"cluster_id"`
+	Services  types.List   `tfsdk:"services"`
+	ID        types.String `tfsdk:"id"`
 }
 
 type PrivateEndpointConnection struct {

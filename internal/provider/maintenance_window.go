@@ -88,7 +88,7 @@ func (r *maintenanceWindowResource) Create(
 	}
 
 	var plan ClusterMaintenanceWindow
-	diags := req.Config.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

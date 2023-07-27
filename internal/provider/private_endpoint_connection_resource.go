@@ -119,7 +119,7 @@ func (r *privateEndpointConnectionResource) Create(
 	}
 
 	var plan PrivateEndpointConnection
-	diags := req.Config.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -152,12 +152,6 @@ func (r *privateEndpointConnectionResource) Create(
 			"Error establishing AWS Endpoint Connection",
 			fmt.Sprintf("Could not establish AWS Endpoint Connection: %s", formatAPIErrorMessage(err)),
 		)
-		return
-	}
-
-	diags = resp.State.Set(ctx, plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
 		return
 	}
 

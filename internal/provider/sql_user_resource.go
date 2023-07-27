@@ -128,7 +128,7 @@ func (r *sqlUserResource) Create(
 	}
 
 	var sqlUserSpec SQLUser
-	diags := req.Config.Get(ctx, &sqlUserSpec)
+	diags := req.Plan.Get(ctx, &sqlUserSpec)
 	resp.Diagnostics.Append(diags...)
 	// Create a unique ID (required by terraform framework) by combining
 	// the cluster ID and username.

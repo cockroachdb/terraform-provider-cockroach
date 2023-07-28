@@ -3,12 +3,12 @@
 page_title: "cockroach_allow_list Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Allow list of IP range
+  List of IP ranges allowed to access the cluster.
 ---
 
 # cockroach_allow_list (Resource)
 
-Allow list of IP range
+List of IP ranges allowed to access the cluster.
 
 
 
@@ -17,18 +17,18 @@ Allow list of IP range
 
 ### Required
 
-- `cidr_ip` (String)
-- `cidr_mask` (Number)
+- `cidr_ip` (String) IP address component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.
+- `cidr_mask` (Number) Map component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.
 - `cluster_id` (String)
-- `sql` (Boolean)
-- `ui` (Boolean)
+- `sql` (Boolean) Set to 'true' to allow SQL connections from this CIDR range.
+- `ui` (Boolean) Set to 'true' to allow access to the management console from this CIDR range.
 
 ### Optional
 
-- `name` (String)
+- `name` (String) Name of this allowlist entry.
 
 ### Read-Only
 
-- `id` (String) A unique identifier with format '<cluster ID>:<CIDR IP>/<CIDR mask>'
+- `id` (String) A unique identifier with format `<cluster ID>:<CIDR IP>/<CIDR mask>`.
 
 

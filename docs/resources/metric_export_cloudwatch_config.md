@@ -3,12 +3,12 @@
 page_title: "cockroach_metric_export_cloudwatch_config Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Metric Export CloudWatch Config Resource
+  Amazon CloudWatch metric export configuration for a cluster.
 ---
 
 # cockroach_metric_export_cloudwatch_config (Resource)
 
-Metric Export CloudWatch Config Resource
+Amazon CloudWatch metric export configuration for a cluster.
 
 
 
@@ -17,7 +17,7 @@ Metric Export CloudWatch Config Resource
 
 ### Required
 
-- `id` (String) Cluster ID
+- `id` (String) Cluster ID.
 - `role_arn` (String) The IAM role used to upload metric segments to the target AWS account.
 
 ### Optional
@@ -27,7 +27,7 @@ Metric Export CloudWatch Config Resource
 
 ### Read-Only
 
-- `status` (String)
-- `user_message` (String)
+- `status` (String) Encodes the possible states that a metric export configuration can be in as it is created, deployed, and disabled.
+- `user_message` (String) Elaborates on the metric export status and hints at how to fix issues that may have occurred during asynchronous operations.
 
 

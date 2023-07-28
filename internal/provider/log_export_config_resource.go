@@ -35,30 +35,31 @@ import (
 var logExportAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Cluster ID",
+		MarkdownDescription: "Cluster ID.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	},
 	"auth_principal": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging",
+		MarkdownDescription: "Either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging.",
 	},
 	"log_name": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "An identifier for the logs in the customer's log sink",
+		MarkdownDescription: "An identifier for the logs in the customer's log sink.",
 	},
 	"type": schema.StringAttribute{
-		Required:            true,
-		MarkdownDescription: "The cloud selection that we're exporting to along with the cloud logging platform. Possible values are `GCP_CLOUD_LOGGING` or `AWS_CLOUDWATCH`",
+		Required: true,
+		MarkdownDescription: "The cloud selection being exported to along with the cloud logging platform. Possible values are:" +
+			formatEnumMarkdownList(client.AllowedLogExportTypeEnumValues),
 	},
 	"redact": schema.BoolAttribute{
 		Optional:    true,
-		Description: "Controls whether logs are redacted before forwarding to customer sinks",
+		Description: "Controls whether logs are redacted before forwarding to customer sinks.",
 	},
 	"region": schema.StringAttribute{
 		Optional:            true,
-		MarkdownDescription: "Controls whether all logs are sent to a specific region in the customer sink",
+		MarkdownDescription: "Controls whether all logs are sent to a specific region in the customer sink.",
 		Computed:            true,
 	},
 	"groups": schema.ListNestedAttribute{
@@ -68,38 +69,42 @@ var logExportAttributes = map[string]schema.Attribute{
 				"channels": schema.ListAttribute{
 					Required:            true,
 					ElementType:         types.StringType,
-					MarkdownDescription: "A list of CRDB log channels to include in this group",
+					MarkdownDescription: "A list of CockroachDB log channels to include in this group.",
 				},
 				"log_name": schema.StringAttribute{
 					Required:            true,
-					MarkdownDescription: "The name of the group, reflected in the log sink",
+					MarkdownDescription: "The name of the group, reflected in the log sink.",
 				},
 				"min_level": schema.StringAttribute{
 					Optional:            true,
-					MarkdownDescription: "The minimum log level to filter to this log group",
+					MarkdownDescription: "The minimum log level to filter to this log group.",
 				},
 				"redact": schema.BoolAttribute{
 					Optional:            true,
-					MarkdownDescription: "Governs whether this log group should aggregate redacted logs if unset",
+					MarkdownDescription: "Governs whether this log group should aggregate redacted logs if unset.",
 					Computed:            true,
 				},
 			},
 		},
 	},
 	"status": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Encodes the possible states that a log export configuration can be in as it is created, deployed, and disabled.",
 	},
 	"user_message": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Elaborates on the log export status and hints at how to fix issues that may have occurred during asynchronous operations.",
 	},
 	"created_at": schema.StringAttribute{
 		Computed: true,
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.UseStateForUnknown(),
 		},
+		Description: "Indicates when log export was initially configured.",
 	},
 	"updated_at": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Indicates when the log export configuration was last updated.",
 	},
 }
 
@@ -111,7 +116,7 @@ func (r *logExportConfigResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Log Export Config Resource",
+		MarkdownDescription: "Log Export configuration for a cluster.",
 		Attributes:          logExportAttributes,
 	}
 }

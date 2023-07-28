@@ -50,7 +50,7 @@ func (r *allowListResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Allow list of IP range",
+		Description: "List of IP ranges allowed to access the cluster.",
 		Attributes: map[string]schema.Attribute{
 			"cluster_id": schema.StringAttribute{
 				Required: true,
@@ -63,28 +63,33 @@ func (r *allowListResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				MarkdownDescription: "IP address component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.",
 			},
 			"cidr_mask": schema.Int64Attribute{
 				Required: true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
+				MarkdownDescription: "Map component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.",
 			},
 			"ui": schema.BoolAttribute{
-				Required: true,
+				Required:    true,
+				Description: "Set to 'true' to allow access to the management console from this CIDR range.",
 			},
 			"sql": schema.BoolAttribute{
-				Required: true,
+				Required:    true,
+				Description: "Set to 'true' to allow SQL connections from this CIDR range.",
 			},
 			"name": schema.StringAttribute{
-				Optional: true,
+				Optional:    true,
+				Description: "Name of this allowlist entry.",
 			},
 			"id": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Description: "A unique identifier with format '<cluster ID>:<CIDR IP>/<CIDR mask>'",
+				MarkdownDescription: "A unique identifier with format `<cluster ID>:<CIDR IP>/<CIDR mask>`.",
 			},
 		},
 	}

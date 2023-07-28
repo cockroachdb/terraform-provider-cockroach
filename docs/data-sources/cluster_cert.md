@@ -20,10 +20,10 @@ Serverless clusters use the root PostgreSQL CA cert. If it isn't already install
 
 ### Required
 
-- `id` (String) Cluster ID
+- `id` (String) Cluster ID.
 
 ### Read-Only
 
-- `cert` (String)
+- `cert` (String) Certificate contents.
 
 

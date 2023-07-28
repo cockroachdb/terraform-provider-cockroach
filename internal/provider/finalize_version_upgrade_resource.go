@@ -37,16 +37,17 @@ func (r *finalizeVersionUpgradeResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Utility resource that represents the one-time action of finalizing a cluster's pending CockroachDB version upgrade.",
+		Description: "Utility resource that represents the one-time action of finalizing a cluster's pending CockroachDB version upgrade.",
 		Attributes: map[string]schema.Attribute{
 			"cockroach_version": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Description: "Major version of the cluster to be finalized.",
 			},
 			"id": schema.StringAttribute{
-				Description: "Cluster ID",
+				Description: "Cluster ID.",
 				Required:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),

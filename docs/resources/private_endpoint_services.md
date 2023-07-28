@@ -3,12 +3,12 @@
 page_title: "cockroach_private_endpoint_services Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)
+  PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP).
 ---
 
 # cockroach_private_endpoint_services (Resource)
 
-PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)
+PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP).
 
 
 
@@ -30,9 +30,9 @@ PrivateEndpointServices contains services that allow for VPC communication, eith
 Read-Only:
 
 - `aws` (Attributes) (see [below for nested schema](#nestedatt--services--aws))
-- `cloud_provider` (String)
-- `region_name` (String)
-- `status` (String)
+- `cloud_provider` (String) Cloud provider associated with this service.
+- `region_name` (String) Cloud provider region code associated with this service.
+- `status` (String) Operation status of the service.
 
 <a id="nestedatt--services--aws"></a>
 ### Nested Schema for `services.aws`
@@ -40,7 +40,7 @@ Read-Only:
 Read-Only:
 
 - `availability_zone_ids` (List of String) AZ IDs users should create their VPCs in to minimize their cost.
-- `service_id` (String)
-- `service_name` (String)
+- `service_id` (String) Server side ID of the PrivateLink connection.
+- `service_name` (String) AWS service name used to create endpoints.
 
 

@@ -126,3 +126,11 @@ func (l *leveledTFLogger) Warn(msg string, keysAndValues ...interface{}) {
 }
 
 var _ retryablehttp.LeveledLogger = &leveledTFLogger{}
+
+// formatEnumMarkdownList takes a list of allowed enum values and formats them as a Markdown list.
+func formatEnumMarkdownList[T ~string](allowedValues []T) (mdList string) {
+	for _, val := range allowedValues {
+		mdList += "\n  * " + string(val)
+	}
+	return mdList
+}

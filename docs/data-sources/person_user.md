@@ -3,12 +3,12 @@
 page_title: "cockroach_person_user Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Information about a person user
+  Information about an individual user.
 ---
 
 # cockroach_person_user (Data Source)
 
-Information about a person user
+Information about an individual user.
 
 
 
@@ -21,6 +21,6 @@ Information about a person user
 
 ### Read-Only
 
-- `id` (String) User ID
+- `id` (String) User ID.
 
 

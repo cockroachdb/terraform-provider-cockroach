@@ -48,11 +48,11 @@ func (r *privateEndpointConnectionResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "AWS PrivateLink Endpoint Connection",
+		MarkdownDescription: "AWS PrivateLink Endpoint Connection.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Used with `terrform import`. Format is \"<cluster ID>:<endpoint ID>\"",
+				MarkdownDescription: "Used with `terrform import`. Format is \"<cluster ID>:<endpoint ID>\".",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -62,24 +62,28 @@ func (r *privateEndpointConnectionResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "Cloud provider region code associated with this connection.",
 			},
 			"cloud_provider": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "Cloud provider associated with this connection.",
 			},
 			"endpoint_id": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Description: "Client side ID of the PrivateLink connection.",
 			},
 			"service_id": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "Server side ID of the PrivateLink connection.",
 			},
 			"cluster_id": schema.StringAttribute{
 				Required: true,

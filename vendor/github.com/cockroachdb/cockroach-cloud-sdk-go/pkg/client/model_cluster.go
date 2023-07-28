@@ -36,8 +36,10 @@ type Cluster struct {
 	Name                string                   `json:"name"`
 	NetworkVisibility   *NetworkVisibilityType   `json:"network_visibility,omitempty"`
 	OperationStatus     ClusterStatusType        `json:"operation_status"`
-	Plan                PlanType                 `json:"plan"`
-	Regions             []Region                 `json:"regions"`
+	// Limited Access: The parent ID is a folder ID. A \"root\" valued parent ID  refers to a cluster at the root level.
+	ParentId *string  `json:"parent_id,omitempty"`
+	Plan     PlanType `json:"plan"`
+	Regions  []Region `json:"regions"`
 	// sql_dns is the DNS name of SQL interface of the cluster.
 	SqlDns        *string                  `json:"sql_dns,omitempty"`
 	State         ClusterStateType         `json:"state"`
@@ -246,6 +248,20 @@ func (o *Cluster) GetOperationStatus() ClusterStatusType {
 // SetOperationStatus sets field value.
 func (o *Cluster) SetOperationStatus(v ClusterStatusType) {
 	o.OperationStatus = v
+}
+
+// GetParentId returns the ParentId field value if set, zero value otherwise.
+func (o *Cluster) GetParentId() string {
+	if o == nil || o.ParentId == nil {
+		var ret string
+		return ret
+	}
+	return *o.ParentId
+}
+
+// SetParentId gets a reference to the given string and assigns it to the ParentId field.
+func (o *Cluster) SetParentId(v string) {
+	o.ParentId = &v
 }
 
 // GetPlan returns the Plan field value.

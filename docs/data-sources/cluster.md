@@ -25,6 +25,7 @@ Cluster Data Source
 - `id` (String) The ID of this resource.
 - `name` (String) Name of cluster
 - `operation_status` (String)
+- `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `plan` (String)
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))

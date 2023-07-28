@@ -76,4 +76,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/cockroachdb/cockroach-cloud-sdk-go v1.2.0 => ../cockroach-cloud-sdk-go
+replace github.com/cockroachdb/cockroach-cloud-sdk-go v1.3.0 => ../cockroach-cloud-sdk-go

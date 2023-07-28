@@ -23,7 +23,7 @@ import (
 	"fmt"
 )
 
-// OrganizationUserRoleType the model 'OrganizationUserRoleType'.
+// OrganizationUserRoleType  - DEVELOPER: To be deprecated  - ADMIN: To be deprecated  - FOLDER_ADMIN: Limited Access: A folder admin role.  - FOLDER_MOVER: Limited Access: A folder mover role.
 type OrganizationUserRoleType string
 
 // List of OrganizationUserRole.Type.
@@ -37,6 +37,8 @@ const (
 	ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER OrganizationUserRoleType = "CLUSTER_OPERATOR_WRITER"
 	ORGANIZATIONUSERROLETYPE_CLUSTER_DEVELOPER       OrganizationUserRoleType = "CLUSTER_DEVELOPER"
 	ORGANIZATIONUSERROLETYPE_CLUSTER_CREATOR         OrganizationUserRoleType = "CLUSTER_CREATOR"
+	ORGANIZATIONUSERROLETYPE_FOLDER_ADMIN            OrganizationUserRoleType = "FOLDER_ADMIN"
+	ORGANIZATIONUSERROLETYPE_FOLDER_MOVER            OrganizationUserRoleType = "FOLDER_MOVER"
 )
 
 // All allowed values of OrganizationUserRoleType enum.
@@ -50,6 +52,8 @@ var AllowedOrganizationUserRoleTypeEnumValues = []OrganizationUserRoleType{
 	"CLUSTER_OPERATOR_WRITER",
 	"CLUSTER_DEVELOPER",
 	"CLUSTER_CREATOR",
+	"FOLDER_ADMIN",
+	"FOLDER_MOVER",
 }
 
 func (v *OrganizationUserRoleType) UnmarshalJSON(src []byte) error {

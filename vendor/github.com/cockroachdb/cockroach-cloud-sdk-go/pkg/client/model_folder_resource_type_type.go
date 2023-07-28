@@ -23,54 +23,52 @@ import (
 	"fmt"
 )
 
-// ResourceTypeType  - ORGANIZATION: An organization.  - CLUSTER: A cluster resource.  - FOLDER: Limited Access: A folder resource.
-type ResourceTypeType string
+// FolderResourceTypeType the model 'FolderResourceTypeType'.
+type FolderResourceTypeType string
 
-// List of ResourceType.Type.
+// List of FolderResourceType.Type.
 const (
-	RESOURCETYPETYPE_ORGANIZATION ResourceTypeType = "ORGANIZATION"
-	RESOURCETYPETYPE_CLUSTER      ResourceTypeType = "CLUSTER"
-	RESOURCETYPETYPE_FOLDER       ResourceTypeType = "FOLDER"
+	FOLDERRESOURCETYPETYPE_FOLDER  FolderResourceTypeType = "FOLDER"
+	FOLDERRESOURCETYPETYPE_CLUSTER FolderResourceTypeType = "CLUSTER"
 )
 
-// All allowed values of ResourceTypeType enum.
-var AllowedResourceTypeTypeEnumValues = []ResourceTypeType{
-	"ORGANIZATION",
-	"CLUSTER",
+// All allowed values of FolderResourceTypeType enum.
+var AllowedFolderResourceTypeTypeEnumValues = []FolderResourceTypeType{
 	"FOLDER",
+	"CLUSTER",
 }
 
-func (v *ResourceTypeType) UnmarshalJSON(src []byte) error {
+func (v *FolderResourceTypeType) UnmarshalJSON(src []byte) error {
 	var value string
 	err := json.Unmarshal(src, &value)
 	if err != nil {
 		return err
 	}
-	enumTypeValue := ResourceTypeType(value)
-	for _, existing := range AllowedResourceTypeTypeEnumValues {
+	enumTypeValue := FolderResourceTypeType(value)
+	for _, existing := range AllowedFolderResourceTypeTypeEnumValues {
 		if existing == enumTypeValue {
 			*v = enumTypeValue
 			return nil
 		}
 	}
 
-	return fmt.Errorf("%+v is not a valid ResourceTypeType", value)
+	return fmt.Errorf("%+v is not a valid FolderResourceTypeType", value)
 }
 
-// NewResourceTypeTypeFromValue returns a pointer to a valid ResourceTypeType
+// NewFolderResourceTypeTypeFromValue returns a pointer to a valid FolderResourceTypeType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewResourceTypeTypeFromValue(v string) (*ResourceTypeType, error) {
-	ev := ResourceTypeType(v)
+func NewFolderResourceTypeTypeFromValue(v string) (*FolderResourceTypeType, error) {
+	ev := FolderResourceTypeType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for ResourceTypeType: valid values are %v", v, AllowedResourceTypeTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for FolderResourceTypeType: valid values are %v", v, AllowedFolderResourceTypeTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v ResourceTypeType) IsValid() bool {
-	for _, existing := range AllowedResourceTypeTypeEnumValues {
+func (v FolderResourceTypeType) IsValid() bool {
+	for _, existing := range AllowedFolderResourceTypeTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -78,7 +76,7 @@ func (v ResourceTypeType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to ResourceType.Type value.
-func (v ResourceTypeType) Ptr() *ResourceTypeType {
+// Ptr returns reference to FolderResourceType.Type value.
+func (v FolderResourceTypeType) Ptr() *FolderResourceTypeType {
 	return &v
 }

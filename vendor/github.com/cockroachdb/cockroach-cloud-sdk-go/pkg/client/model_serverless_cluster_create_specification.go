@@ -27,6 +27,8 @@ type ServerlessClusterCreateSpecification struct {
 	// spend_limit is the maximum monthly charge for a cluster, in US cents. We recommend using usage_limits instead, since spend_limit will be deprecated in the future.
 	SpendLimit  *int32       `json:"spend_limit,omitempty"`
 	UsageLimits *UsageLimits `json:"usage_limits,omitempty"`
+	// WithEmptyIPAllowlist creates a cluster with no entries in the IP Allowlist. By default, Serverless clusters have one IP allowlist entry that opens the cluster to any IP. Set this property to true to ensure the cluster is closed to public traffic by default.
+	WithEmptyIpAllowlist *bool `json:"with_empty_ip_allowlist,omitempty"`
 }
 
 // NewServerlessClusterCreateSpecification instantiates a new ServerlessClusterCreateSpecification object.
@@ -102,4 +104,18 @@ func (o *ServerlessClusterCreateSpecification) GetUsageLimits() UsageLimits {
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
 func (o *ServerlessClusterCreateSpecification) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
+}
+
+// GetWithEmptyIpAllowlist returns the WithEmptyIpAllowlist field value if set, zero value otherwise.
+func (o *ServerlessClusterCreateSpecification) GetWithEmptyIpAllowlist() bool {
+	if o == nil || o.WithEmptyIpAllowlist == nil {
+		var ret bool
+		return ret
+	}
+	return *o.WithEmptyIpAllowlist
+}
+
+// SetWithEmptyIpAllowlist gets a reference to the given bool and assigns it to the WithEmptyIpAllowlist field.
+func (o *ServerlessClusterCreateSpecification) SetWithEmptyIpAllowlist(v bool) {
+	o.WithEmptyIpAllowlist = &v
 }

@@ -689,22 +689,6 @@ func (mr *MockServiceMockRecorder) GetFolder(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolder", reflect.TypeOf((*MockService)(nil).GetFolder), arg0, arg1)
 }
 
-// GetFolderTopLevel mocks base method.
-func (m *MockService) GetFolderTopLevel(arg0 context.Context, arg1 *client.GetFolderTopLevelOptions) (*client.FolderResourceList, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetFolderTopLevel", arg0, arg1)
-	ret0, _ := ret[0].(*client.FolderResourceList)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetFolderTopLevel indicates an expected call of GetFolderTopLevel.
-func (mr *MockServiceMockRecorder) GetFolderTopLevel(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFolderTopLevel", reflect.TypeOf((*MockService)(nil).GetFolderTopLevel), arg0, arg1)
-}
-
 // GetGroup mocks base method.
 func (m *MockService) GetGroup(arg0 context.Context, arg1 string, arg2 *client.GetGroupOptions) (*client.ScimGroup, *http.Response, error) {
 	m.ctrl.T.Helper()

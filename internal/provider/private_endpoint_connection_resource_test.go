@@ -159,7 +159,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				Return(&connection, nil, nil)
 			s.EXPECT().ListAwsEndpointConnections(gomock.Any(), clusterID).
 				Return(connections, nil, nil).
-				Times(2)
+				Times(3)
 			rejected := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED
 			s.EXPECT().SetAwsEndpointConnectionState(
 				gomock.Any(),
@@ -205,6 +205,11 @@ func testPrivateEndpointConnectionResource(
 					resource.TestCheckResourceAttr(resourceName, "region_name", "us-east-1"),
 					resource.TestCheckResourceAttr(resourceName, "cloud_provider", "AWS"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

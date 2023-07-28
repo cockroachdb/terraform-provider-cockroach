@@ -156,7 +156,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			}
 			s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
 				Return(services, nil, nil).
-				Times(2)
+				Times(3)
 			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
 			testPrivateEndpointServicesResource(
@@ -172,6 +172,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 func testPrivateEndpointServicesResource(
 	t *testing.T, clusterName string, useMock bool, isServerless bool,
 ) {
+	resourceName := "cockroach_private_endpoint_services.services"
 	var clusterResourceName string
 	var privateEndpointServicesResourceConfigFn func(string) string
 	var numExpectedServices int
@@ -187,11 +188,11 @@ func testPrivateEndpointServicesResource(
 
 	checks := []resource.TestCheckFunc{
 		resource.TestCheckResourceAttr(clusterResourceName, "name", clusterName),
-		resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", "services.#", strconv.Itoa(numExpectedServices)),
+		resource.TestCheckResourceAttr(resourceName, "services.#", strconv.Itoa(numExpectedServices)),
 	}
 	for i := 0; i < numExpectedServices; i++ {
 		checks = append(checks,
-			resource.TestCheckResourceAttr("cockroach_private_endpoint_services.services", fmt.Sprintf("services.%d.status", i), string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
+			resource.TestCheckResourceAttr(resourceName, fmt.Sprintf("services.%d.status", i), string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
 		)
 	}
 
@@ -203,6 +204,11 @@ func testPrivateEndpointServicesResource(
 			{
 				Config: privateEndpointServicesResourceConfigFn(clusterName),
 				Check:  resource.ComposeTestCheckFunc(checks...),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

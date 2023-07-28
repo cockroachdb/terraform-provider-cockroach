@@ -135,7 +135,7 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
 		Return(cluster, httpOkResponse, nil) // CLUSTER Read()
 	s.EXPECT().GetClientCACert(gomock.Any(), clusterId).
-		Return(cert2InfoReady, nil, nil) // CERT Read()
+		Return(cert2InfoReady, nil, nil).Times(2) // CERT Read()
 
 	s.EXPECT().DeleteClientCACert(gomock.Any(), clusterId).
 		Return(certInfoEmptyPending, nil, nil) // CERT Delete()
@@ -173,6 +173,11 @@ func testClientCACertResource(t *testing.T, clusterName string, cert1 string, ce
 					resource.TestCheckResourceAttr(cliCACertResourceName, "x509_pem_cert", cert2),
 					resource.TestCheckResourceAttr(cliCACertResourceName, "status", string(client.CLIENTCACERTSTATUS_IS_SET)),
 				),
+			},
+			{
+				ImportState:       true,
+				ImportStateVerify: true,
+				ResourceName:      cliCACertResourceName,
 			},
 		},
 	})

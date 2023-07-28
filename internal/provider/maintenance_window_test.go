@@ -103,7 +103,8 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 	s.EXPECT().SetMaintenanceWindow(gomock.Any(), clusterID, updatedMaintenanceWindowInfo).
 		Return(updatedMaintenanceWindowInfo, nil, nil)
 	s.EXPECT().GetMaintenanceWindow(gomock.Any(), clusterID).
-		Return(updatedMaintenanceWindowInfo, nil, nil)
+		Return(updatedMaintenanceWindowInfo, nil, nil).
+		Times(2)
 
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
@@ -138,6 +139,11 @@ func testMaintenanceWindowResource(t *testing.T, clusterName string, useMock boo
 					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration", "1100"),
 					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration", "110011"),
 				),
+			},
+			{
+				ResourceName:      maintenanceWindowResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

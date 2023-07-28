@@ -159,7 +159,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 		Return(updatedLogExportClusterInfo, nil, nil)
 	s.EXPECT().GetLogExportInfo(gomock.Any(), clusterID).
 		Return(updatedLogExportClusterInfo, nil, nil).
-		Times(3)
+		Times(4)
 
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
@@ -196,6 +196,11 @@ func testLogExportConfigResource(t *testing.T, clusterName string, useMock bool)
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.#", "2"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.channels.#", "1"),
 				),
+			},
+			{
+				ResourceName:      logExportConfigResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

@@ -100,7 +100,7 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 		clusterID,
 		&client.CreateSQLUserRequest{Name: sqlUserNameNoPass, Password: testPassword},
 	).Return(&userNoPass, nil, nil)
-	s.EXPECT().ListSQLUsers(gomock.Any(), clusterID, gomock.Any()).Times(4).Return(
+	s.EXPECT().ListSQLUsers(gomock.Any(), clusterID, gomock.Any()).Times(5).Return(
 		&client.ListSQLUsersResponse{Users: []client.SQLUser{userWithPass, userNoPass}}, nil, nil)
 	s.EXPECT().DeleteSQLUser(gomock.Any(), clusterID, userWithPass.Name)
 	s.EXPECT().DeleteSQLUser(gomock.Any(), clusterID, userNoPass.Name)
@@ -133,6 +133,14 @@ func testSqlUserResource(
 					resource.TestCheckResourceAttr(resourceNamePass, "name", sqlUserNameWithPass),
 					resource.TestCheckResourceAttr(resourceNameNoPass, "name", sqlUserNameNoPass),
 				),
+			},
+			{
+				ResourceName:      resourceNamePass,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"password",
+				},
 			},
 		},
 	})

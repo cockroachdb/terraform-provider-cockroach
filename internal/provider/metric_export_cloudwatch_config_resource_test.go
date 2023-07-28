@@ -133,7 +133,7 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 		Return(updatedCloudWatchClusterInfo, nil, nil)
 	s.EXPECT().GetCloudWatchMetricExportInfo(gomock.Any(), clusterID).
 		Return(updatedCloudWatchClusterInfo, nil, nil).
-		Times(3)
+		Times(4)
 
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
@@ -170,6 +170,11 @@ func testMetricExportCloudWatchConfigResource(t *testing.T, clusterName string, 
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "log_group_name", "example"),
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "target_region", "us-east-1"),
 				),
+			},
+			{
+				ResourceName:      metricExportCloudWatchConfigResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

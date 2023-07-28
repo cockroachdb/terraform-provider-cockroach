@@ -120,7 +120,7 @@ func TestIntegrationRoleResource(t *testing.T) {
 	s.EXPECT().SetRolesForUser(gomock.Any(), userId, gomock.Any()).
 		Return(nil, nil, nil)
 	s.EXPECT().ListRoleGrants(gomock.Any(), gomock.Any()).
-		Return(&listResponse, nil, nil)
+		Return(&listResponse, nil, nil).Times(2)
 	s.EXPECT().SetRolesForUser(gomock.Any(), userId, &client.CockroachCloudSetRolesForUserRequest{}).
 		Return(nil, nil, nil)
 
@@ -145,6 +145,11 @@ func testRoleResource(t *testing.T, userId string, useMock bool) {
 					testRoleMembership(resourceNameTest, userId, "CLUSTER_ADMIN", true),
 					resource.TestCheckResourceAttr(resourceNameTest, "id", userId),
 				),
+			},
+			{
+				ResourceName:      resourceNameTest,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

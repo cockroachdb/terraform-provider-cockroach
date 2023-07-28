@@ -108,7 +108,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		Return(&updatedDatabase, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{updatedDatabase}}, nil, nil).
-		Times(2)
+		Times(3)
 
 	// Delete
 	s.EXPECT().DeleteDatabase(gomock.Any(), clusterID, newDatabaseName)
@@ -143,6 +143,11 @@ func testDatabaseResource(
 					testDatabaseExists(resourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", newDatabaseName),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

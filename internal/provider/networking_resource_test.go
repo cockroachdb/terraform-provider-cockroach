@@ -206,7 +206,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				Return(&newEntry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
 				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).
-				Times(2)
+				Times(3)
 
 			// Delete
 			s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
@@ -267,6 +267,11 @@ func testAllowlistEntryResource(
 					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
 					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})

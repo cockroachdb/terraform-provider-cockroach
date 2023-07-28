@@ -48,14 +48,14 @@ func (r *clientCACertResource) Schema(_ context.Context, _ resource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "Cluster ID",
+				MarkdownDescription: "Cluster ID.",
 			},
 			"x509_pem_cert": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "X509 certificate in PEM format",
+				MarkdownDescription: "X509 certificate in PEM format.",
 			},
 			"status": schema.StringAttribute{
-				MarkdownDescription: "Status of client CA certs on a cluster",
+				MarkdownDescription: "Status of client CA certs on a cluster.",
 				Computed:            true,
 			},
 		},

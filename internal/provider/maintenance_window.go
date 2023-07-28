@@ -35,15 +35,15 @@ import (
 var maintenanceWindowAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Cluster ID",
+		MarkdownDescription: "Cluster ID.",
 	},
 	"offset_duration": schema.Int64Attribute{
 		Required:            true,
-		MarkdownDescription: "The offset duration is the duration in seconds from the beginning of each Monday (UTC) after which the maintenance window starts.",
+		MarkdownDescription: "Duration in seconds from the beginning of each Monday (UTC) after which the maintenance window starts.",
 	},
 	"window_duration": schema.Int64Attribute{
 		Required:            true,
-		MarkdownDescription: "The window duration is the duration in seconds that the maintenance window will remain active for after it starts.",
+		MarkdownDescription: "Duration in seconds that the maintenance window will remain active for after it starts.",
 	},
 }
 
@@ -55,7 +55,7 @@ func (r *maintenanceWindowResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Maintenance window resource for a cluster.",
+		MarkdownDescription: "Maintenance window configuration for a cluster.",
 		Attributes:          maintenanceWindowAttributes,
 	}
 }

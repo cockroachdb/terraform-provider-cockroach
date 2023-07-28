@@ -3,12 +3,12 @@
 page_title: "cockroach_metric_export_datadog_config Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Metric Export Datadog Config Resource
+  DataDog metric export configuration for a cluster.
 ---
 
 # cockroach_metric_export_datadog_config (Resource)
 
-Metric Export Datadog Config Resource
+DataDog metric export configuration for a cluster.
 
 
 
@@ -17,13 +17,13 @@ Metric Export Datadog Config Resource
 
 ### Required
 
-- `api_key` (String, Sensitive) A Datadog API key
-- `id` (String) Cluster ID
-- `site` (String) The Datadog region to export to
+- `api_key` (String, Sensitive) A Datadog API key.
+- `id` (String) Cluster ID.
+- `site` (String) The Datadog region to export to.
 
 ### Read-Only
 
-- `status` (String)
-- `user_message` (String)
+- `status` (String) Encodes the possible states that a metric export configuration can be in as it is created, deployed, and disabled.
+- `user_message` (String) Elaborates on the metric export status and hints at how to fix issues that may have occurred during asynchronous operations.
 
 

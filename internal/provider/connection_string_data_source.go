@@ -41,14 +41,14 @@ func (d *connectionStringDataSource) Schema(
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:    true,
-				Description: "Cluster ID",
+				Description: "Cluster ID.",
 			},
 			"os": schema.StringAttribute{
 				Optional: true,
 				Computed: true,
 				Description: "Used to determine the SSL certificate path for dedicated clusters. " +
 					"Defaults to the Terraform user's OS. " +
-					"Options are 'WINDOWS', 'MAC', and 'LINUX'.",
+					"Options are:" + formatEnumMarkdownList(client.AllowedOperatingSystemTypeEnumValues),
 			},
 			"database": schema.StringAttribute{
 				Optional:    true,
@@ -74,7 +74,7 @@ func (d *connectionStringDataSource) Schema(
 				Description: "List of individual connection string parameters. Can be used to build nonstandard connection strings.",
 			},
 		},
-		Description: "Generic connection string for a given cluster",
+		Description: "Generic connection string for a cluster.",
 	}
 }
 

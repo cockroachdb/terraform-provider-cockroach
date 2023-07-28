@@ -48,23 +48,26 @@ func (r *databaseResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Database",
+		Description: "CockroachDB database.",
 		Attributes: map[string]schema.Attribute{
 			"cluster_id": schema.StringAttribute{
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Description: "ID of the cluster the database belongs to.",
 			},
 			"name": schema.StringAttribute{
-				Required: true,
+				Required:    true,
+				Description: "Database name.",
 			},
 			"id": schema.StringAttribute{
-				Computed:    true,
-				Description: "A unique identifier with format '<cluster ID>:<database name>'",
+				Computed:            true,
+				MarkdownDescription: "A unique identifier with format `<cluster ID>:<database name>`.",
 			},
 			"table_count": schema.Int64Attribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Number of tables in the database.",
 			},
 		},
 	}

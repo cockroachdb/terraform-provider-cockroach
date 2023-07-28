@@ -17,7 +17,7 @@ Utility resource that represents the one-time action of finalizing a cluster's p
 
 ### Required
 
-- `cockroach_version` (String)
-- `id` (String) Cluster ID
+- `cockroach_version` (String) Major version of the cluster to be finalized.
+- `id` (String) Cluster ID.
 
 

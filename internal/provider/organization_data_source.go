@@ -31,19 +31,23 @@ type organizationDataSource struct {
 
 func (d *organizationDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Information about the organization associated with the user's API key",
+		Description: "Information about the organization associated with the user's API key.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Organization ID.",
 			},
 			"label": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "A short ID used by CockroachDB Support.",
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Name of the organization.",
 			},
 			"created_at": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Indicates when the organization was created.",
 			},
 		},
 	}

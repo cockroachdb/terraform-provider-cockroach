@@ -3,12 +3,12 @@
 page_title: "cockroach_maintenance_window Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Maintenance window resource for a cluster.
+  Maintenance window configuration for a cluster.
 ---
 
 # cockroach_maintenance_window (Resource)
 
-Maintenance window resource for a cluster.
+Maintenance window configuration for a cluster.
 
 
 
@@ -17,8 +17,8 @@ Maintenance window resource for a cluster.
 
 ### Required
 
-- `id` (String) Cluster ID
-- `offset_duration` (Number) The offset duration is the duration in seconds from the beginning of each Monday (UTC) after which the maintenance window starts.
-- `window_duration` (Number) The window duration is the duration in seconds that the maintenance window will remain active for after it starts.
+- `id` (String) Cluster ID.
+- `offset_duration` (Number) Duration in seconds from the beginning of each Monday (UTC) after which the maintenance window starts.
+- `window_duration` (Number) Duration in seconds that the maintenance window will remain active for after it starts.
 
 

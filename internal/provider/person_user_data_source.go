@@ -33,11 +33,11 @@ func (d *personUserDataSource) Schema(
 	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Description: "Information about a person user",
+		Description: "Information about a person user.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:    true,
-				Description: "User ID",
+				Description: "User ID.",
 			},
 			"email": schema.StringAttribute{
 				Required:    true,

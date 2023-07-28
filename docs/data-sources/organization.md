@@ -3,12 +3,12 @@
 page_title: "cockroach_organization Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Information about the organization associated with the user's API key
+  Information about the organization associated with the user's API key.
 ---
 
 # cockroach_organization (Data Source)
 
-Information about the organization associated with the user's API key
+Information about the organization associated with the user's API key.
 
 
 
@@ -17,9 +17,9 @@ Information about the organization associated with the user's API key
 
 ### Read-Only
 
-- `created_at` (String)
-- `id` (String) The ID of this resource.
-- `label` (String)
-- `name` (String)
+- `created_at` (String) Indicates when the organization was created.
+- `id` (String) Organization ID.
+- `label` (String) A short ID used by CockroachDB Support.
+- `name` (String) Name of the organization.
 
 

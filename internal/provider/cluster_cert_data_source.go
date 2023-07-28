@@ -39,10 +39,11 @@ func (d *clusterCertDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required:    true,
-				Description: "Cluster ID",
+				Description: "Cluster ID.",
 			},
 			"cert": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Certificate contents.",
 			},
 		},
 		MarkdownDescription: "TLS certificate for the specified CockroachDB cluster. Certificates " +

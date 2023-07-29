@@ -20,7 +20,8 @@ provider "cockroach" {
 }
 
 resource "cockroach_folder" "example-folder-parent" {
-  name = var.folder_parent_name
+  name      = var.folder_parent_name
+  parent_id = "root"
 }
 
 resource "cockroach_folder" "example-folder-child" {

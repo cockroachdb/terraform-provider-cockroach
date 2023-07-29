@@ -26,7 +26,7 @@ func (r *folderResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Folder Resource",
+		MarkdownDescription: "CockroachDB Cloud folder.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -35,15 +35,12 @@ func (r *folderResource) Schema(
 				},
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of the folder",
+				MarkdownDescription: "Name of the folder.",
 				Required:            true,
 			},
 			"parent_id": schema.StringAttribute{
-				MarkdownDescription: "ID of the parent folder",
-				Required:            false,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+				MarkdownDescription: "ID of the parent folder. Use 'root' for the root level (no parent folder).",
+				Required:            true,
 			},
 		},
 	}
@@ -77,16 +74,17 @@ func (r *folderResource) Create(
 	}
 
 	var plan Folder
-	diags := req.Config.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var createReq client.CreateFolderRequest
-	createReq.Name = plan.Name.ValueString()
-
-	_, _, err := r.provider.service.CreateFolder(ctx, &createReq)
+	parentID := plan.ParentId.ValueString()
+	folderObj, _, err := r.provider.service.CreateFolder(ctx, &client.CreateFolderRequest{
+		Name:     plan.Name.ValueString(),
+		ParentId: &parentID,
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating folder",
@@ -95,7 +93,9 @@ func (r *folderResource) Create(
 		return
 	}
 
-	diags = resp.State.Set(ctx, plan)
+	var state Folder
+	loadFolderToTerraformState(folderObj, &state)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -179,7 +179,7 @@ func (r *folderResource) Update(
 		newName      = plan.Name.ValueString()
 		destParentID = plan.ParentId.ValueString()
 	)
-	apiResp, _, err := r.provider.service.UpdateFolder(
+	folderObj, _, err := r.provider.service.UpdateFolder(
 		ctx,
 		plan.ID.ValueString(),
 		&client.UpdateFolderSpecification{
@@ -188,15 +188,14 @@ func (r *folderResource) Update(
 		})
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error updating folder name",
+			"Error updating folder",
 			fmt.Sprintf("Could not update folder: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
 
-	var newState Folder
-	loadFolderToTerraformState(apiResp, &newState)
-	diags = resp.State.Set(ctx, newState)
+	loadFolderToTerraformState(folderObj, &state)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

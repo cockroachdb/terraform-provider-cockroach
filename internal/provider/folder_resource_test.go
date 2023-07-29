@@ -41,61 +41,68 @@ func TestIntegrationFolderResource(t *testing.T) {
 	}
 
 	var (
-		folderName       = fmt.Sprintf("tftest-folder-%s", GenerateRandomString(4))
-		newFolderName    = fmt.Sprintf("tftest-folder-%s", GenerateRandomString(4))
-		parentFolderName = fmt.Sprintf("tftest-folder-%s", GenerateRandomString(4))
+		folderName       = "child-folder"
+		newFolderName    = "child-folder-renamed"
+		parentFolderName = "parent-folder"
 
-		parentFolderID = uuid.Nil.String()
-		childFolderID  = uuid.Must(uuid.Parse("00000000-0000-0000-0000-000000000001")).String()
-		uuidNil        = uuid.Nil.String()
+		rootParentID   = "root"
+		parentFolderID = uuid.Must(uuid.Parse("00000000-0000-0000-0000-000000000001")).String()
+		childFolderID  = uuid.Must(uuid.Parse("00000000-0000-0000-0000-000000000002")).String()
 	)
 
 	parentFolder := client.FolderResource{
-		ResourceId: &parentFolderID,
-		Name:       &parentFolderName,
+		ResourceId: parentFolderID,
+		Name:       parentFolderName,
+		ParentId:   rootParentID,
 	}
 	childFolder := client.FolderResource{
-		ResourceId: &childFolderID,
-		Name:       &folderName,
-	}
-	renamedChildFolder := client.FolderResource{
-		ResourceId: &childFolderID,
-		Name:       &newFolderName,
+		ResourceId: childFolderID,
+		Name:       folderName,
+		ParentId:   parentFolderID,
 	}
 	updatedChildFolder := client.FolderResource{
-		ResourceId: &childFolderID,
-		Name:       &newFolderName,
-		ParentId:   &uuidNil,
+		ResourceId: childFolderID,
+		Name:       newFolderName,
+		ParentId:   rootParentID,
 	}
 
 	// Create
-	s.EXPECT().CreateFolder(gomock.Any(), gomock.Any()).
+	s.EXPECT().CreateFolder(gomock.Any(),
+		&client.CreateFolderRequest{Name: parentFolderName, ParentId: &rootParentID}).
 		Return(&parentFolder, nil, nil)
-	s.EXPECT().CreateFolder(gomock.Any(), gomock.Any()).
+	s.EXPECT().CreateFolder(gomock.Any(),
+		&client.CreateFolderRequest{Name: folderName, ParentId: &parentFolderID}).
 		Return(&childFolder, nil, nil)
 
 	// Read
+	s.EXPECT().GetFolder(gomock.Any(), parentFolderID).
+		Return(&parentFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(2)
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
 		Return(&childFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
+		Times(2)
 
 	// Update
-	s.EXPECT().
-		UpdateFolder(gomock.Any(), childFolderID, &client.UpdateFolderSpecification{Name: &newFolderName}).
-		Return(&renamedChildFolder, nil, nil)
+	s.EXPECT().GetFolder(gomock.Any(), parentFolderID).
+		Return(&parentFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(1)
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
-		Return(&renamedChildFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
-	s.EXPECT().
-		UpdateFolder(
-			gomock.Any(),
-			childFolderID,
-			&client.UpdateFolderSpecification{ParentId: &uuidNil},
-		).
+		Return(&childFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(1)
+	s.EXPECT().UpdateFolder(gomock.Any(), childFolderID,
+		&client.UpdateFolderSpecification{Name: &newFolderName, ParentId: &rootParentID}).
 		Return(&updatedChildFolder, nil, nil)
+	s.EXPECT().GetFolder(gomock.Any(), parentFolderID).
+		Return(&parentFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(2)
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
 		Return(&updatedChildFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(4)
+		Times(2)
+
+	// Import
+	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
+		Return(&updatedChildFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(1)
 
 	// Delete
 	s.EXPECT().DeleteFolder(gomock.Any(), childFolderID)
@@ -104,7 +111,9 @@ func TestIntegrationFolderResource(t *testing.T) {
 	testFolderResource(t, parentFolderName, folderName, newFolderName, true)
 }
 
-func testFolderResource(t *testing.T, parentFolderName, folderName, newFolderName string, useMock bool) {
+func testFolderResource(
+	t *testing.T, parentFolderName, folderName, newFolderName string, useMock bool,
+) {
 	var (
 		resourceName       = "cockroach_folder.test_folder_child"
 		resourceParentName = "cockroach_folder.test_folder_parent"
@@ -125,13 +134,18 @@ func testFolderResource(t *testing.T, parentFolderName, folderName, newFolderNam
 				),
 			},
 			{
-				Config: getTestFolderResourceConfig(parentFolderName, newFolderName),
+				Config: getTestFolderResourceUpdateConfig(parentFolderName, newFolderName),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckFolderExists(resourceName),
 					testCheckFolderExists(resourceParentName),
 					resource.TestCheckResourceAttr(resourceName, "name", newFolderName),
-					resource.TestCheckResourceAttrSet(resourceName, "parent_id"),
+					resource.TestCheckResourceAttr(resourceName, "parent_id", "root"),
 				),
+			},
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -152,9 +166,10 @@ func testCheckFolderExists(resourceName string) resource.TestCheckFunc {
 
 		id := rs.Primary.Attributes["id"]
 		log.Printf(
-			"[DEBUG] folderID: %s, name %s",
+			"[DEBUG] folderID: %s, name %s, parentID: %s",
 			rs.Primary.Attributes["id"],
 			rs.Primary.Attributes["name"],
+			rs.Primary.Attributes["parent_id"],
 		)
 
 		if _, _, err := p.service.GetFolder(context.Background(), id); err == nil {
@@ -165,14 +180,30 @@ func testCheckFolderExists(resourceName string) resource.TestCheckFunc {
 	}
 }
 
-func getTestFolderResourceConfig(parentFolderName, folderName string) string {
+func getTestFolderResourceConfig(parentFolderName, childFolderName string) string {
 	return fmt.Sprintf(`
 resource "cockroach_folder" "test_folder_parent" {
     name = "%s"
+	parent_id = "root"
 }
 
 resource "cockroach_folder" "test_folder_child" {
     name = "%s"
+	parent_id = cockroach_folder.test_folder_parent.id
 }
-`, parentFolderName, folderName)
+`, parentFolderName, childFolderName)
+}
+
+func getTestFolderResourceUpdateConfig(parentFolderName, childFolderName string) string {
+	return fmt.Sprintf(`
+resource "cockroach_folder" "test_folder_parent" {
+    name = "%s"
+	parent_id = "root"
+}
+
+resource "cockroach_folder" "test_folder_child" {
+    name = "%s"
+	parent_id = "root"
+}
+`, parentFolderName, childFolderName)
 }

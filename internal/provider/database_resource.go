@@ -98,19 +98,20 @@ func (r *databaseResource) Create(
 	}
 
 	var databaseSpec Database
-	diags := req.Config.Get(ctx, &databaseSpec)
+	diags := req.Plan.Get(ctx, &databaseSpec)
 	resp.Diagnostics.Append(diags...)
 	// Create a unique ID (required by terraform framework) by combining
 	// the cluster ID and database name.
 	databaseSpec.ID = types.StringValue(
 		fmt.Sprintf(databaseIDFmt, databaseSpec.ClusterId.ValueString(), databaseSpec.Name.ValueString()),
 	)
+	clusterID := databaseSpec.ClusterId.ValueString()
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	_, _, err := r.provider.service.GetCluster(ctx, databaseSpec.ClusterId.ValueString())
+	_, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting the cluster",
@@ -122,7 +123,7 @@ func (r *databaseResource) Create(
 	var databaseRequest client.CreateDatabaseRequest
 	databaseRequest.Name = databaseSpec.Name.ValueString()
 
-	_, _, err = r.provider.service.CreateDatabase(ctx, databaseSpec.ClusterId.ValueString(), &databaseRequest)
+	databaseObj, _, err := r.provider.service.CreateDatabase(ctx, clusterID, &databaseRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating database",
@@ -131,6 +132,7 @@ func (r *databaseResource) Create(
 		return
 	}
 
+	loadDatabaseToTerraformState(clusterID, databaseObj, &databaseSpec)
 	diags = resp.State.Set(ctx, databaseSpec)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -318,7 +320,5 @@ func loadDatabaseToTerraformState(
 	// Get the unique ID (required by terraform framework) by combining
 	// the cluster ID and database name.
 	state.ID = types.StringValue(fmt.Sprintf(databaseIDFmt, clusterID, databaseObj.GetName()))
-	if databaseObj.TableCount != nil {
-		state.TableCount = types.Int64Value(*databaseObj.TableCount)
-	}
+	state.TableCount = types.Int64PointerValue(databaseObj.TableCount)
 }

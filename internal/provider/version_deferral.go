@@ -79,7 +79,7 @@ func (r *versionDeferralResource) Create(
 	}
 
 	var versionDeferral ClusterVersionDeferral
-	diags := req.Config.Get(ctx, &versionDeferral)
+	diags := req.Plan.Get(ctx, &versionDeferral)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

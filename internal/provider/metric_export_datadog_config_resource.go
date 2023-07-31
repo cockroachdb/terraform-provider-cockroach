@@ -100,7 +100,7 @@ func (r *metricExportDatadogConfigResource) Create(
 	}
 
 	var plan ClusterDatadogMetricExportConfig
-	diags := req.Config.Get(ctx, &plan)
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

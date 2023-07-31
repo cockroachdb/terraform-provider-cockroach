@@ -118,7 +118,7 @@ func (r *allowListResource) Create(
 	}
 
 	var entry AllowlistEntry
-	diags := req.Config.Get(ctx, &entry)
+	diags := req.Plan.Get(ctx, &entry)
 	resp.Diagnostics.Append(diags...)
 	// Create a unique ID (required by terraform framework) by combining
 	// the cluster ID and full CIDR address.

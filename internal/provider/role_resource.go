@@ -99,7 +99,7 @@ func (r *roleResource) Create(
 	}
 
 	var roleGrantSpec RoleGrant
-	diags := req.Config.Get(ctx, &roleGrantSpec)
+	diags := req.Plan.Get(ctx, &roleGrantSpec)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {

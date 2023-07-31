@@ -93,7 +93,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		gomock.Any(),
 		clusterID,
 		&client.CreateDatabaseRequest{Name: databaseName},
-	).Return(nil, nil, nil)
+	).Return(&database, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{database}}, nil, nil).
 		Times(2)

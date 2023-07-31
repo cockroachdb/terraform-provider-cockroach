@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -40,65 +41,67 @@ type privateEndpointServicesResource struct {
 
 const endpointServicesCreateTimeout = time.Hour
 
-func (r *privateEndpointServicesResource) Schema(
-	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
-) {
-	resp.Schema = schema.Schema{
-		MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)",
-		Attributes: map[string]schema.Attribute{
-			"cluster_id": schema.StringAttribute{
-				Required: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
+var endpointServicesSchema = schema.Schema{
+	MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)",
+	Attributes: map[string]schema.Attribute{
+		"cluster_id": schema.StringAttribute{
+			Required: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.RequiresReplace(),
 			},
-			"id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
-				MarkdownDescription: "Always matches the cluster ID. Required by Terraform.",
+		},
+		"id": schema.StringAttribute{
+			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
 			},
-			"services": schema.ListNestedAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"region_name": schema.StringAttribute{
-							Computed: true,
+			MarkdownDescription: "Always matches the cluster ID. Required by Terraform.",
+		},
+		"services": schema.ListNestedAttribute{
+			Computed: true,
+			PlanModifiers: []planmodifier.List{
+				listplanmodifier.UseStateForUnknown(),
+			},
+			NestedObject: schema.NestedAttributeObject{
+				Attributes: map[string]schema.Attribute{
+					"region_name": schema.StringAttribute{
+						Computed: true,
+					},
+					"cloud_provider": schema.StringAttribute{
+						Computed: true,
+					},
+					"status": schema.StringAttribute{
+						Computed: true,
+					},
+					"aws": schema.SingleNestedAttribute{
+						Computed: true,
+						PlanModifiers: []planmodifier.Object{
+							objectplanmodifier.UseStateForUnknown(),
 						},
-						"cloud_provider": schema.StringAttribute{
-							Computed: true,
-						},
-						"status": schema.StringAttribute{
-							Computed: true,
-						},
-						"aws": schema.SingleNestedAttribute{
-							Computed: true,
-							PlanModifiers: []planmodifier.Object{
-								objectplanmodifier.UseStateForUnknown(),
+						Attributes: map[string]schema.Attribute{
+							"service_name": schema.StringAttribute{
+								Computed: true,
 							},
-							Attributes: map[string]schema.Attribute{
-								"service_name": schema.StringAttribute{
-									Computed: true,
-								},
-								"service_id": schema.StringAttribute{
-									Computed: true,
-								},
-								"availability_zone_ids": schema.ListAttribute{
-									Computed:            true,
-									ElementType:         types.StringType,
-									MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
-								},
+							"service_id": schema.StringAttribute{
+								Computed: true,
+							},
+							"availability_zone_ids": schema.ListAttribute{
+								Computed:            true,
+								ElementType:         types.StringType,
+								MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
 							},
 						},
 					},
 				},
 			},
 		},
-	}
+	},
+}
+
+func (r *privateEndpointServicesResource) Schema(
+	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+) {
+	resp.Schema = endpointServicesSchema
 }
 
 func (r *privateEndpointServicesResource) Metadata(
@@ -128,14 +131,14 @@ func (r *privateEndpointServicesResource) Create(
 		return
 	}
 
-	var config PrivateEndpointServices
-	diags := req.Config.Get(ctx, &config)
+	var plan PrivateEndpointServices
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	cluster, _, err := r.provider.service.GetCluster(ctx, config.ClusterID.ValueString())
+	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
@@ -158,7 +161,7 @@ func (r *privateEndpointServicesResource) Create(
 	if cluster.Config.Serverless == nil {
 		// If private endpoint services already exist for this dedicated cluster,
 		// this is a no-op. The API will gracefully return the existing services.
-		_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, config.ClusterID.ValueString())
+		_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, plan.ClusterID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Error enabling private endpoint services",
@@ -178,9 +181,13 @@ func (r *privateEndpointServicesResource) Create(
 		return
 	}
 	var state PrivateEndpointServices
-	state.ClusterID = config.ClusterID
-	state.ID = config.ClusterID
-	loadEndpointServicesIntoTerraformState(&services, &state)
+	state.ClusterID = plan.ClusterID
+	state.ID = plan.ClusterID
+	diags = loadEndpointServicesIntoTerraformState(ctx, &services, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -211,19 +218,17 @@ func (r *privateEndpointServicesResource) Read(
 		}
 		return
 	}
-	loadEndpointServicesIntoTerraformState(apiResp, &state)
+	loadEndpointServicesIntoTerraformState(ctx, apiResp, &state)
 	state.ID = state.ClusterID
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
 
-func loadEndpointServicesIntoTerraformState(
-	apiServices *client.PrivateEndpointServices, state *PrivateEndpointServices,
-) {
+func loadEndpointServicesIntoTerraformState(ctx context.Context, apiServices *client.PrivateEndpointServices, state *PrivateEndpointServices) diag.Diagnostics {
 	serviceList := apiServices.GetServices()
-	state.Services = make([]PrivateEndpointService, len(serviceList))
+	services := make([]PrivateEndpointService, len(serviceList))
 	for i, service := range serviceList {
-		state.Services[i] = PrivateEndpointService{
+		services[i] = PrivateEndpointService{
 			RegionName:    types.StringValue(service.GetRegionName()),
 			CloudProvider: types.StringValue(string(service.GetCloudProvider())),
 			Status:        types.StringValue(string(service.GetStatus())),
@@ -237,8 +242,17 @@ func loadEndpointServicesIntoTerraformState(
 		for j, az := range apiAZs {
 			azs[j] = types.StringValue(az)
 		}
-		state.Services[i].Aws.AvailabilityZoneIds = azs
+		services[i].Aws.AvailabilityZoneIds = azs
 	}
+	var diags diag.Diagnostics
+	state.Services, diags = types.ListValueFrom(
+		ctx,
+		// Yes, it really does apparently need to be this complicated.
+		// https://github.com/hashicorp/terraform-plugin-framework/issues/713
+		endpointServicesSchema.Attributes["services"].(schema.ListNestedAttribute).NestedObject.Type(),
+		services,
+	)
+	return diags
 }
 
 func (r *privateEndpointServicesResource) Update(

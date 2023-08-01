@@ -28,6 +28,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
+- `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 
 ### Read-Only

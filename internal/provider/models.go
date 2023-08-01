@@ -87,6 +87,7 @@ type CockroachCluster struct {
 	CreatorId        types.String             `tfsdk:"creator_id"`
 	OperationStatus  types.String             `tfsdk:"operation_status"`
 	UpgradeStatus    types.String             `tfsdk:"upgrade_status"`
+	ParentId         types.String             `tfsdk:"parent_id"`
 }
 
 type AllowlistEntry struct {

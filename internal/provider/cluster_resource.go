@@ -220,6 +220,11 @@ func (r *clusterResource) Schema(
 			"upgrade_status": schema.StringAttribute{
 				Computed: true,
 			},
+			"parent_id": schema.StringAttribute{
+				Computed:            true,
+				Optional:            true,
+				MarkdownDescription: "The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.",
+			},
 		},
 	}
 }
@@ -356,6 +361,25 @@ func (r *clusterResource) Create(
 
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
+		parentID := plan.ParentId.ValueString()
+		if parentID == "" {
+			resp.Diagnostics.AddError("Invalid parent_id",
+				"If set, the parent_id must be a folder ID or 'root' for a root level cluster.")
+			return
+		}
+		if parentID != "root" {
+			_, _, err := r.provider.service.GetFolder(ctx, parentID)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error getting the parent folder",
+					fmt.Sprintf("Could not get the parent folder: %s", formatAPIErrorMessage(err)))
+				return
+			}
+		}
+		clusterSpec.SetParentId(parentID)
 	}
 
 	clusterReq := client.NewCreateClusterRequest(plan.Name.ValueString(), client.CloudProviderType(plan.CloudProvider.ValueString()), *clusterSpec)
@@ -670,6 +694,26 @@ func (r *clusterResource) Update(
 		clusterReq.SetDedicated(*dedicated)
 	}
 
+	// Parent Id
+	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
+		parentID := plan.ParentId.ValueString()
+		if plan.ParentId.ValueString() == "" {
+			resp.Diagnostics.AddError("Invalid parent_id",
+				"If set, the parent_id must be a folder ID or 'root' for a root level cluster.")
+			return
+		}
+		if parentID != "root" {
+			_, _, err := r.provider.service.GetFolder(ctx, parentID)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error getting the parent folder",
+					fmt.Sprintf("Could not get the parent folder: %s", formatAPIErrorMessage(err)))
+				return
+			}
+		}
+		clusterReq.SetParentId(parentID)
+	}
+
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -809,6 +853,12 @@ func loadClusterToTerraformState(
 	}
 	state.Regions = getManagedRegions(&clusterObj.Regions, planRegions)
 	state.UpgradeStatus = types.StringValue(string(clusterObj.UpgradeStatus))
+
+	if clusterObj.ParentId == nil {
+		state.ParentId = types.StringNull()
+	} else {
+		state.ParentId = types.StringValue(*clusterObj.ParentId)
+	}
 
 	if clusterObj.Config.Serverless != nil {
 		serverlessConfig := &ServerlessClusterConfig{

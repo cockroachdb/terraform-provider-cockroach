@@ -135,6 +135,10 @@ func (d *clusterDataSource) Schema(
 			"upgrade_status": schema.StringAttribute{
 				Computed: true,
 			},
+			"parent_id": schema.StringAttribute{
+				Computed:            true,
+				MarkdownDescription: "The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.",
+			},
 		},
 		MarkdownDescription: "Cluster Data Source",
 	}

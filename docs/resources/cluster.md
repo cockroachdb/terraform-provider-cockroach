@@ -25,6 +25,7 @@ Cluster Resource
 
 - `cockroach_version` (String)
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
+- `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 
 ### Read-Only

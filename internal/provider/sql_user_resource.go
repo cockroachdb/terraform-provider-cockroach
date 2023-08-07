@@ -52,7 +52,7 @@ func (r *sqlUserResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "SQL user and password",
+		Description: "CockroachDB SQL user.",
 		Attributes: map[string]schema.Attribute{
 			"cluster_id": schema.StringAttribute{
 				Required: true,
@@ -65,6 +65,7 @@ func (r *sqlUserResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Description: "SQL user name.",
 			},
 			"password": schema.StringAttribute{
 				Optional:    true,
@@ -76,7 +77,7 @@ func (r *sqlUserResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Description: "A unique identifier with format '<cluster ID>:<SQL user name>'",
+				MarkdownDescription: "A unique identifier with format `<cluster ID>:<SQL user name>`.",
 			},
 		},
 	}

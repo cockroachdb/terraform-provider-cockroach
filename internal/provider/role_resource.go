@@ -19,7 +19,6 @@ package provider
 import (
 	"context"
 	"fmt"
-
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -39,7 +38,7 @@ func (r *roleResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Role grants",
+		MarkdownDescription: "Role grants for a single user.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -49,7 +48,8 @@ func (r *roleResource) Schema(
 				MarkdownDescription: "Always matches the user ID. Required by Terraform.",
 			},
 			"user_id": schema.StringAttribute{
-				Required: true,
+				Required:    true,
+				Description: "ID of the user to grant these roles to.",
 			},
 			"roles": schema.SetNestedAttribute{
 				Required: true,
@@ -57,12 +57,17 @@ func (r *roleResource) Schema(
 					Attributes: map[string]schema.Attribute{
 						"role_name": schema.StringAttribute{
 							Required: true,
+							MarkdownDescription: "Name of the role to grant. Allowed values are:" +
+								formatEnumMarkdownList(client.AllowedOrganizationUserRoleTypeEnumValues),
 						},
 						"resource_type": schema.StringAttribute{
 							Required: true,
+							MarkdownDescription: "Type of resource. Allowed values are: " +
+								formatEnumMarkdownList(client.AllowedResourceTypeTypeEnumValues),
 						},
 						"resource_id": schema.StringAttribute{
-							Optional: true,
+							Optional:    true,
+							Description: "ID of the resource. Omit if resource_type is 'ORGANIZATION'.",
 						},
 					},
 				},

@@ -3,12 +3,12 @@
 page_title: "cockroach_version_deferral Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Version upgrade deferral resource for a cluster.
+  Configure minor version upgrade deferral for a cluster.
 ---
 
 # cockroach_version_deferral (Resource)
 
-Version upgrade deferral resource for a cluster.
+Configure minor version upgrade deferral for a cluster.
 
 
 
@@ -18,6 +18,6 @@ Version upgrade deferral resource for a cluster.
 ### Required
 
 - `deferral_policy` (String) The policy for managing automated minor version upgrades. Set to FIXED_DEFERRAL to defer upgrades by 60 days or NOT_DEFERRED to apply upgrades immediately.
-- `id` (String) Cluster ID
+- `id` (String) Cluster ID.
 
 

@@ -3,12 +3,12 @@
 page_title: "cockroach_cluster Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Cluster Data Source
+  CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 ---
 
 # cockroach_cluster (Data Source)
 
-Cluster Data Source
+CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 
 
 
@@ -17,31 +17,34 @@ Cluster Data Source
 
 ### Read-Only
 
-- `account_id` (String)
-- `cloud_provider` (String)
-- `cockroach_version` (String)
-- `creator_id` (String)
+- `account_id` (String) The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.
+- `cloud_provider` (String) Cloud provider used to host the cluster. Allowed values are:
+  * GCP
+  * AWS
+  * AZURE
+- `cockroach_version` (String) Full version of CockroachDB running on the cluster.
+- `creator_id` (String) ID of the user who created the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `id` (String) The ID of this resource.
-- `name` (String) Name of cluster
-- `operation_status` (String)
-- `plan` (String)
+- `name` (String) Name of the cluster.
+- `operation_status` (String) Describes the current long-running operation, if any.
+- `plan` (String) Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
-- `state` (String)
-- `upgrade_status` (String)
+- `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
+- `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
 
 <a id="nestedatt--dedicated"></a>
 ### Nested Schema for `dedicated`
 
 Read-Only:
 
-- `disk_iops` (Number)
-- `machine_type` (String)
-- `memory_gib` (Number)
-- `num_virtual_cpus` (Number)
-- `private_network_visibility` (Boolean)
-- `storage_gib` (Number)
+- `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
+- `machine_type` (String) Machine type identifier within the given cloud provider, ex. m6.xlarge, n2-standard-4.
+- `memory_gib` (Number) Memory per node in GiB.
+- `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
+- `private_network_visibility` (Boolean) Indicates whether private IP addresses are assigned to nodes. Required for CMEK and other advanced networking features.
+- `storage_gib` (Number) Storage amount per node in GiB.
 
 
 <a id="nestedatt--regions"></a>
@@ -49,12 +52,12 @@ Read-Only:
 
 Read-Only:
 
-- `internal_dns` (String)
-- `name` (String)
-- `node_count` (Number)
-- `primary` (Boolean)
-- `sql_dns` (String)
-- `ui_dns` (String)
+- `internal_dns` (String) Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.
+- `name` (String) Region code used by the cluster's cloud provider.
+- `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
+- `primary` (Boolean) Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.
+- `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
+- `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
 
 
 <a id="nestedatt--serverless"></a>
@@ -62,8 +65,8 @@ Read-Only:
 
 Read-Only:
 
-- `routing_id` (String)
-- `spend_limit` (Number)
+- `routing_id` (String) Cluster identifier in a connection string.
+- `spend_limit` (Number) Spend limit in US cents.
 - `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
 
 <a id="nestedatt--serverless--usage_limits"></a>
@@ -71,7 +74,7 @@ Read-Only:
 
 Read-Only:
 
-- `request_unit_limit` (Number)
-- `storage_mib_limit` (Number)
+- `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
+- `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
 
 

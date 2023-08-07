@@ -56,16 +56,20 @@ type clusterResource struct {
 var regionSchema = schema.NestedAttributeObject{
 	Attributes: map[string]schema.Attribute{
 		"name": schema.StringAttribute{
-			Required: true,
+			Required:    true,
+			Description: "Name of the region. Should match the region code used by the cluster's cloud provider.",
 		},
 		"sql_dns": schema.StringAttribute{
-			Computed: true,
+			Computed:    true,
+			Description: "DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.",
 		},
 		"ui_dns": schema.StringAttribute{
-			Computed: true,
+			Computed:    true,
+			Description: "DNS name used when connecting to the DB Console for the cluster.",
 		},
 		"internal_dns": schema.StringAttribute{
-			Computed: true,
+			Computed:    true,
+			Description: "Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.",
 		},
 		"node_count": schema.Int64Attribute{
 			Optional: true,
@@ -73,6 +77,7 @@ var regionSchema = schema.NestedAttributeObject{
 			PlanModifiers: []planmodifier.Int64{
 				int64planmodifier.UseStateForUnknown(),
 			},
+			Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",
 		},
 		"primary": schema.BoolAttribute{
 			Optional:    true,
@@ -89,7 +94,7 @@ func (r *clusterResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Cluster Resource",
+		Description: "CockroachDB Cloud cluster. Can be Dedicated or Serverless.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -98,7 +103,7 @@ func (r *clusterResource) Schema(
 				},
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "Name of cluster",
+				MarkdownDescription: "Name of the cluster.",
 				Required:            true,
 			},
 			"cockroach_version": schema.StringAttribute{
@@ -107,21 +112,26 @@ func (r *clusterResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "Major version of CockroachDB running on the cluster.",
 			},
 			"account_id": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.",
 			},
 			"plan": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.",
 			},
 			"cloud_provider": schema.StringAttribute{
 				Required: true,
+				MarkdownDescription: "Cloud provider used to host the cluster. Allowed values are:" +
+					formatEnumMarkdownList(client.AllowedCloudProviderTypeEnumValues),
 			},
 			"serverless": schema.SingleNestedAttribute{
 				Optional: true,
@@ -141,7 +151,7 @@ func (r *clusterResource) Schema(
 								PlanModifiers: []planmodifier.Int64{
 									int64planmodifier.UseStateForUnknown(),
 								},
-								MarkdownDescription: "Maximum number of request units that the cluster can consume during the month.",
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume during the month.",
 							},
 							"storage_mib_limit": schema.Int64Attribute{
 								Required: true,
@@ -157,6 +167,7 @@ func (r *clusterResource) Schema(
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},
+						Description: "Cluster identifier in a connection string.",
 					},
 				},
 			},
@@ -172,21 +183,26 @@ func (r *clusterResource) Schema(
 						PlanModifiers: []planmodifier.Int64{
 							int64planmodifier.UseStateForUnknown(),
 						},
+						Description: "Storage amount per node in GiB.",
 					},
 					"disk_iops": schema.Int64Attribute{
-						Optional: true,
-						Computed: true,
+						Optional:    true,
+						Computed:    true,
+						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.",
 					},
 					"memory_gib": schema.Float64Attribute{
-						Computed: true,
+						Computed:    true,
+						Description: "Memory per node in GiB.",
 					},
 					"machine_type": schema.StringAttribute{
-						Optional: true,
-						Computed: true,
+						Optional:    true,
+						Computed:    true,
+						Description: "Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4.",
 					},
 					"num_virtual_cpus": schema.Int64Attribute{
-						Optional: true,
-						Computed: true,
+						Optional:    true,
+						Computed:    true,
+						Description: "Number of virtual CPUs per node in the cluster.",
 					},
 					"private_network_visibility": schema.BoolAttribute{
 						Optional:    true,
@@ -206,19 +222,23 @@ func (r *clusterResource) Schema(
 				NestedObject: regionSchema,
 			},
 			"state": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Describes whether the cluster is being created, updated, deleted, etc.",
 			},
 			"creator_id": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Description: "ID of the user who created the cluster.",
 			},
 			"operation_status": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Describes the current long-running operation, if any.",
 			},
 			"upgrade_status": schema.StringAttribute{
-				Computed: true,
+				Computed:    true,
+				Description: "Describes the status of any in-progress CockroachDB upgrade or rollback.",
 			},
 		},
 	}

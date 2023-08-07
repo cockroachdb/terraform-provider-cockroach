@@ -37,13 +37,13 @@ import (
 var cmekAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Cluster ID",
+		MarkdownDescription: "Cluster ID.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	},
 	"status": schema.StringAttribute{
-		MarkdownDescription: "Aggregated status of the cluster's encryption key(s)",
+		MarkdownDescription: "Aggregated status of the cluster's encryption key(s).",
 		Computed:            true,
 		Optional:            true,
 	},
@@ -55,35 +55,44 @@ var cmekAttributes = map[string]schema.Attribute{
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
 				"region": schema.StringAttribute{
-					Required: true,
+					Required:    true,
+					Description: "Cloud provider region code.",
 				},
 				"status": schema.StringAttribute{
-					Computed: true,
+					Computed:    true,
+					Description: "Describes the status of the current encryption key within the region.",
 				},
 				"key": schema.SingleNestedAttribute{
 					Required: true,
 					Attributes: map[string]schema.Attribute{
 						"auth_principal": schema.StringAttribute{
-							Required: true,
+							Required:    true,
+							Description: "Principal to authenticate as in order to access the key.",
 						},
 						"type": schema.StringAttribute{
-							MarkdownDescription: "Current allowed values are 'AWS_KMS' and 'GCP_CLOUD_KMS'",
-							Required:            true,
-						},
-						"uri": schema.StringAttribute{
+							MarkdownDescription: "Type of encryption key. Current allowed values are:" +
+								formatEnumMarkdownList(client.AllowedCMEKKeyTypeEnumValues),
 							Required: true,
 						},
+						"uri": schema.StringAttribute{
+							Required:    true,
+							Description: "Provider-specific URI pointing to the encryption key.",
+						},
 						"status": schema.StringAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Current status of this key.",
 						},
 						"user_message": schema.StringAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Elaborates on the key's status and hints at how to fix issues that may have occurred during asynchronous key operations.",
 						},
 						"created_at": schema.StringAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Indicates when the key was created.",
 						},
 						"updated_at": schema.StringAttribute{
-							Computed: true,
+							Computed:    true,
+							Description: "Indicates when the key was last updated.",
 						},
 					},
 				},
@@ -105,7 +114,7 @@ func (r *cmekResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Customer-managed encryption keys (CMEK) resource for a single cluster",
+		MarkdownDescription: "Customer-managed encryption keys (CMEK) resource for a single cluster.",
 		Attributes:          cmekAttributes,
 	}
 }

@@ -3,12 +3,12 @@
 page_title: "cockroach_sql_user Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  SQL user and password
+  CockroachDB SQL user.
 ---
 
 # cockroach_sql_user (Resource)
 
-SQL user and password
+CockroachDB SQL user.
 
 
 
@@ -18,7 +18,7 @@ SQL user and password
 ### Required
 
 - `cluster_id` (String)
-- `name` (String)
+- `name` (String) SQL user name.
 
 ### Optional
 
@@ -26,6 +26,6 @@ SQL user and password
 
 ### Read-Only
 
-- `id` (String) A unique identifier with format '<cluster ID>:<SQL user name>'
+- `id` (String) A unique identifier with format `<cluster ID>:<SQL user name>`.
 
 

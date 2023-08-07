@@ -36,7 +36,7 @@ import (
 var metricExportCloudWathConfigAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Cluster ID",
+		MarkdownDescription: "Cluster ID.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
@@ -56,10 +56,12 @@ var metricExportCloudWathConfigAttributes = map[string]schema.Attribute{
 		Computed:            true,
 	},
 	"status": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Encodes the possible states that a metric export configuration can be in as it is created, deployed, and disabled.",
 	},
 	"user_message": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Elaborates on the metric export status and hints at how to fix issues that may have occurred during asynchronous operations.",
 	},
 }
 
@@ -71,8 +73,8 @@ func (r *metricExportCloudWatchConfigResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Metric Export CloudWatch Config Resource",
-		Attributes:          metricExportCloudWathConfigAttributes,
+		Description: "Amazon CloudWatch metric export configuration for a cluster.",
+		Attributes:  metricExportCloudWathConfigAttributes,
 	}
 }
 

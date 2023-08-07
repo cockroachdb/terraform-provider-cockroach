@@ -3,12 +3,12 @@
 page_title: "cockroach_database Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Database
+  CockroachDB database.
 ---
 
 # cockroach_database (Resource)
 
-Database
+CockroachDB database.
 
 
 
@@ -17,12 +17,12 @@ Database
 
 ### Required
 
-- `cluster_id` (String)
-- `name` (String)
+- `cluster_id` (String) ID of the cluster the database belongs to.
+- `name` (String) Database name.
 
 ### Read-Only
 
-- `id` (String) A unique identifier with format '<cluster ID>:<database name>'
-- `table_count` (Number)
+- `id` (String) A unique identifier with format `<cluster ID>:<database name>`.
+- `table_count` (Number) Number of tables in the database.
 
 

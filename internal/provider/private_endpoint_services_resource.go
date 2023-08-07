@@ -42,7 +42,7 @@ type privateEndpointServicesResource struct {
 const endpointServicesCreateTimeout = time.Hour
 
 var endpointServicesSchema = schema.Schema{
-	MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP)",
+	MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP).",
 	Attributes: map[string]schema.Attribute{
 		"cluster_id": schema.StringAttribute{
 			Required: true,
@@ -65,13 +65,16 @@ var endpointServicesSchema = schema.Schema{
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
 					"region_name": schema.StringAttribute{
-						Computed: true,
+						Computed:    true,
+						Description: "Cloud provider region code associated with this service.",
 					},
 					"cloud_provider": schema.StringAttribute{
-						Computed: true,
+						Computed:    true,
+						Description: "Cloud provider associated with this service.",
 					},
 					"status": schema.StringAttribute{
-						Computed: true,
+						Computed:    true,
+						Description: "Operation status of the service.",
 					},
 					"aws": schema.SingleNestedAttribute{
 						Computed: true,
@@ -80,10 +83,12 @@ var endpointServicesSchema = schema.Schema{
 						},
 						Attributes: map[string]schema.Attribute{
 							"service_name": schema.StringAttribute{
-								Computed: true,
+								Computed:    true,
+								Description: "AWS service name used to create endpoints.",
 							},
 							"service_id": schema.StringAttribute{
-								Computed: true,
+								Computed:    true,
+								Description: "Server side ID of the PrivateLink connection.",
 							},
 							"availability_zone_ids": schema.ListAttribute{
 								Computed:            true,

@@ -3,12 +3,12 @@
 page_title: "cockroach_user_role_grants Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Role grants
+  Role grants for a single user.
 ---
 
 # cockroach_user_role_grants (Resource)
 
-Role grants
+Role grants for a single user.
 
 
 
@@ -18,7 +18,7 @@ Role grants
 ### Required
 
 - `roles` (Attributes Set) (see [below for nested schema](#nestedatt--roles))
-- `user_id` (String)
+- `user_id` (String) ID of the user to grant these roles to.
 
 ### Read-Only
 
@@ -29,11 +29,22 @@ Role grants
 
 Required:
 
-- `resource_type` (String)
-- `role_name` (String)
+- `resource_type` (String) Type of resource. Allowed values are: 
+  * ORGANIZATION
+  * CLUSTER
+- `role_name` (String) Name of the role to grant. Allowed values are:
+  * DEVELOPER
+  * ADMIN
+  * BILLING_COORDINATOR
+  * ORG_ADMIN
+  * ORG_MEMBER
+  * CLUSTER_ADMIN
+  * CLUSTER_OPERATOR_WRITER
+  * CLUSTER_DEVELOPER
+  * CLUSTER_CREATOR
 
 Optional:
 
-- `resource_id` (String)
+- `resource_id` (String) ID of the resource. Omit if resource_type is 'ORGANIZATION'.
 
 

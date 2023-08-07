@@ -17,11 +17,11 @@ Manages client CA certs.
 
 ### Required
 
-- `id` (String) Cluster ID
-- `x509_pem_cert` (String) X509 certificate in PEM format
+- `id` (String) Cluster ID.
+- `x509_pem_cert` (String) X509 certificate in PEM format.
 
 ### Read-Only
 
-- `status` (String) Status of client CA certs on a cluster
+- `status` (String) Status of client CA certs on a cluster.
 
 

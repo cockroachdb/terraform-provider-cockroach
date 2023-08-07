@@ -30,7 +30,7 @@ import (
 var versionDeferralAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Cluster ID",
+		MarkdownDescription: "Cluster ID.",
 	},
 	"deferral_policy": schema.StringAttribute{
 		Required:            true,
@@ -46,7 +46,7 @@ func (r *versionDeferralResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Version upgrade deferral resource for a cluster.",
+		MarkdownDescription: "Configure minor version upgrade deferral for a cluster.",
 		Attributes:          versionDeferralAttributes,
 	}
 }

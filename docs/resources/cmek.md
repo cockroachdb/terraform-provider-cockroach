@@ -3,12 +3,12 @@
 page_title: "cockroach_cmek Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Customer-managed encryption keys (CMEK) resource for a single cluster
+  Customer-managed encryption keys (CMEK) resource for a single cluster.
 ---
 
 # cockroach_cmek (Resource)
 
-Customer-managed encryption keys (CMEK) resource for a single cluster
+Customer-managed encryption keys (CMEK) resource for a single cluster.
 
 
 
@@ -17,13 +17,13 @@ Customer-managed encryption keys (CMEK) resource for a single cluster
 
 ### Required
 
-- `id` (String) Cluster ID
+- `id` (String) Cluster ID.
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 
 ### Optional
 
 - `additional_regions` (Attributes List) Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead. (see [below for nested schema](#nestedatt--additional_regions))
-- `status` (String) Aggregated status of the cluster's encryption key(s)
+- `status` (String) Aggregated status of the cluster's encryption key(s).
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`
@@ -31,27 +31,30 @@ Customer-managed encryption keys (CMEK) resource for a single cluster
 Required:
 
 - `key` (Attributes) (see [below for nested schema](#nestedatt--regions--key))
-- `region` (String)
+- `region` (String) Cloud provider region code.
 
 Read-Only:
 
-- `status` (String)
+- `status` (String) Describes the status of the current encryption key within the region.
 
 <a id="nestedatt--regions--key"></a>
 ### Nested Schema for `regions.key`
 
 Required:
 
-- `auth_principal` (String)
-- `type` (String) Current allowed values are 'AWS_KMS' and 'GCP_CLOUD_KMS'
-- `uri` (String)
+- `auth_principal` (String) Principal to authenticate as in order to access the key.
+- `type` (String) Type of encryption key. Current allowed values are:
+  * AWS_KMS
+  * GCP_CLOUD_KMS
+  * NULL_KMS
+- `uri` (String) Provider-specific URI pointing to the encryption key.
 
 Read-Only:
 
-- `created_at` (String)
-- `status` (String)
-- `updated_at` (String)
-- `user_message` (String)
+- `created_at` (String) Indicates when the key was created.
+- `status` (String) Current status of this key.
+- `updated_at` (String) Indicates when the key was last updated.
+- `user_message` (String) Elaborates on the key's status and hints at how to fix issues that may have occurred during asynchronous key operations.
 
 
 
@@ -60,17 +63,17 @@ Read-Only:
 
 Required:
 
-- `name` (String)
+- `name` (String) Name of the region. Should match the region code used by the cluster's cloud provider.
 
 Optional:
 
-- `node_count` (Number)
+- `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
 - `primary` (Boolean) Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
 
 Read-Only:
 
-- `internal_dns` (String)
-- `sql_dns` (String)
-- `ui_dns` (String)
+- `internal_dns` (String) Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.
+- `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
+- `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
 
 

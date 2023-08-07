@@ -36,25 +36,27 @@ import (
 var metricExportDatadogConfigAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "Cluster ID",
+		MarkdownDescription: "Cluster ID.",
 		PlanModifiers: []planmodifier.String{
 			stringplanmodifier.RequiresReplace(),
 		},
 	},
 	"site": schema.StringAttribute{
 		Required:            true,
-		MarkdownDescription: "The Datadog region to export to",
+		MarkdownDescription: "The Datadog region to export to.",
 	},
 	"api_key": schema.StringAttribute{
 		Required:            true,
 		Sensitive:           true,
-		MarkdownDescription: "A Datadog API key",
+		MarkdownDescription: "A Datadog API key.",
 	},
 	"status": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Encodes the possible states that a metric export configuration can be in as it is created, deployed, and disabled.",
 	},
 	"user_message": schema.StringAttribute{
-		Computed: true,
+		Computed:    true,
+		Description: "Elaborates on the metric export status and hints at how to fix issues that may have occurred during asynchronous operations.",
 	},
 }
 
@@ -66,8 +68,8 @@ func (r *metricExportDatadogConfigResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Metric Export Datadog Config Resource",
-		Attributes:          metricExportDatadogConfigAttributes,
+		Description: "DataDog metric export configuration for a cluster.",
+		Attributes:  metricExportDatadogConfigAttributes,
 	}
 }
 

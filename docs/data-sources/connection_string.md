@@ -3,12 +3,12 @@
 page_title: "cockroach_connection_string Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Generic connection string for a given cluster
+  Generic connection string for a cluster.
 ---
 
 # cockroach_connection_string (Data Source)
 
-Generic connection string for a given cluster
+Generic connection string for a cluster.
 
 
 
@@ -17,12 +17,15 @@ Generic connection string for a given cluster
 
 ### Required
 
-- `id` (String) Cluster ID
+- `id` (String) Cluster ID.
 
 ### Optional
 
 - `database` (String) Database to connect to. Defaults to 'defaultdb'.
-- `os` (String) Used to determine the SSL certificate path for dedicated clusters. Defaults to the Terraform user's OS. Options are 'WINDOWS', 'MAC', and 'LINUX'.
+- `os` (String) Used to determine the SSL certificate path for dedicated clusters. Defaults to the Terraform user's OS. Options are:
+  * MAC
+  * LINUX
+  * WINDOWS
 - `password` (String, Sensitive) Database user password. Must also include `sql_user`.
 - `sql_user` (String) Database username.
 

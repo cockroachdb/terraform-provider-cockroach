@@ -280,6 +280,21 @@ type Folder struct {
 	ParentId types.String `tfsdk:"parent_id"`
 }
 
+type ApiOidcConfig struct {
+	ID          types.String        `tfsdk:"id"`
+	Issuer      types.String        `tfsdk:"issuer"`
+	Audience    types.String        `tfsdk:"audience"`
+	Jwks        types.String        `tfsdk:"jwks"`
+	Claim       types.String        `tfsdk:"claim"`
+	IdentityMap *[]IdentityMapEntry `tfsdk:"identity_map"`
+}
+
+type IdentityMapEntry struct {
+	TokenIdentity types.String `tfsdk:"token_identity"`
+	CcIdentity    types.String `tfsdk:"cc_identity"`
+	IsRegex       types.Bool   `tfsdk:"is_regex"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

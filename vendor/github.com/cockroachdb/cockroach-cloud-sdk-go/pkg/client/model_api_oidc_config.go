@@ -20,12 +20,12 @@ package client
 
 // ApiOidcConfig api_oidc_config contains information about an OIDC provider that can generate JWT tokens that can be used for authentication with the Cockroach Cloud API..
 type ApiOidcConfig struct {
-	Audience    string  `json:"audience"`
-	Claim       *string `json:"claim,omitempty"`
-	Id          string  `json:"id"`
-	IdentityMap *string `json:"identity_map,omitempty"`
-	Issuer      string  `json:"issuer"`
-	Jwks        string  `json:"jwks"`
+	Audience    string                     `json:"audience"`
+	Claim       *string                    `json:"claim,omitempty"`
+	Id          string                     `json:"id"`
+	IdentityMap *[]ApiOidcIdentityMapEntry `json:"identity_map,omitempty"`
+	Issuer      string                     `json:"issuer"`
+	Jwks        string                     `json:"jwks"`
 }
 
 // NewApiOidcConfig instantiates a new ApiOidcConfig object.
@@ -94,16 +94,16 @@ func (o *ApiOidcConfig) SetId(v string) {
 }
 
 // GetIdentityMap returns the IdentityMap field value if set, zero value otherwise.
-func (o *ApiOidcConfig) GetIdentityMap() string {
+func (o *ApiOidcConfig) GetIdentityMap() []ApiOidcIdentityMapEntry {
 	if o == nil || o.IdentityMap == nil {
-		var ret string
+		var ret []ApiOidcIdentityMapEntry
 		return ret
 	}
 	return *o.IdentityMap
 }
 
-// SetIdentityMap gets a reference to the given string and assigns it to the IdentityMap field.
-func (o *ApiOidcConfig) SetIdentityMap(v string) {
+// SetIdentityMap gets a reference to the given []ApiOidcIdentityMapEntry and assigns it to the IdentityMap field.
+func (o *ApiOidcConfig) SetIdentityMap(v []ApiOidcIdentityMapEntry) {
 	o.IdentityMap = &v
 }
 

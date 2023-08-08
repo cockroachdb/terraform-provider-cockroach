@@ -20,11 +20,11 @@ package client
 
 // CreateApiOidcConfigRequest struct for CreateApiOidcConfigRequest.
 type CreateApiOidcConfigRequest struct {
-	Audience    string  `json:"audience"`
-	Claim       *string `json:"claim,omitempty"`
-	IdentityMap *string `json:"identity_map,omitempty"`
-	Issuer      string  `json:"issuer"`
-	Jwks        string  `json:"jwks"`
+	Audience    string                     `json:"audience"`
+	Claim       *string                    `json:"claim,omitempty"`
+	IdentityMap *[]ApiOidcIdentityMapEntry `json:"identity_map,omitempty"`
+	Issuer      string                     `json:"issuer"`
+	Jwks        string                     `json:"jwks"`
 }
 
 // NewCreateApiOidcConfigRequest instantiates a new CreateApiOidcConfigRequest object.
@@ -77,16 +77,16 @@ func (o *CreateApiOidcConfigRequest) SetClaim(v string) {
 }
 
 // GetIdentityMap returns the IdentityMap field value if set, zero value otherwise.
-func (o *CreateApiOidcConfigRequest) GetIdentityMap() string {
+func (o *CreateApiOidcConfigRequest) GetIdentityMap() []ApiOidcIdentityMapEntry {
 	if o == nil || o.IdentityMap == nil {
-		var ret string
+		var ret []ApiOidcIdentityMapEntry
 		return ret
 	}
 	return *o.IdentityMap
 }
 
-// SetIdentityMap gets a reference to the given string and assigns it to the IdentityMap field.
-func (o *CreateApiOidcConfigRequest) SetIdentityMap(v string) {
+// SetIdentityMap gets a reference to the given []ApiOidcIdentityMapEntry and assigns it to the IdentityMap field.
+func (o *CreateApiOidcConfigRequest) SetIdentityMap(v []ApiOidcIdentityMapEntry) {
 	o.IdentityMap = &v
 }
 

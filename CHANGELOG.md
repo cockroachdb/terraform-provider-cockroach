@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed an issue where changing `num_virtual_cpus` on a `cockroach_cluster` resource would fail to scale the cluster
   and would result in an inconsistent state error.
+- Added validation to prevent multiple serverless regions from being marked as "primary", which could result in an
+  inconsistent state error.
 
 ## [0.7.0] - 2023-07-13
 

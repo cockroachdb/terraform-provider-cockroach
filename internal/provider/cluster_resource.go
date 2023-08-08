@@ -83,9 +83,6 @@ var regionSchema = schema.NestedAttributeObject{
 			Optional:    true,
 			Computed:    true,
 			Description: "Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
-			PlanModifiers: []planmodifier.Bool{
-				boolplanmodifier.UseStateForUnknown(),
-			},
 		},
 	},
 }
@@ -308,6 +305,11 @@ func (r *clusterResource) Create(
 		var primaryRegion string
 		for _, region := range plan.Regions {
 			if region.Primary.ValueBool() {
+				if primaryRegion != "" {
+					resp.Diagnostics.AddError("Too many primary regions",
+						"Only one region may be marked primary when creating a multi-region Serverless cluster.")
+					return
+				}
 				primaryRegion = region.Name.ValueString()
 			}
 			regions = append(regions, region.Name.ValueString())
@@ -630,6 +632,11 @@ func (r *clusterResource) Update(
 			var primaryRegion string
 			for _, region := range plan.Regions {
 				if region.Primary.ValueBool() {
+					if primaryRegion != "" {
+						resp.Diagnostics.AddError("Too many primary regions",
+							"Only one region may be marked primary when creating a multi-region Serverless cluster.")
+						return
+					}
 					primaryRegion = region.Name.ValueString()
 				}
 				regions = append(regions, region.Name.ValueString())

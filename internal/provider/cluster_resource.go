@@ -327,7 +327,7 @@ func (r *clusterResource) Create(
 				usageLimits.RequestUnitLimit.ValueInt64(), usageLimits.StorageMibLimit.ValueInt64())
 		} else {
 			spendLimit := plan.ServerlessConfig.SpendLimit
-			if !spendLimit.IsNull() {
+			if IsKnown(spendLimit) {
 				val := int32(spendLimit.ValueInt64())
 				serverless.SpendLimit = &val
 			}
@@ -336,7 +336,7 @@ func (r *clusterResource) Create(
 		clusterSpec.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
-		if !plan.CockroachVersion.IsNull() {
+		if IsKnown(plan.CockroachVersion) {
 			version := plan.CockroachVersion.ValueString()
 			dedicated.CockroachVersion = &version
 		}
@@ -350,18 +350,18 @@ func (r *clusterResource) Create(
 		if cfg := plan.DedicatedConfig; cfg != nil {
 			hardware := client.DedicatedHardwareCreateSpecification{}
 			machineSpec := client.DedicatedMachineTypeSpecification{}
-			if !cfg.NumVirtualCpus.IsNull() {
+			if IsKnown(cfg.NumVirtualCpus) {
 				cpus := int32(cfg.NumVirtualCpus.ValueInt64())
 				machineSpec.NumVirtualCpus = &cpus
-			} else if !cfg.MachineType.IsNull() {
+			} else if IsKnown(cfg.MachineType) {
 				machineType := cfg.MachineType.ValueString()
 				machineSpec.MachineType = &machineType
 			}
 			hardware.MachineSpec = machineSpec
-			if !cfg.StorageGib.IsNull() {
+			if IsKnown(cfg.StorageGib) {
 				hardware.StorageGib = int32(cfg.StorageGib.ValueInt64())
 			}
-			if !cfg.DiskIops.IsNull() {
+			if IsKnown(cfg.DiskIops) {
 				diskiops := int32(cfg.DiskIops.ValueInt64())
 				hardware.DiskIops = &diskiops
 			}
@@ -423,7 +423,7 @@ func (r *clusterResource) Read(
 		return
 	}
 
-	if cluster.ID.IsNull() {
+	if !IsKnown(cluster.ID) {
 		return
 	}
 	clusterID := cluster.ID.ValueString()
@@ -559,7 +559,7 @@ func (r *clusterResource) Update(
 	}
 
 	// CRDB Versions
-	if !plan.CockroachVersion.IsNull() && plan.CockroachVersion != state.CockroachVersion {
+	if IsKnown(plan.CockroachVersion) && plan.CockroachVersion != state.CockroachVersion {
 		// Validate that the target version is valid.
 		planVersion := plan.CockroachVersion.ValueString()
 		stateVersion := state.CockroachVersion.ValueString()
@@ -669,19 +669,19 @@ func (r *clusterResource) Update(
 			}
 		}
 		dedicated.Hardware = client.NewDedicatedHardwareUpdateSpecification()
-		if !plan.DedicatedConfig.StorageGib.IsNull() {
+		if IsKnown(plan.DedicatedConfig.StorageGib) {
 			storage := int32(plan.DedicatedConfig.StorageGib.ValueInt64())
 			dedicated.Hardware.StorageGib = &storage
 		}
-		if !plan.DedicatedConfig.DiskIops.IsNull() {
+		if IsKnown(plan.DedicatedConfig.DiskIops) {
 			diskiops := int32(plan.DedicatedConfig.DiskIops.ValueInt64())
 			dedicated.Hardware.DiskIops = &diskiops
 		}
 		machineSpec := client.DedicatedMachineTypeSpecification{}
-		if !plan.DedicatedConfig.MachineType.IsNull() {
+		if IsKnown(plan.DedicatedConfig.MachineType) {
 			machineType := plan.DedicatedConfig.MachineType.ValueString()
 			machineSpec.MachineType = &machineType
-		} else if !plan.DedicatedConfig.NumVirtualCpus.IsNull() {
+		} else if IsKnown(plan.DedicatedConfig.NumVirtualCpus) {
 			cpus := int32(plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
 			machineSpec.NumVirtualCpus = &cpus
 		}
@@ -734,7 +734,7 @@ func (r *clusterResource) Delete(
 	}
 
 	// Get cluster ID from state
-	if state.ID.IsNull() {
+	if !IsKnown(state.ID) {
 		return
 	}
 	clusterID := state.ID.ValueString()
@@ -850,7 +850,7 @@ func loadClusterToTerraformState(
 				RequestUnitLimit: types.Int64Value(usageLimits.RequestUnitLimit),
 				StorageMibLimit:  types.Int64Value(usageLimits.StorageMibLimit),
 			}
-		} else if clusterObj.Config.Serverless.SpendLimit != nil && planConfig != nil && !planConfig.SpendLimit.IsNull() {
+		} else if clusterObj.Config.Serverless.SpendLimit != nil && planConfig != nil && IsKnown(planConfig.SpendLimit) {
 			serverlessConfig.SpendLimit = types.Int64Value(int64(clusterObj.Config.Serverless.GetSpendLimit()))
 		}
 		state.ServerlessConfig = serverlessConfig

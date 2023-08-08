@@ -618,13 +618,19 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	finalizedCluster := upgradingCluster
 	finalizedCluster.UpgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_FINALIZED
 
+	scaledCluster := finalizedCluster
+	scaledCluster.Config.Dedicated = &client.DedicatedHardwareConfig{}
+	*scaledCluster.Config.Dedicated = *finalizedCluster.Config.Dedicated
+	scaledCluster.Config.Dedicated.NumVirtualCpus = 4
+
+	httpOk := &http.Response{Status: http.StatusText(http.StatusOK)}
+
 	// Creation
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(&cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(8)
+		Return(&cluster, httpOk, nil).AnyTimes()
 
 	// Upgrade
 
@@ -639,66 +645,93 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		},
 	}, nil, nil)
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &upgradingCluster.UpgradeStatus}).
-		Return(&upgradingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&pendingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-	// Scale (no-op)
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
-		Return(&pendingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&pendingCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
-	// Finalize
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &finalizedCluster.UpgradeStatus}).
-		Return(&finalizedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+		DoAndReturn(
+			func(context.Context, string, *client.UpdateClusterSpecification,
+			) (*client.Cluster, *http.Response, error) {
+				cluster = upgradingCluster
+				return &cluster, httpOk, nil
+			},
+		)
 
+	// Scale (no-op)
+
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
+		DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
+		) (*client.Cluster, *http.Response, error) {
+			cluster = pendingCluster
+			return &cluster, httpOk, nil
+		})
+
+	// Finalize
+
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &finalizedCluster.UpgradeStatus}).
+		DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
+		) (*client.Cluster, *http.Response, error) {
+			cluster = finalizedCluster
+			return &cluster, httpOk, nil
+		})
+
+	// Scale
+
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
+		DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
+		) (*client.Cluster, *http.Response, error) {
+			cluster = scaledCluster
+			return &cluster, httpOk, nil
+		})
 	// Deletion
 
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&finalizedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(6)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testDedicatedClusterResource(t, clusterName, true)
+	scaleStep := resource.TestStep{
+		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4),
+		Check:  resource.TestCheckResourceAttr("cockroach_cluster.dedicated", "dedicated.num_virtual_cpus", "4"),
+	}
+
+	testDedicatedClusterResource(t, clusterName, true, scaleStep)
 }
 
-func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool) {
+func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool, additionalSteps ...resource.TestStep) {
 	const (
 		resourceName   = "cockroach_cluster.dedicated"
 		dataSourceName = "data.cockroach_cluster.test"
 	)
 
+	testSteps := []resource.TestStep{
+		{
+			Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false, 2),
+			Check: resource.ComposeTestCheckFunc(
+				testCheckCockroachClusterExists(resourceName),
+				resource.TestCheckResourceAttr(resourceName, "name", clusterName),
+				resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
+				resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
+				resource.TestCheckResourceAttr(resourceName, "plan", "DEDICATED"),
+				resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
+				resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
+				resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
+				resource.TestCheckResourceAttr(dataSourceName, "plan", "DEDICATED"),
+			),
+		},
+		{
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true, 2),
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
+				resource.TestCheckResourceAttr(dataSourceName, "cockroach_version", latestClusterMajorVersion),
+			),
+		},
+		{
+			ResourceName:      resourceName,
+			ImportState:       true,
+			ImportStateVerify: true,
+		},
+	}
+	testSteps = append(testSteps, additionalSteps...)
+
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckCockroachClusterExists(resourceName),
-					resource.TestCheckResourceAttr(resourceName, "name", clusterName),
-					resource.TestCheckResourceAttrSet(resourceName, "cloud_provider"),
-					resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
-					resource.TestCheckResourceAttr(resourceName, "plan", "DEDICATED"),
-					resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
-					resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
-					resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
-					resource.TestCheckResourceAttr(dataSourceName, "plan", "DEDICATED"),
-				),
-			},
-			{
-				Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
-					resource.TestCheckResourceAttr(dataSourceName, "cockroach_version", latestClusterMajorVersion),
-				),
-			},
-			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
+		Steps:                    testSteps,
 	})
 }
 
@@ -726,7 +759,7 @@ func testCheckCockroachClusterExists(resourceName string) resource.TestCheckFunc
 	}
 }
 
-func getTestDedicatedClusterResourceConfig(name, version string, finalize bool) string {
+func getTestDedicatedClusterResourceConfig(name, version string, finalize bool, vcpus int) string {
 	config := fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -734,7 +767,7 @@ resource "cockroach_cluster" "dedicated" {
     cockroach_version = "%s"
     dedicated = {
 	  storage_gib = 15
-	  num_virtual_cpus = 2
+	  num_virtual_cpus = %d
     }
 	regions = [{
 		name: "us-central1"
@@ -745,7 +778,7 @@ resource "cockroach_cluster" "dedicated" {
 data "cockroach_cluster" "test" {
     id = cockroach_cluster.dedicated.id
 }
-`, name, version)
+`, name, version, vcpus)
 
 	if finalize {
 		config += fmt.Sprintf(`

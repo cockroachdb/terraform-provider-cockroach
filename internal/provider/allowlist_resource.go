@@ -142,7 +142,7 @@ func (r *allowListResource) Create(
 		Sql:      entry.Sql.ValueBool(),
 	}
 
-	if !entry.Name.IsNull() {
+	if IsKnown(entry.Name) {
 		name := entry.Name.ValueString()
 		allowList.Name = &name
 	}

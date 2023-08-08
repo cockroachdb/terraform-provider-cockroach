@@ -203,7 +203,7 @@ func (r *cmekResource) Read(
 	var cmek ClusterCMEK
 	diags := req.State.Get(ctx, &cmek)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() || cmek.ID.IsNull() {
+	if resp.Diagnostics.HasError() || !IsKnown(cmek.ID) {
 		return
 	}
 

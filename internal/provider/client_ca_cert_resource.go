@@ -177,8 +177,8 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 
 	// Only update cert if non-null.
 	// Setting it to null will essentially cause TF to forget the field.
-	if plan.X509PemCert.IsNull() {
-		if !state.X509PemCert.IsNull() {
+	if !IsKnown(plan.X509PemCert) {
+		if IsKnown(state.X509PemCert) {
 			resp.Diagnostics.AddWarning(
 				"Client CA Cert will not be changed",
 				"Setting the cert field to null will not clear the cert, it will only remove it from Terraform state. Delete the resource to unset a cert.",

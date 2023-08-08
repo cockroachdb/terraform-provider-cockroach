@@ -49,10 +49,10 @@ variable "storage_gib" {
   default  = 15
 }
 
-variable "machine_type" {
-  type     = string
+variable "num_virtual_cpus" {
+  type     = number
   nullable = false
-  default  = "n1-standard-2"
+  default  = 2
 }
 
 variable "allow_list_name" {
@@ -101,8 +101,8 @@ resource "cockroach_cluster" "example" {
   cloud_provider    = var.cloud_provider
   cockroach_version = var.cockroach_version
   dedicated = {
-    storage_gib  = var.storage_gib
-    machine_type = var.machine_type
+    storage_gib      = var.storage_gib
+    num_virtual_cpus = var.num_virtual_cpus
   }
   regions = [
     for r in var.cloud_provider_regions : {

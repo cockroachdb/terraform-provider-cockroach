@@ -134,3 +134,13 @@ func formatEnumMarkdownList[T ~string](allowedValues []T) (mdList string) {
 	}
 	return mdList
 }
+
+type Knowable interface {
+	IsUnknown() bool
+	IsNull() bool
+}
+
+// IsKnown is a shortcut that checks in a value is neither null nor unknown.
+func IsKnown[T Knowable](t T) bool {
+	return !t.IsUnknown() && !t.IsNull()
+}

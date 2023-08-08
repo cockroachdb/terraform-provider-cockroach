@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New api_oidc_config resource allows users to configure an external JWT signer for API tokens.
+JWT API tokens are in [limited access](https://www.cockroachlabs.com/docs/v23.1/cockroachdb-feature-availability).
+
 ## [1.1.0] - 2023-08-15
 
 ### Added

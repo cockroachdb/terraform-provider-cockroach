@@ -344,7 +344,7 @@ func (r *logExportConfigResource) Read(
 	var state ClusterLogExport
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() || state.ID.IsNull() {
+	if resp.Diagnostics.HasError() || !IsKnown(state.ID) {
 		return
 	}
 	clusterID := state.ID.ValueString()
@@ -467,11 +467,11 @@ func logExportGroupToClientGroup(group LogExportGroup) (*client.LogExportGroup, 
 		Channels: channels,
 	}
 
-	if !group.Redact.IsNull() && !group.Redact.IsUnknown() {
+	if IsKnown(group.Redact) {
 		clientGroup.SetRedact(group.Redact.ValueBool())
 	}
 
-	if group.MinLevel.IsNull() {
+	if !IsKnown(group.MinLevel) {
 		clientGroup.SetMinLevel(client.LOGLEVELTYPE_UNSPECIFIED)
 	} else {
 		minLevel, err := client.NewLogLevelTypeFromValue(group.MinLevel.ValueString())
@@ -501,10 +501,10 @@ func loadPlanIntoEnableLogExportRequest(
 
 	req.SetAuthPrincipal(plan.AuthPrincipal.ValueString())
 	req.SetLogName(plan.LogName.ValueString())
-	if !plan.Redact.IsNull() && !plan.Redact.IsUnknown() {
+	if IsKnown(plan.Redact) {
 		req.SetRedact(plan.Redact.ValueBool())
 	}
-	if !plan.Region.IsNull() && !plan.Redact.IsUnknown() {
+	if IsKnown(plan.Region) {
 		req.SetRegion(plan.Region.ValueString())
 	}
 

@@ -141,10 +141,10 @@ func (r *metricExportCloudWatchConfigResource) Create(
 	}
 
 	apiRequest := client.NewEnableCloudWatchMetricExportRequest(plan.RoleArn.ValueString())
-	if !plan.TargetRegion.IsNull() && !plan.TargetRegion.IsUnknown() {
+	if IsKnown(plan.TargetRegion) {
 		apiRequest.SetTargetRegion(plan.TargetRegion.ValueString())
 	}
-	if !plan.LogGroupName.IsNull() && !plan.LogGroupName.IsUnknown() {
+	if IsKnown(plan.LogGroupName) {
 		apiRequest.SetLogGroupName(plan.LogGroupName.ValueString())
 	}
 
@@ -278,7 +278,7 @@ func (r *metricExportCloudWatchConfigResource) Read(
 	var state ClusterCloudWatchMetricExportConfig
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() || state.ID.IsNull() {
+	if resp.Diagnostics.HasError() || !IsKnown(state.ID) {
 		return
 	}
 	clusterID := state.ID.ValueString()
@@ -357,10 +357,10 @@ func (r *metricExportCloudWatchConfigResource) Update(
 	}
 
 	apiRequest := client.NewEnableCloudWatchMetricExportRequest(plan.RoleArn.ValueString())
-	if !plan.TargetRegion.IsNull() && !plan.TargetRegion.IsUnknown() {
+	if IsKnown(plan.TargetRegion) {
 		apiRequest.SetTargetRegion(plan.TargetRegion.ValueString())
 	}
-	if !plan.LogGroupName.IsNull() && !plan.LogGroupName.IsUnknown() {
+	if IsKnown(plan.LogGroupName) {
 		apiRequest.SetLogGroupName(plan.LogGroupName.ValueString())
 	}
 

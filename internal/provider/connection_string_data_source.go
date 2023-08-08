@@ -120,12 +120,12 @@ func (d *connectionStringDataSource) Read(
 		database = config.Database.ValueString()
 	}
 	var sqlUser *string
-	if !config.SqlUser.IsNull() {
+	if IsKnown(config.SqlUser) {
 		sqlUser = new(string)
 		*sqlUser = config.SqlUser.ValueString()
 	}
 	var os string
-	if !config.OS.IsNull() {
+	if IsKnown(config.OS) {
 		os = config.OS.ValueString()
 	} else {
 		switch runtime.GOOS {
@@ -154,7 +154,7 @@ func (d *connectionStringDataSource) Read(
 	connectionString := apiResp.GetConnectionString()
 	connectionParams := apiResp.GetParams()
 
-	if !config.Password.IsNull() {
+	if IsKnown(config.Password) {
 		connectionParams["Password"] = config.Password.ValueString()
 		if connectionURL, err := url.Parse(connectionString); err != nil {
 			resp.Diagnostics.AddWarning("Couldn't parse connection URL to inject password", err.Error())

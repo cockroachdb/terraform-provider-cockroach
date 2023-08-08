@@ -264,7 +264,7 @@ func (r *sqlUserResource) Update(
 	// Only update the password if it's non-null. Setting it to null
 	// will essentially cause Terraform to forget the password.
 	if plan.Password.IsNull() {
-		if !state.Password.IsNull() {
+		if IsKnown(state.Password) {
 			resp.Diagnostics.AddWarning(
 				"Password will not be changed",
 				"Setting the password field to null will not change the password. It will simply remove it from Terraform state.",

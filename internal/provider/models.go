@@ -271,6 +271,15 @@ type Folder struct {
 	ParentId types.String `tfsdk:"parent_id"`
 }
 
+type ApiOidcConfig struct {
+	ID          types.String `tfsdk:"id"`
+	Issuer      types.String `tfsdk:"issuer"`
+	Audience    types.String `tfsdk:"audience"`
+	Jwks        types.String `tfsdk:"jwks"`
+	Claim       types.String `tfsdk:"claim"`
+	IdentityMap types.String `tfsdk:"identity_map"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

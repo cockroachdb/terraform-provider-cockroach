@@ -74,10 +74,15 @@ func TestIntegrationConnectionStringDataSource(t *testing.T) {
 		SqlUser:  &sqlUser,
 		Os:       &os,
 	}
-	fakeString := "postgresql://test@fake.cockroachlabs.cloud:26257/testdb"
+	username := "test"
 	connectionStringResponse := &client.GetConnectionStringResponse{
-		ConnectionString: &fakeString,
-		Params:           &map[string]string{},
+		ConnectionString: "postgresql://test@fake.cockroachlabs.cloud:26257/testdb",
+		Params: client.ConnectionStringParameters{
+			Database: "testdb",
+			Host:     "fake.cockroachlabs.cloud",
+			Port:     "26257",
+			Username: &username,
+		},
 	}
 
 	httpOkResponse := &http.Response{Status: http.StatusText(http.StatusOK)}
@@ -106,7 +111,11 @@ func testConnectionStringDataSource(t *testing.T, clusterName string, useMock bo
 				Config: getTestConnectionStringResourceConfig(clusterName, sqlPassword),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttrSet(connectStrDataSourceName, "connection_string"),
-					resource.TestCheckResourceAttrSet(connectStrDataSourceName, "connection_params.%"),
+					resource.TestCheckResourceAttrSet(connectStrDataSourceName, "connection_params.host"),
+					resource.TestCheckResourceAttrSet(connectStrDataSourceName, "connection_params.port"),
+					resource.TestCheckResourceAttr(connectStrDataSourceName, "connection_params.database", "testdb"),
+					resource.TestCheckResourceAttr(connectStrDataSourceName, "connection_params.username", "test"),
+					resource.TestCheckResourceAttr(connectStrDataSourceName, "connection_params.password", sqlPassword),
 					resource.TestCheckResourceAttrWith(connectStrDataSourceName, "connection_string", func(value string) error {
 						connectURL, err := url.Parse(value)
 						if err != nil {

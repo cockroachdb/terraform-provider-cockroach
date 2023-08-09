@@ -20,7 +20,9 @@ package client
 
 // CreateClusterSpecification struct for CreateClusterSpecification.
 type CreateClusterSpecification struct {
-	Dedicated  *DedicatedClusterCreateSpecification  `json:"dedicated,omitempty"`
+	Dedicated *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
+	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" will create a cluster at the root level.
+	ParentId   *string                               `json:"parent_id,omitempty"`
 	Serverless *ServerlessClusterCreateSpecification `json:"serverless,omitempty"`
 }
 
@@ -45,6 +47,20 @@ func (o *CreateClusterSpecification) GetDedicated() DedicatedClusterCreateSpecif
 // SetDedicated gets a reference to the given DedicatedClusterCreateSpecification and assigns it to the Dedicated field.
 func (o *CreateClusterSpecification) SetDedicated(v DedicatedClusterCreateSpecification) {
 	o.Dedicated = &v
+}
+
+// GetParentId returns the ParentId field value if set, zero value otherwise.
+func (o *CreateClusterSpecification) GetParentId() string {
+	if o == nil || o.ParentId == nil {
+		var ret string
+		return ret
+	}
+	return *o.ParentId
+}
+
+// SetParentId gets a reference to the given string and assigns it to the ParentId field.
+func (o *CreateClusterSpecification) SetParentId(v string) {
+	o.ParentId = &v
 }
 
 // GetServerless returns the Serverless field value if set, zero value otherwise.

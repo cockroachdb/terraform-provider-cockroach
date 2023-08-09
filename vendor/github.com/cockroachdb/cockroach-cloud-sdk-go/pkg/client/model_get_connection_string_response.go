@@ -21,44 +21,55 @@ package client
 // GetConnectionStringResponse struct for GetConnectionStringResponse.
 type GetConnectionStringResponse struct {
 	// connection_string contains the full connection string with parameters formatted inline.
-	ConnectionString *string `json:"connection_string,omitempty"`
-	// params contains a list of individual key parameters for generating nonstandard connection strings.
-	Params *map[string]string `json:"params,omitempty"`
+	ConnectionString string                     `json:"connection_string"`
+	Params           ConnectionStringParameters `json:"params"`
 }
 
 // NewGetConnectionStringResponse instantiates a new GetConnectionStringResponse object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewGetConnectionStringResponse() *GetConnectionStringResponse {
+func NewGetConnectionStringResponse(connectionString string, params ConnectionStringParameters) *GetConnectionStringResponse {
+	p := GetConnectionStringResponse{}
+	p.ConnectionString = connectionString
+	p.Params = params
+	return &p
+}
+
+// NewGetConnectionStringResponseWithDefaults instantiates a new GetConnectionStringResponse object.
+// This constructor will only assign default values to properties that have it defined,
+// but it doesn't guarantee that properties required by API are set
+func NewGetConnectionStringResponseWithDefaults() *GetConnectionStringResponse {
 	p := GetConnectionStringResponse{}
 	return &p
 }
 
-// GetConnectionString returns the ConnectionString field value if set, zero value otherwise.
+// GetConnectionString returns the ConnectionString field value.
 func (o *GetConnectionStringResponse) GetConnectionString() string {
-	if o == nil || o.ConnectionString == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.ConnectionString
+
+	return o.ConnectionString
 }
 
-// SetConnectionString gets a reference to the given string and assigns it to the ConnectionString field.
+// SetConnectionString sets field value.
 func (o *GetConnectionStringResponse) SetConnectionString(v string) {
-	o.ConnectionString = &v
+	o.ConnectionString = v
 }
 
-// GetParams returns the Params field value if set, zero value otherwise.
-func (o *GetConnectionStringResponse) GetParams() map[string]string {
-	if o == nil || o.Params == nil {
-		var ret map[string]string
+// GetParams returns the Params field value.
+func (o *GetConnectionStringResponse) GetParams() ConnectionStringParameters {
+	if o == nil {
+		var ret ConnectionStringParameters
 		return ret
 	}
-	return *o.Params
+
+	return o.Params
 }
 
-// SetParams gets a reference to the given map[string]string and assigns it to the Params field.
-func (o *GetConnectionStringResponse) SetParams(v map[string]string) {
-	o.Params = &v
+// SetParams sets field value.
+func (o *GetConnectionStringResponse) SetParams(v ConnectionStringParameters) {
+	o.Params = v
 }

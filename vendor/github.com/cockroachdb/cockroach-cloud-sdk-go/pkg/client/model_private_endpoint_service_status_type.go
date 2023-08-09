@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -42,23 +41,6 @@ var AllowedPrivateEndpointServiceStatusTypeEnumValues = []PrivateEndpointService
 	"CREATE_FAILED",
 	"DELETING",
 	"DELETE_FAILED",
-}
-
-func (v *PrivateEndpointServiceStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := PrivateEndpointServiceStatusType(value)
-	for _, existing := range AllowedPrivateEndpointServiceStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid PrivateEndpointServiceStatusType", value)
 }
 
 // NewPrivateEndpointServiceStatusTypeFromValue returns a pointer to a valid PrivateEndpointServiceStatusType

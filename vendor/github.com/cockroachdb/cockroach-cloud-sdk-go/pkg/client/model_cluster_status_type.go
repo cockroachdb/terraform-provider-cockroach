@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -88,23 +87,6 @@ var AllowedClusterStatusTypeEnumValues = []ClusterStatusType{
 	"CRDB_CUSTOM_CLIENT_CA_FAILED",
 	"DEDICATED_FULL_CLUSTER_RESTORE_RUNNING",
 	"DEDICATED_FULL_CLUSTER_RESTORE_FAILED",
-}
-
-func (v *ClusterStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := ClusterStatusType(value)
-	for _, existing := range AllowedClusterStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid ClusterStatusType", value)
 }
 
 // NewClusterStatusTypeFromValue returns a pointer to a valid ClusterStatusType

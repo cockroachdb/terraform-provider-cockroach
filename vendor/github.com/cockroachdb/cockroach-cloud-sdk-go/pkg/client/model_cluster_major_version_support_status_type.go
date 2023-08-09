@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -38,23 +37,6 @@ var AllowedClusterMajorVersionSupportStatusTypeEnumValues = []ClusterMajorVersio
 	"UNSUPPORTED",
 	"SUPPORTED",
 	"PREVIEW",
-}
-
-func (v *ClusterMajorVersionSupportStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := ClusterMajorVersionSupportStatusType(value)
-	for _, existing := range AllowedClusterMajorVersionSupportStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid ClusterMajorVersionSupportStatusType", value)
 }
 
 // NewClusterMajorVersionSupportStatusTypeFromValue returns a pointer to a valid ClusterMajorVersionSupportStatusType

@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -42,23 +41,6 @@ var AllowedClusterUpgradeStatusTypeEnumValues = []ClusterUpgradeStatusType{
 	"UPGRADE_AVAILABLE",
 	"PENDING_FINALIZATION",
 	"ROLLBACK_RUNNING",
-}
-
-func (v *ClusterUpgradeStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := ClusterUpgradeStatusType(value)
-	for _, existing := range AllowedClusterUpgradeStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid ClusterUpgradeStatusType", value)
 }
 
 // NewClusterUpgradeStatusTypeFromValue returns a pointer to a valid ClusterUpgradeStatusType

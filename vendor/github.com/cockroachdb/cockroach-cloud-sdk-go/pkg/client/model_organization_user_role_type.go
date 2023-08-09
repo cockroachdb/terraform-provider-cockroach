@@ -19,11 +19,10 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
-// OrganizationUserRoleType the model 'OrganizationUserRoleType'.
+// OrganizationUserRoleType  - DEVELOPER: To be deprecated  - ADMIN: To be deprecated  - FOLDER_ADMIN: Limited Access: A folder admin role.  - FOLDER_MOVER: Limited Access: A folder mover role.
 type OrganizationUserRoleType string
 
 // List of OrganizationUserRole.Type.
@@ -37,6 +36,8 @@ const (
 	ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER OrganizationUserRoleType = "CLUSTER_OPERATOR_WRITER"
 	ORGANIZATIONUSERROLETYPE_CLUSTER_DEVELOPER       OrganizationUserRoleType = "CLUSTER_DEVELOPER"
 	ORGANIZATIONUSERROLETYPE_CLUSTER_CREATOR         OrganizationUserRoleType = "CLUSTER_CREATOR"
+	ORGANIZATIONUSERROLETYPE_FOLDER_ADMIN            OrganizationUserRoleType = "FOLDER_ADMIN"
+	ORGANIZATIONUSERROLETYPE_FOLDER_MOVER            OrganizationUserRoleType = "FOLDER_MOVER"
 )
 
 // All allowed values of OrganizationUserRoleType enum.
@@ -50,23 +51,8 @@ var AllowedOrganizationUserRoleTypeEnumValues = []OrganizationUserRoleType{
 	"CLUSTER_OPERATOR_WRITER",
 	"CLUSTER_DEVELOPER",
 	"CLUSTER_CREATOR",
-}
-
-func (v *OrganizationUserRoleType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := OrganizationUserRoleType(value)
-	for _, existing := range AllowedOrganizationUserRoleTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid OrganizationUserRoleType", value)
+	"FOLDER_ADMIN",
+	"FOLDER_MOVER",
 }
 
 // NewOrganizationUserRoleTypeFromValue returns a pointer to a valid OrganizationUserRoleType

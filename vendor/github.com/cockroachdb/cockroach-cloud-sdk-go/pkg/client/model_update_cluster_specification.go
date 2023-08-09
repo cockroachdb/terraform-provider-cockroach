@@ -20,7 +20,9 @@ package client
 
 // UpdateClusterSpecification Set `upgrade_status` to 'UPGRADE_RUNNING' to start an upgrade. Multi-node clusters will undergo a rolling upgrade and will remain available, but single-node clusters will be briefly unavailable while the upgrade takes place. Upgrades will be finalized automatically after 72 hours, or can be manually finalized by setting the value to 'FINALIZED'. Before the cluster is finalized, it can be rolled back by setting the value to 'ROLLBACK_RUNNING'. Version upgrade operations cannot be performed simultaneously with other update operations..
 type UpdateClusterSpecification struct {
-	Dedicated     *DedicatedClusterUpdateSpecification  `json:"dedicated,omitempty"`
+	Dedicated *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
+	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
+	ParentId      *string                               `json:"parent_id,omitempty"`
 	Serverless    *ServerlessClusterUpdateSpecification `json:"serverless,omitempty"`
 	UpgradeStatus *ClusterUpgradeStatusType             `json:"upgrade_status,omitempty"`
 }
@@ -46,6 +48,20 @@ func (o *UpdateClusterSpecification) GetDedicated() DedicatedClusterUpdateSpecif
 // SetDedicated gets a reference to the given DedicatedClusterUpdateSpecification and assigns it to the Dedicated field.
 func (o *UpdateClusterSpecification) SetDedicated(v DedicatedClusterUpdateSpecification) {
 	o.Dedicated = &v
+}
+
+// GetParentId returns the ParentId field value if set, zero value otherwise.
+func (o *UpdateClusterSpecification) GetParentId() string {
+	if o == nil || o.ParentId == nil {
+		var ret string
+		return ret
+	}
+	return *o.ParentId
+}
+
+// SetParentId gets a reference to the given string and assigns it to the ParentId field.
+func (o *UpdateClusterSpecification) SetParentId(v string) {
+	o.ParentId = &v
 }
 
 // GetServerless returns the Serverless field value if set, zero value otherwise.

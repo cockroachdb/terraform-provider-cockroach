@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -44,23 +43,6 @@ var AllowedLogExportStatusEnumValues = []LogExportStatus{
 	"ENABLED",
 	"ENABLING",
 	"ENABLE_FAILED",
-}
-
-func (v *LogExportStatus) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := LogExportStatus(value)
-	for _, existing := range AllowedLogExportStatusEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid LogExportStatus", value)
 }
 
 // NewLogExportStatusFromValue returns a pointer to a valid LogExportStatus

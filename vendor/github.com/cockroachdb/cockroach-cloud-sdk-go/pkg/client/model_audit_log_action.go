@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -66,6 +65,12 @@ const (
 	AUDITLOGACTION_SET_CLIENT_CA_CERT            AuditLogAction = "AUDIT_LOG_ACTION_SET_CLIENT_CA_CERT"
 	AUDITLOGACTION_UPDATE_CLIENT_CA_CERT         AuditLogAction = "AUDIT_LOG_ACTION_UPDATE_CLIENT_CA_CERT"
 	AUDITLOGACTION_DELETE_CLIENT_CA_CERT         AuditLogAction = "AUDIT_LOG_ACTION_DELETE_CLIENT_CA_CERT"
+	AUDITLOGACTION_CREATE_API_OIDC_CONFIG        AuditLogAction = "AUDIT_LOG_ACTION_CREATE_API_OIDC_CONFIG"
+	AUDITLOGACTION_DELETE_API_OIDC_CONFIG        AuditLogAction = "AUDIT_LOG_ACTION_DELETE_API_OIDC_CONFIG"
+	AUDITLOGACTION_UPDATE_API_OIDC_CONFIG        AuditLogAction = "AUDIT_LOG_ACTION_UPDATE_API_OIDC_CONFIG"
+	AUDITLOGACTION_CREATE_FOLDER                 AuditLogAction = "AUDIT_LOG_ACTION_CREATE_FOLDER"
+	AUDITLOGACTION_DELETE_FOLDER                 AuditLogAction = "AUDIT_LOG_ACTION_DELETE_FOLDER"
+	AUDITLOGACTION_UPDATE_FOLDER                 AuditLogAction = "AUDIT_LOG_ACTION_UPDATE_FOLDER"
 )
 
 // All allowed values of AuditLogAction enum.
@@ -108,23 +113,12 @@ var AllowedAuditLogActionEnumValues = []AuditLogAction{
 	"AUDIT_LOG_ACTION_SET_CLIENT_CA_CERT",
 	"AUDIT_LOG_ACTION_UPDATE_CLIENT_CA_CERT",
 	"AUDIT_LOG_ACTION_DELETE_CLIENT_CA_CERT",
-}
-
-func (v *AuditLogAction) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := AuditLogAction(value)
-	for _, existing := range AllowedAuditLogActionEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid AuditLogAction", value)
+	"AUDIT_LOG_ACTION_CREATE_API_OIDC_CONFIG",
+	"AUDIT_LOG_ACTION_DELETE_API_OIDC_CONFIG",
+	"AUDIT_LOG_ACTION_UPDATE_API_OIDC_CONFIG",
+	"AUDIT_LOG_ACTION_CREATE_FOLDER",
+	"AUDIT_LOG_ACTION_DELETE_FOLDER",
+	"AUDIT_LOG_ACTION_UPDATE_FOLDER",
 }
 
 // NewAuditLogActionFromValue returns a pointer to a valid AuditLogAction

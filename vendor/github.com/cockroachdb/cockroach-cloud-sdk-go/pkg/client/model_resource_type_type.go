@@ -19,40 +19,24 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
-// ResourceTypeType the model 'ResourceTypeType'.
+// ResourceTypeType  - ORGANIZATION: An organization.  - CLUSTER: A cluster resource.  - FOLDER: Limited Access: A folder resource.
 type ResourceTypeType string
 
 // List of ResourceType.Type.
 const (
 	RESOURCETYPETYPE_ORGANIZATION ResourceTypeType = "ORGANIZATION"
 	RESOURCETYPETYPE_CLUSTER      ResourceTypeType = "CLUSTER"
+	RESOURCETYPETYPE_FOLDER       ResourceTypeType = "FOLDER"
 )
 
 // All allowed values of ResourceTypeType enum.
 var AllowedResourceTypeTypeEnumValues = []ResourceTypeType{
 	"ORGANIZATION",
 	"CLUSTER",
-}
-
-func (v *ResourceTypeType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := ResourceTypeType(value)
-	for _, existing := range AllowedResourceTypeTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid ResourceTypeType", value)
+	"FOLDER",
 }
 
 // NewResourceTypeTypeFromValue returns a pointer to a valid ResourceTypeType

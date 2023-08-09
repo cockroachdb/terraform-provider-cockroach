@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -42,23 +41,6 @@ var AllowedClusterStateTypeEnumValues = []ClusterStateType{
 	"CREATION_FAILED",
 	"DELETED",
 	"LOCKED",
-}
-
-func (v *ClusterStateType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := ClusterStateType(value)
-	for _, existing := range AllowedClusterStateTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid ClusterStateType", value)
 }
 
 // NewClusterStateTypeFromValue returns a pointer to a valid ClusterStateType

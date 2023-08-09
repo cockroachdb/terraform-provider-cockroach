@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -42,23 +41,6 @@ var AllowedEgressTrafficPolicyTypeEnumValues = []EgressTrafficPolicyType{
 	"ALLOW_ALL",
 	"DEFAULT_DENY",
 	"UPDATING",
-}
-
-func (v *EgressTrafficPolicyType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := EgressTrafficPolicyType(value)
-	for _, existing := range AllowedEgressTrafficPolicyTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid EgressTrafficPolicyType", value)
 }
 
 // NewEgressTrafficPolicyTypeFromValue returns a pointer to a valid EgressTrafficPolicyType

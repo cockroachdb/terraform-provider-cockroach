@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -38,23 +37,6 @@ var AllowedOperatingSystemTypeEnumValues = []OperatingSystemType{
 	"MAC",
 	"LINUX",
 	"WINDOWS",
-}
-
-func (v *OperatingSystemType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := OperatingSystemType(value)
-	for _, existing := range AllowedOperatingSystemTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid OperatingSystemType", value)
 }
 
 // NewOperatingSystemTypeFromValue returns a pointer to a valid OperatingSystemType

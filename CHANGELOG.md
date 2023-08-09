@@ -7,12 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2023-08-10
+
+### Notes
+
+- The CockroachDB Cloud Terraform Provider is now generally available with semantic versioning compatibility promises.
+
+### Changed
+
+- connection_params field on the connection_string data source is now an object instead of a string map.
+
 ### Fixed
 
 - Fixed an issue where changing `num_virtual_cpus` on a `cockroach_cluster` resource would fail to scale the cluster
   and would result in an inconsistent state error.
 - Added validation to prevent multiple serverless regions from being marked as "primary", which could result in an
   inconsistent state error.
+- Fixed "not a valid value" errors that occurred when reading recently added enum values, such as cluster status.
 
 ## [0.7.0] - 2023-07-13
 

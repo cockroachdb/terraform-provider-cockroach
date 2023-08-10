@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -40,23 +39,6 @@ var AllowedClientCACertStatusEnumValues = []ClientCACertStatus{
 	"IS_SET",
 	"PENDING",
 	"FAILED",
-}
-
-func (v *ClientCACertStatus) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := ClientCACertStatus(value)
-	for _, existing := range AllowedClientCACertStatusEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid ClientCACertStatus", value)
 }
 
 // NewClientCACertStatusFromValue returns a pointer to a valid ClientCACertStatus

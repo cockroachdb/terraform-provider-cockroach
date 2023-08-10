@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -40,23 +39,6 @@ var AllowedLogLevelTypeEnumValues = []LogLevelType{
 	"WARNING",
 	"ERROR",
 	"FATAL",
-}
-
-func (v *LogLevelType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := LogLevelType(value)
-	for _, existing := range AllowedLogLevelTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid LogLevelType", value)
 }
 
 // NewLogLevelTypeFromValue returns a pointer to a valid LogLevelType

@@ -68,9 +68,31 @@ func (d *connectionStringDataSource) Schema(
 				Computed:    true,
 				Description: "Fully formatted connection string. Assumes the cluster certificate is stored in the default location.",
 			},
-			"connection_params": schema.MapAttribute{
-				Computed:    true,
-				ElementType: types.StringType,
+			"connection_params": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"host": schema.StringAttribute{
+						Computed:    true,
+						Description: "Host value to use in a connection URL.",
+					},
+					"port": schema.StringAttribute{
+						Computed:    true,
+						Description: "Port value to use in a connection URL.",
+					},
+					"database": schema.StringAttribute{
+						Computed:    true,
+						Description: "Database value to use in a connection URL.",
+					},
+					"username": schema.StringAttribute{
+						Computed:    true,
+						Description: "Username value to use in a connection URL.",
+					},
+					"password": schema.StringAttribute{
+						Computed:    true,
+						Sensitive:   true,
+						Description: "Password value to use in a connection URL.",
+					},
+				},
 				Description: "List of individual connection string parameters. Can be used to build nonstandard connection strings.",
 			},
 		},
@@ -152,10 +174,15 @@ func (d *connectionStringDataSource) Read(
 	}
 
 	connectionString := apiResp.GetConnectionString()
-	connectionParams := apiResp.GetParams()
+	config.ConnectionParams = &ConnectionParams{
+		Host:     types.StringValue(apiResp.Params.Host),
+		Port:     types.StringValue(apiResp.Params.Port),
+		Database: types.StringValue(apiResp.Params.Database),
+		Username: types.StringPointerValue(apiResp.Params.Username),
+	}
 
 	if IsKnown(config.Password) {
-		connectionParams["Password"] = config.Password.ValueString()
+		config.ConnectionParams.Password = config.Password
 		if connectionURL, err := url.Parse(connectionString); err != nil {
 			resp.Diagnostics.AddWarning("Couldn't parse connection URL to inject password", err.Error())
 		} else {
@@ -165,11 +192,6 @@ func (d *connectionStringDataSource) Read(
 	}
 
 	config.ConnectionString = types.StringValue(connectionString)
-	config.ConnectionParams, diags = types.MapValueFrom(ctx, types.StringType, connectionParams)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	diags = resp.State.Set(ctx, config)
 	resp.Diagnostics.Append(diags...)

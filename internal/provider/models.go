@@ -155,14 +155,22 @@ type ClusterCert struct {
 	Cert types.String `tfsdk:"cert"`
 }
 
+type ConnectionParams struct {
+	Host     types.String `tfsdk:"host"`
+	Port     types.String `tfsdk:"port"`
+	Database types.String `tfsdk:"database"`
+	Username types.String `tfsdk:"username"`
+	Password types.String `tfsdk:"password"`
+}
+
 type ConnectionString struct {
-	ID               types.String `tfsdk:"id"`
-	OS               types.String `tfsdk:"os"`
-	Database         types.String `tfsdk:"database"`
-	SqlUser          types.String `tfsdk:"sql_user"`
-	Password         types.String `tfsdk:"password"`
-	ConnectionString types.String `tfsdk:"connection_string"`
-	ConnectionParams types.Map    `tfsdk:"connection_params"`
+	ID               types.String      `tfsdk:"id"`
+	OS               types.String      `tfsdk:"os"`
+	Database         types.String      `tfsdk:"database"`
+	SqlUser          types.String      `tfsdk:"sql_user"`
+	Password         types.String      `tfsdk:"password"`
+	ConnectionString types.String      `tfsdk:"connection_string"`
+	ConnectionParams *ConnectionParams `tfsdk:"connection_params"`
 }
 
 type Database struct {

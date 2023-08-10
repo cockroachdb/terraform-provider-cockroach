@@ -68,16 +68,7 @@ func (p *provider) Configure(
 	}
 
 	var apiKey string
-	if config.ApiKey.IsUnknown() {
-		// cannot connect to client with an unknown value
-		resp.Diagnostics.AddWarning(
-			"Unable to create client",
-			"Cannot use unknown value as apikey",
-		)
-		return
-	}
-
-	if config.ApiKey.IsNull() {
+	if !IsKnown(config.ApiKey) {
 		apiKey = os.Getenv(CockroachAPIKey)
 	} else {
 		apiKey = config.ApiKey.ValueString()

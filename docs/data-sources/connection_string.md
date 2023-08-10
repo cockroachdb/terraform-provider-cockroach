@@ -31,7 +31,18 @@ Generic connection string for a cluster.
 
 ### Read-Only
 
-- `connection_params` (Map of String) List of individual connection string parameters. Can be used to build nonstandard connection strings.
+- `connection_params` (Attributes) List of individual connection string parameters. Can be used to build nonstandard connection strings. (see [below for nested schema](#nestedatt--connection_params))
 - `connection_string` (String) Fully formatted connection string. Assumes the cluster certificate is stored in the default location.
+
+<a id="nestedatt--connection_params"></a>
+### Nested Schema for `connection_params`
+
+Read-Only:
+
+- `database` (String) Database value to use in a connection URL.
+- `host` (String) Host value to use in a connection URL.
+- `password` (String, Sensitive) Password value to use in a connection URL.
+- `port` (String) Port value to use in a connection URL.
+- `username` (String) Username value to use in a connection URL.
 
 

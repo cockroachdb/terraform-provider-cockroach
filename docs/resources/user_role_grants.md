@@ -32,6 +32,7 @@ Required:
 - `resource_type` (String) Type of resource. Allowed values are: 
   * ORGANIZATION
   * CLUSTER
+  * FOLDER
 - `role_name` (String) Name of the role to grant. Allowed values are:
   * DEVELOPER
   * ADMIN
@@ -42,6 +43,8 @@ Required:
   * CLUSTER_OPERATOR_WRITER
   * CLUSTER_DEVELOPER
   * CLUSTER_CREATOR
+  * FOLDER_ADMIN
+  * FOLDER_MOVER
 
 Optional:
 

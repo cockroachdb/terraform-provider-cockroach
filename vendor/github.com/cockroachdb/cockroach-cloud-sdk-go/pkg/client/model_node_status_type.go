@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -36,23 +35,6 @@ const (
 var AllowedNodeStatusTypeEnumValues = []NodeStatusType{
 	"LIVE",
 	"NOT_READY",
-}
-
-func (v *NodeStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := NodeStatusType(value)
-	for _, existing := range AllowedNodeStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid NodeStatusType", value)
 }
 
 // NewNodeStatusTypeFromValue returns a pointer to a valid NodeStatusType

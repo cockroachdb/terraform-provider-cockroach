@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -36,23 +35,6 @@ const (
 var AllowedQuantityUnitTypeEnumValues = []QuantityUnitType{
 	"HOURS",
 	"REQUEST_UNITS",
-}
-
-func (v *QuantityUnitType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := QuantityUnitType(value)
-	for _, existing := range AllowedQuantityUnitTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid QuantityUnitType", value)
 }
 
 // NewQuantityUnitTypeFromValue returns a pointer to a valid QuantityUnitType

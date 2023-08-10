@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -54,23 +53,6 @@ var AllowedCMEKStatusEnumValues = []CMEKStatus{
 	"REVOKED",
 	"REVOKING",
 	"REVOKE_FAILED",
-}
-
-func (v *CMEKStatus) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := CMEKStatus(value)
-	for _, existing := range AllowedCMEKStatusEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid CMEKStatus", value)
 }
 
 // NewCMEKStatusFromValue returns a pointer to a valid CMEKStatus

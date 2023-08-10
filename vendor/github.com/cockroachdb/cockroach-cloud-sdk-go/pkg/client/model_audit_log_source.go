@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -40,23 +39,6 @@ var AllowedAuditLogSourceEnumValues = []AuditLogSource{
 	"AUDIT_LOG_SOURCE_CLI",
 	"AUDIT_LOG_SOURCE_UI",
 	"AUDIT_LOG_SOURCE_INTERNAL",
-}
-
-func (v *AuditLogSource) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := AuditLogSource(value)
-	for _, existing := range AllowedAuditLogSourceEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid AuditLogSource", value)
 }
 
 // NewAuditLogSourceFromValue returns a pointer to a valid AuditLogSource

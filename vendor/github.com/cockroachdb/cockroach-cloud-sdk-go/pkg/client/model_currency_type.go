@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -36,23 +35,6 @@ const (
 var AllowedCurrencyTypeEnumValues = []CurrencyType{
 	"USD",
 	"CRDB_CLOUD_CREDITS",
-}
-
-func (v *CurrencyType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := CurrencyType(value)
-	for _, existing := range AllowedCurrencyTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid CurrencyType", value)
 }
 
 // NewCurrencyTypeFromValue returns a pointer to a valid CurrencyType

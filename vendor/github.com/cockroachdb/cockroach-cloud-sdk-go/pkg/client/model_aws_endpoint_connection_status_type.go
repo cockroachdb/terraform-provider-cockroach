@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -48,23 +47,6 @@ var AllowedAWSEndpointConnectionStatusTypeEnumValues = []AWSEndpointConnectionSt
 	"REJECTED",
 	"FAILED",
 	"EXPIRED",
-}
-
-func (v *AWSEndpointConnectionStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := AWSEndpointConnectionStatusType(value)
-	for _, existing := range AllowedAWSEndpointConnectionStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid AWSEndpointConnectionStatusType", value)
 }
 
 // NewAWSEndpointConnectionStatusTypeFromValue returns a pointer to a valid AWSEndpointConnectionStatusType

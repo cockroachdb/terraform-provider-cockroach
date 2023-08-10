@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -38,23 +37,6 @@ var AllowedCloudProviderTypeEnumValues = []CloudProviderType{
 	"GCP",
 	"AWS",
 	"AZURE",
-}
-
-func (v *CloudProviderType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := CloudProviderType(value)
-	for _, existing := range AllowedCloudProviderTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid CloudProviderType", value)
 }
 
 // NewCloudProviderTypeFromValue returns a pointer to a valid CloudProviderType

@@ -22,35 +22,35 @@ import (
 	"fmt"
 )
 
-// LogExportType LogExportType encodes the cloud selection that we're exporting to along with the cloud logging platform.  Currently, each cloud has a single logging platform.
-type LogExportType string
+// FolderResourceTypeType the model 'FolderResourceTypeType'.
+type FolderResourceTypeType string
 
-// List of LogExportType.
+// List of FolderResourceType.Type.
 const (
-	LOGEXPORTTYPE_AWS_CLOUDWATCH    LogExportType = "AWS_CLOUDWATCH"
-	LOGEXPORTTYPE_GCP_CLOUD_LOGGING LogExportType = "GCP_CLOUD_LOGGING"
+	FOLDERRESOURCETYPETYPE_FOLDER  FolderResourceTypeType = "FOLDER"
+	FOLDERRESOURCETYPETYPE_CLUSTER FolderResourceTypeType = "CLUSTER"
 )
 
-// All allowed values of LogExportType enum.
-var AllowedLogExportTypeEnumValues = []LogExportType{
-	"AWS_CLOUDWATCH",
-	"GCP_CLOUD_LOGGING",
+// All allowed values of FolderResourceTypeType enum.
+var AllowedFolderResourceTypeTypeEnumValues = []FolderResourceTypeType{
+	"FOLDER",
+	"CLUSTER",
 }
 
-// NewLogExportTypeFromValue returns a pointer to a valid LogExportType
+// NewFolderResourceTypeTypeFromValue returns a pointer to a valid FolderResourceTypeType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewLogExportTypeFromValue(v string) (*LogExportType, error) {
-	ev := LogExportType(v)
+func NewFolderResourceTypeTypeFromValue(v string) (*FolderResourceTypeType, error) {
+	ev := FolderResourceTypeType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for LogExportType: valid values are %v", v, AllowedLogExportTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for FolderResourceTypeType: valid values are %v", v, AllowedFolderResourceTypeTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v LogExportType) IsValid() bool {
-	for _, existing := range AllowedLogExportTypeEnumValues {
+func (v FolderResourceTypeType) IsValid() bool {
+	for _, existing := range AllowedFolderResourceTypeTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -58,7 +58,7 @@ func (v LogExportType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to LogExportType value.
-func (v LogExportType) Ptr() *LogExportType {
+// Ptr returns reference to FolderResourceType.Type value.
+func (v FolderResourceTypeType) Ptr() *FolderResourceTypeType {
 	return &v
 }

@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -38,23 +37,6 @@ var AllowedCMEKKeyTypeEnumValues = []CMEKKeyType{
 	"AWS_KMS",
 	"GCP_CLOUD_KMS",
 	"NULL_KMS",
-}
-
-func (v *CMEKKeyType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := CMEKKeyType(value)
-	for _, existing := range AllowedCMEKKeyTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid CMEKKeyType", value)
 }
 
 // NewCMEKKeyTypeFromValue returns a pointer to a valid CMEKKeyType

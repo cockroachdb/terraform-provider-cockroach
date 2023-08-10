@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -36,23 +35,6 @@ const (
 var AllowedNetworkVisibilityTypeEnumValues = []NetworkVisibilityType{
 	"PUBLIC",
 	"PRIVATE",
-}
-
-func (v *NetworkVisibilityType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := NetworkVisibilityType(value)
-	for _, existing := range AllowedNetworkVisibilityTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid NetworkVisibilityType", value)
 }
 
 // NewNetworkVisibilityTypeFromValue returns a pointer to a valid NetworkVisibilityType

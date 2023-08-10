@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -36,23 +35,6 @@ const (
 var AllowedSetAWSEndpointConnectionStatusTypeEnumValues = []SetAWSEndpointConnectionStatusType{
 	"AVAILABLE",
 	"REJECTED",
-}
-
-func (v *SetAWSEndpointConnectionStatusType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := SetAWSEndpointConnectionStatusType(value)
-	for _, existing := range AllowedSetAWSEndpointConnectionStatusTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid SetAWSEndpointConnectionStatusType", value)
 }
 
 // NewSetAWSEndpointConnectionStatusTypeFromValue returns a pointer to a valid SetAWSEndpointConnectionStatusType

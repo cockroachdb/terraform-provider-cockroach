@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -36,23 +35,6 @@ const (
 var AllowedSortOrderEnumValues = []SortOrder{
 	"ASC",
 	"DESC",
-}
-
-func (v *SortOrder) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := SortOrder(value)
-	for _, existing := range AllowedSortOrderEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid SortOrder", value)
 }
 
 // NewSortOrderFromValue returns a pointer to a valid SortOrder

@@ -19,7 +19,6 @@
 package client
 
 import (
-	"encoding/json"
 	"fmt"
 )
 
@@ -42,23 +41,6 @@ var AllowedDatadogSiteTypeEnumValues = []DatadogSiteType{
 	"US5",
 	"US1_GOV",
 	"EU1",
-}
-
-func (v *DatadogSiteType) UnmarshalJSON(src []byte) error {
-	var value string
-	err := json.Unmarshal(src, &value)
-	if err != nil {
-		return err
-	}
-	enumTypeValue := DatadogSiteType(value)
-	for _, existing := range AllowedDatadogSiteTypeEnumValues {
-		if existing == enumTypeValue {
-			*v = enumTypeValue
-			return nil
-		}
-	}
-
-	return fmt.Errorf("%+v is not a valid DatadogSiteType", value)
 }
 
 // NewDatadogSiteTypeFromValue returns a pointer to a valid DatadogSiteType

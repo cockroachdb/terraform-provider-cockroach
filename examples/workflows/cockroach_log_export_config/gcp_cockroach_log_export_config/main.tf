@@ -122,4 +122,5 @@ resource "cockroach_log_export_config" "example" {
       min_level = "WARNING"
     }
   ]
+  omitted_channels = ["SQL_PERF"]
 }

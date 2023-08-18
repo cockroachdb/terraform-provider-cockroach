@@ -206,17 +206,18 @@ type LogExportGroup struct {
 }
 
 type ClusterLogExport struct {
-	ID            types.String      `tfsdk:"id"`
-	AuthPrincipal types.String      `tfsdk:"auth_principal"`
-	LogName       types.String      `tfsdk:"log_name"`
-	Type          types.String      `tfsdk:"type"`
-	Redact        types.Bool        `tfsdk:"redact"`
-	Region        types.String      `tfsdk:"region"`
-	Groups        *[]LogExportGroup `tfsdk:"groups"`
-	Status        types.String      `tfsdk:"status"`
-	UserMessage   types.String      `tfsdk:"user_message"`
-	CreatedAt     types.String      `tfsdk:"created_at"`
-	UpdatedAt     types.String      `tfsdk:"updated_at"`
+	ID              types.String      `tfsdk:"id"`
+	AuthPrincipal   types.String      `tfsdk:"auth_principal"`
+	LogName         types.String      `tfsdk:"log_name"`
+	Type            types.String      `tfsdk:"type"`
+	Redact          types.Bool        `tfsdk:"redact"`
+	Region          types.String      `tfsdk:"region"`
+	Groups          *[]LogExportGroup `tfsdk:"groups"`
+	Status          types.String      `tfsdk:"status"`
+	UserMessage     types.String      `tfsdk:"user_message"`
+	CreatedAt       types.String      `tfsdk:"created_at"`
+	UpdatedAt       types.String      `tfsdk:"updated_at"`
+	OmittedChannels *[]types.String   `tfsdk:"omitted_channels"`
 }
 
 type ClusterCloudWatchMetricExportConfig struct {

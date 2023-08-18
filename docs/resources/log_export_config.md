@@ -27,6 +27,7 @@ Log Export configuration for a cluster.
 ### Optional
 
 - `groups` (Attributes List) (see [below for nested schema](#nestedatt--groups))
+- `omitted_channels` (List of String) Controls what CRDB channels do not get exported.
 - `redact` (Boolean) Controls whether logs are redacted before forwarding to customer sinks.
 - `region` (String) Controls whether all logs are sent to a specific region in the customer sink.
 

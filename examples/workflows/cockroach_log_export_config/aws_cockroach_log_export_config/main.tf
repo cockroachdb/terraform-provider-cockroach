@@ -164,4 +164,5 @@ resource "cockroach_log_export_config" "example" {
       redact   = false
     }
   ]
+  omitted_channels = ["SQL_PERF"]
 }

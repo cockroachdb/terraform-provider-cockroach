@@ -89,16 +89,18 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	createdGroups := []client.LogExportGroup{
 		{LogName: "sql", Channels: []string{"SQL_SCHEMA", "SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
 	}
+	omittedChannels := []string{"SQL_PERF"}
 	enabledStatus, _ := client.NewLogExportStatusFromValue("ENABLED")
 	createdLogExportClusterInfo := &client.LogExportClusterInfo{
 		ClusterId: &clusterID,
 		Spec: &client.LogExportClusterSpecification{
-			AuthPrincipal: &authPrincipal,
-			LogName:       &logName,
-			Groups:        &createdGroups,
-			Redact:        &trueBool,
-			Type:          configType,
-			Region:        &region,
+			AuthPrincipal:   &authPrincipal,
+			LogName:         &logName,
+			Groups:          &createdGroups,
+			Redact:          &trueBool,
+			Type:            configType,
+			Region:          &region,
+			OmittedChannels: &omittedChannels,
 		},
 		Status: enabledStatus,
 	}
@@ -108,15 +110,17 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 		{LogName: "sql", Channels: []string{"SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
 		{LogName: "devops", Channels: []string{"OPS", "HEALTH", "STORAGE"}, MinLevel: minLevel, Redact: &falseBool},
 	}
+	updatedOChannels := []string{"SQL_SCHEMA"}
 	updatedLogExportClusterInfo := &client.LogExportClusterInfo{
 		ClusterId: &clusterID,
 		Spec: &client.LogExportClusterSpecification{
-			AuthPrincipal: &authPrincipal,
-			LogName:       &logName,
-			Groups:        &updatedGroups,
-			Redact:        &falseBool,
-			Type:          configType,
-			Region:        &region,
+			AuthPrincipal:   &authPrincipal,
+			LogName:         &logName,
+			Groups:          &updatedGroups,
+			Redact:          &falseBool,
+			Type:            configType,
+			Region:          &region,
+			OmittedChannels: &updatedOChannels,
 		},
 		Status: enabledStatus,
 	}
@@ -129,12 +133,13 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 		Times(3)
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
 		&client.EnableLogExportRequest{
-			Groups:        &createdGroups,
-			AuthPrincipal: authPrincipal,
-			LogName:       logName,
-			Redact:        &trueBool,
-			Type:          *configType,
-			Region:        &region,
+			Groups:          &createdGroups,
+			AuthPrincipal:   authPrincipal,
+			LogName:         logName,
+			Redact:          &trueBool,
+			Type:            *configType,
+			Region:          &region,
+			OmittedChannels: &omittedChannels,
 		}).
 		Return(createdLogExportClusterInfo, nil, nil)
 	s.EXPECT().GetLogExportInfo(gomock.Any(), clusterID).
@@ -149,12 +154,13 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 		Return(createdLogExportClusterInfo, nil, nil)
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
 		&client.EnableLogExportRequest{
-			AuthPrincipal: authPrincipal,
-			Type:          *configType,
-			LogName:       logName,
-			Redact:        &falseBool,
-			Groups:        &updatedGroups,
-			Region:        &region,
+			AuthPrincipal:   authPrincipal,
+			Type:            *configType,
+			LogName:         logName,
+			Redact:          &falseBool,
+			Groups:          &updatedGroups,
+			Region:          &region,
+			OmittedChannels: &updatedOChannels,
 		}).
 		Return(updatedLogExportClusterInfo, nil, nil)
 	s.EXPECT().GetLogExportInfo(gomock.Any(), clusterID).
@@ -264,6 +270,7 @@ resource "cockroach_log_export_config" "test" {
 	  redact = true
     }
   ]
+  omitted_channels = ["SQL_PERF"]
 }
 `, name)
 }
@@ -304,6 +311,7 @@ resource "cockroach_log_export_config" "test" {
 	  redact = false
     }
   ]
+  omitted_channels = ["SQL_SCHEMA"]
 }
 `, name)
 }

@@ -106,6 +106,11 @@ var logExportAttributes = map[string]schema.Attribute{
 		Computed:    true,
 		Description: "Indicates when the log export configuration was last updated.",
 	},
+	"omitted_channels": schema.ListAttribute{
+		Optional:    true,
+		ElementType: types.StringType,
+		Description: "Controls what CRDB channels do not get exported.",
+	},
 }
 
 type logExportConfigResource struct {
@@ -320,6 +325,11 @@ func loadLogExportIntoTerraformState(
 		apiRegion = types.StringValue(spec.GetRegion())
 	}
 
+	var omittedChannels []types.String
+	for _, ochannel := range spec.GetOmittedChannels() {
+		omittedChannels = append(omittedChannels, types.StringValue(ochannel))
+	}
+
 	state.ID = types.StringValue(apiLogExportObj.GetClusterId())
 	state.AuthPrincipal = types.StringValue(spec.GetAuthPrincipal())
 	state.LogName = types.StringValue(spec.GetLogName())
@@ -331,6 +341,7 @@ func loadLogExportIntoTerraformState(
 	state.UserMessage = types.StringValue(apiLogExportObj.GetUserMessage())
 	state.CreatedAt = types.StringValue(apiLogExportObj.GetCreatedAt().String())
 	state.UpdatedAt = types.StringValue(apiLogExportObj.GetUpdatedAt().String())
+	state.OmittedChannels = &omittedChannels
 }
 
 func (r *logExportConfigResource) Read(
@@ -506,6 +517,13 @@ func loadPlanIntoEnableLogExportRequest(
 	}
 	if IsKnown(plan.Region) {
 		req.SetRegion(plan.Region.ValueString())
+	}
+	if plan.OmittedChannels != nil {
+		var omittedChannels []string
+		for _, ochannel := range *plan.OmittedChannels {
+			omittedChannels = append(omittedChannels, ochannel.ValueString())
+		}
+		req.SetOmittedChannels(omittedChannels)
 	}
 
 	configType, err := client.NewLogExportTypeFromValue(plan.Type.ValueString())

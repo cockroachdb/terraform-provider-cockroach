@@ -23,7 +23,7 @@ AWS PrivateLink Endpoint Connection.
 ### Read-Only
 
 - `cloud_provider` (String) Cloud provider associated with this connection.
-- `id` (String) Used with `terrform import`. Format is "<cluster ID>:<endpoint ID>".
+- `id` (String) Used with `terraform import`. Format is "<cluster ID>:<endpoint ID>".
 - `region_name` (String) Cloud provider region code associated with this connection.
 - `service_id` (String) Server side ID of the PrivateLink connection.
 

@@ -128,6 +128,14 @@ type PrivateEndpointConnection struct {
 	ClusterID     types.String `tfsdk:"cluster_id"`
 }
 
+type PrivateEndpointTrustedOwner struct {
+	ID              types.String `tfsdk:"id"`
+	ClusterID       types.String `tfsdk:"cluster_id"`
+	OwnerID         types.String `tfsdk:"owner_id"`
+	Type            types.String `tfsdk:"type"`
+	ExternalOwnerID types.String `tfsdk:"external_owner_id"`
+}
+
 type CMEKKey struct {
 	Status        types.String `tfsdk:"status"`
 	UserMessage   types.String `tfsdk:"user_message"`

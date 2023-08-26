@@ -52,7 +52,7 @@ func (r *privateEndpointConnectionResource) Schema(
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
-				MarkdownDescription: "Used with `terrform import`. Format is \"<cluster ID>:<endpoint ID>\".",
+				MarkdownDescription: "Used with `terraform import`. Format is \"<cluster ID>:<endpoint ID>\".",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},

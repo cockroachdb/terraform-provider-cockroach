@@ -23,6 +23,8 @@ type AwsEndpointConnection struct {
 	CloudProvider CloudProviderType `json:"cloud_provider"`
 	// endpoint_id is the client side of the PrivateLink connection.
 	EndpointId string `json:"endpoint_id"`
+	// external_owner_id represents the ID of the AWS account that owns the PrivateLink connection.
+	ExternalOwnerId *string `json:"external_owner_id,omitempty"`
 	// region_name is the cloud provider region name (i.e. us-east-1).
 	RegionName string `json:"region_name"`
 	// service_id is the server side of the PrivateLink connection. This is the same as AWSPrivateLinkEndpoint.service_id.
@@ -80,6 +82,20 @@ func (o *AwsEndpointConnection) GetEndpointId() string {
 // SetEndpointId sets field value.
 func (o *AwsEndpointConnection) SetEndpointId(v string) {
 	o.EndpointId = v
+}
+
+// GetExternalOwnerId returns the ExternalOwnerId field value if set, zero value otherwise.
+func (o *AwsEndpointConnection) GetExternalOwnerId() string {
+	if o == nil || o.ExternalOwnerId == nil {
+		var ret string
+		return ret
+	}
+	return *o.ExternalOwnerId
+}
+
+// SetExternalOwnerId gets a reference to the given string and assigns it to the ExternalOwnerId field.
+func (o *AwsEndpointConnection) SetExternalOwnerId(v string) {
+	o.ExternalOwnerId = &v
 }
 
 // GetRegionName returns the RegionName field value.

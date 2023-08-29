@@ -84,6 +84,22 @@ func (mr *MockServiceMockRecorder) AddEgressRule(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEgressRule", reflect.TypeOf((*MockService)(nil).AddEgressRule), arg0, arg1, arg2)
 }
 
+// AddPrivateEndpointTrustedOwner mocks base method.
+func (m *MockService) AddPrivateEndpointTrustedOwner(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudAddPrivateEndpointTrustedOwnerRequest) (*client.AddPrivateEndpointTrustedOwnerResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPrivateEndpointTrustedOwner", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.AddPrivateEndpointTrustedOwnerResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// AddPrivateEndpointTrustedOwner indicates an expected call of AddPrivateEndpointTrustedOwner.
+func (mr *MockServiceMockRecorder) AddPrivateEndpointTrustedOwner(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPrivateEndpointTrustedOwner", reflect.TypeOf((*MockService)(nil).AddPrivateEndpointTrustedOwner), arg0, arg1, arg2)
+}
+
 // AddUserToRole mocks base method.
 func (m *MockService) AddUserToRole(arg0 context.Context, arg1, arg2, arg3, arg4 string) (*client.GetAllRolesForUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -98,6 +114,22 @@ func (m *MockService) AddUserToRole(arg0 context.Context, arg1, arg2, arg3, arg4
 func (mr *MockServiceMockRecorder) AddUserToRole(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddUserToRole", reflect.TypeOf((*MockService)(nil).AddUserToRole), arg0, arg1, arg2, arg3, arg4)
+}
+
+// CreateApiOidcConfig mocks base method.
+func (m *MockService) CreateApiOidcConfig(arg0 context.Context, arg1 *client.CreateApiOidcConfigRequest) (*client.ApiOidcConfig, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateApiOidcConfig", arg0, arg1)
+	ret0, _ := ret[0].(*client.ApiOidcConfig)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateApiOidcConfig indicates an expected call of CreateApiOidcConfig.
+func (mr *MockServiceMockRecorder) CreateApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateApiOidcConfig", reflect.TypeOf((*MockService)(nil).CreateApiOidcConfig), arg0, arg1)
 }
 
 // CreateCluster mocks base method.
@@ -226,6 +258,22 @@ func (m *MockService) DeleteAllowlistEntry(arg0 context.Context, arg1, arg2 stri
 func (mr *MockServiceMockRecorder) DeleteAllowlistEntry(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAllowlistEntry", reflect.TypeOf((*MockService)(nil).DeleteAllowlistEntry), arg0, arg1, arg2, arg3)
+}
+
+// DeleteApiOidcConfig mocks base method.
+func (m *MockService) DeleteApiOidcConfig(arg0 context.Context, arg1 string) (*client.ApiOidcConfig, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteApiOidcConfig", arg0, arg1)
+	ret0, _ := ret[0].(*client.ApiOidcConfig)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteApiOidcConfig indicates an expected call of DeleteApiOidcConfig.
+func (mr *MockServiceMockRecorder) DeleteApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteApiOidcConfig", reflect.TypeOf((*MockService)(nil).DeleteApiOidcConfig), arg0, arg1)
 }
 
 // DeleteClientCACert mocks base method.
@@ -545,6 +593,22 @@ func (mr *MockServiceMockRecorder) GetAllRolesForUser(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllRolesForUser", reflect.TypeOf((*MockService)(nil).GetAllRolesForUser), arg0, arg1)
 }
 
+// GetApiOidcConfig mocks base method.
+func (m *MockService) GetApiOidcConfig(arg0 context.Context, arg1 string) (*client.ApiOidcConfig, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetApiOidcConfig", arg0, arg1)
+	ret0, _ := ret[0].(*client.ApiOidcConfig)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetApiOidcConfig indicates an expected call of GetApiOidcConfig.
+func (mr *MockServiceMockRecorder) GetApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApiOidcConfig", reflect.TypeOf((*MockService)(nil).GetApiOidcConfig), arg0, arg1)
+}
+
 // GetCMEKClusterInfo mocks base method.
 func (m *MockService) GetCMEKClusterInfo(arg0 context.Context, arg1 string) (*client.CMEKClusterInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -833,6 +897,22 @@ func (mr *MockServiceMockRecorder) GetPersonUsersByEmail(arg0, arg1 interface{})
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonUsersByEmail", reflect.TypeOf((*MockService)(nil).GetPersonUsersByEmail), arg0, arg1)
 }
 
+// GetPrivateEndpointTrustedOwner mocks base method.
+func (m *MockService) GetPrivateEndpointTrustedOwner(arg0 context.Context, arg1, arg2 string) (*client.GetPrivateEndpointTrustedOwnerResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPrivateEndpointTrustedOwner", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.GetPrivateEndpointTrustedOwnerResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetPrivateEndpointTrustedOwner indicates an expected call of GetPrivateEndpointTrustedOwner.
+func (mr *MockServiceMockRecorder) GetPrivateEndpointTrustedOwner(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateEndpointTrustedOwner", reflect.TypeOf((*MockService)(nil).GetPrivateEndpointTrustedOwner), arg0, arg1, arg2)
+}
+
 // GetResourceType mocks base method.
 func (m *MockService) GetResourceType(arg0 context.Context, arg1 string, arg2 *client.GetResourceTypeOptions) (*client.ScimResourceType, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -991,6 +1071,22 @@ func (m *MockService) ListAllowlistEntries(arg0 context.Context, arg1 string, ar
 func (mr *MockServiceMockRecorder) ListAllowlistEntries(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAllowlistEntries", reflect.TypeOf((*MockService)(nil).ListAllowlistEntries), arg0, arg1, arg2)
+}
+
+// ListApiOidcConfig mocks base method.
+func (m *MockService) ListApiOidcConfig(arg0 context.Context, arg1 *client.ListApiOidcConfigOptions) (*client.ListApiOidcConfigResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListApiOidcConfig", arg0, arg1)
+	ret0, _ := ret[0].(*client.ListApiOidcConfigResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListApiOidcConfig indicates an expected call of ListApiOidcConfig.
+func (mr *MockServiceMockRecorder) ListApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListApiOidcConfig", reflect.TypeOf((*MockService)(nil).ListApiOidcConfig), arg0, arg1)
 }
 
 // ListAuditLogs mocks base method.
@@ -1169,6 +1265,22 @@ func (mr *MockServiceMockRecorder) ListPrivateEndpointServices(arg0, arg1 interf
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointServices", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointServices), arg0, arg1)
 }
 
+// ListPrivateEndpointTrustedOwners mocks base method.
+func (m *MockService) ListPrivateEndpointTrustedOwners(arg0 context.Context, arg1 string) (*client.ListPrivateEndpointTrustedOwnersResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPrivateEndpointTrustedOwners", arg0, arg1)
+	ret0, _ := ret[0].(*client.ListPrivateEndpointTrustedOwnersResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListPrivateEndpointTrustedOwners indicates an expected call of ListPrivateEndpointTrustedOwners.
+func (mr *MockServiceMockRecorder) ListPrivateEndpointTrustedOwners(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointTrustedOwners", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointTrustedOwners), arg0, arg1)
+}
+
 // ListRoleGrants mocks base method.
 func (m *MockService) ListRoleGrants(arg0 context.Context, arg1 *client.ListRoleGrantsOptions) (*client.ListRoleGrantsResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1199,6 +1311,22 @@ func (m *MockService) ListSQLUsers(arg0 context.Context, arg1 string, arg2 *clie
 func (mr *MockServiceMockRecorder) ListSQLUsers(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListSQLUsers", reflect.TypeOf((*MockService)(nil).ListSQLUsers), arg0, arg1, arg2)
+}
+
+// RemovePrivateEndpointTrustedOwner mocks base method.
+func (m *MockService) RemovePrivateEndpointTrustedOwner(arg0 context.Context, arg1, arg2 string) (*client.RemovePrivateEndpointTrustedOwnerResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RemovePrivateEndpointTrustedOwner", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.RemovePrivateEndpointTrustedOwnerResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// RemovePrivateEndpointTrustedOwner indicates an expected call of RemovePrivateEndpointTrustedOwner.
+func (mr *MockServiceMockRecorder) RemovePrivateEndpointTrustedOwner(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemovePrivateEndpointTrustedOwner", reflect.TypeOf((*MockService)(nil).RemovePrivateEndpointTrustedOwner), arg0, arg1, arg2)
 }
 
 // RemoveUserFromRole mocks base method.
@@ -1326,6 +1454,22 @@ func (m *MockService) UpdateAllowlistEntry(arg0 context.Context, arg1, arg2 stri
 func (mr *MockServiceMockRecorder) UpdateAllowlistEntry(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateAllowlistEntry", reflect.TypeOf((*MockService)(nil).UpdateAllowlistEntry), arg0, arg1, arg2, arg3, arg4)
+}
+
+// UpdateApiOidcConfig mocks base method.
+func (m *MockService) UpdateApiOidcConfig(arg0 context.Context, arg1 string, arg2 *client.ApiOidcConfig1) (*client.ApiOidcConfig, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateApiOidcConfig", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ApiOidcConfig)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateApiOidcConfig indicates an expected call of UpdateApiOidcConfig.
+func (mr *MockServiceMockRecorder) UpdateApiOidcConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApiOidcConfig", reflect.TypeOf((*MockService)(nil).UpdateApiOidcConfig), arg0, arg1, arg2)
 }
 
 // UpdateCMEKSpec mocks base method.

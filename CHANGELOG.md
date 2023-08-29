@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2023-08-29
+
+### Added
+
 - New cockroach_private_endpoint_connection resource allows users to configure
   trusted owner entries for private endpoints.
 
 ## [1.1.0] - 2023-08-15
 
 ### Added
+
 - New folder resource and the new `parent_id` for clusters support users managing nested resources. 
 Folders is in [limited access](https://www.cockroachlabs.com/docs/v23.1/cockroachdb-feature-availability).
 

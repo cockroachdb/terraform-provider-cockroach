@@ -57,7 +57,7 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
 		Plan:             "DEDICATED",
-		CloudProvider:    "AWS",
+		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
@@ -69,7 +69,7 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-east-1",
+				Name:      "us-east1",
 				NodeCount: 3,
 			},
 		},
@@ -153,13 +153,13 @@ func getTestMaintenanceWindowResourceCreateConfig(name string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
-  cloud_provider = "AWS"
+  cloud_provider = "GCP"
   dedicated = {
     storage_gib  = 35
   	num_virtual_cpus = 4
   }
   regions = [{
-    name = "us-east-1"
+    name = "us-east1"
     node_count: 3
   }]
 }
@@ -176,13 +176,13 @@ func getTestMaintenanceWindowResourceUpdateConfig(name string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
-  cloud_provider = "AWS"
+  cloud_provider = "GCP"
   dedicated = {
     storage_gib  = 35
   	num_virtual_cpus = 4
   }
   regions = [{
-    name = "us-east-1"
+    name = "us-east1"
     node_count: 3
   }]
 }

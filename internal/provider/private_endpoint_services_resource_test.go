@@ -79,7 +79,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				State: "CREATED",
 				Regions: []client.Region{
 					{
-						Name:      "ap-south-1",
+						Name:      "us-east-1",
 						NodeCount: 1,
 					},
 				},
@@ -224,7 +224,7 @@ resource "cockroach_cluster" "dedicated" {
 	  num_virtual_cpus = 2
     }
 	regions = [{
-		name: "ap-south-1"
+		name: "us-east-1"
 		node_count: 1
 	}]
 }

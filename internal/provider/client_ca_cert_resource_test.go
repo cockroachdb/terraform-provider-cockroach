@@ -63,7 +63,7 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 	cluster := &client.Cluster{
 		Id:            clusterId,
 		Name:          clusterName,
-		CloudProvider: "AWS",
+		CloudProvider: "GCP",
 		State:         "CREATED",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
@@ -74,7 +74,7 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-west-2",
+				Name:      "us-west2",
 				NodeCount: 1,
 			},
 		},
@@ -189,13 +189,13 @@ func getTestClientCACertResourceConfig(name string, cert string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
 	name           = "%s"
-	cloud_provider = "AWS"
+	cloud_provider = "GCP"
 	dedicated = {
 		storage_gib = 35
 		num_virtual_cpus = 4
 	}
 	regions = [{
-		name = "us-west-2"
+		name = "us-west2"
 		node_count: 1
 	}]
 }

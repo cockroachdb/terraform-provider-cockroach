@@ -126,7 +126,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				CloudProvider: "AWS",
+				CloudProvider: "GCP",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
 						StorageGib:     15,
@@ -137,7 +137,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				State: "CREATED",
 				Regions: []client.Region{
 					{
-						Name:      "ap-south-1",
+						Name:      "us-east1",
 						NodeCount: 1,
 					},
 				},
@@ -318,13 +318,13 @@ func getTestAllowlistEntryResourceConfigForDedicated(
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
-    cloud_provider = "AWS"
+    cloud_provider = "GCP"
     dedicated = {
         storage_gib = 15
         num_virtual_cpus = 2
     }
     regions = [{
-        name: "ap-south-1"
+        name: "us-east1"
         node_count: 1
     }]
 }

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Cluster regions, CMEK regions, log export groups and channels, and private endpoint services and
+  availablility zone IDs are now internally represented as sets instead of lists. That means
+  changing their order will not trigger update operations.
+
 ## [1.2.0] - 2023-08-29
 
 ### Added

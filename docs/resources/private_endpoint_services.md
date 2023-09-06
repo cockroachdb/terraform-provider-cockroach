@@ -22,7 +22,7 @@ PrivateEndpointServices contains services that allow for VPC communication, eith
 ### Read-Only
 
 - `id` (String) Always matches the cluster ID. Required by Terraform.
-- `services` (Attributes List) (see [below for nested schema](#nestedatt--services))
+- `services` (Attributes Set) (see [below for nested schema](#nestedatt--services))
 
 <a id="nestedatt--services"></a>
 ### Nested Schema for `services`
@@ -39,7 +39,7 @@ Read-Only:
 
 Read-Only:
 
-- `availability_zone_ids` (List of String) AZ IDs users should create their VPCs in to minimize their cost.
+- `availability_zone_ids` (Set of String) AZ IDs users should create their VPCs in to minimize their cost.
 - `service_id` (String) Server side ID of the PrivateLink connection.
 - `service_name` (String) AWS service name used to create endpoints.
 

@@ -18,11 +18,11 @@ Customer-managed encryption keys (CMEK) resource for a single cluster.
 ### Required
 
 - `id` (String) Cluster ID.
-- `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
+- `regions` (Attributes Set) (see [below for nested schema](#nestedatt--regions))
 
 ### Optional
 
-- `additional_regions` (Attributes List) Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead. (see [below for nested schema](#nestedatt--additional_regions))
+- `additional_regions` (Attributes Set) Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead. (see [below for nested schema](#nestedatt--additional_regions))
 - `status` (String) Aggregated status of the cluster's encryption key(s).
 
 <a id="nestedatt--regions"></a>

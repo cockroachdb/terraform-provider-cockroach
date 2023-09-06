@@ -87,7 +87,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	trueBool := true
 	minLevel, _ := client.NewLogLevelTypeFromValue("WARNING")
 	createdGroups := []client.LogExportGroup{
-		{LogName: "sql", Channels: []string{"SQL_SCHEMA", "SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
+		{LogName: "sql", Channels: []string{"SQL_EXEC", "SQL_SCHEMA"}, MinLevel: minLevel, Redact: &trueBool},
 	}
 	omittedChannels := []string{"SQL_PERF"}
 	enabledStatus, _ := client.NewLogExportStatusFromValue("ENABLED")
@@ -107,8 +107,8 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 
 	falseBool := false
 	updatedGroups := []client.LogExportGroup{
+		{LogName: "devops", Channels: []string{"HEALTH", "OPS", "STORAGE"}, MinLevel: minLevel, Redact: &falseBool},
 		{LogName: "sql", Channels: []string{"SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
-		{LogName: "devops", Channels: []string{"OPS", "HEALTH", "STORAGE"}, MinLevel: minLevel, Redact: &falseBool},
 	}
 	updatedOChannels := []string{"SQL_SCHEMA"}
 	updatedLogExportClusterInfo := &client.LogExportClusterInfo{
@@ -200,7 +200,7 @@ func testLogExportConfigResource(t *testing.T, clusterName string, useMock bool)
 					testLogExportConfigExists(logExportConfigResourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "redact", "false"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.#", "2"),
-					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.channels.#", "1"),
+					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.1.channels.#", "1"),
 				),
 			},
 			{

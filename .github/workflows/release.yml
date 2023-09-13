@@ -1,5 +1,8 @@
 # This GitHub action can publish assets for release when a tag is created.
-# Currently its setup to run on any tag that matches the pattern "v*" (ie. v0.1.0).
+# Currently its setup to be triggered manually via the GitHUB UI. We should
+# only run this on a tag that matches the pattern "v*" (ie. v0.1.0) *after*
+# validating that the release can be signed off (e.g. by triaging the
+# pre-release-ci workflow).
 #
 # This uses an action (hashicorp/ghaction-import-gpg) that assumes you set your 
 # private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
@@ -8,38 +11,12 @@
 #
 # You will need to pass the `--batch` flag to `gpg` in your signing step 
 # in `goreleaser` to indicate this is being used in a non-interactive mode.
-#
-name: release
-on:
-  push:
-    tags:
-      - 'v*'
+name: release (manually, after pre-release-ci)
+on: workflow_dispatch
 permissions:
   contents: write
 jobs:
-  # pre job to run acceptance tests
-  acceptance-test:
-    name: acceptance-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v2
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-
-      - name: Setup Go
-        uses: actions/setup-go@v2
-        with:
-          go-version: 1.18
-
-      - name: Tests
-        run: make testacc
-        env:
-          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
-
   goreleaser:
-    needs: acceptance-test
     runs-on: ubuntu-latest
     steps:
       -

@@ -21,13 +21,14 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"sort"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -46,10 +47,10 @@ var cmekAttributes = map[string]schema.Attribute{
 		Computed:            true,
 		Optional:            true,
 	},
-	"regions": schema.SetNestedAttribute{
+	"regions": schema.ListNestedAttribute{
 		Required: true,
-		PlanModifiers: []planmodifier.Set{
-			setplanmodifier.UseStateForUnknown(),
+		PlanModifiers: []planmodifier.List{
+			listplanmodifier.UseStateForUnknown(),
 		},
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
@@ -98,7 +99,7 @@ var cmekAttributes = map[string]schema.Attribute{
 			},
 		},
 	},
-	"additional_regions": schema.SetNestedAttribute{
+	"additional_regions": schema.ListNestedAttribute{
 		NestedObject:        regionSchema,
 		Optional:            true,
 		MarkdownDescription: "Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead.",
@@ -359,9 +360,27 @@ func (r *cmekResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
+// Since the API response will always sort regions by name, we need to
+// resort the list, so it matches up with the plan. If the response and
+// plan regions don't match up, the sort won't work right, but we can
+// ignore it. Terraform will handle it.
+func sortCMEKRegionsByPlan(cmekObj *client.CMEKClusterInfo, plan *ClusterCMEK) {
+	if cmekObj == nil || plan == nil {
+		return
+	}
+	regionOrdinals := make(map[string]int, len(cmekObj.GetRegionInfos()))
+	for i, region := range plan.Regions {
+		regionOrdinals[region.Region.ValueString()] = i
+	}
+	sort.Slice(*cmekObj.RegionInfos, func(i, j int) bool {
+		return regionOrdinals[cmekObj.GetRegionInfos()[i].GetRegion()] < regionOrdinals[cmekObj.GetRegionInfos()[j].GetRegion()]
+	})
+}
+
 func loadCMEKToTerraformState(
 	cmekObj *client.CMEKClusterInfo, state *ClusterCMEK, plan *ClusterCMEK,
 ) {
+	sortCMEKRegionsByPlan(cmekObj, plan)
 	var rgs []CMEKRegion
 	for i, region := range cmekObj.GetRegionInfos() {
 		var keyInfo client.CMEKKeyInfo

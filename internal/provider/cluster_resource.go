@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -32,9 +33,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -210,10 +211,10 @@ func (r *clusterResource) Schema(
 					},
 				},
 			},
-			"regions": schema.SetNestedAttribute{
+			"regions": schema.ListNestedAttribute{
 				Required: true,
-				PlanModifiers: []planmodifier.Set{
-					setplanmodifier.UseStateForUnknown(),
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
 				},
 				NestedObject: regionSchema,
 			},
@@ -279,7 +280,7 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("serverless").AtName("usage_limits"),
 		),
 		resourcevalidator.Conflicting(
-			path.MatchRoot("regions").AtAnySetValue().AtName("primary"),
+			path.MatchRoot("regions").AtAnyListIndex().AtName("primary"),
 			path.MatchRoot("dedicated"),
 		),
 	}
@@ -834,6 +835,23 @@ func simplifyClusterVersion(version string, planSpecifiesPreviewString bool) str
 	return fmt.Sprintf("v%s.%s", parts[1], parts[2])
 }
 
+// Since the API response will always sort regions by name, we need to
+// resort the list, so it matches up with the plan. If the response and
+// plan regions don't match up, the sort won't work right, but we can
+// ignore it. Terraform will handle it.
+func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
+	if regions == nil || plan == nil {
+		return
+	}
+	regionOrdinals := make(map[string]int, len(*regions))
+	for i, region := range plan {
+		regionOrdinals[region.Name.ValueString()] = i
+	}
+	sort.Slice(*regions, func(i, j int) bool {
+		return regionOrdinals[(*regions)[i].Name] < regionOrdinals[(*regions)[j].Name]
+	})
+}
+
 // loadCLusterToTerraformState translates the cluster from an API response into the
 // TF provider model. It's used in both the cluster resource and data source. The plan,
 // if available, is used to determine the sort order of the cluster's regions, as well as
@@ -913,6 +931,7 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 		return nil
 	}
 	regions := make([]Region, 0, len(*apiRegions))
+	sortRegionsByPlan(apiRegions, plan)
 	planRegions := make(map[string]bool, len(plan))
 	for _, region := range plan {
 		planRegions[region.Name.ValueString()] = true

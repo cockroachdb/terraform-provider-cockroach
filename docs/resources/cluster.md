@@ -22,7 +22,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Serverless.
   * AWS
   * AZURE
 - `name` (String) Name of the cluster.
-- `regions` (Attributes Set) (see [below for nested schema](#nestedatt--regions))
+- `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 
 ### Optional
 

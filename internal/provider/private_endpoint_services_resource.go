@@ -27,9 +27,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	"github.com/hashicorp/terraform-plugin-framework/resource/schema/setplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -57,10 +57,10 @@ var endpointServicesSchema = schema.Schema{
 			},
 			MarkdownDescription: "Always matches the cluster ID. Required by Terraform.",
 		},
-		"services": schema.SetNestedAttribute{
+		"services": schema.ListNestedAttribute{
 			Computed: true,
-			PlanModifiers: []planmodifier.Set{
-				setplanmodifier.UseStateForUnknown(),
+			PlanModifiers: []planmodifier.List{
+				listplanmodifier.UseStateForUnknown(),
 			},
 			NestedObject: schema.NestedAttributeObject{
 				Attributes: map[string]schema.Attribute{
@@ -90,7 +90,7 @@ var endpointServicesSchema = schema.Schema{
 								Computed:    true,
 								Description: "Server side ID of the PrivateLink connection.",
 							},
-							"availability_zone_ids": schema.SetAttribute{
+							"availability_zone_ids": schema.ListAttribute{
 								Computed:            true,
 								ElementType:         types.StringType,
 								MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
@@ -250,11 +250,11 @@ func loadEndpointServicesIntoTerraformState(ctx context.Context, apiServices *cl
 		services[i].Aws.AvailabilityZoneIds = azs
 	}
 	var diags diag.Diagnostics
-	state.Services, diags = types.SetValueFrom(
+	state.Services, diags = types.ListValueFrom(
 		ctx,
 		// Yes, it really does apparently need to be this complicated.
 		// https://github.com/hashicorp/terraform-plugin-framework/issues/713
-		endpointServicesSchema.Attributes["services"].(schema.SetNestedAttribute).NestedObject.Type(),
+		endpointServicesSchema.Attributes["services"].(schema.ListNestedAttribute).NestedObject.Type(),
 		services,
 	)
 	return diags

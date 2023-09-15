@@ -39,9 +39,9 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		}
 		configureResp := datasource.ConfigureResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined DataSource Configure")
+		logging.FrameworkDebug(ctx, "Calling provider defined DataSource Configure")
 		dataSourceWithConfigure.Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkTrace(ctx, "Called provider defined DataSource Configure")
+		logging.FrameworkDebug(ctx, "Called provider defined DataSource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -62,7 +62,7 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 			// from modifying or removing diagnostics.
 			vdscResp := &datasource.ValidateConfigResponse{}
 
-			logging.FrameworkTrace(
+			logging.FrameworkDebug(
 				ctx,
 				"Calling provider defined ConfigValidator",
 				map[string]interface{}{
@@ -70,7 +70,7 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 				},
 			)
 			configValidator.ValidateDataSource(ctx, vdscReq, vdscResp)
-			logging.FrameworkTrace(
+			logging.FrameworkDebug(
 				ctx,
 				"Called provider defined ConfigValidator",
 				map[string]interface{}{
@@ -89,9 +89,9 @@ func (s *Server) ValidateDataSourceConfig(ctx context.Context, req *ValidateData
 		// from modifying or removing diagnostics.
 		vdscResp := &datasource.ValidateConfigResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined DataSource ValidateConfig")
+		logging.FrameworkDebug(ctx, "Calling provider defined DataSource ValidateConfig")
 		dataSource.ValidateConfig(ctx, vdscReq, vdscResp)
-		logging.FrameworkTrace(ctx, "Called provider defined DataSource ValidateConfig")
+		logging.FrameworkDebug(ctx, "Called provider defined DataSource ValidateConfig")
 
 		resp.Diagnostics.Append(vdscResp.Diagnostics...)
 	}

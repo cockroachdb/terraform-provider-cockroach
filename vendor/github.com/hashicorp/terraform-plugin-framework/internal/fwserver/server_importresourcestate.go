@@ -58,9 +58,9 @@ func (s *Server) ImportResourceState(ctx context.Context, req *ImportResourceSta
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
 		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -103,9 +103,9 @@ func (s *Server) ImportResourceState(ctx context.Context, req *ImportResourceSta
 		Private: privateProviderData,
 	}
 
-	logging.FrameworkTrace(ctx, "Calling provider defined Resource ImportState")
+	logging.FrameworkDebug(ctx, "Calling provider defined Resource ImportState")
 	resourceWithImportState.ImportState(ctx, importReq, &importResp)
-	logging.FrameworkTrace(ctx, "Called provider defined Resource ImportState")
+	logging.FrameworkDebug(ctx, "Called provider defined Resource ImportState")
 
 	resp.Diagnostics.Append(importResp.Diagnostics...)
 

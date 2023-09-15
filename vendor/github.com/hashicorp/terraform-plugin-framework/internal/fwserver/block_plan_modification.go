@@ -113,22 +113,6 @@ func BlockModifyPlan(ctx context.Context, b fwschema.Block, req ModifyAttributeP
 				return
 			}
 
-			planObjectValuable, diags := coerceObjectValuable(ctx, attrPath, planElem)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			typable, diags := coerceObjectTypable(ctx, attrPath, planObjectValuable)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
 			stateObject, diags := listElemObject(ctx, attrPath, stateList, idx, fwschemadata.DataDescriptionState)
 
 			resp.Diagnostics.Append(diags...)
@@ -155,26 +139,7 @@ func BlockModifyPlan(ctx context.Context, b fwschema.Block, req ModifyAttributeP
 
 			NestedBlockObjectPlanModify(ctx, nestedBlockObject, objectReq, objectResp)
 
-			respValue, diags := coerceObjectValue(ctx, attrPath, objectResp.AttributePlan)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			// A custom value type must be returned in the final response to prevent
-			// later correctness errors.
-			// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/821
-			respValuable, diags := typable.ValueFromObject(ctx, respValue)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			planElements[idx] = respValuable
+			planElements[idx] = objectResp.AttributePlan
 			resp.Diagnostics.Append(objectResp.Diagnostics...)
 			resp.Private = objectResp.Private
 			resp.RequiresReplace.Append(objectResp.RequiresReplace...)
@@ -264,22 +229,6 @@ func BlockModifyPlan(ctx context.Context, b fwschema.Block, req ModifyAttributeP
 				return
 			}
 
-			planObjectValuable, diags := coerceObjectValuable(ctx, attrPath, planElem)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			typable, diags := coerceObjectTypable(ctx, attrPath, planObjectValuable)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
 			stateObject, diags := setElemObject(ctx, attrPath, stateSet, idx, fwschemadata.DataDescriptionState)
 
 			resp.Diagnostics.Append(diags...)
@@ -306,26 +255,7 @@ func BlockModifyPlan(ctx context.Context, b fwschema.Block, req ModifyAttributeP
 
 			NestedBlockObjectPlanModify(ctx, nestedBlockObject, objectReq, objectResp)
 
-			respValue, diags := coerceObjectValue(ctx, attrPath, objectResp.AttributePlan)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			// A custom value type must be returned in the final response to prevent
-			// later correctness errors.
-			// Reference: https://github.com/hashicorp/terraform-plugin-framework/issues/821
-			respValuable, diags := typable.ValueFromObject(ctx, respValue)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			planElements[idx] = respValuable
+			planElements[idx] = objectResp.AttributePlan
 			resp.Diagnostics.Append(objectResp.Diagnostics...)
 			resp.Private = objectResp.Private
 			resp.RequiresReplace.Append(objectResp.RequiresReplace...)
@@ -559,7 +489,7 @@ func BlockPlanModifyList(ctx context.Context, block fwxschema.BlockWithListPlanM
 			Private:   resp.Private,
 		}
 
-		logging.FrameworkTrace(
+		logging.FrameworkDebug(
 			ctx,
 			"Calling provider defined planmodifier.List",
 			map[string]interface{}{
@@ -569,7 +499,7 @@ func BlockPlanModifyList(ctx context.Context, block fwxschema.BlockWithListPlanM
 
 		planModifier.PlanModifyList(ctx, planModifyReq, planModifyResp)
 
-		logging.FrameworkTrace(
+		logging.FrameworkDebug(
 			ctx,
 			"Called provider defined planmodifier.List",
 			map[string]interface{}{
@@ -719,7 +649,7 @@ func BlockPlanModifyObject(ctx context.Context, block fwxschema.BlockWithObjectP
 			Private:   resp.Private,
 		}
 
-		logging.FrameworkTrace(
+		logging.FrameworkDebug(
 			ctx,
 			"Calling provider defined planmodifier.Object",
 			map[string]interface{}{
@@ -729,7 +659,7 @@ func BlockPlanModifyObject(ctx context.Context, block fwxschema.BlockWithObjectP
 
 		planModifier.PlanModifyObject(ctx, planModifyReq, planModifyResp)
 
-		logging.FrameworkTrace(
+		logging.FrameworkDebug(
 			ctx,
 			"Called provider defined planmodifier.Object",
 			map[string]interface{}{
@@ -879,7 +809,7 @@ func BlockPlanModifySet(ctx context.Context, block fwxschema.BlockWithSetPlanMod
 			Private:   resp.Private,
 		}
 
-		logging.FrameworkTrace(
+		logging.FrameworkDebug(
 			ctx,
 			"Calling provider defined planmodifier.Set",
 			map[string]interface{}{
@@ -889,7 +819,7 @@ func BlockPlanModifySet(ctx context.Context, block fwxschema.BlockWithSetPlanMod
 
 		planModifier.PlanModifySet(ctx, planModifyReq, planModifyResp)
 
-		logging.FrameworkTrace(
+		logging.FrameworkDebug(
 			ctx,
 			"Called provider defined planmodifier.Set",
 			map[string]interface{}{
@@ -938,7 +868,7 @@ func NestedBlockObjectPlanModify(ctx context.Context, o fwschema.NestedBlockObje
 				Private:   resp.Private,
 			}
 
-			logging.FrameworkTrace(
+			logging.FrameworkDebug(
 				ctx,
 				"Calling provider defined planmodifier.Object",
 				map[string]interface{}{
@@ -948,7 +878,7 @@ func NestedBlockObjectPlanModify(ctx context.Context, o fwschema.NestedBlockObje
 
 			objectPlanModifier.PlanModifyObject(ctx, req, planModifyResp)
 
-			logging.FrameworkTrace(
+			logging.FrameworkDebug(
 				ctx,
 				"Called provider defined planmodifier.Object",
 				map[string]interface{}{

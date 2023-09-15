@@ -52,9 +52,9 @@ func (s *Server) UpdateResource(ctx context.Context, req *UpdateResourceRequest,
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
 		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -118,9 +118,9 @@ func (s *Server) UpdateResource(ctx context.Context, req *UpdateResourceRequest,
 		resp.Private = req.PlannedPrivate
 	}
 
-	logging.FrameworkTrace(ctx, "Calling provider defined Resource Update")
+	logging.FrameworkDebug(ctx, "Calling provider defined Resource Update")
 	req.Resource.Update(ctx, updateReq, &updateResp)
-	logging.FrameworkTrace(ctx, "Called provider defined Resource Update")
+	logging.FrameworkDebug(ctx, "Called provider defined Resource Update")
 
 	resp.Diagnostics = updateResp.Diagnostics
 	resp.NewState = &updateResp.State

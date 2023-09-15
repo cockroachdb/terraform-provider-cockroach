@@ -39,9 +39,9 @@ func (s *Server) ValidateResourceConfig(ctx context.Context, req *ValidateResour
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
 		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -62,7 +62,7 @@ func (s *Server) ValidateResourceConfig(ctx context.Context, req *ValidateResour
 			// from modifying or removing diagnostics.
 			vdscResp := &resource.ValidateConfigResponse{}
 
-			logging.FrameworkTrace(
+			logging.FrameworkDebug(
 				ctx,
 				"Calling provider defined ResourceConfigValidator",
 				map[string]interface{}{
@@ -70,7 +70,7 @@ func (s *Server) ValidateResourceConfig(ctx context.Context, req *ValidateResour
 				},
 			)
 			configValidator.ValidateResource(ctx, vdscReq, vdscResp)
-			logging.FrameworkTrace(
+			logging.FrameworkDebug(
 				ctx,
 				"Called provider defined ResourceConfigValidator",
 				map[string]interface{}{
@@ -89,9 +89,9 @@ func (s *Server) ValidateResourceConfig(ctx context.Context, req *ValidateResour
 		// from modifying or removing diagnostics.
 		vdscResp := &resource.ValidateConfigResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined Resource ValidateConfig")
+		logging.FrameworkDebug(ctx, "Calling provider defined Resource ValidateConfig")
 		resourceWithValidateConfig.ValidateConfig(ctx, vdscReq, vdscResp)
-		logging.FrameworkTrace(ctx, "Called provider defined Resource ValidateConfig")
+		logging.FrameworkDebug(ctx, "Called provider defined Resource ValidateConfig")
 
 		resp.Diagnostics.Append(vdscResp.Diagnostics...)
 	}

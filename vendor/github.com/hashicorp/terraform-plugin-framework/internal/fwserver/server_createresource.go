@@ -51,9 +51,9 @@ func (s *Server) CreateResource(ctx context.Context, req *CreateResourceRequest,
 		}
 		configureResp := resource.ConfigureResponse{}
 
-		logging.FrameworkTrace(ctx, "Calling provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Calling provider defined Resource Configure")
 		resourceWithConfigure.Configure(ctx, configureReq, &configureResp)
-		logging.FrameworkTrace(ctx, "Called provider defined Resource Configure")
+		logging.FrameworkDebug(ctx, "Called provider defined Resource Configure")
 
 		resp.Diagnostics.Append(configureResp.Diagnostics...)
 
@@ -97,9 +97,9 @@ func (s *Server) CreateResource(ctx context.Context, req *CreateResourceRequest,
 		createReq.ProviderMeta = *req.ProviderMeta
 	}
 
-	logging.FrameworkTrace(ctx, "Calling provider defined Resource Create")
+	logging.FrameworkDebug(ctx, "Calling provider defined Resource Create")
 	req.Resource.Create(ctx, createReq, &createResp)
-	logging.FrameworkTrace(ctx, "Called provider defined Resource Create")
+	logging.FrameworkDebug(ctx, "Called provider defined Resource Create")
 
 	resp.Diagnostics = createResp.Diagnostics
 	resp.NewState = &createResp.State

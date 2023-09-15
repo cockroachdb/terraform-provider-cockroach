@@ -114,7 +114,7 @@ func (d *clusterDataSource) Schema(
 					},
 				},
 			},
-			"regions": schema.SetNestedAttribute{
+			"regions": schema.ListNestedAttribute{
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{

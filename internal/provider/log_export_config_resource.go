@@ -62,14 +62,14 @@ var logExportAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "Controls whether all logs are sent to a specific region in the customer sink.",
 		Computed:            true,
 	},
-	"groups": schema.SetNestedAttribute{
+	"groups": schema.ListNestedAttribute{
 		Optional: true,
 		NestedObject: schema.NestedAttributeObject{
 			Attributes: map[string]schema.Attribute{
-				"channels": schema.SetAttribute{
+				"channels": schema.ListAttribute{
 					Required:            true,
 					ElementType:         types.StringType,
-					MarkdownDescription: "A set of CockroachDB log channels to include in this group.",
+					MarkdownDescription: "A list of CockroachDB log channels to include in this group.",
 				},
 				"log_name": schema.StringAttribute{
 					Required:            true,
@@ -106,7 +106,7 @@ var logExportAttributes = map[string]schema.Attribute{
 		Computed:    true,
 		Description: "Indicates when the log export configuration was last updated.",
 	},
-	"omitted_channels": schema.SetAttribute{
+	"omitted_channels": schema.ListAttribute{
 		Optional:    true,
 		ElementType: types.StringType,
 		Description: "Controls what CRDB channels do not get exported.",

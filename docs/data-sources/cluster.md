@@ -30,7 +30,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 - `operation_status` (String) Describes the current long-running operation, if any.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `plan` (String) Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.
-- `regions` (Attributes Set) (see [below for nested schema](#nestedatt--regions))
+- `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.

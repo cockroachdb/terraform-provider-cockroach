@@ -19,12 +19,6 @@ variable "sql_user_password" {
   sensitive = true
 }
 
-variable "cockroach_version" {
-  type     = string
-  nullable = true
-  default  = "v22.2"
-}
-
 variable "cloud_provider" {
   type     = string
   nullable = false
@@ -99,7 +93,6 @@ provider "cockroach" {
 resource "cockroach_cluster" "example" {
   name              = var.cluster_name
   cloud_provider    = var.cloud_provider
-  cockroach_version = var.cockroach_version
   dedicated = {
     storage_gib      = var.storage_gib
     num_virtual_cpus = var.num_virtual_cpus

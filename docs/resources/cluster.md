@@ -68,7 +68,7 @@ Optional:
 - `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
 - `machine_type` (String) Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4.
 - `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
-- `private_network_visibility` (Boolean) Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features.
+- `private_network_visibility` (Boolean) Set to true to assign private IP addresses to nodes. Creates a Dedicated advanced cluster with CMEK and other advanced networking features.
 - `storage_gib` (Number) Storage amount per node in GiB.
 
 Read-Only:

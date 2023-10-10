@@ -204,7 +204,7 @@ func (r *clusterResource) Schema(
 					"private_network_visibility": schema.BoolAttribute{
 						Optional:    true,
 						Computed:    true,
-						Description: "Set to true to assign private IP addresses to nodes. Creates a Dedicated advanced cluster with CMEK and other advanced networking features.",
+						Description: "Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will be Dedicated advanced.",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},

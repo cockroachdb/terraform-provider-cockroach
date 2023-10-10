@@ -84,7 +84,7 @@ var uuidRegex = regexp.MustCompile(uuidRegexString)
 
 // retryGetRequests implements the retryable-http CheckRetry type.
 func retryGetRequestsOnly(ctx context.Context, resp *http.Response, err error) (bool, error) {
-	if resp.Request.Method != http.MethodGet {
+	if resp != nil && resp.Request != nil && resp.Request.Method != http.MethodGet {
 		// We don't want to blindly retry anything that isn't a GET method
 		// because it's possible that a different method type mutated data on
 		// the server even if the response wasn't successful. Application code

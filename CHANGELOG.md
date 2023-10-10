@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- Clarify cluster.private_network_visibility attribute documentation.
+
 ## [1.8.0] - 2024-09-18
 
 ### Added

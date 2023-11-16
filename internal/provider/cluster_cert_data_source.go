@@ -49,7 +49,7 @@ func (d *clusterCertDataSource) Schema(_ context.Context, _ datasource.SchemaReq
 		MarkdownDescription: "TLS certificate for the specified CockroachDB cluster. Certificates " +
 			"for dedicated clusters should be written to `$HOME/Library/CockroachCloud/certs/<cluster name>-ca.crt` " +
 			"on MacOS or Linux, or `$env:appdata\\CockroachCloud\\certs\\<cluster name>-ca.crt` on Windows. \n\n" +
-			"Serverless clusters use the root PostgreSQL CA cert. If it isn't already installed, the certificate " +
+			"Shared clusters use the root PostgreSQL CA cert. If it isn't already installed, the certificate " +
 			"can be appended to `$HOME/.postgresql/root.crt` on MacOS or Linux, or `$env:appdata\\postgresql\\root.crt` " +
 			"on Windows.",
 	}

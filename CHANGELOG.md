@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `STANDARD` clusters with provisioned capacity on shared hardware.
+
+### Changed
+
+- Renamed `serverless` config in `cluster` resource to `shared`. Users will need
+  to convert Terraform config files.
+- Renamed `SERVERLESS` plan to `BASIC`.
+- Renamed `DEDICATED` plan to `ADVANCED`.
+
+### Removed
+
+- Removed support for `spend_limit` field in `serverless` config. Users can
+  enforce resource limits with `usage_limits`.
+
 ### Fixed
 
 - Fixed a nil pointer exception which could occur while retrying a certain

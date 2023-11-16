@@ -3,8 +3,10 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=cockroachdb
 NAME=cockroach
 BINARY=terraform-provider-${NAME}
-VERSION=0.4.3
-OS_ARCH=darwin_amd64
+VERSION=2.0.0
+OS := $(shell uname | tr A-Z a-z)
+ARCH := $(shell uname -m | sed 's/x86_64/amd64/')
+OS_ARCH := $(OS)_$(ARCH)
 
 default: install
 
@@ -34,6 +36,8 @@ release:
 	GOOS=windows GOARCH=386 go build -o ./bin/${BINARY}_${VERSION}_windows_386
 	GOOS=windows GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_windows_amd64
 
+# Use this to install a development binary to your local machine, in the TF
+# provider cache.
 install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}

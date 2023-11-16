@@ -3,12 +3,12 @@
 page_title: "cockroach_cluster Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  CockroachDB Cloud cluster. Can be Dedicated or Serverless.
+  CockroachDB Cloud cluster.
 ---
 
 # cockroach_cluster (Resource)
 
-CockroachDB Cloud cluster. Can be Dedicated or Serverless.
+CockroachDB Cloud cluster.
 
 
 
@@ -29,7 +29,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
-- `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
+- `shared` (Attributes) (see [below for nested schema](#nestedatt--shared))
 
 ### Read-Only
 
@@ -37,7 +37,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 - `creator_id` (String) ID of the user who created the cluster.
 - `id` (String) The ID of this resource.
 - `operation_status` (String) Describes the current long-running operation, if any.
-- `plan` (String) Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
 
@@ -50,8 +50,8 @@ Required:
 
 Optional:
 
-- `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
-- `primary` (Boolean) Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
+- `node_count` (Number) Number of nodes in the region. Will always be 0 for shared clusters.
+- `primary` (Boolean) Set to true to mark this region as the primary for a shared cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
 
 Read-Only:
 
@@ -76,24 +76,24 @@ Read-Only:
 - `memory_gib` (Number) Memory per node in GiB.
 
 
-<a id="nestedatt--serverless"></a>
-### Nested Schema for `serverless`
+<a id="nestedatt--shared"></a>
+### Nested Schema for `shared`
 
 Optional:
 
-- `spend_limit` (Number) Spend limit in US cents.
-- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
+- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--shared--usage_limits))
 
 Read-Only:
 
 - `routing_id` (String) Cluster identifier in a connection string.
 
-<a id="nestedatt--serverless--usage_limits"></a>
-### Nested Schema for `serverless.usage_limits`
+<a id="nestedatt--shared--usage_limits"></a>
+### Nested Schema for `shared.usage_limits`
 
-Required:
+Optional:
 
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
+- `request_unit_rate_limit` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
 
 

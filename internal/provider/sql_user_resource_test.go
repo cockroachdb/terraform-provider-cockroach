@@ -62,14 +62,14 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
 		return s
 	})()
-	spendLimit := int32(1)
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            uuid.Nil.String(),
+		Plan:          "BASIC",
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
-			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: &spendLimit,
+			Shared: &client.SharedClusterConfig{
+				RoutingId: "routing-id",
 			},
 		},
 		State: "CREATED",
@@ -113,7 +113,7 @@ func testSqlUserResource(
 	t *testing.T, clusterName, sqlUserNameWithPass, sqlUserNameNoPass string, useMock bool,
 ) {
 	var (
-		clusterResourceName = "cockroach_cluster.serverless"
+		clusterResourceName = "cockroach_cluster.shared"
 		resourceNamePass    = "cockroach_sql_user.with_pass"
 		resourceNameNoPass  = "cockroach_sql_user.no_pass"
 	)
@@ -185,12 +185,10 @@ func getTestSqlUserResourceConfig(
 	clusterName, userNamePass, userNameNoPass, password string,
 ) string {
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "serverless" {
+resource "cockroach_cluster" "shared" {
     name           = "%s"
     cloud_provider = "GCP"
-    serverless = {
-        spend_limit = 1
-    }
+    shared = {}
 	regions = [{
 		name = "us-central1"
 	}]
@@ -199,12 +197,12 @@ resource "cockroach_cluster" "serverless" {
 resource "cockroach_sql_user" "with_pass" {
   name = "%s"
   password = "%s"
-  cluster_id = cockroach_cluster.serverless.id
+  cluster_id = cockroach_cluster.shared.id
 }
 
 resource "cockroach_sql_user" "no_pass" {
   name = "%s"
-  cluster_id = cockroach_cluster.serverless.id
+  cluster_id = cockroach_cluster.shared.id
 }
 `, clusterName, userNamePass, password, userNameNoPass)
 }

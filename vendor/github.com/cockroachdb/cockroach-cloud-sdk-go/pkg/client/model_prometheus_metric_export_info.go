@@ -18,51 +18,35 @@
 
 package client
 
-// DatadogMetricExportInfo struct for DatadogMetricExportInfo.
-type DatadogMetricExportInfo struct {
-	// api_key is the last 4 digits of a Datadog API key.
-	ApiKey      *string                 `json:"api_key,omitempty"`
-	ClusterId   string                  `json:"cluster_id"`
-	Site        DatadogSiteType         `json:"site"`
-	Status      *MetricExportStatusType `json:"status,omitempty"`
-	UserMessage *string                 `json:"user_message,omitempty"`
+// PrometheusMetricExportInfo struct for PrometheusMetricExportInfo.
+type PrometheusMetricExportInfo struct {
+	ClusterId string                  `json:"cluster_id"`
+	Status    *MetricExportStatusType `json:"status,omitempty"`
+	// targets is a map of ports exposing metrics to regions.
+	Targets     *map[string]string `json:"targets,omitempty"`
+	UserMessage *string            `json:"user_message,omitempty"`
 }
 
-// NewDatadogMetricExportInfo instantiates a new DatadogMetricExportInfo object.
+// NewPrometheusMetricExportInfo instantiates a new PrometheusMetricExportInfo object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewDatadogMetricExportInfo(clusterId string, site DatadogSiteType) *DatadogMetricExportInfo {
-	p := DatadogMetricExportInfo{}
+func NewPrometheusMetricExportInfo(clusterId string) *PrometheusMetricExportInfo {
+	p := PrometheusMetricExportInfo{}
 	p.ClusterId = clusterId
-	p.Site = site
 	return &p
 }
 
-// NewDatadogMetricExportInfoWithDefaults instantiates a new DatadogMetricExportInfo object.
+// NewPrometheusMetricExportInfoWithDefaults instantiates a new PrometheusMetricExportInfo object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewDatadogMetricExportInfoWithDefaults() *DatadogMetricExportInfo {
-	p := DatadogMetricExportInfo{}
+func NewPrometheusMetricExportInfoWithDefaults() *PrometheusMetricExportInfo {
+	p := PrometheusMetricExportInfo{}
 	return &p
-}
-
-// GetApiKey returns the ApiKey field value if set, zero value otherwise.
-func (o *DatadogMetricExportInfo) GetApiKey() string {
-	if o == nil || o.ApiKey == nil {
-		var ret string
-		return ret
-	}
-	return *o.ApiKey
-}
-
-// SetApiKey gets a reference to the given string and assigns it to the ApiKey field.
-func (o *DatadogMetricExportInfo) SetApiKey(v string) {
-	o.ApiKey = &v
 }
 
 // GetClusterId returns the ClusterId field value.
-func (o *DatadogMetricExportInfo) GetClusterId() string {
+func (o *PrometheusMetricExportInfo) GetClusterId() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -72,27 +56,12 @@ func (o *DatadogMetricExportInfo) GetClusterId() string {
 }
 
 // SetClusterId sets field value.
-func (o *DatadogMetricExportInfo) SetClusterId(v string) {
+func (o *PrometheusMetricExportInfo) SetClusterId(v string) {
 	o.ClusterId = v
 }
 
-// GetSite returns the Site field value.
-func (o *DatadogMetricExportInfo) GetSite() DatadogSiteType {
-	if o == nil {
-		var ret DatadogSiteType
-		return ret
-	}
-
-	return o.Site
-}
-
-// SetSite sets field value.
-func (o *DatadogMetricExportInfo) SetSite(v DatadogSiteType) {
-	o.Site = v
-}
-
 // GetStatus returns the Status field value if set, zero value otherwise.
-func (o *DatadogMetricExportInfo) GetStatus() MetricExportStatusType {
+func (o *PrometheusMetricExportInfo) GetStatus() MetricExportStatusType {
 	if o == nil || o.Status == nil {
 		var ret MetricExportStatusType
 		return ret
@@ -101,12 +70,26 @@ func (o *DatadogMetricExportInfo) GetStatus() MetricExportStatusType {
 }
 
 // SetStatus gets a reference to the given MetricExportStatusType and assigns it to the Status field.
-func (o *DatadogMetricExportInfo) SetStatus(v MetricExportStatusType) {
+func (o *PrometheusMetricExportInfo) SetStatus(v MetricExportStatusType) {
 	o.Status = &v
 }
 
+// GetTargets returns the Targets field value if set, zero value otherwise.
+func (o *PrometheusMetricExportInfo) GetTargets() map[string]string {
+	if o == nil || o.Targets == nil {
+		var ret map[string]string
+		return ret
+	}
+	return *o.Targets
+}
+
+// SetTargets gets a reference to the given map[string]string and assigns it to the Targets field.
+func (o *PrometheusMetricExportInfo) SetTargets(v map[string]string) {
+	o.Targets = &v
+}
+
 // GetUserMessage returns the UserMessage field value if set, zero value otherwise.
-func (o *DatadogMetricExportInfo) GetUserMessage() string {
+func (o *PrometheusMetricExportInfo) GetUserMessage() string {
 	if o == nil || o.UserMessage == nil {
 		var ret string
 		return ret
@@ -115,6 +98,6 @@ func (o *DatadogMetricExportInfo) GetUserMessage() string {
 }
 
 // SetUserMessage gets a reference to the given string and assigns it to the UserMessage field.
-func (o *DatadogMetricExportInfo) SetUserMessage(v string) {
+func (o *PrometheusMetricExportInfo) SetUserMessage(v string) {
 	o.UserMessage = &v
 }

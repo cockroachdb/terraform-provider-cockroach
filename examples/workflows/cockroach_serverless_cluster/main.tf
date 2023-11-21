@@ -19,10 +19,10 @@ variable "sql_user_password" {
   sensitive = true
 }
 
-variable "serverless_spend_limit" {
+variable "request_unit_rate_limit" {
   type     = number
   nullable = false
-  default  = 0
+  default  = 1000
 }
 
 variable "cloud_provider" {
@@ -52,7 +52,9 @@ resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = var.cloud_provider
   serverless = {
-    spend_limit = var.serverless_spend_limit
+    usage_limits = {
+      request_unit_rate_limit = var.request_unit_rate_limit
+    }
   }
   regions = [for r in var.cloud_provider_regions : { name = r }]
 }

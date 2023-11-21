@@ -434,6 +434,22 @@ func (mr *MockServiceMockRecorder) DeleteMaintenanceWindow(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMaintenanceWindow", reflect.TypeOf((*MockService)(nil).DeleteMaintenanceWindow), arg0, arg1)
 }
 
+// DeletePrometheusMetricExport mocks base method.
+func (m *MockService) DeletePrometheusMetricExport(arg0 context.Context, arg1 string) (*client.DeleteMetricExportResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePrometheusMetricExport", arg0, arg1)
+	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeletePrometheusMetricExport indicates an expected call of DeletePrometheusMetricExport.
+func (mr *MockServiceMockRecorder) DeletePrometheusMetricExport(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePrometheusMetricExport", reflect.TypeOf((*MockService)(nil).DeletePrometheusMetricExport), arg0, arg1)
+}
+
 // DeleteSQLUser mocks base method.
 func (m *MockService) DeleteSQLUser(arg0 context.Context, arg1, arg2 string) (*client.SQLUser, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -575,6 +591,22 @@ func (m *MockService) EnableLogExport(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) EnableLogExport(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableLogExport", reflect.TypeOf((*MockService)(nil).EnableLogExport), arg0, arg1, arg2)
+}
+
+// EnablePrometheusMetricExport mocks base method.
+func (m *MockService) EnablePrometheusMetricExport(arg0 context.Context, arg1 string, arg2 *map[string]interface{}) (*client.PrometheusMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnablePrometheusMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.PrometheusMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnablePrometheusMetricExport indicates an expected call of EnablePrometheusMetricExport.
+func (mr *MockServiceMockRecorder) EnablePrometheusMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnablePrometheusMetricExport", reflect.TypeOf((*MockService)(nil).EnablePrometheusMetricExport), arg0, arg1, arg2)
 }
 
 // GetAllRolesForUser mocks base method.
@@ -911,6 +943,22 @@ func (m *MockService) GetPrivateEndpointTrustedOwner(arg0 context.Context, arg1,
 func (mr *MockServiceMockRecorder) GetPrivateEndpointTrustedOwner(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateEndpointTrustedOwner", reflect.TypeOf((*MockService)(nil).GetPrivateEndpointTrustedOwner), arg0, arg1, arg2)
+}
+
+// GetPrometheusMetricExportInfo mocks base method.
+func (m *MockService) GetPrometheusMetricExportInfo(arg0 context.Context, arg1 string) (*client.PrometheusMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPrometheusMetricExportInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.PrometheusMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetPrometheusMetricExportInfo indicates an expected call of GetPrometheusMetricExportInfo.
+func (mr *MockServiceMockRecorder) GetPrometheusMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrometheusMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetPrometheusMetricExportInfo), arg0, arg1)
 }
 
 // GetResourceType mocks base method.

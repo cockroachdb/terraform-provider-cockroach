@@ -114,8 +114,8 @@ func TestIntegrationPrivateEndpointTrustedOwnerResource(t *testing.T) {
 	testPrivateEndpointTrustedOwnerResource(t, cluster.Name, true /* useMock */)
 }
 
-// TODO(jaylim-crl): Update this to also test serverless once we support this
-// feature for serverless clusters within CockroachCloud.
+// TODO(jaylim-crl): Update this to also test shared once we support this
+// feature for isShared clusters within CockroachCloud.
 func testPrivateEndpointTrustedOwnerResource(t *testing.T, clusterName string, useMock bool) {
 	const resourceName = "cockroach_private_endpoint_trusted_owner.owner"
 	resource.Test(t, resource.TestCase{

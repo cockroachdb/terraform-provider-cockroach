@@ -34,15 +34,15 @@ func TestAccDedicatedPrivateEndpointConnectionResource(t *testing.T) {
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
-	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, false /* isServerless */)
+	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, false /* isShared */)
 }
 
-func TestAccServerlessPrivateEndpointConnectionResource(t *testing.T) {
+func TestAccSharedPrivateEndpointConnectionResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
-	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isServerless */)
+	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isShared */)
 }
 
 func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
@@ -81,7 +81,6 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 		Connections: []client.AwsEndpointConnection{connection},
 	}
 
-	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
 		finalCluster client.Cluster
@@ -91,6 +90,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            clusterID,
+				Plan:          "ADVANCED",
 				CloudProvider: "AWS",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
@@ -108,17 +108,16 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			},
 		},
 		{
-			"serverless cluster",
+			"shared cluster",
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				Plan:          "SERVERLESS",
+				Plan:          "STANDARD",
 				CloudProvider: "AWS",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
-					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: &zeroSpendLimit,
-						RoutingId:  "routing-id",
+					Shared: &client.SharedClusterConfig{
+						RoutingId: "routing-id",
 					},
 				},
 				Regions: []client.Region{
@@ -137,14 +136,14 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				return s
 			})()
 			cluster := c.finalCluster
-			isServerless := cluster.Config.Dedicated == nil
+			isShared := cluster.Config.Dedicated == nil
 
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&cluster, nil, nil)
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(4)
-			if !isServerless {
+			if !isShared {
 				s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
 					Return(services, nil, nil)
 			}
@@ -178,19 +177,19 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				t,
 				clusterName,
 				true, /* useMock */
-				isServerless,
+				isShared,
 			)
 		})
 	}
 }
 
 func testPrivateEndpointConnectionResource(
-	t *testing.T, clusterName string, useMock bool, isServerless bool,
+	t *testing.T, clusterName string, useMock bool, isShared bool,
 ) {
 	const resourceName = "cockroach_private_endpoint_connection.connection"
 	var privateEndpointConnectionResourceConfigFn func(string) string
-	if isServerless {
-		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForServerless
+	if isShared {
+		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForShared
 	} else {
 		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForDedicated
 	}
@@ -243,24 +242,22 @@ resource "cockroach_private_endpoint_connection" "connection" {
 `, clusterName)
 }
 
-func getTestPrivateEndpointConnectionResourceConfigForServerless(clusterName string) string {
+func getTestPrivateEndpointConnectionResourceConfigForShared(clusterName string) string {
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "serverless" {
+resource "cockroach_cluster" "shared" {
     name           = "%s"
     cloud_provider = "AWS"
-    serverless = {
-        spend_limit = 0
-    }
+    shared = {}
     regions = [{
         name = "us-east-1"
     }]
 }
 resource "cockroach_private_endpoint_services" "services" {
-    cluster_id = cockroach_cluster.serverless.id
+    cluster_id = cockroach_cluster.shared.id
 }
 
 resource "cockroach_private_endpoint_connection" "connection" {
-    cluster_id = cockroach_cluster.serverless.id
+    cluster_id = cockroach_cluster.shared.id
     endpoint_id = "endpoint-id"
 }
 `, clusterName)

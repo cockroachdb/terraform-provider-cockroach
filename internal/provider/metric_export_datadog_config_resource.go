@@ -119,7 +119,7 @@ func (r *metricExportDatadogConfigResource) Create(
 		return
 	}
 
-	if cluster.Config.Serverless != nil {
+	if cluster.Config.Shared != nil {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster type",
 			"Datadog metric export services are only available for dedicated clusters",

@@ -36,16 +36,16 @@ import (
 func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
-	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, false /* isServerless */)
+	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, false /* isShared */)
 }
 
-// TestAccServerlessPrivateEndpointServicesResource attempts to create, check,
-// and destroy a real serverless cluster and endpoint services. It will be
-// skipped if TF_ACC isn't set.
-func TestAccServerlessPrivateEndpointServicesResource(t *testing.T) {
+// TestAccSharedPrivateEndpointServicesResource attempts to create, check, and
+// destroy a real shared cluster and endpoint services. It will be skipped if
+// TF_ACC isn't set.
+func TestAccSharedPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
-	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, true /* isServerless */)
+	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, true /* isShared */)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
@@ -58,7 +58,6 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	}
 
 	true_val := true
-	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
 		finalCluster client.Cluster
@@ -68,6 +67,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
+				Plan:          "ADVANCED",
 				CloudProvider: "AWS",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
@@ -86,17 +86,16 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			},
 		},
 		{
-			"serverless cluster",
+			"shared cluster",
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				Plan:          "SERVERLESS",
+				Plan:          "BASIC",
 				CloudProvider: "AWS",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
-					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: &zeroSpendLimit,
-						RoutingId:  "routing-id",
+					Shared: &client.SharedClusterConfig{
+						RoutingId: "routing-id",
 					},
 				},
 				Regions: []client.Region{
@@ -119,7 +118,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				return s
 			})()
 			cluster := c.finalCluster
-			isServerless := cluster.Config.Dedicated == nil
+			isShared := cluster.Config.Dedicated == nil
 
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&cluster, nil, nil)
@@ -127,7 +126,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(3)
 			var regions []string
-			if isServerless {
+			if isShared {
 				regions = []string{"us-east-1", "eu-central-1"}
 			} else {
 				regions = []string{"us-east-1"}
@@ -148,7 +147,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 					},
 				})
 			}
-			if !isServerless {
+			if !isShared {
 				initialServices := &client.PrivateEndpointServices{}
 				for _, service := range services.Services {
 					service.Status = client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING
@@ -166,22 +165,22 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				t,
 				clusterName,
 				true, /* useMock */
-				isServerless,
+				isShared,
 			)
 		})
 	}
 }
 
 func testPrivateEndpointServicesResource(
-	t *testing.T, clusterName string, useMock bool, isServerless bool,
+	t *testing.T, clusterName string, useMock bool, isShared bool,
 ) {
 	resourceName := "cockroach_private_endpoint_services.services"
 	var clusterResourceName string
 	var privateEndpointServicesResourceConfigFn func(string) string
 	var numExpectedServices int
-	if isServerless {
-		clusterResourceName = "cockroach_cluster.serverless"
-		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForServerless
+	if isShared {
+		clusterResourceName = "cockroach_cluster.shared"
+		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForShared
 		numExpectedServices = 2
 	} else {
 		clusterResourceName = "cockroach_cluster.dedicated"
@@ -237,23 +236,21 @@ resource "cockroach_private_endpoint_services" "services" {
 `, clusterName)
 }
 
-func getTestPrivateEndpointServicesResourceConfigForServerless(clusterName string) string {
+func getTestPrivateEndpointServicesResourceConfigForShared(clusterName string) string {
 	// Use two regions here so we end up creating the cluster on the multi-
 	// region host, which has PrivateLink enabled.
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "serverless" {
+resource "cockroach_cluster" "shared" {
     name           = "%s"
     cloud_provider = "AWS"
-    serverless = {
-        spend_limit = 0
-    }
+    shared = {}
     regions = [
         { name = "us-east-1", primary = true },
         { name = "eu-central-1" },
     ]
 }
 resource "cockroach_private_endpoint_services" "services" {
-    cluster_id = cockroach_cluster.serverless.id
+    cluster_id = cockroach_cluster.shared.id
 }
 `, clusterName)
 }

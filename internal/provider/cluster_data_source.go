@@ -33,7 +33,7 @@ func (d *clusterDataSource) Schema(
 	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Description: "CockroachDB Cloud cluster. Can be Dedicated or Serverless.",
+		Description: "CockroachDB Cloud cluster. Can be Dedicated or Shared.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required: true,
@@ -48,7 +48,7 @@ func (d *clusterDataSource) Schema(
 			},
 			"plan": schema.StringAttribute{
 				Computed:    true,
-				Description: "Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.",
+				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
 			},
 			"cloud_provider": schema.StringAttribute{
 				Computed: true,
@@ -59,13 +59,9 @@ func (d *clusterDataSource) Schema(
 				Computed:    true,
 				Description: "The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.",
 			},
-			"serverless": schema.SingleNestedAttribute{
+			"shared": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
-					"spend_limit": schema.Int64Attribute{
-						Computed:            true,
-						MarkdownDescription: "Spend limit in US cents.",
-					},
 					"usage_limits": schema.SingleNestedAttribute{
 						Computed: true,
 						Attributes: map[string]schema.Attribute{
@@ -76,6 +72,10 @@ func (d *clusterDataSource) Schema(
 							"storage_mib_limit": schema.Int64Attribute{
 								Computed:            true,
 								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
+							"request_unit_rate_limit": schema.Int64Attribute{
+								Computed:            true,
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
 							},
 						},
 					},
@@ -136,11 +136,11 @@ func (d *clusterDataSource) Schema(
 						},
 						"node_count": schema.Int64Attribute{
 							Computed:    true,
-							Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",
+							Description: "Number of nodes in the region. Will always be 0 for shared clusters.",
 						},
 						"primary": schema.BoolAttribute{
 							Computed:    true,
-							Description: "Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.",
+							Description: "Denotes whether this is the primary region in a shared cluster. Dedicated clusters don't have a primary region.",
 						},
 					},
 				},

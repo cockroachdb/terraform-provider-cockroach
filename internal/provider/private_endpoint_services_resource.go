@@ -160,10 +160,10 @@ func (r *privateEndpointServicesResource) Create(
 		return
 	}
 
-	// Only create an endpoint service if it is a dedicated cluster. Serverless
+	// Only create an endpoint service if it is a dedicated cluster. Shared
 	// clusters have endpoint services by default, and will error out if the
 	// Create API is called.
-	if cluster.Config.Serverless == nil {
+	if cluster.Config.Shared == nil {
 		// If private endpoint services already exist for this dedicated cluster,
 		// this is a no-op. The API will gracefully return the existing services.
 		_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, plan.ClusterID.ValueString())

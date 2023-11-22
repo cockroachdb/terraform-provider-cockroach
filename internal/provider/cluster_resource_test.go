@@ -56,9 +56,8 @@ func TestAccSharedClusterResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("tftest-shared-%s", GenerateRandomString(2))
 	resource.Test(t, resource.TestCase{
-		IsUnitTest:               false,
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		IsUnitTest: false,
+		PreCheck:   func() { testAccPreCheck(t) },
 		Steps: []resource.TestStep{
 			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10000000000, 102400),
 			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1000000, 1024),
@@ -83,6 +82,42 @@ func TestAccMultiRegionSharedClusterResource(t *testing.T) {
 		Steps: []resource.TestStep{
 			provisionedMultiRegionClusterWithLimit(clusterName, "STANDARD"),
 			provisionedMultiRegionClusterUpdated(clusterName, "STANDARD"),
+		},
+	})
+}
+
+// TestAccUpgradeClusterResource uses an older version of the provider to create
+// version 0 schema, and expects that to be upgraded to version 1.
+// NOTE: If this test is failing with an error like:
+//
+//	Could not retrieve the list of available versions for provider
+//
+// You may need to blow away this directory which is created by `make install`:
+//
+//	~/.terraform.d/plugins/registry.terraform.io/cockroachdb/cockroach
+func TestAccUpgradeClusterResource(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("tftest-shared-%s", GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest: false,
+		PreCheck:   func() { testAccPreCheck(t) },
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: providerVersion1(),
+				Config: fmt.Sprintf(`
+				resource "cockroach_cluster" "test" {
+					name           = "%s"
+					cloud_provider = "GCP"
+					serverless = {
+						spend_limit = 1000
+					}
+					regions = [{
+						name = "us-central1"
+					}]
+				}
+				`, clusterName),
+			},
+			onDemandSingleRegionClusterNoLimits(clusterName, "BASIC"),
 		},
 	})
 }
@@ -310,6 +345,7 @@ func onDemandSingleRegionClusterNoLimits(
 	return resource.TestStep{
 		// Basic cluster with no resource limits specified, which translates to
 		// unlimited on-demand resources.
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
 				name           = "%s"
@@ -345,6 +381,7 @@ func onDemandSingleRegionClusterWithLimits(
 ) resource.TestStep {
 	return resource.TestStep{
 		// Basic cluster with resource limits.
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
 				name           = "%s"
@@ -384,6 +421,7 @@ func onDemandSingleRegionClusterWithUnlimited(
 ) resource.TestStep {
 	return resource.TestStep{
 		// Basic cluster with unlimited on-demand resources.
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
 				name           = "%s"
@@ -773,6 +811,17 @@ resource "cockroach_finalize_version_upgrade" "test" {
 	return config
 }
 
+// providerVersion1 returns v1 of the Cockroach Terraform provider, used for
+// upgrade testing.
+func providerVersion1() map[string]resource.ExternalProvider {
+	return map[string]resource.ExternalProvider{
+		"cockroach": {
+			VersionConstraint: "~>1",
+			Source:            "cockroachdb/cockroach",
+		},
+	}
+}
+
 func TestSortRegionsByPlan(t *testing.T) {
 	t.Run("Plan matches cluster", func(t *testing.T) {
 		regions := []client.Region{
@@ -849,4 +898,103 @@ func TestClusterSchemaInSync(t *testing.T) {
 	rAttrs := rSchema.Schema.Attributes
 	dAttrs := dSchema.Schema.Attributes
 	CheckSchemaAttributesMatch(t, rAttrs, dAttrs)
+}
+
+func TestUpgradeVersion0To1(t *testing.T) {
+	cases := []struct {
+		name     string
+		input    map[string]interface{}
+		expected map[string]interface{}
+	}{
+		{
+			"dedicated cluster",
+			map[string]interface{}{
+				"name": "dedicated",
+				"plan": "DEDICATED",
+				"dedicated": map[string]interface{}{
+					"storage_gib": float64(15),
+				},
+			},
+			map[string]interface{}{
+				"name": "dedicated",
+				"plan": "ADVANCED",
+				"dedicated": map[string]interface{}{
+					"storage_gib": float64(15),
+				},
+			},
+		},
+		{
+			"serverless cluster, no spend limit",
+			map[string]interface{}{
+				"name": "serverless",
+				"plan": "SERVERLESS",
+				"serverless": map[string]interface{}{
+					"usage_limits": map[string]interface{}{
+						"resource_unit_limit": float64(1_000_000),
+					},
+				},
+			},
+			map[string]interface{}{
+				"name": "serverless",
+				"plan": "BASIC",
+				"shared": map[string]interface{}{
+					"usage_limits": map[string]interface{}{
+						"resource_unit_limit": float64(1_000_000),
+					},
+				},
+			},
+		},
+		{
+			"serverless cluster, spend limit, no usage limits",
+			map[string]interface{}{
+				"name": "serverless",
+				"plan": "SERVERLESS",
+				"serverless": map[string]interface{}{
+					"spend_limit": float64(10_00),
+				},
+			},
+			map[string]interface{}{
+				"name": "serverless",
+				"plan": "BASIC",
+				"shared": map[string]interface{}{
+					"usage_limits": map[string]interface{}{
+						"request_unit_limit": float64(40_000_000),
+						"storage_mib_limit":  float64(4 * 1024),
+					},
+				},
+			},
+		},
+		{
+			"serverless cluster, spend limit with usage limits",
+			map[string]interface{}{
+				"name": "serverless",
+				"plan": "SERVERLESS",
+				"serverless": map[string]interface{}{
+					"spend_limit": float64(10_00),
+					"usage_limits": map[string]interface{}{
+						"request_unit_limit": float64(80_000_000),
+						"storage_mib_limit":  float64(2 * 1024),
+					},
+				},
+			},
+			map[string]interface{}{
+				"name": "serverless",
+				"plan": "BASIC",
+				"shared": map[string]interface{}{
+					"usage_limits": map[string]interface{}{
+						"request_unit_limit": float64(80_000_000),
+						"storage_mib_limit":  float64(2 * 1024),
+					},
+				},
+			},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			var r clusterResource
+			r.upgradeVersion0To1(c.input)
+			require.Equal(t, c.expected, c.input)
+		})
+	}
 }

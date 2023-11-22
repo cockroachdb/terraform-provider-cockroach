@@ -18,7 +18,9 @@ package provider
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"net/http"
 	"regexp"
 	"sort"
@@ -92,6 +94,7 @@ func (r *clusterResource) Schema(
 ) {
 	resp.Schema = schema.Schema{
 		Description: "CockroachDB Cloud cluster.",
+		Version:     1,
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -497,7 +500,6 @@ func (r *clusterResource) Read(
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 }
 
 // ModifyPlan is used to make sure the user isn't trying to modify an
@@ -808,6 +810,97 @@ func (r *clusterResource) ImportState(
 	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
 ) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// UpgradeState returns a map from schema version number to an upgrader function
+// that maps from that version to the latest version. If Terraform encounters
+// state with an older version, it will invoke the corresponding upgrader to
+// migrate that state to the latest version.
+func (r *clusterResource) UpgradeState(ctx context.Context) map[int64]resource.StateUpgrader {
+	// upgrade is a helper function that unmarshals the request state into a JSON
+	// map and then invokes a function to upgrade the state. The state is then
+	// marshalled back into JSON.
+	// NOTE: When adding new versions, remember that upgrades go directly to the
+	// current version; the TF framework will not iteratively apply each upgrade.
+	// Therefore, when adding a new upgrader, be sure to update older upgraders
+	// to apply all the upgrades. For example, when adding version 1, update
+	// version 0 to apply both `0 to 1` and `1 to 2` upgrades:
+	//
+	//   upgrade(req, resp, func(rawState map[string]interface{}) {
+	//     r.upgradeVersion0To1(rawState)
+	//     r.upgradeVersion1To2(rawState)
+	//   })
+	upgrade := func(
+		req resource.UpgradeStateRequest,
+		resp *resource.UpgradeStateResponse,
+		fn func(rawState map[string]interface{}),
+	) {
+		var rawState map[string]interface{}
+		err := json.Unmarshal(req.RawState.JSON, &rawState)
+		if err != nil {
+			resp.Diagnostics.AddError("Error parsing JSON cluster state", formatAPIErrorMessage(err))
+		}
+		fn(rawState)
+		out, err := json.Marshal(rawState)
+		if err != nil {
+			resp.Diagnostics.AddError("Error creating JSON cluster state", formatAPIErrorMessage(err))
+		}
+		resp.DynamicValue = &tfprotov6.DynamicValue{JSON: out}
+	}
+
+	return map[int64]resource.StateUpgrader{
+		0: {
+			StateUpgrader: func(_ context.Context, req resource.UpgradeStateRequest, resp *resource.UpgradeStateResponse) {
+				upgrade(req, resp, func(rawState map[string]interface{}) {
+					r.upgradeVersion0To1(rawState)
+				})
+			},
+		},
+	}
+}
+
+// upgradeVersion0To1 migrates the given JSON map containing a cluster resource
+// from schema version 0 to schema version 1. This involves these steps:
+//   - Rename serverless to shared
+//   - Map spend limit to resource limits
+//   - Map to new plan type names
+func (r *clusterResource) upgradeVersion0To1(
+	rawState map[string]interface{},
+) {
+	const (
+		// requestUnitsPerUSD is the number of request units that one dollar buys,
+		// using May 1st prices for the original Serverless offering.
+		requestUnitsPerUSD = 5_000_000
+		// storageMiBMonthsPerUSD is the number of MiB that can be stored per month
+		// for one dollar, using May 1st prices for the original Serverless offering.
+		storageMiBMonthsPerUSD = 2 * 1024
+	)
+
+	if serverless, ok := rawState["serverless"].(map[string]interface{}); ok {
+		if spendLimit, ok := serverless["spend_limit"].(float64); ok {
+			delete(serverless, "spend_limit")
+
+			if serverless["usage_limits"] == nil {
+				// Infer resource limits from spend limit.
+				serverless["usage_limits"] = map[string]interface{}{
+					"request_unit_limit": float64(spendLimit) / 100 * 0.8 * requestUnitsPerUSD,
+					"storage_mib_limit":  float64(spendLimit) / 100 * 0.2 * storageMiBMonthsPerUSD,
+				}
+			}
+		}
+
+		rawState["shared"] = serverless
+		delete(rawState, "serverless")
+	}
+
+	if planType, ok := rawState["plan"].(string); ok {
+		switch planType {
+		case "SERVERLESS":
+			rawState["plan"] = string(client.PLANTYPE_BASIC)
+		case "DEDICATED":
+			rawState["plan"] = string(client.PLANTYPE_ADVANCED)
+		}
+	}
 }
 
 // versionRE is the regexp that is used to verify that a version string is

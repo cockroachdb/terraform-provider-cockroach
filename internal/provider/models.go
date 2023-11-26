@@ -57,6 +57,19 @@ type UsageLimits struct {
 	RequestUnitRateLimit types.Int64 `tfsdk:"request_unit_rate_limit"`
 }
 
+// TODO(andyk): This is deprecated and will be removed in a future release.
+type ServerlessClusterConfig struct {
+	SpendLimit  types.Int64            `tfsdk:"spend_limit"`
+	RoutingId   types.String           `tfsdk:"routing_id"`
+	UsageLimits *ServerlessUsageLimits `tfsdk:"usage_limits"`
+}
+
+// TODO(andyk): This is deprecated and will be removed in a future release.
+type ServerlessUsageLimits struct {
+	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
+	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
+}
+
 type SQLUser struct {
 	ClusterId types.String `tfsdk:"cluster_id"`
 	Name      types.String `tfsdk:"name"`
@@ -74,20 +87,21 @@ type APIErrorMessage struct {
 // and the cluster data source. Changes to this model
 // should be supported by both.
 type CockroachCluster struct {
-	ID               types.String            `tfsdk:"id"`
-	Name             types.String            `tfsdk:"name"`
-	CloudProvider    types.String            `tfsdk:"cloud_provider"`
-	AccountId        types.String            `tfsdk:"account_id"`
-	DedicatedConfig  *DedicatedClusterConfig `tfsdk:"dedicated"`
-	SharedConfig     *SharedClusterConfig    `tfsdk:"shared"`
-	Regions          []Region                `tfsdk:"regions"`
-	CockroachVersion types.String            `tfsdk:"cockroach_version"`
-	Plan             types.String            `tfsdk:"plan"`
-	State            types.String            `tfsdk:"state"`
-	CreatorId        types.String            `tfsdk:"creator_id"`
-	OperationStatus  types.String            `tfsdk:"operation_status"`
-	UpgradeStatus    types.String            `tfsdk:"upgrade_status"`
-	ParentId         types.String            `tfsdk:"parent_id"`
+	ID               types.String             `tfsdk:"id"`
+	Name             types.String             `tfsdk:"name"`
+	CloudProvider    types.String             `tfsdk:"cloud_provider"`
+	AccountId        types.String             `tfsdk:"account_id"`
+	DedicatedConfig  *DedicatedClusterConfig  `tfsdk:"dedicated"`
+	SharedConfig     *SharedClusterConfig     `tfsdk:"shared"`
+	ServerlessConfig *ServerlessClusterConfig `tfsdk:"serverless"`
+	Regions          []Region                 `tfsdk:"regions"`
+	CockroachVersion types.String             `tfsdk:"cockroach_version"`
+	Plan             types.String             `tfsdk:"plan"`
+	State            types.String             `tfsdk:"state"`
+	CreatorId        types.String             `tfsdk:"creator_id"`
+	OperationStatus  types.String             `tfsdk:"operation_status"`
+	UpgradeStatus    types.String             `tfsdk:"upgrade_status"`
+	ParentId         types.String             `tfsdk:"parent_id"`
 }
 
 type AllowlistEntry struct {

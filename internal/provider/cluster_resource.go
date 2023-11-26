@@ -171,6 +171,46 @@ func (r *clusterResource) Schema(
 					},
 				},
 			},
+			"serverless": schema.SingleNestedAttribute{
+				DeprecationMessage: "The `serverless` attribute is deprecated and will be removed in a future release of the provider. Configure 'shared' instead.",
+				Optional:           true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"spend_limit": schema.Int64Attribute{
+						DeprecationMessage:  "The `spend_limit` attribute is deprecated and will be removed in a future release of the provider. Configure 'usage_limits' instead.",
+						Optional:            true,
+						MarkdownDescription: "Spend limit in US cents.",
+					},
+					"usage_limits": schema.SingleNestedAttribute{
+						Optional: true,
+						Attributes: map[string]schema.Attribute{
+							"request_unit_limit": schema.Int64Attribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume during the month.",
+							},
+							"storage_mib_limit": schema.Int64Attribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
+						},
+					},
+					"routing_id": schema.StringAttribute{
+						Computed: true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+						Description: "Cluster identifier in a connection string.",
+					},
+				},
+			},
 			"dedicated": schema.SingleNestedAttribute{
 				Optional: true,
 				PlanModifiers: []planmodifier.Object{
@@ -270,13 +310,18 @@ func (r *clusterResource) Configure(
 
 func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		resourcevalidator.Conflicting(
+		resourcevalidator.ExactlyOneOf(
 			path.MatchRoot("dedicated"),
 			path.MatchRoot("shared"),
+			path.MatchRoot("serverless"),
 		),
 		resourcevalidator.Conflicting(
 			path.MatchRoot("dedicated").AtName("num_virtual_cpus"),
 			path.MatchRoot("dedicated").AtName("machine_type"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("serverless").AtName("spend_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits"),
 		),
 		resourcevalidator.Conflicting(
 			path.MatchRoot("shared").AtName("usage_limits").AtName("request_unit_limit"),
@@ -302,13 +347,14 @@ func (r *clusterResource) Create(
 	}
 
 	var plan CockroachCluster
-
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Add a corresponding Shared config, if it's a Serverless plan.
+	r.addSharedConfig(&plan)
 
 	clusterSpec := client.NewCreateClusterSpecification()
 
@@ -427,9 +473,9 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	var state CockroachCluster
-	loadClusterToTerraformState(clusterObj, &state, &plan)
-	diags = resp.State.Set(ctx, state)
+	var newState CockroachCluster
+	loadClusterToTerraformState(clusterObj, &newState, &plan)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -444,18 +490,18 @@ func (r *clusterResource) Read(
 		return
 	}
 
-	var cluster CockroachCluster
-	diags := req.State.Get(ctx, &cluster)
+	var state CockroachCluster
+	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if !IsKnown(cluster.ID) {
+	if !IsKnown(state.ID) {
 		return
 	}
-	clusterID := cluster.ID.ValueString()
+	clusterID := state.ID.ValueString()
 	// In case this was an import, validate the ID format.
 	if !uuidRegex.MatchString(clusterID) {
 		resp.Diagnostics.AddError(
@@ -488,16 +534,15 @@ func (r *clusterResource) Read(
 		return
 	}
 
-	// We actually want to use the current state as the plan here,
-	// since we're trying to see if it changed.
-	loadClusterToTerraformState(clusterObj, &cluster, &cluster)
-
-	diags = resp.State.Set(ctx, cluster)
+	// We actually want to use the current state as the plan here, since we're
+	// trying to see if it changed.
+	var newState CockroachCluster
+	loadClusterToTerraformState(clusterObj, &newState, &state)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 }
 
 // ModifyPlan is used to make sure the user isn't trying to modify an
@@ -530,8 +575,7 @@ func (r *clusterResource) ModifyPlan(
 			"To prevent accidental deletion of data, changing a cluster's cloud provider "+
 				"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
 	}
-	if ((plan.DedicatedConfig == nil) != (state.DedicatedConfig == nil)) ||
-		((plan.SharedConfig == nil) != (state.SharedConfig == nil)) {
+	if (plan.DedicatedConfig != nil) != (state.DedicatedConfig != nil) {
 		resp.Diagnostics.AddError("Cannot update cluster plan type",
 			"To prevent accidental deletion of data, changing a cluster's plan type "+
 				"isn't allowed. Please explicitly destroy this cluster before changing between "+
@@ -543,6 +587,44 @@ func (r *clusterResource) ModifyPlan(
 			"To prevent accidental deletion of data, changing a cluster's network "+
 				"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
 				"network visibility.")
+	}
+}
+
+// addSharedConfig will add a corresponding Shared config to the given cluster
+// if it contains a Serverless config. Note that the Serverless config is left
+// in place.
+func (r *clusterResource) addSharedConfig(cluster *CockroachCluster) {
+	const (
+		// requestUnitsPerUSD is the number of request units that one dollar buys,
+		// using May 1st prices for the original Serverless offering.
+		requestUnitsPerUSD = 5_000_000
+		// storageMiBMonthsPerUSD is the number of MiB that can be stored per month
+		// for one dollar, using May 1st prices for the original Serverless offering.
+		storageMiBMonthsPerUSD = 2 * 1024
+	)
+
+	if cluster == nil {
+		return
+	}
+
+	if cluster.ServerlessConfig != nil {
+		var usageLimits *UsageLimits
+		if !cluster.ServerlessConfig.SpendLimit.IsNull() {
+			spendLimit := cluster.ServerlessConfig.SpendLimit.ValueInt64()
+			usageLimits = &UsageLimits{
+				RequestUnitLimit: types.Int64Value(spendLimit * requestUnitsPerUSD * 8 / 10 / 100),
+				StorageMibLimit:  types.Int64Value(spendLimit * storageMiBMonthsPerUSD * 2 / 10 / 100),
+			}
+		} else if cluster.ServerlessConfig.UsageLimits != nil {
+			usageLimits = &UsageLimits{
+				RequestUnitLimit: cluster.ServerlessConfig.UsageLimits.RequestUnitLimit,
+				StorageMibLimit:  cluster.ServerlessConfig.UsageLimits.StorageMibLimit,
+			}
+		}
+		cluster.SharedConfig = &SharedClusterConfig{
+			RoutingId:   cluster.ServerlessConfig.RoutingId,
+			UsageLimits: usageLimits,
+		}
 	}
 }
 
@@ -573,6 +655,9 @@ func (r *clusterResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Add a corresponding Shared config, if it's a Serverless plan.
+	r.addSharedConfig(&plan)
 
 	// Get current state
 	var state CockroachCluster
@@ -757,9 +842,10 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	// Set state
-	loadClusterToTerraformState(clusterObj, &state, &plan)
-	diags = resp.State.Set(ctx, state)
+	// Set state.
+	var newState CockroachCluster
+	loadClusterToTerraformState(clusterObj, &newState, &plan)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -849,7 +935,7 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 	})
 }
 
-// loadCLusterToTerraformState translates the cluster from an API response into the
+// loadClusterToTerraformState translates the cluster from an API response into the
 // TF provider model. It's used in both the cluster resource and data source. The plan,
 // if available, is used to determine the sort order of the cluster's regions, as well as
 // special formatting of certain attribute values (e.g. "preview" for `cockroach_version`).
@@ -885,30 +971,47 @@ func loadClusterToTerraformState(
 	}
 
 	if clusterObj.Config.Shared != nil {
-		sharedConfig := &SharedClusterConfig{
-			RoutingId: types.StringValue(clusterObj.Config.Shared.RoutingId),
+		translateUsageLimits := func(in *client.UsageLimits) (out *UsageLimits) {
+			if in != nil {
+				out = &UsageLimits{}
+				out.RequestUnitRateLimit = types.Int64PointerValue(in.RequestUnitRateLimit)
+				out.RequestUnitLimit = types.Int64PointerValue(in.RequestUnitLimit)
+				out.StorageMibLimit = types.Int64PointerValue(in.StorageMibLimit)
+			} else if plan != nil && plan.SharedConfig != nil && plan.SharedConfig.UsageLimits != nil {
+				// There is no difference in behavior between UsageLimits = nil and
+				// UsageLimits = &UsageLimits{}, but we need to match whichever form
+				// the plan requested.
+				out = &UsageLimits{}
+			}
+			return out
 		}
 
-		// The whole plan or just its serverless config can be nil.
-		var planConfig *SharedClusterConfig
-		if plan != nil {
-			planConfig = plan.SharedConfig
-		}
+		if plan != nil && plan.ServerlessConfig != nil {
+			// The TF plan uses a deprecated Serverless config, so map back to it
+			// in order to preserve backwards-compatibility.
+			serverlessConfig := &ServerlessClusterConfig{
+				RoutingId: types.StringValue(clusterObj.Config.Shared.RoutingId),
+			}
 
-		// Set the usage limits, if any are defined on the cluster.
-		usageLimits := clusterObj.Config.Shared.UsageLimits
-		if usageLimits != nil {
-			sharedConfig.UsageLimits = &UsageLimits{}
-			sharedConfig.UsageLimits.RequestUnitRateLimit = types.Int64PointerValue(usageLimits.RequestUnitRateLimit)
-			sharedConfig.UsageLimits.RequestUnitLimit = types.Int64PointerValue(usageLimits.RequestUnitLimit)
-			sharedConfig.UsageLimits.StorageMibLimit = types.Int64PointerValue(usageLimits.StorageMibLimit)
-		} else if planConfig != nil && planConfig.UsageLimits != nil {
-			// There is no difference in behavior between UsageLimits = nil and
-			// UsageLimits = &UsageLimits{}, but we need to match whichever form
-			// the plan requested.
-			sharedConfig.UsageLimits = &UsageLimits{}
+			if IsKnown(plan.ServerlessConfig.SpendLimit) {
+				serverlessConfig.SpendLimit = plan.ServerlessConfig.SpendLimit
+			} else {
+				usageLimits := translateUsageLimits(clusterObj.Config.Shared.UsageLimits)
+				if usageLimits != nil {
+					serverlessConfig.UsageLimits = &ServerlessUsageLimits{
+						RequestUnitLimit: usageLimits.RequestUnitLimit,
+						StorageMibLimit:  usageLimits.StorageMibLimit,
+					}
+				}
+			}
+
+			state.ServerlessConfig = serverlessConfig
+		} else {
+			state.SharedConfig = &SharedClusterConfig{
+				RoutingId:   types.StringValue(clusterObj.Config.Shared.RoutingId),
+				UsageLimits: translateUsageLimits(clusterObj.Config.Shared.UsageLimits),
+			}
 		}
-		state.SharedConfig = sharedConfig
 	} else if clusterObj.Config.Dedicated != nil {
 		state.DedicatedConfig = &DedicatedClusterConfig{
 			MachineType:              types.StringValue(clusterObj.Config.Dedicated.MachineType),

@@ -22,7 +22,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -60,12 +62,15 @@ func TestAccSharedClusterResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10000000000, 102400),
-			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1000000, 1024),
+			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10_000_000_000, 102_400),
+			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024),
 			onDemandSingleRegionClusterNoLimits(clusterName, "BASIC"),
-			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10000000000, 102400),
+			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10_000_000_000, 102_400),
 			onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC"),
 			onDemandSingleRegionClusterNoLimits(clusterName, "BASIC"),
+			legacyServerlessClusterWithSpendLimit(clusterName, 10_00),
+			legacyServerlessClusterNoLimits(clusterName),
+			onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC"),
 		},
 	})
 }
@@ -81,8 +86,8 @@ func TestAccMultiRegionSharedClusterResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			provisionedMultiRegionClusterWithLimit(clusterName, "STANDARD"),
-			provisionedMultiRegionClusterUpdated(clusterName, "STANDARD"),
+			provisionedMultiRegionClusterWithLimit(clusterName),
+			provisionedMultiRegionClusterUpdated(clusterName),
 		},
 	})
 }
@@ -94,143 +99,369 @@ func TestIntegrationSharedClusterResource(t *testing.T) {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
 
-	boolPtr := func(val bool) *bool { return &val }
 	int64Ptr := func(val int64) *int64 { return &val }
+	clusterName := fmt.Sprintf("tftest-shared-%s", GenerateRandomString(2))
 
-	initialCluster := client.Cluster{
-		Id:               uuid.Nil.String(),
-		Name:             fmt.Sprintf("tftest-shared-%s", GenerateRandomString(2)),
-		CockroachVersion: latestClusterPatchVersion,
-		CloudProvider:    "GCP",
-		State:            "CREATED",
-		Config: client.ClusterConfig{
-			Shared: &client.SharedClusterConfig{
-				UsageLimits: &client.UsageLimits{
-					RequestUnitLimit: int64Ptr(1_000_000),
-					StorageMibLimit:  int64Ptr(1024),
+	singleRegionClusterWithUnlimited := func(planType client.PlanType) client.Cluster {
+		return client.Cluster{
+			Id:               uuid.Nil.String(),
+			Name:             clusterName,
+			CockroachVersion: latestClusterPatchVersion,
+			CloudProvider:    "GCP",
+			State:            "CREATED",
+			Plan:             planType,
+			Config: client.ClusterConfig{
+				Shared: &client.SharedClusterConfig{
+					RoutingId: "routing-id",
 				},
-				RoutingId: "routing-id",
 			},
-		},
-		Regions: []client.Region{
-			{
-				Name: "us-central1",
+			Regions: []client.Region{
+				{
+					Name: "us-central1",
+				},
 			},
-		},
+		}
+	}
+
+	singleRegionClusterWithLimits := func(
+		planType client.PlanType,
+		ruLimit int64,
+		storageLimit int64,
+	) client.Cluster {
+		return client.Cluster{
+			Id:               uuid.Nil.String(),
+			Name:             clusterName,
+			CockroachVersion: latestClusterPatchVersion,
+			CloudProvider:    "GCP",
+			State:            "CREATED",
+			Plan:             planType,
+			Config: client.ClusterConfig{
+				Shared: &client.SharedClusterConfig{
+					UsageLimits: &client.UsageLimits{
+						RequestUnitLimit: int64Ptr(ruLimit),
+						StorageMibLimit:  int64Ptr(storageLimit),
+					},
+					RoutingId: "routing-id",
+				},
+			},
+			Regions: []client.Region{
+				{
+					Name: "us-central1",
+				},
+			},
+		}
+	}
+
+	provisionedMultiRegionCluster := func(ruRateLimit int64, primaryIndex int) client.Cluster {
+		cluster := client.Cluster{
+			Id:               uuid.Nil.String(),
+			Name:             clusterName,
+			CockroachVersion: latestClusterPatchVersion,
+			CloudProvider:    "GCP",
+			State:            "CREATED",
+			Plan:             "STANDARD",
+			Config: client.ClusterConfig{
+				Shared: &client.SharedClusterConfig{
+					UsageLimits: &client.UsageLimits{
+						RequestUnitRateLimit: int64Ptr(ruRateLimit),
+					},
+					RoutingId: "routing-id",
+				},
+			},
+			Regions: []client.Region{
+				{
+					Name: "europe-west1",
+				},
+				{
+					Name: "us-east1",
+				},
+				{
+					Name: "us-west2",
+				},
+			},
+		}
+		trueVal := true
+		cluster.Regions[primaryIndex].Primary = &trueVal
+		return cluster
 	}
 
 	cases := []struct {
-		name         string
-		testStep     func(clusterName string, planType client.PlanType) resource.TestStep
-		finalCluster client.Cluster
+		name              string
+		createStep        func() resource.TestStep
+		initialCluster    client.Cluster
+		updateStep        func() resource.TestStep
+		finalCluster      client.Cluster
+		ignoreImportPaths []string
 	}{
 		{
-			"single-region shared BASIC cluster with updated resource limits",
-			func(clusterName string, planType client.PlanType) resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(
-					clusterName, "BASIC", 10000000000, 102400)
+			name: "single-region shared BASIC cluster converted to unlimited resources",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
 			},
-			client.Cluster{
-				Id:               uuid.Nil.String(),
-				Name:             initialCluster.Name,
-				CockroachVersion: latestClusterPatchVersion,
-				Plan:             "BASIC",
-				CloudProvider:    "GCP",
-				State:            "CREATED",
-				Config: client.ClusterConfig{
-					Shared: &client.SharedClusterConfig{
-						UsageLimits: &client.UsageLimits{
-							RequestUnitLimit: int64Ptr(10_000_000_000),
-							StorageMibLimit:  int64Ptr(102_400),
-						},
-						RoutingId: "routing-id",
-					},
-				},
-				Regions: []client.Region{
-					{
-						Name: "us-central1",
-					},
-				},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC")
+			},
+			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
+			// When testing import, skip validating the usage limits, because the
+			// server returns usage_limits = null for "unlimited", whereas the
+			// TF state contains usage_limits = {}. This is a spurious failure,
+			// as the two formulations are equivalent.
+			ignoreImportPaths: []string{"shared.usage_limits.%"},
+		},
+		{
+			name: "single-region shared BASIC cluster converted to no limit resources",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+			},
+			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
+		},
+		{
+			name: "single-region shared BASIC cluster converted from unlimited resources",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC")
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+			},
+			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+		},
+		{
+			name: "single-region shared BASIC cluster converted from no limit resources",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+			},
+			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+		},
+		{
+			name: "single-region shared BASIC cluster with updated resource limits",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10_000_000_000, 102_400)
+			},
+			finalCluster: singleRegionClusterWithLimits("BASIC", 10_000_000_000, 102_400),
+		},
+		{
+			name: "multi-region shared STANDARD cluster with provisioned limit",
+			createStep: func() resource.TestStep {
+				return provisionedMultiRegionClusterWithLimit(clusterName)
+			},
+			initialCluster: provisionedMultiRegionCluster(3000, 1),
+			updateStep: func() resource.TestStep {
+				return provisionedMultiRegionClusterUpdated(clusterName)
+			},
+			finalCluster: provisionedMultiRegionCluster(4000, 0),
+		},
+		{
+			name: "legacy Serverless cluster from spend limit to higher spend limit",
+			createStep: func() resource.TestStep {
+				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
+			updateStep: func() resource.TestStep {
+				return legacyServerlessClusterWithSpendLimit(clusterName, 20_00)
+			},
+			finalCluster: singleRegionClusterWithLimits("BASIC", 80_000_000, 8192),
+			// When testing import, skip validating the configs, because the test
+			// framework compares what's returned by the server (shared config)
+			// with what was previously in the TF state (serverless config).
+			ignoreImportPaths: []string{
+				"shared.%",
+				"shared.routing_id",
+				"shared.usage_limits.%",
+				"shared.usage_limits.request_unit_limit",
+				"shared.usage_limits.storage_mib_limit",
+				"serverless.%",
+				"serverless.routing_id",
+				"serverless.spend_limit",
 			},
 		},
 		{
-			"single-region shared BASIC cluster with unlimited resources",
-			onDemandSingleRegionClusterWithUnlimited,
-			client.Cluster{
-				Id:               uuid.Nil.String(),
-				Name:             initialCluster.Name,
-				CockroachVersion: latestClusterPatchVersion,
-				Plan:             "BASIC",
-				CloudProvider:    "GCP",
-				State:            "CREATED",
-				Config: client.ClusterConfig{
-					Shared: &client.SharedClusterConfig{
-						RoutingId:   "routing-id",
-						UsageLimits: &client.UsageLimits{},
-					},
-				},
-				Regions: []client.Region{
-					{
-						Name: "us-central1",
-					},
-				},
+			name: "legacy Serverless cluster from spend limit to no limits",
+			createStep: func() resource.TestStep {
+				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
+			updateStep: func() resource.TestStep {
+				return legacyServerlessClusterNoLimits(clusterName)
+			},
+			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
+			// When testing import, skip validating the configs, because the test
+			// framework compares what's returned by the server (shared config)
+			// with what was previously in the TF state (serverless config).
+			ignoreImportPaths: []string{
+				"shared.%",
+				"shared.routing_id",
+				"shared.usage_limits.%",
+				"shared.usage_limits.request_unit_limit",
+				"shared.usage_limits.storage_mib_limit",
+				"serverless.%",
+				"serverless.routing_id",
+				"serverless.spend_limit",
 			},
 		},
 		{
-			"single-region shared BASIC cluster with no limits specified",
-			onDemandSingleRegionClusterNoLimits,
-			client.Cluster{
-				Id:               uuid.Nil.String(),
-				Name:             initialCluster.Name,
-				CockroachVersion: latestClusterPatchVersion,
-				Plan:             "BASIC",
-				CloudProvider:    "GCP",
-				State:            "CREATED",
-				Config: client.ClusterConfig{
-					Shared: &client.SharedClusterConfig{
-						RoutingId: "routing-id",
-					},
-				},
-				Regions: []client.Region{
-					{
-						Name: "us-central1",
-					},
-				},
+			name: "legacy Serverless cluster from spend limit to resource limits",
+			createStep: func() resource.TestStep {
+				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
+			updateStep: func() resource.TestStep {
+				return legacyServerlessClusterWithResourceLimits(clusterName, 1_000_000, 1024)
+			},
+			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+			// When testing import, skip validating the configs, because the test
+			// framework compares what's returned by the server (shared config)
+			// with what was previously in the TF state (serverless config).
+			ignoreImportPaths: []string{
+				"shared.%",
+				"shared.routing_id",
+				"shared.usage_limits.%",
+				"shared.usage_limits.request_unit_limit",
+				"shared.usage_limits.storage_mib_limit",
+				"serverless.%",
+				"serverless.routing_id",
+				"serverless.usage_limits.%",
+				"serverless.usage_limits.request_unit_limit",
+				"serverless.usage_limits.storage_mib_limit",
 			},
 		},
 		{
-			"multi-region shared STANDARD cluster with provisioned limit",
-			provisionedMultiRegionClusterWithLimit,
-			client.Cluster{
-				Id:               uuid.Nil.String(),
-				Name:             initialCluster.Name,
-				CockroachVersion: latestClusterPatchVersion,
-				Plan:             "STANDARD",
-				CloudProvider:    "GCP",
-				State:            "CREATED",
-				Config: client.ClusterConfig{
-					Shared: &client.SharedClusterConfig{
-						UsageLimits: &client.UsageLimits{
-							RequestUnitRateLimit: int64Ptr(3000),
-						},
-						RoutingId: "routing-id",
-					},
-				},
-				Regions: []client.Region{
-					{
-						Name: "us-west2",
-					},
-					{
-						Name:    "us-east1",
-						Primary: boolPtr(true),
-					},
-					{
-						Name: "europe-west1",
-					},
-				},
+			name: "update legacy Serverless cluster to Shared cluster with limits",
+			createStep: func() resource.TestStep {
+				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 80_000_000, 8192)
+			},
+			finalCluster: singleRegionClusterWithLimits("BASIC", 80_000_000, 8192),
+		},
+		{
+			name: "update legacy Serverless cluster to Shared cluster with no limits",
+			createStep: func() resource.TestStep {
+				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+			},
+			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+			},
+			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
+		},
+		{
+			name: "attempt to update name",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				step := onDemandSingleRegionClusterNoLimits("new-name", "BASIC")
+				step.ExpectError = regexp.MustCompile("Cannot update cluster name")
+				return step
+			},
+		},
+		{
+			name: "attempt to update cloud provider",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				step := onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				step.Config = strings.Replace(step.Config, "GCP", "AWS", -1)
+				step.ExpectError = regexp.MustCompile("Cannot update cluster cloud provider")
+				return step
+			},
+		},
+		{
+			name: "attempt to update plan type",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config:      getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4),
+					ExpectError: regexp.MustCompile("Cannot update cluster plan type"),
+				}
+			},
+		},
+		{
+			name: "conflicting serverless and shared configs",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: `
+						resource "cockroach_cluster" "test" {
+							name = "foo"
+							cloud_provider = "GCP"
+							shared = {}
+							serverless = {}
+							regions = [{
+								name = "us-central1"
+							}]
+						}`,
+					ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+				}
+			},
+		},
+		{
+			name: "request unit limit and request unit rate limit both specified",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: `
+						resource "cockroach_cluster" "test" {
+							name = "foo"
+							cloud_provider = "GCP"
+							shared = {
+								usage_limits = {
+									request_unit_limit = 1000000
+									request_unit_rate_limit = 1000
+								}
+							}
+							regions = [{
+								name = "us-central1"
+							}]
+						}`,
+					ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+				}
+			},
+		},
+		{
+			name: "storage limit and request unit rate limit both specified",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: `
+						resource "cockroach_cluster" "test" {
+							name = "foo"
+							cloud_provider = "GCP"
+							shared = {
+								usage_limits = {
+									storage_mib_limit = 1024
+									request_unit_rate_limit = 1000
+								}
+							}
+							regions = [{
+								name = "us-central1"
+							}]
+						}`,
+					ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+				}
 			},
 		},
 	}
+
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
@@ -239,59 +470,58 @@ func TestIntegrationSharedClusterResource(t *testing.T) {
 				return s
 			})()
 
-			initialCluster.Plan = c.finalCluster.Plan
+			// Return the initial cluster until Update is called, after which point
+			// return the final cluster.
+			var updateCalled bool
+			s.EXPECT().
+				GetCluster(gomock.Any(), c.initialCluster.Id).
+				DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
+					cluster := &c.initialCluster
+					if updateCalled {
+						cluster = &c.finalCluster
+					}
+					return cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil
+				}).AnyTimes()
 
-			steps := []resource.TestStep{
-				// Create initial resource.
-				onDemandSingleRegionClusterWithLimits(
-					initialCluster.Name, initialCluster.Plan, 1000000, 1024),
-				// Apply an update.
-				c.testStep(initialCluster.Name, c.finalCluster.Plan),
-				// Import the resource.
-				{
-					ResourceName:      "cockroach_cluster.test",
-					ImportState:       true,
-					ImportStateVerify: true,
-				},
+			var steps []resource.TestStep
+			createStep := c.createStep()
+			steps = append(steps, createStep)
+
+			if createStep.ExpectError == nil {
+				// Use DoAndReturn so that it's easy to set break points.
+				s.EXPECT().
+					CreateCluster(gomock.Any(), gomock.Any()).
+					DoAndReturn(func(context.Context, *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+						return &c.initialCluster, nil, nil
+					})
+				s.EXPECT().
+					DeleteCluster(gomock.Any(), c.initialCluster.Id).
+					DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
+						return &c.finalCluster, nil, nil
+					})
+
+				updateStep := c.updateStep()
+				steps = append(steps, updateStep)
+
+				if updateStep.ExpectError == nil {
+					s.EXPECT().
+						UpdateCluster(gomock.Any(), gomock.Any(), gomock.Any()).
+						DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+							updateCalled = true
+							return &c.finalCluster, nil, nil
+						})
+
+					// Test import and refresh.
+					steps = append(steps, resource.TestStep{
+						ResourceName:            "cockroach_cluster.test",
+						ImportState:             true,
+						ImportStateVerify:       true,
+						ImportStateVerifyIgnore: c.ignoreImportPaths,
+					}, resource.TestStep{
+						RefreshState: true,
+					})
+				}
 			}
-
-			// Use DoAndReturn so that it's easy to set break points.
-			s.EXPECT().
-				CreateCluster(gomock.Any(), gomock.Any()).
-				DoAndReturn(func(context.Context, *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
-					return &initialCluster, nil, nil
-				})
-
-			// GetCluster calls during cluster creation.
-			s.EXPECT().
-				GetCluster(gomock.Any(), c.finalCluster.Id).
-				DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
-					return &initialCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil
-				}).Times(7)
-
-			s.EXPECT().
-				UpdateCluster(gomock.Any(), gomock.Any(), gomock.Any()).
-				DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
-					return &c.finalCluster, nil, nil
-				})
-
-			// GetCluster calls during cluster update.
-			s.EXPECT().GetCluster(gomock.Any(), c.finalCluster.Id).DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
-				return &c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil
-			}).Times(6)
-
-			// GetCluster calls during cluster import.
-			s.EXPECT().
-				GetCluster(gomock.Any(), c.finalCluster.Id).
-				DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
-					return &c.finalCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil
-				}).MinTimes(2).MaxTimes(3)
-
-			s.EXPECT().
-				DeleteCluster(gomock.Any(), c.finalCluster.Id).
-				DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
-					return &c.finalCluster, nil, nil
-				})
 
 			resource.Test(t, resource.TestCase{
 				IsUnitTest:               true,
@@ -308,7 +538,7 @@ func onDemandSingleRegionClusterNoLimits(
 	planType client.PlanType,
 ) resource.TestStep {
 	return resource.TestStep{
-		// Basic cluster with no resource limits specified, which translates to
+		// Shared cluster with no resource limits specified, which translates to
 		// unlimited on-demand resources.
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
@@ -344,7 +574,7 @@ func onDemandSingleRegionClusterWithLimits(
 	storageMibLimit int64,
 ) resource.TestStep {
 	return resource.TestStep{
-		// Basic cluster with resource limits.
+		// Shared cluster with resource limits.
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
 				name           = "%s"
@@ -383,7 +613,7 @@ func onDemandSingleRegionClusterWithUnlimited(
 	planType client.PlanType,
 ) resource.TestStep {
 	return resource.TestStep{
-		// Basic cluster with unlimited on-demand resources.
+		// Shared cluster with unlimited on-demand resources.
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
 				name           = "%s"
@@ -414,10 +644,7 @@ func onDemandSingleRegionClusterWithUnlimited(
 	}
 }
 
-func provisionedMultiRegionClusterWithLimit(
-	clusterName string,
-	planType client.PlanType,
-) resource.TestStep {
+func provisionedMultiRegionClusterWithLimit(clusterName string) resource.TestStep {
 	return resource.TestStep{
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
@@ -447,7 +674,7 @@ func provisionedMultiRegionClusterWithLimit(
 			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
-			makeDefaultSharedResourceChecks(clusterName, planType),
+			makeDefaultSharedResourceChecks(clusterName, "STANDARD"),
 			resource.TestCheckResourceAttr(sharedResourceName, "regions.#", "3"),
 			resource.TestCheckResourceAttr(sharedResourceName, "regions.0.name", "europe-west1"),
 			resource.TestCheckResourceAttr(sharedResourceName, "regions.0.primary", "false"),
@@ -474,10 +701,7 @@ func provisionedMultiRegionClusterWithLimit(
 
 // provisionedMultiRegionClusterUpdated updates some of the fields in
 // provisionedMultiRegionClusterWithLimit.
-func provisionedMultiRegionClusterUpdated(
-	clusterName string,
-	planType client.PlanType,
-) resource.TestStep {
+func provisionedMultiRegionClusterUpdated(clusterName string) resource.TestStep {
 	return resource.TestStep{
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
@@ -507,7 +731,7 @@ func provisionedMultiRegionClusterUpdated(
 			}
 			`, clusterName),
 		Check: resource.ComposeTestCheckFunc(
-			makeDefaultSharedResourceChecks(clusterName, planType),
+			makeDefaultSharedResourceChecks(clusterName, "STANDARD"),
 			resource.TestCheckResourceAttr(sharedResourceName, "regions.#", "3"),
 			resource.TestCheckResourceAttr(sharedResourceName, "regions.0.name", "europe-west1"),
 			resource.TestCheckResourceAttr(sharedResourceName, "regions.0.primary", "true"),
@@ -528,6 +752,114 @@ func provisionedMultiRegionClusterUpdated(
 			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.usage_limits.request_unit_rate_limit", "4000"),
 			resource.TestCheckNoResourceAttr(sharedDataSourceName, "shared.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(sharedDataSourceName, "shared.usage_limits.storage_mib_limit"),
+		),
+	}
+}
+
+func legacyServerlessClusterWithSpendLimit(
+	clusterName string,
+	spendLimit int64,
+) resource.TestStep {
+	return resource.TestStep{
+		// Serverless cluster with spend limit.
+		Config: fmt.Sprintf(`
+			resource "cockroach_cluster" "test" {
+				name           = "%s"
+				cloud_provider = "GCP"
+				serverless = {
+					spend_limit = %d
+				}
+				regions = [{
+					name = "us-central1"
+				}]
+			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.test.id
+			}
+			`, clusterName, spendLimit),
+		Check: resource.ComposeTestCheckFunc(
+			testCheckCockroachClusterExists(sharedResourceName),
+			makeDefaultSharedResourceChecks(clusterName, "BASIC"),
+			resource.TestCheckResourceAttr(sharedResourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(sharedResourceName, "serverless.#", "0"),
+			resource.TestCheckResourceAttr(sharedResourceName, "serverless.spend_limit", strconv.Itoa(int(spendLimit))),
+			resource.TestCheckNoResourceAttr(sharedResourceName, "serverless.usage_limits"),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.#", "0"),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.usage_limits.request_unit_limit", strconv.Itoa(int(spendLimit*5_000_000*8/10/100))),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.usage_limits.storage_mib_limit", strconv.Itoa(int(spendLimit*2*1024*2/10/100))),
+			resource.TestCheckNoResourceAttr(sharedDataSourceName, "shared.usage_limits.request_unit_rate_limit"),
+		),
+	}
+}
+
+func legacyServerlessClusterWithResourceLimits(
+	clusterName string,
+	ruLimit int64,
+	storageLimit int64,
+) resource.TestStep {
+	return resource.TestStep{
+		// Serverless cluster with spend limit.
+		Config: fmt.Sprintf(`
+			resource "cockroach_cluster" "test" {
+				name           = "%s"
+				cloud_provider = "GCP"
+				serverless = {
+					usage_limits = {
+						request_unit_limit = %d
+						storage_mib_limit = %d
+					}
+				}
+				regions = [{
+					name = "us-central1"
+				}]
+			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.test.id
+			}
+			`, clusterName, ruLimit, storageLimit),
+		Check: resource.ComposeTestCheckFunc(
+			testCheckCockroachClusterExists(sharedResourceName),
+			makeDefaultSharedResourceChecks(clusterName, "BASIC"),
+			resource.TestCheckResourceAttr(sharedResourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(sharedResourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(ruLimit))),
+			resource.TestCheckResourceAttr(sharedResourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageLimit))),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.usage_limits.request_unit_limit", strconv.Itoa(int(ruLimit))),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.usage_limits.storage_mib_limit", strconv.Itoa(int(storageLimit))),
+			resource.TestCheckNoResourceAttr(sharedDataSourceName, "shared.usage_limits.request_unit_rate_limit"),
+		),
+	}
+}
+
+func legacyServerlessClusterNoLimits(clusterName string) resource.TestStep {
+	return resource.TestStep{
+		// Serverless cluster with spend limit.
+		Config: fmt.Sprintf(`
+			resource "cockroach_cluster" "test" {
+				name           = "%s"
+				cloud_provider = "GCP"
+				serverless = {}
+				regions = [{
+					name = "us-central1"
+				}]
+			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.test.id
+			}
+			`, clusterName),
+		Check: resource.ComposeTestCheckFunc(
+			testCheckCockroachClusterExists(sharedResourceName),
+			makeDefaultSharedResourceChecks(clusterName, "BASIC"),
+			resource.TestCheckResourceAttr(sharedResourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(sharedResourceName, "serverless.#", "0"),
+			resource.TestCheckNoResourceAttr(sharedResourceName, "serverless.usage_limits"),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "regions.#", "1"),
+			resource.TestCheckResourceAttr(sharedDataSourceName, "shared.#", "0"),
+			resource.TestCheckNoResourceAttr(sharedDataSourceName, "shared.usage_limits"),
 		),
 	}
 }
@@ -666,7 +998,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 
 	scaleStep := resource.TestStep{
 		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4),
-		Check:  resource.TestCheckResourceAttr("cockroach_cluster.dedicated", "dedicated.num_virtual_cpus", "4"),
+		Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "4"),
 	}
 
 	testDedicatedClusterResource(t, clusterName, true, scaleStep)
@@ -674,7 +1006,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 
 func testDedicatedClusterResource(t *testing.T, clusterName string, useMock bool, additionalSteps ...resource.TestStep) {
 	const (
-		resourceName   = "cockroach_cluster.dedicated"
+		resourceName   = "cockroach_cluster.test"
 		dataSourceName = "data.cockroach_cluster.test"
 	)
 
@@ -742,7 +1074,7 @@ func testCheckCockroachClusterExists(resourceName string) resource.TestCheckFunc
 
 func getTestDedicatedClusterResourceConfig(name, version string, finalize bool, vcpus int) string {
 	config := fmt.Sprintf(`
-resource "cockroach_cluster" "dedicated" {
+resource "cockroach_cluster" "test" {
     name           = "%s"
     cloud_provider = "GCP"
     cockroach_version = "%s"
@@ -757,14 +1089,14 @@ resource "cockroach_cluster" "dedicated" {
 }
 
 data "cockroach_cluster" "test" {
-    id = cockroach_cluster.dedicated.id
+    id = cockroach_cluster.test.id
 }
 `, name, version, vcpus)
 
 	if finalize {
 		config += fmt.Sprintf(`
 resource "cockroach_finalize_version_upgrade" "test" {
-	id = cockroach_cluster.dedicated.id
+	id = cockroach_cluster.test.id
 	cockroach_version = "%s"
 }
 `, version)

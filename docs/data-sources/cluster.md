@@ -31,6 +31,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Shared.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
+- `serverless` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--serverless))
 - `shared` (Attributes) (see [below for nested schema](#nestedatt--shared))
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
@@ -59,6 +60,25 @@ Read-Only:
 - `primary` (Boolean) Denotes whether this is the primary region in a shared cluster. Dedicated clusters don't have a primary region.
 - `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
 - `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
+
+
+<a id="nestedatt--serverless"></a>
+### Nested Schema for `serverless`
+
+Read-Only:
+
+- `routing_id` (String) Cluster identifier in a connection string.
+- `spend_limit` (Number, Deprecated) Spend limit in US cents.
+- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
+
+<a id="nestedatt--serverless--usage_limits"></a>
+### Nested Schema for `serverless.usage_limits`
+
+Read-Only:
+
+- `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
+- `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
+
 
 
 <a id="nestedatt--shared"></a>

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a nil pointer exception which could occur while retrying a certain
   class of api failures.
+- Fixed a bug where the `log_export_config` would sometimes fail to detect changes to
+  the group level `redact` field due to it being declared as a `computed` field.
 
 ## [1.3.0] - 2023-09-14
 

@@ -82,7 +82,6 @@ var logExportAttributes = map[string]schema.Attribute{
 				"redact": schema.BoolAttribute{
 					Optional:            true,
 					MarkdownDescription: "Governs whether this log group should aggregate redacted logs if unset.",
-					Computed:            true,
 				},
 			},
 		},

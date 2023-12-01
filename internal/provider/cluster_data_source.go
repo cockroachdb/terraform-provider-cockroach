@@ -85,6 +85,34 @@ func (d *clusterDataSource) Schema(
 					},
 				},
 			},
+			"serverless": schema.SingleNestedAttribute{
+				DeprecationMessage: "The `serverless` attribute is deprecated and will be removed in a future release of the provider. Configure 'shared' instead.",
+				Computed:           true,
+				Attributes: map[string]schema.Attribute{
+					"spend_limit": schema.Int64Attribute{
+						DeprecationMessage:  "The `spend_limit` attribute is deprecated and will be removed in a future release of the provider. Configure 'usage_limits' instead.",
+						Computed:            true,
+						MarkdownDescription: "Spend limit in US cents.",
+					},
+					"usage_limits": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"request_unit_limit": schema.Int64Attribute{
+								Computed:            true,
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume during the month.",
+							},
+							"storage_mib_limit": schema.Int64Attribute{
+								Computed:            true,
+								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
+						},
+					},
+					"routing_id": schema.StringAttribute{
+						Computed:    true,
+						Description: "Cluster identifier in a connection string.",
+					},
+				},
+			},
 			"dedicated": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{
@@ -196,8 +224,8 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
-	var cluster CockroachCluster
-	diags := req.Config.Get(ctx, &cluster)
+	var state CockroachCluster
+	diags := req.Config.Get(ctx, &state)
 
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -205,14 +233,14 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
-	if cluster.ID.IsNull() {
+	if state.ID.IsNull() {
 		resp.Diagnostics.AddError(
 			"ID can't be null",
 			"The ID field is null, but it never should be. Please double check the value!",
 		)
 		return
 	}
-	clusterID := cluster.ID.ValueString()
+	clusterID := state.ID.ValueString()
 	if !uuidRegex.MatchString(clusterID) {
 		resp.Diagnostics.AddError(
 			"Unexpected cluster ID format",
@@ -237,9 +265,9 @@ func (d *clusterDataSource) Read(
 
 	// The concept of a plan doesn't apply to data sources.
 	// Using a nil plan means we won't try to re-sort the region list.
-	loadClusterToTerraformState(cockroachCluster, &cluster, nil)
-
-	diags = resp.State.Set(ctx, cluster)
+	var newState CockroachCluster
+	loadClusterToTerraformState(cockroachCluster, &newState, nil)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 }
 

@@ -15,18 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New `STANDARD` clusters with provisioned capacity on shared hardware.
+- New `shared` attribute which should be used in place of `serverless`.
 
 ### Changed
 
-- Renamed `serverless` config in `cluster` resource to `shared`. Users will need
-  to convert Terraform config files.
-- Renamed `SERVERLESS` plan to `BASIC`.
-- Renamed `DEDICATED` plan to `ADVANCED`.
+- Renamed `SERVERLESS` plan type to `BASIC`.
+- Renamed `DEDICATED` plan type to `ADVANCED`.
 
-### Removed
+### Deprecated
 
-- Removed support for `spend_limit` field in `serverless` config. Users can
-  enforce resource limits with `usage_limits`.
+- Deprecated support for `serverless` attribute. Users should rename to
+  `shared` and convert any `spend_limit` attribute.
+- Deprecated support for `spend_limit` attribute in `serverless` config. Users
+  can instead enforce resource limits with `usage_limits`.
 
 ## [1.3.1] - 2023-12-01
 

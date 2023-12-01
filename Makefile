@@ -37,10 +37,15 @@ release:
 	GOOS=windows GOARCH=amd64 go build -o ./bin/${BINARY}_${VERSION}_windows_amd64
 
 # Use this to install a development binary to your local machine, in the TF
-# provider cache.
+# provider cache. Note that if this directory is present, using an "official"
+# version of the provider is disabled. Use "make clean" to reset.
 install: build
 	mkdir -p ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
 	mv ${BINARY} ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/${VERSION}/${OS_ARCH}
+
+clean:
+	rm -rf ~/.terraform.d/plugins/${HOSTNAME}/${NAMESPACE}/${NAME}/
+	go clean -testcache -i -x
 
 test:
 	go test ./... -v $(TESTARGS) -timeout 5m

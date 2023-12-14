@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- Update docs for allowlist resource to clear up with cidr_mask is
+
+- Realign variables used in the cockroach_dedicated_cluster with the README
+
+- Removed mention of Limited Access for Azure clusters in README
+
+- Added some example values for clarity in README
+
 ## [1.7.5] - 2024-06-06
 
 ## Fixed

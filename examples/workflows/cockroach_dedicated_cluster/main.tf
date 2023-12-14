@@ -73,7 +73,7 @@ variable "cidr_ip" {
   default  = "0.0.0.0"
 }
 
-variable "cidr_mask" {
+variable "cidr_prefix_length" {
   type     = number
   nullable = false
   default  = 0
@@ -112,7 +112,7 @@ data "cockroach_cluster_cert" "example" {
 resource "cockroach_allow_list" "example" {
   name       = var.allow_list_name
   cidr_ip    = var.cidr_ip
-  cidr_mask  = var.cidr_mask
+  cidr_mask  = var.cidr_prefix_length
   ui         = true
   sql        = true
   cluster_id = cockroach_cluster.example.id
@@ -140,7 +140,9 @@ data "cockroach_connection_string" "example" {
 
   # Caution: Including the `password` field will result in
   # the password showing up in plain text in the
-  # connection string output!
+  # connection string output! We recommend following terraform best practices
+  # for securing sensitive variables.
+  # https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables
   #
   # password = cockroach_sql_user.example.password
 

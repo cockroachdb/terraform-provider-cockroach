@@ -117,11 +117,11 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
     cloud_provider = "<cloud provider>"
     cloud_provider_regions = ["<cloud provider region>"]
     cluster_node_count = <number of nodes>
+    num_virtual_cpus = <number of VCPUs per node>
     storage_gib = <storage in GiB>
-    machine_type = "<cloud provider machine type>"
     allow_list_name = "<allow list name>"
     cidr_ip = "<allow list CIDR IP>"
-    cidr_mask = <allow list CIDR prefix>
+    cidr_prefix_length = <allow list CIDR prefix length>
     os = "<OS name>"
     ~~~
 
@@ -130,14 +130,14 @@ Before you use `terraform-provider-cockroach` you must [install Terraform](https
         - `<database name>` is the name that will be used for the database created within the cluster. This database is in addition to defaultdb which is created by default.  
         - `<SQL user name>` is the name of the SQL user you want to create.  
         - `<SQL user password>` is the password for the SQL user you want to create.  
-        - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS` or `AZURE` (limited access).  
+        - `<cloud provider>` is the cloud infrastructure provider. Possible values are `GCP` or `AWS` or `AZURE`.  
         - `<cloud provider region>` is the region code or codes for the cloud infrastructure provider. For multi-region clusters, separate each region with a comma.  
         - `<number of nodes>` is the number of nodes in each region. Cockroach Labs recommends at least 3 nodes per region, and the same number of nodes in each region for multi-region clusters.  
+        - `<number of VCPUs per node>` is the number of virtual CPUS assigned to each node.  This number will dictate which machine type is used for your cluster nodes. Recommendations for choosing this value can be found [here](https://www.cockroachlabs.com/docs/cockroachcloud/create-your-cluster#step-5-configure-cluster-capacity).  
         - `<storage in GiB>` is the amount of storage specified in GiB.  
-        - `<cloud provider machine type>` is the machine type for the cloud infrastructure provider.  
-        - `<allow list name>` is the name for the IP allow list. Use a descriptive name to identify the IP allow list.  
-        - `<allow list CIDR IP>` is the Classless Inter-Domain Routing (CIDR) IP address base.  
-        - `<allow list CIDR prefix>` is the CIDR prefix. This should be a number from 0 to 32. Use 32 to only allow the single IP Address passed in cidr_ip.  
+        - `<allow list name>` is the name for the IP allow list. Use a descriptive name to identify the IP allow list. (i.e. "allow all" or "home network")  
+        - `<allow list CIDR IP>` is the Classless Inter-Domain Routing (CIDR) IP address base. (i.e. 123.123.123.123)  
+        - `<allow list CIDR prefix length>` is the CIDR prefix length. This should be a number from 0 to 32. Use 32 to only allow the single IP Address passed in cidr_ip.  
         - `<OS name>` is the name of the OS that will be used to connect from for connection string output. Possible values are ('WINDOWS', 'MAC', and 'LINUX').  
 
 1. Initialize the provider.

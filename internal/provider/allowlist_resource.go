@@ -70,7 +70,7 @@ func (r *allowListResource) Schema(
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
-				MarkdownDescription: "Map component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.",
+				MarkdownDescription: "The [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) notation prefix length. A number ranging from 0 to 32 indicating the size of the network. Use 32 to allow a single IP address.",
 			},
 			"ui": schema.BoolAttribute{
 				Required:    true,

@@ -29,7 +29,7 @@ resource "cockroach_allow_list" "vpn" {
 ### Required
 
 - `cidr_ip` (String) IP address component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.
-- `cidr_mask` (Number) Map component of the [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) range for this entry.
+- `cidr_mask` (Number) The [CIDR](https://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing#CIDR_notation) notation prefix length. A number ranging from 0 to 32 indicating the size of the network. Use 32 to allow a single IP address.
 - `cluster_id` (String)
 - `sql` (Boolean) Set to 'true' to allow SQL connections from this CIDR range.
 - `ui` (Boolean) Set to 'true' to allow access to the management console from this CIDR range.

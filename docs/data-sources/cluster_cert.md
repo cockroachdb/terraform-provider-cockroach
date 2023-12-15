@@ -4,14 +4,14 @@ page_title: "cockroach_cluster_cert Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
   TLS certificate for the specified CockroachDB cluster. Certificates for dedicated clusters should be written to $HOME/Library/CockroachCloud/certs/<cluster name>-ca.crt on MacOS or Linux, or $env:appdata\CockroachCloud\certs\<cluster name>-ca.crt on Windows.
-  Shared clusters use the root PostgreSQL CA cert. If it isn't already installed, the certificate can be appended to $HOME/.postgresql/root.crt on MacOS or Linux, or $env:appdata\postgresql\root.crt on Windows.
+  Serverless clusters use the root PostgreSQL CA cert. If it isn't already installed, the certificate can be appended to $HOME/.postgresql/root.crt on MacOS or Linux, or $env:appdata\postgresql\root.crt on Windows.
 ---
 
 # cockroach_cluster_cert (Data Source)
 
 TLS certificate for the specified CockroachDB cluster. Certificates for dedicated clusters should be written to `$HOME/Library/CockroachCloud/certs/<cluster name>-ca.crt` on MacOS or Linux, or `$env:appdata\CockroachCloud\certs\<cluster name>-ca.crt` on Windows. 
 
-Shared clusters use the root PostgreSQL CA cert. If it isn't already installed, the certificate can be appended to `$HOME/.postgresql/root.crt` on MacOS or Linux, or `$env:appdata\postgresql\root.crt` on Windows.
+Serverless clusters use the root PostgreSQL CA cert. If it isn't already installed, the certificate can be appended to `$HOME/.postgresql/root.crt` on MacOS or Linux, or `$env:appdata\postgresql\root.crt` on Windows.
 
 
 

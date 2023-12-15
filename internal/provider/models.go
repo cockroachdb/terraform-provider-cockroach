@@ -46,28 +46,18 @@ type DedicatedClusterConfig struct {
 	PrivateNetworkVisibility types.Bool    `tfsdk:"private_network_visibility"`
 }
 
-type SharedClusterConfig struct {
+type ServerlessClusterConfig struct {
+	// TODO(andyk): SpendLimit is deprecated and will be removed in a future
+	// release.
+	SpendLimit  types.Int64  `tfsdk:"spend_limit"`
 	RoutingId   types.String `tfsdk:"routing_id"`
 	UsageLimits *UsageLimits `tfsdk:"usage_limits"`
 }
 
 type UsageLimits struct {
-	RequestUnitLimit     types.Int64 `tfsdk:"request_unit_limit"`
-	StorageMibLimit      types.Int64 `tfsdk:"storage_mib_limit"`
-	RequestUnitRateLimit types.Int64 `tfsdk:"request_unit_rate_limit"`
-}
-
-// TODO(andyk): This is deprecated and will be removed in a future release.
-type ServerlessClusterConfig struct {
-	SpendLimit  types.Int64            `tfsdk:"spend_limit"`
-	RoutingId   types.String           `tfsdk:"routing_id"`
-	UsageLimits *ServerlessUsageLimits `tfsdk:"usage_limits"`
-}
-
-// TODO(andyk): This is deprecated and will be removed in a future release.
-type ServerlessUsageLimits struct {
-	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
-	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
+	RequestUnitLimit    types.Int64 `tfsdk:"request_unit_limit"`
+	StorageMibLimit     types.Int64 `tfsdk:"storage_mib_limit"`
+	ProvisionedCapacity types.Int64 `tfsdk:"provisioned_capacity"`
 }
 
 type SQLUser struct {
@@ -92,7 +82,6 @@ type CockroachCluster struct {
 	CloudProvider    types.String             `tfsdk:"cloud_provider"`
 	AccountId        types.String             `tfsdk:"account_id"`
 	DedicatedConfig  *DedicatedClusterConfig  `tfsdk:"dedicated"`
-	SharedConfig     *SharedClusterConfig     `tfsdk:"shared"`
 	ServerlessConfig *ServerlessClusterConfig `tfsdk:"serverless"`
 	Regions          []Region                 `tfsdk:"regions"`
 	CockroachVersion types.String             `tfsdk:"cockroach_version"`

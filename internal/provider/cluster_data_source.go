@@ -33,7 +33,7 @@ func (d *clusterDataSource) Schema(
 	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Description: "CockroachDB Cloud cluster. Can be Dedicated or Shared.",
+		Description: "CockroachDB Cloud cluster. Can be Dedicated or Serverless.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required: true,
@@ -59,35 +59,8 @@ func (d *clusterDataSource) Schema(
 				Computed:    true,
 				Description: "The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.",
 			},
-			"shared": schema.SingleNestedAttribute{
-				Computed: true,
-				Attributes: map[string]schema.Attribute{
-					"usage_limits": schema.SingleNestedAttribute{
-						Computed: true,
-						Attributes: map[string]schema.Attribute{
-							"request_unit_limit": schema.Int64Attribute{
-								Computed:            true,
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume during the month.",
-							},
-							"storage_mib_limit": schema.Int64Attribute{
-								Computed:            true,
-								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
-							},
-							"request_unit_rate_limit": schema.Int64Attribute{
-								Computed:            true,
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
-							},
-						},
-					},
-					"routing_id": schema.StringAttribute{
-						Computed:    true,
-						Description: "Cluster identifier in a connection string.",
-					},
-				},
-			},
 			"serverless": schema.SingleNestedAttribute{
-				DeprecationMessage: "The `serverless` attribute is deprecated and will be removed in a future release of the provider. Configure 'shared' instead.",
-				Computed:           true,
+				Computed: true,
 				Attributes: map[string]schema.Attribute{
 					"spend_limit": schema.Int64Attribute{
 						DeprecationMessage:  "The `spend_limit` attribute is deprecated and will be removed in a future release of the provider. Configure 'usage_limits' instead.",
@@ -104,6 +77,10 @@ func (d *clusterDataSource) Schema(
 							"storage_mib_limit": schema.Int64Attribute{
 								Computed:            true,
 								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
+							"provisioned_capacity": schema.Int64Attribute{
+								Computed:            true,
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
 							},
 						},
 					},
@@ -164,11 +141,11 @@ func (d *clusterDataSource) Schema(
 						},
 						"node_count": schema.Int64Attribute{
 							Computed:    true,
-							Description: "Number of nodes in the region. Will always be 0 for shared clusters.",
+							Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",
 						},
 						"primary": schema.BoolAttribute{
 							Computed:    true,
-							Description: "Denotes whether this is the primary region in a shared cluster. Dedicated clusters don't have a primary region.",
+							Description: "Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.",
 						},
 					},
 				},

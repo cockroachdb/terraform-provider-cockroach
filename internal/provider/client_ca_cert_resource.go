@@ -97,7 +97,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 		resp.Diagnostics.AddError("Error getting cluster info", formatAPIErrorMessage(err))
 		return
 	}
-	if cluster.Config.Shared != nil {
+	if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
 			"Incompatible cluster type",
 			"Client CA Cert management is only available for dedicated clusters",

@@ -65,7 +65,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		Plan:          "BASIC",
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
-			Shared: &client.SharedClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
 				RoutingId: "routing-id",
 			},
 		},
@@ -121,7 +121,7 @@ func testDatabaseResource(
 	t *testing.T, clusterName, databaseName, newDatabaseName string, useMock bool,
 ) {
 	var (
-		clusterResourceName = "cockroach_cluster.shared"
+		clusterResourceName = "cockroach_cluster.serverless"
 		resourceName        = "cockroach_database.test_database"
 	)
 
@@ -189,10 +189,10 @@ func testDatabaseExists(resourceName, clusterResourceName string) resource.TestC
 
 func getTestDatabaseResourceConfig(clusterName, databaseName string) string {
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "shared" {
+resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    shared = {}
+    serverless = {}
     regions = [{
         name = "us-central1"
     }]
@@ -200,7 +200,7 @@ resource "cockroach_cluster" "shared" {
 
 resource "cockroach_database" "test_database" {
   name = "%s"
-  cluster_id = cockroach_cluster.shared.id
+  cluster_id = cockroach_cluster.serverless.id
 }
 `, clusterName, databaseName)
 }

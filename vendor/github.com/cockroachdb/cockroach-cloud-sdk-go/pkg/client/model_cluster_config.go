@@ -20,8 +20,8 @@ package client
 
 // ClusterConfig struct for ClusterConfig.
 type ClusterConfig struct {
-	Dedicated *DedicatedHardwareConfig `json:"dedicated,omitempty"`
-	Shared    *SharedClusterConfig     `json:"shared,omitempty"`
+	Dedicated  *DedicatedHardwareConfig `json:"dedicated,omitempty"`
+	Serverless *ServerlessClusterConfig `json:"serverless,omitempty"`
 }
 
 // NewClusterConfig instantiates a new ClusterConfig object.
@@ -47,16 +47,16 @@ func (o *ClusterConfig) SetDedicated(v DedicatedHardwareConfig) {
 	o.Dedicated = &v
 }
 
-// GetShared returns the Shared field value if set, zero value otherwise.
-func (o *ClusterConfig) GetShared() SharedClusterConfig {
-	if o == nil || o.Shared == nil {
-		var ret SharedClusterConfig
+// GetServerless returns the Serverless field value if set, zero value otherwise.
+func (o *ClusterConfig) GetServerless() ServerlessClusterConfig {
+	if o == nil || o.Serverless == nil {
+		var ret ServerlessClusterConfig
 		return ret
 	}
-	return *o.Shared
+	return *o.Serverless
 }
 
-// SetShared gets a reference to the given SharedClusterConfig and assigns it to the Shared field.
-func (o *ClusterConfig) SetShared(v SharedClusterConfig) {
-	o.Shared = &v
+// SetServerless gets a reference to the given ServerlessClusterConfig and assigns it to the Serverless field.
+func (o *ClusterConfig) SetServerless(v ServerlessClusterConfig) {
+	o.Serverless = &v
 }

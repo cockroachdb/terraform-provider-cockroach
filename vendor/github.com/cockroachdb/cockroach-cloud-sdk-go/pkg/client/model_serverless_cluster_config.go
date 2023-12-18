@@ -18,33 +18,33 @@
 
 package client
 
-// SharedClusterConfig struct for SharedClusterConfig.
-type SharedClusterConfig struct {
+// ServerlessClusterConfig struct for ServerlessClusterConfig.
+type ServerlessClusterConfig struct {
 	// routing_id is used to identify the cluster in a connection string.
 	RoutingId   string       `json:"routing_id"`
 	UsageLimits *UsageLimits `json:"usage_limits,omitempty"`
 }
 
-// NewSharedClusterConfig instantiates a new SharedClusterConfig object.
+// NewServerlessClusterConfig instantiates a new ServerlessClusterConfig object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSharedClusterConfig(routingId string) *SharedClusterConfig {
-	p := SharedClusterConfig{}
+func NewServerlessClusterConfig(routingId string) *ServerlessClusterConfig {
+	p := ServerlessClusterConfig{}
 	p.RoutingId = routingId
 	return &p
 }
 
-// NewSharedClusterConfigWithDefaults instantiates a new SharedClusterConfig object.
+// NewServerlessClusterConfigWithDefaults instantiates a new ServerlessClusterConfig object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewSharedClusterConfigWithDefaults() *SharedClusterConfig {
-	p := SharedClusterConfig{}
+func NewServerlessClusterConfigWithDefaults() *ServerlessClusterConfig {
+	p := ServerlessClusterConfig{}
 	return &p
 }
 
 // GetRoutingId returns the RoutingId field value.
-func (o *SharedClusterConfig) GetRoutingId() string {
+func (o *ServerlessClusterConfig) GetRoutingId() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -54,12 +54,12 @@ func (o *SharedClusterConfig) GetRoutingId() string {
 }
 
 // SetRoutingId sets field value.
-func (o *SharedClusterConfig) SetRoutingId(v string) {
+func (o *ServerlessClusterConfig) SetRoutingId(v string) {
 	o.RoutingId = v
 }
 
 // GetUsageLimits returns the UsageLimits field value if set, zero value otherwise.
-func (o *SharedClusterConfig) GetUsageLimits() UsageLimits {
+func (o *ServerlessClusterConfig) GetUsageLimits() UsageLimits {
 	if o == nil || o.UsageLimits == nil {
 		var ret UsageLimits
 		return ret
@@ -68,6 +68,6 @@ func (o *SharedClusterConfig) GetUsageLimits() UsageLimits {
 }
 
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
-func (o *SharedClusterConfig) SetUsageLimits(v UsageLimits) {
+func (o *ServerlessClusterConfig) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
 }

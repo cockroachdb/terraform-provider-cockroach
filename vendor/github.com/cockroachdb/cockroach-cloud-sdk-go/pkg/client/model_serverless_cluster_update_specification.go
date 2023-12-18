@@ -18,26 +18,26 @@
 
 package client
 
-// SharedClusterUpdateSpecification struct for SharedClusterUpdateSpecification.
-type SharedClusterUpdateSpecification struct {
-	// Specify which region should be made the primary region. This is only applicable to multi-region shared clusters. This field is required if the regions field contains more than one region.
+// ServerlessClusterUpdateSpecification struct for ServerlessClusterUpdateSpecification.
+type ServerlessClusterUpdateSpecification struct {
+	// Specify which region should be made the primary region. This is only applicable to multi-region Serverless clusters. This field is required if the regions field contains more than one region.
 	PrimaryRegion *string `json:"primary_region,omitempty"`
 	// Region values should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. If this field is provided, the cluster's regions will be changed to match this list. Regions cannot currently be removed.
 	Regions     *[]string    `json:"regions,omitempty"`
 	UsageLimits *UsageLimits `json:"usage_limits,omitempty"`
 }
 
-// NewSharedClusterUpdateSpecification instantiates a new SharedClusterUpdateSpecification object.
+// NewServerlessClusterUpdateSpecification instantiates a new ServerlessClusterUpdateSpecification object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSharedClusterUpdateSpecification() *SharedClusterUpdateSpecification {
-	p := SharedClusterUpdateSpecification{}
+func NewServerlessClusterUpdateSpecification() *ServerlessClusterUpdateSpecification {
+	p := ServerlessClusterUpdateSpecification{}
 	return &p
 }
 
 // GetPrimaryRegion returns the PrimaryRegion field value if set, zero value otherwise.
-func (o *SharedClusterUpdateSpecification) GetPrimaryRegion() string {
+func (o *ServerlessClusterUpdateSpecification) GetPrimaryRegion() string {
 	if o == nil || o.PrimaryRegion == nil {
 		var ret string
 		return ret
@@ -46,12 +46,12 @@ func (o *SharedClusterUpdateSpecification) GetPrimaryRegion() string {
 }
 
 // SetPrimaryRegion gets a reference to the given string and assigns it to the PrimaryRegion field.
-func (o *SharedClusterUpdateSpecification) SetPrimaryRegion(v string) {
+func (o *ServerlessClusterUpdateSpecification) SetPrimaryRegion(v string) {
 	o.PrimaryRegion = &v
 }
 
 // GetRegions returns the Regions field value if set, zero value otherwise.
-func (o *SharedClusterUpdateSpecification) GetRegions() []string {
+func (o *ServerlessClusterUpdateSpecification) GetRegions() []string {
 	if o == nil || o.Regions == nil {
 		var ret []string
 		return ret
@@ -60,12 +60,12 @@ func (o *SharedClusterUpdateSpecification) GetRegions() []string {
 }
 
 // SetRegions gets a reference to the given []string and assigns it to the Regions field.
-func (o *SharedClusterUpdateSpecification) SetRegions(v []string) {
+func (o *ServerlessClusterUpdateSpecification) SetRegions(v []string) {
 	o.Regions = &v
 }
 
 // GetUsageLimits returns the UsageLimits field value if set, zero value otherwise.
-func (o *SharedClusterUpdateSpecification) GetUsageLimits() UsageLimits {
+func (o *ServerlessClusterUpdateSpecification) GetUsageLimits() UsageLimits {
 	if o == nil || o.UsageLimits == nil {
 		var ret UsageLimits
 		return ret
@@ -74,6 +74,6 @@ func (o *SharedClusterUpdateSpecification) GetUsageLimits() UsageLimits {
 }
 
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
-func (o *SharedClusterUpdateSpecification) SetUsageLimits(v UsageLimits) {
+func (o *ServerlessClusterUpdateSpecification) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
 }

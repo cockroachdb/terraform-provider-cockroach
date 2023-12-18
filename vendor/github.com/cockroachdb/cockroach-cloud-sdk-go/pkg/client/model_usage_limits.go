@@ -20,10 +20,10 @@ package client
 
 // UsageLimits struct for UsageLimits.
 type UsageLimits struct {
+	// provisioned_capacity is the maximum number of request units that the cluster can consume per second. Once this limit is reached, operation latency may increase due to throttling. It is an error for this to be zero.
+	ProvisionedCapacity *int64 `json:"provisioned_capacity,omitempty,string"`
 	// request_unit_limit is the maximum number of request units that the cluster can consume during the month. If this limit is exceeded, then the cluster is disabled until the limit is increased, or until the beginning of the next month when more free request units are granted. It is an error for this to be zero.
 	RequestUnitLimit *int64 `json:"request_unit_limit,omitempty,string"`
-	// request_unit_rate_limit is the maximum number of request units that the cluster can consume per second. Once this limit is reached, operation latency may increase due to throttling. It is an error for this to be zero.
-	RequestUnitRateLimit *int64 `json:"request_unit_rate_limit,omitempty,string"`
 	// storage_mib_limit is the maximum number of Mebibytes of storage that the cluster can have at any time during the month. If this limit is exceeded, then the cluster is throttled; only one SQL connection is allowed at a time, with the expectation that it is used to delete data to reduce storage usage. It is an error for this to be zero.
 	StorageMibLimit *int64 `json:"storage_mib_limit,omitempty,string"`
 }
@@ -35,6 +35,20 @@ type UsageLimits struct {
 func NewUsageLimits() *UsageLimits {
 	p := UsageLimits{}
 	return &p
+}
+
+// GetProvisionedCapacity returns the ProvisionedCapacity field value if set, zero value otherwise.
+func (o *UsageLimits) GetProvisionedCapacity() int64 {
+	if o == nil || o.ProvisionedCapacity == nil {
+		var ret int64
+		return ret
+	}
+	return *o.ProvisionedCapacity
+}
+
+// SetProvisionedCapacity gets a reference to the given int64 and assigns it to the ProvisionedCapacity field.
+func (o *UsageLimits) SetProvisionedCapacity(v int64) {
+	o.ProvisionedCapacity = &v
 }
 
 // GetRequestUnitLimit returns the RequestUnitLimit field value if set, zero value otherwise.
@@ -49,20 +63,6 @@ func (o *UsageLimits) GetRequestUnitLimit() int64 {
 // SetRequestUnitLimit gets a reference to the given int64 and assigns it to the RequestUnitLimit field.
 func (o *UsageLimits) SetRequestUnitLimit(v int64) {
 	o.RequestUnitLimit = &v
-}
-
-// GetRequestUnitRateLimit returns the RequestUnitRateLimit field value if set, zero value otherwise.
-func (o *UsageLimits) GetRequestUnitRateLimit() int64 {
-	if o == nil || o.RequestUnitRateLimit == nil {
-		var ret int64
-		return ret
-	}
-	return *o.RequestUnitRateLimit
-}
-
-// SetRequestUnitRateLimit gets a reference to the given int64 and assigns it to the RequestUnitRateLimit field.
-func (o *UsageLimits) SetRequestUnitRateLimit(v int64) {
-	o.RequestUnitRateLimit = &v
 }
 
 // GetStorageMibLimit returns the StorageMibLimit field value if set, zero value otherwise.

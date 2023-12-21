@@ -21,24 +21,24 @@ package client
 // CloudProviderRegion struct for CloudProviderRegion.
 type CloudProviderRegion struct {
 	// Distance in miles, based on client IP address.
-	Distance float32           `json:"distance"`
-	Location string            `json:"location"`
-	Name     string            `json:"name"`
-	Provider CloudProviderType `json:"provider"`
-	Shared   bool              `json:"shared"`
+	Distance   float32           `json:"distance"`
+	Location   string            `json:"location"`
+	Name       string            `json:"name"`
+	Provider   CloudProviderType `json:"provider"`
+	Serverless bool              `json:"serverless"`
 }
 
 // NewCloudProviderRegion instantiates a new CloudProviderRegion object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCloudProviderRegion(distance float32, location string, name string, provider CloudProviderType, shared bool) *CloudProviderRegion {
+func NewCloudProviderRegion(distance float32, location string, name string, provider CloudProviderType, serverless bool) *CloudProviderRegion {
 	p := CloudProviderRegion{}
 	p.Distance = distance
 	p.Location = location
 	p.Name = name
 	p.Provider = provider
-	p.Shared = shared
+	p.Serverless = serverless
 	return &p
 }
 
@@ -110,17 +110,17 @@ func (o *CloudProviderRegion) SetProvider(v CloudProviderType) {
 	o.Provider = v
 }
 
-// GetShared returns the Shared field value.
-func (o *CloudProviderRegion) GetShared() bool {
+// GetServerless returns the Serverless field value.
+func (o *CloudProviderRegion) GetServerless() bool {
 	if o == nil {
 		var ret bool
 		return ret
 	}
 
-	return o.Shared
+	return o.Serverless
 }
 
-// SetShared sets field value.
-func (o *CloudProviderRegion) SetShared(v bool) {
-	o.Shared = v
+// SetServerless sets field value.
+func (o *CloudProviderRegion) SetServerless(v bool) {
+	o.Serverless = v
 }

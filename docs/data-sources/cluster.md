@@ -3,12 +3,12 @@
 page_title: "cockroach_cluster Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  CockroachDB Cloud cluster. Can be Dedicated or Shared.
+  CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 ---
 
 # cockroach_cluster (Data Source)
 
-CockroachDB Cloud cluster. Can be Dedicated or Shared.
+CockroachDB Cloud cluster. Can be Dedicated or Serverless.
 
 
 
@@ -31,8 +31,7 @@ CockroachDB Cloud cluster. Can be Dedicated or Shared.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
-- `serverless` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--serverless))
-- `shared` (Attributes) (see [below for nested schema](#nestedatt--shared))
+- `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
 
@@ -56,8 +55,8 @@ Read-Only:
 
 - `internal_dns` (String) Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.
 - `name` (String) Region code used by the cluster's cloud provider.
-- `node_count` (Number) Number of nodes in the region. Will always be 0 for shared clusters.
-- `primary` (Boolean) Denotes whether this is the primary region in a shared cluster. Dedicated clusters don't have a primary region.
+- `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
+- `primary` (Boolean) Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.
 - `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
 - `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
 
@@ -76,26 +75,8 @@ Read-Only:
 
 Read-Only:
 
+- `provisioned_capacity` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
-- `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
-
-
-
-<a id="nestedatt--shared"></a>
-### Nested Schema for `shared`
-
-Read-Only:
-
-- `routing_id` (String) Cluster identifier in a connection string.
-- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--shared--usage_limits))
-
-<a id="nestedatt--shared--usage_limits"></a>
-### Nested Schema for `shared.usage_limits`
-
-Read-Only:
-
-- `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
-- `request_unit_rate_limit` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
 
 

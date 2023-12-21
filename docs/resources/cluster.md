@@ -29,8 +29,7 @@ CockroachDB Cloud cluster.
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
-- `serverless` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--serverless))
-- `shared` (Attributes) (see [below for nested schema](#nestedatt--shared))
+- `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 
 ### Read-Only
 
@@ -51,8 +50,8 @@ Required:
 
 Optional:
 
-- `node_count` (Number) Number of nodes in the region. Will always be 0 for shared clusters.
-- `primary` (Boolean) Set to true to mark this region as the primary for a shared cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
+- `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
+- `primary` (Boolean) Set to true to mark this region as the primary for a serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
 
 Read-Only:
 
@@ -94,29 +93,8 @@ Read-Only:
 
 Optional:
 
+- `provisioned_capacity` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
-- `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
-
-
-
-<a id="nestedatt--shared"></a>
-### Nested Schema for `shared`
-
-Optional:
-
-- `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--shared--usage_limits))
-
-Read-Only:
-
-- `routing_id` (String) Cluster identifier in a connection string.
-
-<a id="nestedatt--shared--usage_limits"></a>
-### Nested Schema for `shared.usage_limits`
-
-Optional:
-
-- `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
-- `request_unit_rate_limit` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
 
 

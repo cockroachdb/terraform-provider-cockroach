@@ -64,7 +64,7 @@ func TestIntegrationClusterCertDataSource(t *testing.T) {
 		CloudProvider: "GCP",
 		State:         "CREATED",
 		Config: client.ClusterConfig{
-			Shared: &client.SharedClusterConfig{},
+			Serverless: &client.ServerlessClusterConfig{},
 		},
 		Regions: []client.Region{
 			{
@@ -108,7 +108,7 @@ func getTestClusterCertDataSourceConfig(name string) string {
 resource "cockroach_cluster" "test" {
 	name           = "%s"
 	cloud_provider = "GCP"
-	shared = {}
+	serverless = {}
 	regions = [{
 		name = "us-central1"
 	}]

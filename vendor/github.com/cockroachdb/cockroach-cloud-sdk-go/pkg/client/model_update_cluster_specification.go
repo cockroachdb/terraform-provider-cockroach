@@ -18,13 +18,13 @@
 
 package client
 
-// UpdateClusterSpecification Set `upgrade_status` to 'UPGRADE_RUNNING' to start an upgrade. Multi-node clusters will undergo a rolling upgrade and will remain available, but single-node clusters will be briefly unavailable while the upgrade takes place. Upgrades will be finalized automatically after 72 hours, or can be manually finalized by setting the value to 'FINALIZED'. Before the cluster is finalized, it can be rolled back by setting the value to 'ROLLBACK_RUNNING'. Version upgrade operations cannot be performed simultaneously with other update operations..
+// UpdateClusterSpecification struct for UpdateClusterSpecification.
 type UpdateClusterSpecification struct {
 	Dedicated *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
 	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
-	ParentId      *string                           `json:"parent_id,omitempty"`
-	Shared        *SharedClusterUpdateSpecification `json:"shared,omitempty"`
-	UpgradeStatus *ClusterUpgradeStatusType         `json:"upgrade_status,omitempty"`
+	ParentId      *string                               `json:"parent_id,omitempty"`
+	Serverless    *ServerlessClusterUpdateSpecification `json:"serverless,omitempty"`
+	UpgradeStatus *ClusterUpgradeStatusType             `json:"upgrade_status,omitempty"`
 }
 
 // NewUpdateClusterSpecification instantiates a new UpdateClusterSpecification object.
@@ -64,18 +64,18 @@ func (o *UpdateClusterSpecification) SetParentId(v string) {
 	o.ParentId = &v
 }
 
-// GetShared returns the Shared field value if set, zero value otherwise.
-func (o *UpdateClusterSpecification) GetShared() SharedClusterUpdateSpecification {
-	if o == nil || o.Shared == nil {
-		var ret SharedClusterUpdateSpecification
+// GetServerless returns the Serverless field value if set, zero value otherwise.
+func (o *UpdateClusterSpecification) GetServerless() ServerlessClusterUpdateSpecification {
+	if o == nil || o.Serverless == nil {
+		var ret ServerlessClusterUpdateSpecification
 		return ret
 	}
-	return *o.Shared
+	return *o.Serverless
 }
 
-// SetShared gets a reference to the given SharedClusterUpdateSpecification and assigns it to the Shared field.
-func (o *UpdateClusterSpecification) SetShared(v SharedClusterUpdateSpecification) {
-	o.Shared = &v
+// SetServerless gets a reference to the given ServerlessClusterUpdateSpecification and assigns it to the Serverless field.
+func (o *UpdateClusterSpecification) SetServerless(v ServerlessClusterUpdateSpecification) {
+	o.Serverless = &v
 }
 
 // GetUpgradeStatus returns the UpgradeStatus field value if set, zero value otherwise.

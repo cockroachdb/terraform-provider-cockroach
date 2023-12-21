@@ -18,37 +18,37 @@
 
 package client
 
-// SharedClusterCreateSpecification struct for SharedClusterCreateSpecification.
-type SharedClusterCreateSpecification struct {
-	// Specify which region should be made the primary region. This is only applicable to multi-region shared clusters. This field is required if you create the cluster in more than one region.
+// ServerlessClusterCreateSpecification struct for ServerlessClusterCreateSpecification.
+type ServerlessClusterCreateSpecification struct {
+	// Preview: Specify which region should be made the primary region. This is only applicable to multi-region Serverless clusters. This field is required if you create the cluster in more than one region.
 	PrimaryRegion *string `json:"primary_region,omitempty"`
 	// Region values should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS.
 	Regions     []string     `json:"regions"`
 	UsageLimits *UsageLimits `json:"usage_limits,omitempty"`
-	// WithEmptyIPAllowlist creates a cluster with no entries in the IP Allowlist. By default, shared clusters have one IP allowlist entry that opens the cluster to any IP. Set this property to true to ensure the cluster is closed to public traffic by default.
+	// WithEmptyIPAllowlist creates a cluster with no entries in the IP Allowlist. By default, Serverless clusters have one IP allowlist entry that opens the cluster to any IP. Set this property to true to ensure the cluster is closed to public traffic by default.
 	WithEmptyIpAllowlist *bool `json:"with_empty_ip_allowlist,omitempty"`
 }
 
-// NewSharedClusterCreateSpecification instantiates a new SharedClusterCreateSpecification object.
+// NewServerlessClusterCreateSpecification instantiates a new ServerlessClusterCreateSpecification object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewSharedClusterCreateSpecification(regions []string) *SharedClusterCreateSpecification {
-	p := SharedClusterCreateSpecification{}
+func NewServerlessClusterCreateSpecification(regions []string) *ServerlessClusterCreateSpecification {
+	p := ServerlessClusterCreateSpecification{}
 	p.Regions = regions
 	return &p
 }
 
-// NewSharedClusterCreateSpecificationWithDefaults instantiates a new SharedClusterCreateSpecification object.
+// NewServerlessClusterCreateSpecificationWithDefaults instantiates a new ServerlessClusterCreateSpecification object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewSharedClusterCreateSpecificationWithDefaults() *SharedClusterCreateSpecification {
-	p := SharedClusterCreateSpecification{}
+func NewServerlessClusterCreateSpecificationWithDefaults() *ServerlessClusterCreateSpecification {
+	p := ServerlessClusterCreateSpecification{}
 	return &p
 }
 
 // GetPrimaryRegion returns the PrimaryRegion field value if set, zero value otherwise.
-func (o *SharedClusterCreateSpecification) GetPrimaryRegion() string {
+func (o *ServerlessClusterCreateSpecification) GetPrimaryRegion() string {
 	if o == nil || o.PrimaryRegion == nil {
 		var ret string
 		return ret
@@ -57,12 +57,12 @@ func (o *SharedClusterCreateSpecification) GetPrimaryRegion() string {
 }
 
 // SetPrimaryRegion gets a reference to the given string and assigns it to the PrimaryRegion field.
-func (o *SharedClusterCreateSpecification) SetPrimaryRegion(v string) {
+func (o *ServerlessClusterCreateSpecification) SetPrimaryRegion(v string) {
 	o.PrimaryRegion = &v
 }
 
 // GetRegions returns the Regions field value.
-func (o *SharedClusterCreateSpecification) GetRegions() []string {
+func (o *ServerlessClusterCreateSpecification) GetRegions() []string {
 	if o == nil {
 		var ret []string
 		return ret
@@ -72,12 +72,12 @@ func (o *SharedClusterCreateSpecification) GetRegions() []string {
 }
 
 // SetRegions sets field value.
-func (o *SharedClusterCreateSpecification) SetRegions(v []string) {
+func (o *ServerlessClusterCreateSpecification) SetRegions(v []string) {
 	o.Regions = v
 }
 
 // GetUsageLimits returns the UsageLimits field value if set, zero value otherwise.
-func (o *SharedClusterCreateSpecification) GetUsageLimits() UsageLimits {
+func (o *ServerlessClusterCreateSpecification) GetUsageLimits() UsageLimits {
 	if o == nil || o.UsageLimits == nil {
 		var ret UsageLimits
 		return ret
@@ -86,12 +86,12 @@ func (o *SharedClusterCreateSpecification) GetUsageLimits() UsageLimits {
 }
 
 // SetUsageLimits gets a reference to the given UsageLimits and assigns it to the UsageLimits field.
-func (o *SharedClusterCreateSpecification) SetUsageLimits(v UsageLimits) {
+func (o *ServerlessClusterCreateSpecification) SetUsageLimits(v UsageLimits) {
 	o.UsageLimits = &v
 }
 
 // GetWithEmptyIpAllowlist returns the WithEmptyIpAllowlist field value if set, zero value otherwise.
-func (o *SharedClusterCreateSpecification) GetWithEmptyIpAllowlist() bool {
+func (o *ServerlessClusterCreateSpecification) GetWithEmptyIpAllowlist() bool {
 	if o == nil || o.WithEmptyIpAllowlist == nil {
 		var ret bool
 		return ret
@@ -100,6 +100,6 @@ func (o *SharedClusterCreateSpecification) GetWithEmptyIpAllowlist() bool {
 }
 
 // SetWithEmptyIpAllowlist gets a reference to the given bool and assigns it to the WithEmptyIpAllowlist field.
-func (o *SharedClusterCreateSpecification) SetWithEmptyIpAllowlist(v bool) {
+func (o *ServerlessClusterCreateSpecification) SetWithEmptyIpAllowlist(v bool) {
 	o.WithEmptyIpAllowlist = &v
 }

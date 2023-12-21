@@ -77,12 +77,12 @@ var regionSchema = schema.NestedAttributeObject{
 			PlanModifiers: []planmodifier.Int64{
 				int64planmodifier.UseStateForUnknown(),
 			},
-			Description: "Number of nodes in the region. Will always be 0 for shared clusters.",
+			Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",
 		},
 		"primary": schema.BoolAttribute{
 			Optional:    true,
 			Computed:    true,
-			Description: "Set to true to mark this region as the primary for a shared cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
+			Description: "Set to true to mark this region as the primary for a serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
 		},
 	},
 }
@@ -130,50 +130,8 @@ func (r *clusterResource) Schema(
 				MarkdownDescription: "Cloud provider used to host the cluster. Allowed values are:" +
 					formatEnumMarkdownList(client.AllowedCloudProviderTypeEnumValues),
 			},
-			"shared": schema.SingleNestedAttribute{
-				Optional: true,
-				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
-				},
-				Attributes: map[string]schema.Attribute{
-					"usage_limits": schema.SingleNestedAttribute{
-						Optional: true,
-						Attributes: map[string]schema.Attribute{
-							"request_unit_limit": schema.Int64Attribute{
-								Optional: true,
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
-								},
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume during the month.",
-							},
-							"storage_mib_limit": schema.Int64Attribute{
-								Optional: true,
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
-								},
-								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
-							},
-							"request_unit_rate_limit": schema.Int64Attribute{
-								Optional: true,
-								PlanModifiers: []planmodifier.Int64{
-									int64planmodifier.UseStateForUnknown(),
-								},
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
-							},
-						},
-					},
-					"routing_id": schema.StringAttribute{
-						Computed: true,
-						PlanModifiers: []planmodifier.String{
-							stringplanmodifier.UseStateForUnknown(),
-						},
-						Description: "Cluster identifier in a connection string.",
-					},
-				},
-			},
 			"serverless": schema.SingleNestedAttribute{
-				DeprecationMessage: "The `serverless` attribute is deprecated and will be removed in a future release of the provider. Configure 'shared' instead.",
-				Optional:           true,
+				Optional: true,
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.UseStateForUnknown(),
 				},
@@ -199,6 +157,13 @@ func (r *clusterResource) Schema(
 									int64planmodifier.UseStateForUnknown(),
 								},
 								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
+							"provisioned_capacity": schema.Int64Attribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
 							},
 						},
 					},
@@ -310,9 +275,8 @@ func (r *clusterResource) Configure(
 
 func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
 	return []resource.ConfigValidator{
-		resourcevalidator.ExactlyOneOf(
+		resourcevalidator.Conflicting(
 			path.MatchRoot("dedicated"),
-			path.MatchRoot("shared"),
 			path.MatchRoot("serverless"),
 		),
 		resourcevalidator.Conflicting(
@@ -324,12 +288,12 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("serverless").AtName("usage_limits"),
 		),
 		resourcevalidator.Conflicting(
-			path.MatchRoot("shared").AtName("usage_limits").AtName("request_unit_limit"),
-			path.MatchRoot("shared").AtName("usage_limits").AtName("request_unit_rate_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("request_unit_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
 		),
 		resourcevalidator.Conflicting(
-			path.MatchRoot("shared").AtName("usage_limits").AtName("storage_mib_limit"),
-			path.MatchRoot("shared").AtName("usage_limits").AtName("request_unit_rate_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("storage_mib_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
 		),
 		resourcevalidator.Conflicting(
 			path.MatchRoot("regions").AtAnyListIndex().AtName("primary"),
@@ -353,19 +317,16 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	// Add a corresponding Shared config, if it's a Serverless plan.
-	r.addSharedConfig(&plan)
-
 	clusterSpec := client.NewCreateClusterSpecification()
 
-	if plan.SharedConfig != nil {
+	if plan.ServerlessConfig != nil {
 		var regions []string
 		var primaryRegion string
 		for _, region := range plan.Regions {
 			if region.Primary.ValueBool() {
 				if primaryRegion != "" {
 					resp.Diagnostics.AddError("Too many primary regions",
-						"Only one region may be marked primary when creating a multi-region shared cluster.")
+						"Only one region may be marked primary when creating a multi-region serverless cluster.")
 					return
 				}
 				primaryRegion = region.Name.ValueString()
@@ -374,22 +335,22 @@ func (r *clusterResource) Create(
 		}
 		if len(regions) > 1 && primaryRegion == "" {
 			resp.Diagnostics.AddError("Primary region missing",
-				"One region must be marked primary when creating a multi-region shared cluster.")
+				"One region must be marked primary when creating a multi-region serverless cluster.")
 		}
-		shared := client.NewSharedClusterCreateSpecification(regions)
+		serverless := client.NewServerlessClusterCreateSpecification(regions)
 		if primaryRegion != "" {
-			shared.PrimaryRegion = &primaryRegion
+			serverless.PrimaryRegion = &primaryRegion
 		}
 
-		usageLimits := plan.SharedConfig.UsageLimits
+		usageLimits := r.getUsageLimits(plan.ServerlessConfig)
 		if usageLimits != nil {
-			shared.UsageLimits = client.NewUsageLimits()
-			shared.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
-			shared.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
-			shared.UsageLimits.RequestUnitRateLimit = usageLimits.RequestUnitRateLimit.ValueInt64Pointer()
+			serverless.UsageLimits = client.NewUsageLimits()
+			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
+			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
+			serverless.UsageLimits.ProvisionedCapacity = usageLimits.ProvisionedCapacity.ValueInt64Pointer()
 		}
 
-		clusterSpec.SetShared(*shared)
+		clusterSpec.SetServerless(*serverless)
 	} else if plan.DedicatedConfig != nil {
 		dedicated := client.DedicatedClusterCreateSpecification{}
 		if IsKnown(plan.CockroachVersion) {
@@ -579,7 +540,7 @@ func (r *clusterResource) ModifyPlan(
 		resp.Diagnostics.AddError("Cannot update cluster plan type",
 			"To prevent accidental deletion of data, changing a cluster's plan type "+
 				"isn't allowed. Please explicitly destroy this cluster before changing between "+
-				"dedicated and shared plans.")
+				"dedicated and serverless plans.")
 		return
 	}
 	if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.PrivateNetworkVisibility != state.DedicatedConfig.PrivateNetworkVisibility {
@@ -590,10 +551,10 @@ func (r *clusterResource) ModifyPlan(
 	}
 }
 
-// addSharedConfig will add a corresponding Shared config to the given cluster
-// if it contains a Serverless config. Note that the Serverless config is left
-// in place.
-func (r *clusterResource) addSharedConfig(cluster *CockroachCluster) {
+// getUsageLimits tries to derive usage limits from the given Serverless config.
+// If it already specifies limits, they are returned. If there is a spend limit,
+// it is translated into usage limits. Otherwise, nil is returned.
+func (r *clusterResource) getUsageLimits(config *ServerlessClusterConfig) *UsageLimits {
 	const (
 		// requestUnitsPerUSD is the number of request units that one dollar buys,
 		// using May 1st prices for the original Serverless offering.
@@ -603,29 +564,19 @@ func (r *clusterResource) addSharedConfig(cluster *CockroachCluster) {
 		storageMiBMonthsPerUSD = 2 * 1024
 	)
 
-	if cluster == nil {
-		return
+	if config.UsageLimits != nil {
+		return config.UsageLimits
 	}
 
-	if cluster.ServerlessConfig != nil {
-		var usageLimits *UsageLimits
-		if !cluster.ServerlessConfig.SpendLimit.IsNull() {
-			spendLimit := cluster.ServerlessConfig.SpendLimit.ValueInt64()
-			usageLimits = &UsageLimits{
-				RequestUnitLimit: types.Int64Value(spendLimit * requestUnitsPerUSD * 8 / 10 / 100),
-				StorageMibLimit:  types.Int64Value(spendLimit * storageMiBMonthsPerUSD * 2 / 10 / 100),
-			}
-		} else if cluster.ServerlessConfig.UsageLimits != nil {
-			usageLimits = &UsageLimits{
-				RequestUnitLimit: cluster.ServerlessConfig.UsageLimits.RequestUnitLimit,
-				StorageMibLimit:  cluster.ServerlessConfig.UsageLimits.StorageMibLimit,
-			}
-		}
-		cluster.SharedConfig = &SharedClusterConfig{
-			RoutingId:   cluster.ServerlessConfig.RoutingId,
-			UsageLimits: usageLimits,
+	if !config.SpendLimit.IsNull() {
+		spendLimit := config.SpendLimit.ValueInt64()
+		return &UsageLimits{
+			RequestUnitLimit: types.Int64Value(spendLimit * requestUnitsPerUSD * 8 / 10 / 100),
+			StorageMibLimit:  types.Int64Value(spendLimit * storageMiBMonthsPerUSD * 2 / 10 / 100),
 		}
 	}
+
+	return nil
 }
 
 // Comparator for two CRDB versions to make validation simpler. Assumes biannual releases of the form vYY.H.
@@ -655,9 +606,6 @@ func (r *clusterResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	// Add a corresponding Shared config, if it's a Serverless plan.
-	r.addSharedConfig(&plan)
 
 	// Get current state
 	var state CockroachCluster
@@ -736,8 +684,8 @@ func (r *clusterResource) Update(
 	}
 
 	clusterReq := client.NewUpdateClusterSpecification()
-	if plan.SharedConfig != nil {
-		shared := client.NewSharedClusterUpdateSpecification()
+	if plan.ServerlessConfig != nil {
+		serverless := client.NewServerlessClusterUpdateSpecification()
 
 		if plan.Regions != nil {
 			var regions []string
@@ -746,7 +694,7 @@ func (r *clusterResource) Update(
 				if region.Primary.ValueBool() {
 					if primaryRegion != "" {
 						resp.Diagnostics.AddError("Too many primary regions",
-							"Only one region may be marked primary when creating a multi-region shared cluster.")
+							"Only one region may be marked primary when creating a multi-region serverless cluster.")
 						return
 					}
 					primaryRegion = region.Name.ValueString()
@@ -755,23 +703,23 @@ func (r *clusterResource) Update(
 			}
 			if len(regions) > 1 && primaryRegion == "" {
 				resp.Diagnostics.AddError("Primary region missing",
-					"One region must be marked primary when updating a multi-region shared cluster.")
+					"One region must be marked primary when updating a multi-region serverless cluster.")
 				return
 			}
-			shared.SetPrimaryRegion(primaryRegion)
-			shared.SetRegions(regions)
+			serverless.SetPrimaryRegion(primaryRegion)
+			serverless.SetRegions(regions)
 		}
 
 		// If usage limits are nil in the plan, send empty usage limits to the
 		// API server so that it will clear limits (i.e. "unlimited" case).
-		shared.UsageLimits = client.NewUsageLimits()
-		usageLimits := plan.SharedConfig.UsageLimits
+		serverless.UsageLimits = client.NewUsageLimits()
+		usageLimits := r.getUsageLimits(plan.ServerlessConfig)
 		if usageLimits != nil {
-			shared.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
-			shared.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
-			shared.UsageLimits.RequestUnitRateLimit = usageLimits.RequestUnitRateLimit.ValueInt64Pointer()
+			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
+			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
+			serverless.UsageLimits.ProvisionedCapacity = usageLimits.ProvisionedCapacity.ValueInt64Pointer()
 		}
-		clusterReq.SetShared(*shared)
+		clusterReq.SetServerless(*serverless)
 	} else if cfg := plan.DedicatedConfig; cfg != nil {
 		dedicated := client.NewDedicatedClusterUpdateSpecification()
 		if plan.Regions != nil {
@@ -970,48 +918,31 @@ func loadClusterToTerraformState(
 		state.ParentId = types.StringValue(*clusterObj.ParentId)
 	}
 
-	if clusterObj.Config.Shared != nil {
-		translateUsageLimits := func(in *client.UsageLimits) (out *UsageLimits) {
-			if in != nil {
-				out = &UsageLimits{}
-				out.RequestUnitRateLimit = types.Int64PointerValue(in.RequestUnitRateLimit)
-				out.RequestUnitLimit = types.Int64PointerValue(in.RequestUnitLimit)
-				out.StorageMibLimit = types.Int64PointerValue(in.StorageMibLimit)
-			} else if plan != nil && plan.SharedConfig != nil && plan.SharedConfig.UsageLimits != nil {
+	if clusterObj.Config.Serverless != nil {
+		serverlessConfig := &ServerlessClusterConfig{
+			RoutingId: types.StringValue(clusterObj.Config.Serverless.RoutingId),
+		}
+
+		if plan != nil && plan.ServerlessConfig != nil && IsKnown(plan.ServerlessConfig.SpendLimit) {
+			// Map back to the spend limit if it was specified in the plan.
+			serverlessConfig.SpendLimit = plan.ServerlessConfig.SpendLimit
+		} else {
+			usageLimits := clusterObj.Config.Serverless.UsageLimits
+			if usageLimits != nil {
+				serverlessConfig.UsageLimits = &UsageLimits{
+					ProvisionedCapacity: types.Int64PointerValue(usageLimits.ProvisionedCapacity),
+					RequestUnitLimit:    types.Int64PointerValue(usageLimits.RequestUnitLimit),
+					StorageMibLimit:     types.Int64PointerValue(usageLimits.StorageMibLimit),
+				}
+			} else if plan != nil && plan.ServerlessConfig != nil && plan.ServerlessConfig.UsageLimits != nil {
 				// There is no difference in behavior between UsageLimits = nil and
 				// UsageLimits = &UsageLimits{}, but we need to match whichever form
 				// the plan requested.
-				out = &UsageLimits{}
-			}
-			return out
-		}
-
-		if plan != nil && plan.ServerlessConfig != nil {
-			// The TF plan uses a deprecated Serverless config, so map back to it
-			// in order to preserve backwards-compatibility.
-			serverlessConfig := &ServerlessClusterConfig{
-				RoutingId: types.StringValue(clusterObj.Config.Shared.RoutingId),
-			}
-
-			if IsKnown(plan.ServerlessConfig.SpendLimit) {
-				serverlessConfig.SpendLimit = plan.ServerlessConfig.SpendLimit
-			} else {
-				usageLimits := translateUsageLimits(clusterObj.Config.Shared.UsageLimits)
-				if usageLimits != nil {
-					serverlessConfig.UsageLimits = &ServerlessUsageLimits{
-						RequestUnitLimit: usageLimits.RequestUnitLimit,
-						StorageMibLimit:  usageLimits.StorageMibLimit,
-					}
-				}
-			}
-
-			state.ServerlessConfig = serverlessConfig
-		} else {
-			state.SharedConfig = &SharedClusterConfig{
-				RoutingId:   types.StringValue(clusterObj.Config.Shared.RoutingId),
-				UsageLimits: translateUsageLimits(clusterObj.Config.Shared.UsageLimits),
+				serverlessConfig.UsageLimits = &UsageLimits{}
 			}
 		}
+
+		state.ServerlessConfig = serverlessConfig
 	} else if clusterObj.Config.Dedicated != nil {
 		state.DedicatedConfig = &DedicatedClusterConfig{
 			MachineType:              types.StringValue(clusterObj.Config.Dedicated.MachineType),

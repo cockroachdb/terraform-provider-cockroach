@@ -54,13 +54,13 @@ func TestAccDedicatedAllowlistEntryResource(t *testing.T) {
 		Sql:      false,
 		Ui:       false,
 	}
-	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, false /* isShared */)
+	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, false /* isServerless */)
 }
 
-// TestAccSharedAllowlistEntryResource attempts to create, check, and destroy
-// a real shared cluster and allowlist entry. It will be skipped if TF_ACC
-// isn't set.
-func TestAccSharedAllowlistEntryResource(t *testing.T) {
+// TestAccServerlessAllowlistEntryResource attempts to create, check, and
+// destroy a real serverless cluster and allowlist entry. It will be skipped if
+// TF_ACC isn't set.
+func TestAccServerlessAllowlistEntryResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
 	entryName := "default-allow-list"
@@ -79,7 +79,7 @@ func TestAccSharedAllowlistEntryResource(t *testing.T) {
 		Sql:      false,
 		Ui:       false,
 	}
-	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, true /* isShared */)
+	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, true /* isServerless */)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and
@@ -144,7 +144,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			},
 		},
 		{
-			"shared cluster",
+			"serverless cluster",
 			client.AllowlistEntry{
 				Name:     &name,
 				CidrIp:   "192.168.3.2",
@@ -159,7 +159,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				CloudProvider: "GCP",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
-					Shared: &client.SharedClusterConfig{
+					Serverless: &client.ServerlessClusterConfig{
 						RoutingId: "routing-id",
 					},
 				},
@@ -211,7 +211,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
 			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-			testAllowlistEntryResource(t, clusterName, entry, newEntry, true /* useMock */, cluster.Config.Dedicated == nil /* isShared */)
+			testAllowlistEntryResource(t, clusterName, entry, newEntry, true /* useMock */, cluster.Config.Dedicated == nil /* isServerless */)
 		})
 	}
 }
@@ -221,19 +221,19 @@ func testAllowlistEntryResource(
 	clusterName string,
 	entry, newEntry client.AllowlistEntry,
 	useMock bool,
-	isShared bool,
+	isServerless bool,
 ) {
 	const (
-		dedicatedClusterResourceName = "cockroach_cluster.dedicated"
-		sharedClusterResourceName    = "cockroach_cluster.shared"
-		resourceName                 = "cockroach_allow_list.network_list"
+		dedicatedClusterResourceName  = "cockroach_cluster.dedicated"
+		serverlessClusterResourceName = "cockroach_cluster.serverless"
+		resourceName                  = "cockroach_allow_list.network_list"
 	)
 	var clusterResourceName string
 	var allowlistEntryResourceConfigFn func(string, *client.AllowlistEntry) string
 	var uiVal string
-	if isShared {
-		clusterResourceName = sharedClusterResourceName
-		allowlistEntryResourceConfigFn = getTestAllowlistEntryResourceConfigForShared
+	if isServerless {
+		clusterResourceName = serverlessClusterResourceName
+		allowlistEntryResourceConfigFn = getTestAllowlistEntryResourceConfigForServerless
 		uiVal = "false"
 	} else {
 		clusterResourceName = dedicatedClusterResourceName
@@ -338,14 +338,14 @@ resource "cockroach_allow_list" "network_list" {
 `, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }
 
-func getTestAllowlistEntryResourceConfigForShared(
+func getTestAllowlistEntryResourceConfigForServerless(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "shared" {
+resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    shared = {}
+    serverless = {}
     regions = [{
         name = "us-central1"
     }]
@@ -356,7 +356,7 @@ resource "cockroach_allow_list" "network_list" {
     cidr_mask = %d
     sql = %v
     ui = %v
-    cluster_id = cockroach_cluster.shared.id
+    cluster_id = cockroach_cluster.serverless.id
 }
 `, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }

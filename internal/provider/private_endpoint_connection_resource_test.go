@@ -34,15 +34,15 @@ func TestAccDedicatedPrivateEndpointConnectionResource(t *testing.T) {
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
-	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, false /* isShared */)
+	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, false /* isServerless */)
 }
 
-func TestAccSharedPrivateEndpointConnectionResource(t *testing.T) {
+func TestAccServerlessPrivateEndpointConnectionResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
-	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isShared */)
+	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isServerless */)
 }
 
 func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
@@ -108,7 +108,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			},
 		},
 		{
-			"shared cluster",
+			"serverless cluster",
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
@@ -116,7 +116,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				CloudProvider: "AWS",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
-					Shared: &client.SharedClusterConfig{
+					Serverless: &client.ServerlessClusterConfig{
 						RoutingId: "routing-id",
 					},
 				},
@@ -136,14 +136,14 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				return s
 			})()
 			cluster := c.finalCluster
-			isShared := cluster.Config.Dedicated == nil
+			isServerless := cluster.Config.Dedicated == nil
 
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&cluster, nil, nil)
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(4)
-			if !isShared {
+			if !isServerless {
 				s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
 					Return(services, nil, nil)
 			}
@@ -177,19 +177,19 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				t,
 				clusterName,
 				true, /* useMock */
-				isShared,
+				isServerless,
 			)
 		})
 	}
 }
 
 func testPrivateEndpointConnectionResource(
-	t *testing.T, clusterName string, useMock bool, isShared bool,
+	t *testing.T, clusterName string, useMock bool, isServerless bool,
 ) {
 	const resourceName = "cockroach_private_endpoint_connection.connection"
 	var privateEndpointConnectionResourceConfigFn func(string) string
-	if isShared {
-		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForShared
+	if isServerless {
+		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForServerless
 	} else {
 		privateEndpointConnectionResourceConfigFn = getTestPrivateEndpointConnectionResourceConfigForDedicated
 	}
@@ -242,22 +242,22 @@ resource "cockroach_private_endpoint_connection" "connection" {
 `, clusterName)
 }
 
-func getTestPrivateEndpointConnectionResourceConfigForShared(clusterName string) string {
+func getTestPrivateEndpointConnectionResourceConfigForServerless(clusterName string) string {
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "shared" {
+resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "AWS"
-    shared = {}
+    serverless = {}
     regions = [{
         name = "us-east-1"
     }]
 }
 resource "cockroach_private_endpoint_services" "services" {
-    cluster_id = cockroach_cluster.shared.id
+    cluster_id = cockroach_cluster.serverless.id
 }
 
 resource "cockroach_private_endpoint_connection" "connection" {
-    cluster_id = cockroach_cluster.shared.id
+    cluster_id = cockroach_cluster.serverless.id
     endpoint_id = "endpoint-id"
 }
 `, clusterName)

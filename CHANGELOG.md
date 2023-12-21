@@ -14,8 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- New `STANDARD` clusters with provisioned capacity on shared hardware.
-- New `shared` attribute which should be used in place of `serverless`.
+- New `STANDARD` clusters with provisioned serverless capacity.
 
 ### Changed
 
@@ -24,8 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Deprecated
 
-- Deprecated support for `serverless` attribute. Users should rename to
-  `shared` and convert any `spend_limit` attribute.
 - Deprecated support for `spend_limit` attribute in `serverless` config. Users
   can instead enforce resource limits with `usage_limits`.
 

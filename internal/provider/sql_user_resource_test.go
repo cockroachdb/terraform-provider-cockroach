@@ -68,7 +68,7 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 		Plan:          "BASIC",
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
-			Shared: &client.SharedClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
 				RoutingId: "routing-id",
 			},
 		},
@@ -113,7 +113,7 @@ func testSqlUserResource(
 	t *testing.T, clusterName, sqlUserNameWithPass, sqlUserNameNoPass string, useMock bool,
 ) {
 	var (
-		clusterResourceName = "cockroach_cluster.shared"
+		clusterResourceName = "cockroach_cluster.serverless"
 		resourceNamePass    = "cockroach_sql_user.with_pass"
 		resourceNameNoPass  = "cockroach_sql_user.no_pass"
 	)
@@ -185,10 +185,10 @@ func getTestSqlUserResourceConfig(
 	clusterName, userNamePass, userNameNoPass, password string,
 ) string {
 	return fmt.Sprintf(`
-resource "cockroach_cluster" "shared" {
+resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    shared = {}
+    serverless = {}
 	regions = [{
 		name = "us-central1"
 	}]
@@ -197,12 +197,12 @@ resource "cockroach_cluster" "shared" {
 resource "cockroach_sql_user" "with_pass" {
   name = "%s"
   password = "%s"
-  cluster_id = cockroach_cluster.shared.id
+  cluster_id = cockroach_cluster.serverless.id
 }
 
 resource "cockroach_sql_user" "no_pass" {
   name = "%s"
-  cluster_id = cockroach_cluster.shared.id
+  cluster_id = cockroach_cluster.serverless.id
 }
 `, clusterName, userNamePass, password, userNameNoPass)
 }

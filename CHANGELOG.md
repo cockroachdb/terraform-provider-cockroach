@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed a nil pointer exception which could occur while retrying a certain
   class of api failures.
+- Fixed error when the primary attribute was specified in multiple regions,
+  even when false in all but one region.
 
 ## [1.3.0] - 2023-09-14
 

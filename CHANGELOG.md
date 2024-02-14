@@ -16,6 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed `SERVERLESS` plan type to `BASIC`.
 - Renamed `DEDICATED` plan type to `ADVANCED`.
 
+### Fixed
+
+- Fixed error when the primary attribute was specified in multiple regions,
+  even when false in all but one region.
+
 ### Deprecated
 
 - Deprecated support for `spend_limit` attribute in `serverless` config. Users

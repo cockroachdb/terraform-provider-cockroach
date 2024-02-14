@@ -26,6 +26,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Deprecated support for `spend_limit` attribute in `serverless` config. Users
   can instead enforce resource limits with `usage_limits`.
 
+### Fixed
+
+- Fixed error when the primary attribute was specified in multiple regions,
+  even when false in all but one region.
+
 ## [1.3.1] - 2023-12-01
 
 ### Fixed

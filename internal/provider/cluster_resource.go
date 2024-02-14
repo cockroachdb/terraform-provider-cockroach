@@ -305,10 +305,6 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("serverless").AtName("usage_limits").AtName("storage_mib_limit"),
 			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
 		),
-		resourcevalidator.Conflicting(
-			path.MatchRoot("regions").AtAnyListIndex().AtName("primary"),
-			path.MatchRoot("dedicated"),
-		),
 	}
 }
 
@@ -371,6 +367,10 @@ func (r *clusterResource) Create(
 			regionNodes := make(map[string]int32, len(plan.Regions))
 			for _, region := range plan.Regions {
 				regionNodes[region.Name.ValueString()] = int32(region.NodeCount.ValueInt64())
+				if IsKnown(region.Primary) {
+					resp.Diagnostics.AddError("Invalid Attribute Combination",
+						"Dedicated clusters do not support the primary attribute on regions.")
+				}
 			}
 			dedicated.RegionNodes = regionNodes
 		}

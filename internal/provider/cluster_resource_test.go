@@ -97,6 +97,8 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
+
+	boolPtr := func(val bool) *bool { return &val }
 	int64Ptr := func(val int64) *int64 { return &val }
 	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
 
@@ -178,8 +180,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				},
 			},
 		}
-		trueVal := true
-		cluster.Regions[primaryIndex].Primary = &trueVal
+		cluster.Regions[primaryIndex].Primary = boolPtr(true)
 		return cluster
 	}
 
@@ -383,6 +384,17 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							}]
 						}`,
 					ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+				}
+			},
+		},
+		{
+			name: "use serverless primary region on dedicated cluster",
+			createStep: func() resource.TestStep {
+				config := getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil)
+				config = strings.Replace(config, "node_count: 1", "primary: true", -1)
+				return resource.TestStep{
+					Config:      config,
+					ExpectError: regexp.MustCompile("Dedicated clusters do not support the primary attribute on regions."),
 				}
 			},
 		},
@@ -592,6 +604,7 @@ func provisionedMultiRegionClusterWithLimit(clusterName string) resource.TestSte
 					},
 					{
 						name = "us-west2"
+						primary = false
 					},
 				]
 			}

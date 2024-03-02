@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The `user_role_grant` resource was added to allow management of a single role
+  grant.  This resource will not affect other role grants. See
+  [user_role_grants](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/user_role_grant)
+  for more information.
+
 ## [1.3.2] - 2024-03-15
 
 ### Changed

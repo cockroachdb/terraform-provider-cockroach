@@ -271,10 +271,15 @@ type Role struct {
 	ResourceId   types.String `tfsdk:"resource_id"`
 }
 
-type RoleGrant struct {
+type UserRoleGrants struct {
 	ID     types.String `tfsdk:"id"`
 	UserId types.String `tfsdk:"user_id"`
 	Roles  []Role       `tfsdk:"roles"`
+}
+
+type UserRoleGrant struct {
+	UserID types.String `tfsdk:"user_id"`
+	Role   Role         `tfsdk:"role"`
 }
 
 type Folder struct {

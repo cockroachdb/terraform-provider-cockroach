@@ -29,128 +29,318 @@ import (
 )
 
 type Service interface {
+
+	//
 	// AuditLogs
+	//
+
+	// List audit logs
 	ListAuditLogs(ctx _context.Context, options *ListAuditLogsOptions) (*ListAuditLogsResponse, *_nethttp.Response, error)
+
+	//
 	// Billing
+	//
+
+	// Get a specific invoice for an organization
 	GetInvoice(ctx _context.Context, invoiceId string) (*Invoice, *_nethttp.Response, error)
+	// List invoices for a given organization
 	ListInvoices(ctx _context.Context) (*ListInvoicesResponse, *_nethttp.Response, error)
+
+	//
 	// ClientCACertificates
+	//
+
+	// Delete Client CA Cert for a cluster
 	DeleteClientCACert(ctx _context.Context, clusterId string) (*ClientCACertInfo, *_nethttp.Response, error)
+	// Get Client CA Cert information for a cluster
 	GetClientCACert(ctx _context.Context, clusterId string) (*ClientCACertInfo, *_nethttp.Response, error)
+	// Set Client CA Cert for a cluster
 	SetClientCACert(ctx _context.Context, clusterId string, setClientCACertRequest *SetClientCACertRequest) (*ClientCACertInfo, *_nethttp.Response, error)
+	// Update Client CA Cert for a cluster
 	UpdateClientCACert(ctx _context.Context, clusterId string, updateClientCACertRequest *UpdateClientCACertRequest) (*ClientCACertInfo, *_nethttp.Response, error)
+
+	//
 	// Clusters
+	//
+
+	// Create and initialize a new cluster
 	CreateCluster(ctx _context.Context, createClusterRequest *CreateClusterRequest) (*Cluster, *_nethttp.Response, error)
+	// Delete a cluster and all of its data
 	DeleteCluster(ctx _context.Context, clusterId string) (*Cluster, *_nethttp.Response, error)
+	// Get extended information about a cluster
 	GetCluster(ctx _context.Context, clusterId string) (*Cluster, *_nethttp.Response, error)
+	// Get a formatted generic connection string for a cluster
 	GetConnectionString(ctx _context.Context, clusterId string, options *GetConnectionStringOptions) (*GetConnectionStringResponse, *_nethttp.Response, error)
+	// List the regions available for new clusters and nodes
 	ListAvailableRegions(ctx _context.Context, options *ListAvailableRegionsOptions) (*ListAvailableRegionsResponse, *_nethttp.Response, error)
+	// List nodes for a cluster
 	ListClusterNodes(ctx _context.Context, clusterId string, options *ListClusterNodesOptions) (*ListClusterNodesResponse, *_nethttp.Response, error)
+	// List clusters owned by an organization
 	ListClusters(ctx _context.Context, options *ListClustersOptions) (*ListClustersResponse, *_nethttp.Response, error)
+	// List available major cluster versions
 	ListMajorClusterVersions(ctx _context.Context, options *ListMajorClusterVersionsOptions) (*ListMajorClusterVersionsResponse, *_nethttp.Response, error)
+	// Scale, edit or upgrade a cluster
 	UpdateCluster(ctx _context.Context, clusterId string, updateClusterSpecification *UpdateClusterSpecification) (*Cluster, *_nethttp.Response, error)
+
+	//
 	// CustomerManagedEncryptionKeys
+	//
+
+	// Enable CMEK for a cluster
 	EnableCMEKSpec(ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification) (*CMEKClusterInfo, *_nethttp.Response, error)
+	// Get CMEK-related information for a cluster
 	GetCMEKClusterInfo(ctx _context.Context, clusterId string) (*CMEKClusterInfo, *_nethttp.Response, error)
+	// Enable or update the CMEK spec for a cluster
 	UpdateCMEKSpec(ctx _context.Context, clusterId string, cMEKClusterSpecification *CMEKClusterSpecification) (*CMEKClusterInfo, *_nethttp.Response, error)
+	// Update the CMEK-related status for a cluster
 	UpdateCMEKStatus(ctx _context.Context, clusterId string, updateCMEKStatusRequest *UpdateCMEKStatusRequest) (*CMEKClusterInfo, *_nethttp.Response, error)
+
+	//
 	// Databases
+	//
+
+	// Create a new database
 	CreateDatabase(ctx _context.Context, clusterId string, createDatabaseRequest *CreateDatabaseRequest) (*Database, *_nethttp.Response, error)
+	// Delete a database
 	DeleteDatabase(ctx _context.Context, clusterId string, name string) (*Database, *_nethttp.Response, error)
+	// Update a database
 	EditDatabase(ctx _context.Context, clusterId string, name string, updateDatabaseRequest1 *UpdateDatabaseRequest1) (*Database, *_nethttp.Response, error)
+	// Update a database
 	EditDatabase2(ctx _context.Context, clusterId string, updateDatabaseRequest *UpdateDatabaseRequest) (*Database, *_nethttp.Response, error)
+	// List databases for a cluster
 	ListDatabases(ctx _context.Context, clusterId string, options *ListDatabasesOptions) (*ListDatabasesResponse, *_nethttp.Response, error)
+
+	//
 	// EgressRules
+	//
+
+	// Add an egress rule
 	AddEgressRule(ctx _context.Context, clusterId string, addEgressRuleRequest *AddEgressRuleRequest) (*AddEgressRuleResponse, *_nethttp.Response, error)
+	// Delete an existing egress rule
 	DeleteEgressRule(ctx _context.Context, clusterId string, ruleId string, options *DeleteEgressRuleOptions) (*DeleteEgressRuleResponse, *_nethttp.Response, error)
+	// Edit an existing egress rule
 	EditEgressRule(ctx _context.Context, clusterId string, ruleId string, editEgressRuleRequest *EditEgressRuleRequest) (*EditEgressRuleResponse, *_nethttp.Response, error)
+	// Get an existing egress rule
 	GetEgressRule(ctx _context.Context, clusterId string, ruleId string) (*GetEgressRuleResponse, *_nethttp.Response, error)
+	// List all egress rules associated with a cluster
 	ListEgressRules(ctx _context.Context, clusterId string, options *ListEgressRulesOptions) (*ListEgressRulesResponse, *_nethttp.Response, error)
+	// Outbound traffic management
 	SetEgressTrafficPolicy(ctx _context.Context, clusterId string, setEgressTrafficPolicyRequest *SetEgressTrafficPolicyRequest) (*_nethttp.Response, error)
+
+	//
 	// Folders
+	//
+
+	// Create a folder
 	CreateFolder(ctx _context.Context, createFolderRequest *CreateFolderRequest) (*FolderResource, *_nethttp.Response, error)
+	// Delete a folder
 	DeleteFolder(ctx _context.Context, folderId string) (*_nethttp.Response, error)
+	// Get folder info for a folder
 	GetFolder(ctx _context.Context, folderId string) (*FolderResource, *_nethttp.Response, error)
+	// List contents of a folder
 	ListFolderContents(ctx _context.Context, folderId string, options *ListFolderContentsOptions) (*FolderResourceList, *_nethttp.Response, error)
+	// List folders owned by an organization
+	ListFolders(ctx _context.Context, options *ListFoldersOptions) (*ListFoldersResponse, *_nethttp.Response, error)
+	// Update a folder
 	UpdateFolder(ctx _context.Context, folderId string, updateFolderSpecification *UpdateFolderSpecification) (*FolderResource, *_nethttp.Response, error)
+
+	//
 	// IPAllowlists
+	//
+
+	// Add a new CIDR address to the IP allowlist
 	AddAllowlistEntry(ctx _context.Context, clusterId string, allowlistEntry *AllowlistEntry) (*AllowlistEntry, *_nethttp.Response, error)
+	// Add a new CIDR address to the IP allowlist
 	AddAllowlistEntry2(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+	// Delete an IP allowlist entry
 	DeleteAllowlistEntry(ctx _context.Context, clusterId string, cidrIp string, cidrMask int32) (*AllowlistEntry, *_nethttp.Response, error)
+	// Get the IP allowlist and propagation status for a cluster
 	ListAllowlistEntries(ctx _context.Context, clusterId string, options *ListAllowlistEntriesOptions) (*ListAllowlistEntriesResponse, *_nethttp.Response, error)
+	// Update an IP allowlist entry
 	UpdateAllowlistEntry(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+
+	//
 	// LogExport
+	//
+
+	// Delete the Log Export configuration for a cluster
 	DeleteLogExport(ctx _context.Context, clusterId string) (*LogExportClusterInfo, *_nethttp.Response, error)
+	// Create or update the Log Export configuration for a cluster
 	EnableLogExport(ctx _context.Context, clusterId string, enableLogExportRequest *EnableLogExportRequest) (*LogExportClusterInfo, *_nethttp.Response, error)
+	// Get the Log Export configuration for a cluster
 	GetLogExportInfo(ctx _context.Context, clusterId string) (*LogExportClusterInfo, *_nethttp.Response, error)
+
+	//
 	// MaintenanceWindows
+	//
+
+	// Delete the maintenance window for a cluster
 	DeleteMaintenanceWindow(ctx _context.Context, clusterId string) (*MaintenanceWindow, *_nethttp.Response, error)
+	// Get the maintenance window for a cluster
 	GetMaintenanceWindow(ctx _context.Context, clusterId string) (*MaintenanceWindow, *_nethttp.Response, error)
+	// Set the maintenance window for a cluster
 	SetMaintenanceWindow(ctx _context.Context, clusterId string, maintenanceWindow *MaintenanceWindow) (*MaintenanceWindow, *_nethttp.Response, error)
+
+	//
 	// MetricExport
+	//
+
+	// Delete the CloudWatch Metric Export configuration for a cluster
 	DeleteCloudWatchMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
+	// Delete the Datadog Metric Export configuration for a cluster
 	DeleteDatadogMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
+	// Delete the Prometheus Metric Export configuration for a cluster
 	DeletePrometheusMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
+	// Create or update the CloudWatch Metric Export configuration for a cluster
 	EnableCloudWatchMetricExport(ctx _context.Context, clusterId string, enableCloudWatchMetricExportRequest *EnableCloudWatchMetricExportRequest) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
+	// Create or update the Datadog Metric Export configuration for a cluster
 	EnableDatadogMetricExport(ctx _context.Context, clusterId string, enableDatadogMetricExportRequest *EnableDatadogMetricExportRequest) (*DatadogMetricExportInfo, *_nethttp.Response, error)
+	// Create or update the Prometheus Metric Export configuration for a cluster
 	EnablePrometheusMetricExport(ctx _context.Context, clusterId string, body *map[string]interface{}) (*PrometheusMetricExportInfo, *_nethttp.Response, error)
+	// Get the CloudWatch Metric Export configuration for a cluster
 	GetCloudWatchMetricExportInfo(ctx _context.Context, clusterId string) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
+	// Get the Datadog Metric Export configuration for a cluster
 	GetDatadogMetricExportInfo(ctx _context.Context, clusterId string) (*DatadogMetricExportInfo, *_nethttp.Response, error)
+	// Get the Prometheus Metric Export configuration for a cluster
 	GetPrometheusMetricExportInfo(ctx _context.Context, clusterId string) (*PrometheusMetricExportInfo, *_nethttp.Response, error)
+
+	//
 	// OpenIDConnectConfiguration
+	//
+
+	// Create an API OIDC configuration
 	CreateApiOidcConfig(ctx _context.Context, createApiOidcConfigRequest *CreateApiOidcConfigRequest) (*ApiOidcConfig, *_nethttp.Response, error)
+	// Delete an API OIDC configuration
 	DeleteApiOidcConfig(ctx _context.Context, id string) (*ApiOidcConfig, *_nethttp.Response, error)
+	// Get an API OIDC configuration
 	GetApiOidcConfig(ctx _context.Context, id string) (*ApiOidcConfig, *_nethttp.Response, error)
+	// List all API OIDC configurations
 	ListApiOidcConfig(ctx _context.Context, options *ListApiOidcConfigOptions) (*ListApiOidcConfigResponse, *_nethttp.Response, error)
+	// Update an API OIDC configuration
 	UpdateApiOidcConfig(ctx _context.Context, id string, apiOidcConfig1 *ApiOidcConfig1) (*ApiOidcConfig, *_nethttp.Response, error)
+
+	//
 	// Organizations
+	//
+
+	// Get information about the caller&#39;s organization
 	GetOrganizationInfo(ctx _context.Context) (*Organization, *_nethttp.Response, error)
+
+	//
 	// PrivateEndpointServices
+	//
+
+	// Add a connection to a cluster&#39;s private endpoint service.
 	AddPrivateEndpointConnection(ctx _context.Context, clusterId string, addPrivateEndpointConnectionRequest *AddPrivateEndpointConnectionRequest) (*PrivateEndpointConnection, *_nethttp.Response, error)
+	// Add a private endpoint trusted owner to a cluster
 	AddPrivateEndpointTrustedOwner(ctx _context.Context, clusterId string, addPrivateEndpointTrustedOwnerRequest *AddPrivateEndpointTrustedOwnerRequest) (*AddPrivateEndpointTrustedOwnerResponse, *_nethttp.Response, error)
+	// Create all PrivateEndpointServices for a cluster
 	CreatePrivateEndpointServices(ctx _context.Context, clusterId string) (*PrivateEndpointServices, *_nethttp.Response, error)
+	// Delete a connection from a cluster&#39;s private endpoint service.
 	DeletePrivateEndpointConnection(ctx _context.Context, clusterId string, endpointId string) (*_nethttp.Response, error)
+	// Get a private endpoint trusted owner entry for a cluster
 	GetPrivateEndpointTrustedOwner(ctx _context.Context, clusterId string, ownerId string) (*GetPrivateEndpointTrustedOwnerResponse, *_nethttp.Response, error)
+	// List all AwsEndpointConnections for a cluster
 	ListAwsEndpointConnections(ctx _context.Context, clusterId string) (*AwsEndpointConnections, *_nethttp.Response, error)
+	// List all connections to a cluster&#39;s private endpoint service.
 	ListPrivateEndpointConnections(ctx _context.Context, clusterId string) (*PrivateEndpointConnections, *_nethttp.Response, error)
+	// List all PrivateEndpointServices for a cluster
 	ListPrivateEndpointServices(ctx _context.Context, clusterId string) (*PrivateEndpointServices, *_nethttp.Response, error)
+	// List all private endpoint trusted owners for a cluster
 	ListPrivateEndpointTrustedOwners(ctx _context.Context, clusterId string) (*ListPrivateEndpointTrustedOwnersResponse, *_nethttp.Response, error)
+	// Remove a private endpoint trusted owner from a cluster
 	RemovePrivateEndpointTrustedOwner(ctx _context.Context, clusterId string, ownerId string) (*RemovePrivateEndpointTrustedOwnerResponse, *_nethttp.Response, error)
+	// Set the AWS Endpoint Connection state
 	SetAwsEndpointConnectionState(ctx _context.Context, clusterId string, endpointId string, setAwsEndpointConnectionStateRequest *SetAwsEndpointConnectionStateRequest) (*AwsEndpointConnection, *_nethttp.Response, error)
+
+	//
 	// RoleManagement
+	//
+
+	// Add the user to the given role
 	AddUserToRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	// Get all Role Grants for a user
 	GetAllRolesForUser(ctx _context.Context, userId string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	// Search person users by email address
 	GetPersonUsersByEmail(ctx _context.Context, email *string) (*GetPersonUsersByEmailResponse, *_nethttp.Response, error)
+	// List all RoleGrants
 	ListRoleGrants(ctx _context.Context, options *ListRoleGrantsOptions) (*ListRoleGrantsResponse, *_nethttp.Response, error)
+	// Remove the user from the given role
 	RemoveUserFromRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+	// Make a user&#39;s roles exactly those provided
 	SetRolesForUser(ctx _context.Context, userId string, cockroachCloudSetRolesForUserRequest *CockroachCloudSetRolesForUserRequest) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+
+	//
 	// SCIM
+	//
+
+	// Create a group
 	CreateGroup(ctx _context.Context, createGroupRequest *CreateGroupRequest) (*ScimGroup, *_nethttp.Response, error)
+	// Create a user
 	CreateUser(ctx _context.Context, createUserRequest *CreateUserRequest) (*ScimUser, *_nethttp.Response, error)
+	// Delete a group based on ID
 	DeleteGroup(ctx _context.Context, id string) (*_nethttp.Response, error)
+	// Delete a user based on ID
 	DeleteUser(ctx _context.Context, id string) (*_nethttp.Response, error)
+	// Get a group by ID
 	GetGroup(ctx _context.Context, id string, options *GetGroupOptions) (*ScimGroup, *_nethttp.Response, error)
+	// Deprecated: Search a group by ID (Deprecated)
 	GetGroup2(ctx _context.Context, id string, getGroupRequest *GetGroupRequest) (*ScimGroup, *_nethttp.Response, error)
+	// List groups
 	GetGroups(ctx _context.Context, options *GetGroupsOptions) (*GetGroupsResponse, *_nethttp.Response, error)
+	// Deprecated: Search groups (Deprecated)
 	GetGroups2(ctx _context.Context, getGroupsRequest *GetGroupsRequest) (*GetGroupsResponse, *_nethttp.Response, error)
+	// Get a SCIM resource type by ID
 	GetResourceType(ctx _context.Context, resourceId string, options *GetResourceTypeOptions) (*ScimResourceType, *_nethttp.Response, error)
+	// List the SCIM resource types
 	GetResourceTypes(ctx _context.Context, options *GetResourceTypesOptions) (*GetResourceTypesResponse, *_nethttp.Response, error)
+	// Get a SCIM schema by ID
 	GetSchema(ctx _context.Context, schemaId string, options *GetSchemaOptions) (*ScimSchema, *_nethttp.Response, error)
+	// List the SCIM schemas
 	GetSchemas(ctx _context.Context, options *GetSchemasOptions) (*GetSchemasResponse, *_nethttp.Response, error)
+	// Return the SCIM Service Provider configuration
 	GetServiceProviderConfig(ctx _context.Context) (*GetServiceProviderConfigResponse, *_nethttp.Response, error)
+	// Get a user by ID
 	GetUser(ctx _context.Context, id string, options *GetUserOptions) (*ScimUser, *_nethttp.Response, error)
+	// Deprecated: Search for a user by ID (Deprecated)
 	GetUser2(ctx _context.Context, id string, getUserRequest *GetUserRequest) (*ScimUser, *_nethttp.Response, error)
+	// List Users
 	GetUsers(ctx _context.Context, options *GetUsersOptions) (*GetUsersResponse, *_nethttp.Response, error)
+	// Deprecated: Search User (Deprecated)
 	GetUsers2(ctx _context.Context, getUsersRequest *GetUsersRequest) (*GetUsersResponse, *_nethttp.Response, error)
+	// Search a group by ID
+	SearchGroup(ctx _context.Context, id string, getGroupRequest *GetGroupRequest) (*ScimGroup, *_nethttp.Response, error)
+	// Search groups
+	SearchGroups(ctx _context.Context, getGroupsRequest *GetGroupsRequest) (*GetGroupsResponse, *_nethttp.Response, error)
+	// Search for a user by ID
+	SearchUser(ctx _context.Context, id string, getUserRequest *GetUserRequest) (*ScimUser, *_nethttp.Response, error)
+	// Search Users
+	SearchUsers(ctx _context.Context, getUsersRequest *GetUsersRequest) (*GetUsersResponse, *_nethttp.Response, error)
+	// Update a group by supplying all values of the user object
 	UpdateGroup(ctx _context.Context, id string, updateGroupRequest *UpdateGroupRequest) (*ScimGroup, *_nethttp.Response, error)
+	// Update a user by supplying all values of the user object
 	UpdateUser(ctx _context.Context, id string, updateUserRequest *UpdateUserRequest) (*ScimUser, *_nethttp.Response, error)
+
+	//
 	// SQLUsers
+	//
+
+	// Create a new SQL user
 	CreateSQLUser(ctx _context.Context, clusterId string, createSQLUserRequest *CreateSQLUserRequest) (*SQLUser, *_nethttp.Response, error)
+	// Delete a SQL user
 	DeleteSQLUser(ctx _context.Context, clusterId string, name string) (*SQLUser, *_nethttp.Response, error)
+	// List SQL users for a cluster
 	ListSQLUsers(ctx _context.Context, clusterId string, options *ListSQLUsersOptions) (*ListSQLUsersResponse, *_nethttp.Response, error)
+	// Update a SQL user&#39;s password
 	UpdateSQLUserPassword(ctx _context.Context, clusterId string, name string, updateSQLUserPasswordRequest *UpdateSQLUserPasswordRequest) (*SQLUser, *_nethttp.Response, error)
+
+	//
 	// VersionDeferral
+	//
+
+	// Get the version upgrade deferral policy for a cluster.
 	GetClusterVersionDeferral(ctx _context.Context, clusterId string) (*ClusterVersionDeferral, *_nethttp.Response, error)
+	// Set the version upgrade deferral policy for a cluster
 	SetClusterVersionDeferral(ctx _context.Context, clusterId string, clusterVersionDeferral *ClusterVersionDeferral) (*ClusterVersionDeferral, *_nethttp.Response, error)
 }
 
@@ -1681,7 +1871,7 @@ func (a *ServiceImpl) GetConnectionString(
 
 // ListAvailableRegionsOptions contains optional parameters for ListAvailableRegions.
 type ListAvailableRegionsOptions struct {
-	// Optional CloudProvider for filtering.   - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.  - AZURE: Limited Access: The Azure cloud provider.
+	// Optional CloudProvider for filtering.   - GCP: The Google Cloud Platform cloud provider.  - AWS: The Amazon Web Services cloud provider.  - AZURE: The Azure cloud provider.
 	Provider *string
 
 	// Optional filter to only show regions available for serverless clusters.
@@ -5096,6 +5286,168 @@ func (a *ServiceImpl) ListFolderContents(
 	}
 
 	var localVarReturnValue FolderResourceList
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListFoldersOptions contains optional parameters for ListFolders.
+type ListFoldersOptions struct {
+	// Optional filter to limit the response to include only results that match the given absolute path to that folder. Preceding and ending \"/\" are optional. For example /folder1/folder2, /folder1/folder2/, folder1/folder2, and folder1/folder2/ are all equivalent. If no matching folder is found, an empty list is returned. Because folder paths are passed via the query parameters, they must be URL-encoded.
+	Path *string
+
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListFolders executes the request.
+func (a *ServiceImpl) ListFolders(
+	ctx _context.Context, options *ListFoldersOptions,
+) (*ListFoldersResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/folders"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.Path != nil {
+		localVarQueryParams.Add("path", parameterToString(*options.Path, ""))
+	}
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListFoldersResponse
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -11779,6 +12131,7 @@ func (a *ServiceImpl) GetGroup(
 }
 
 // GetGroup2 executes the request.
+// Deprecated.
 func (a *ServiceImpl) GetGroup2(
 	ctx _context.Context, id string, getGroupRequest *GetGroupRequest,
 ) (*ScimGroup, *_nethttp.Response, error) {
@@ -12067,6 +12420,7 @@ func (a *ServiceImpl) GetGroups(
 }
 
 // GetGroups2 executes the request.
+// Deprecated.
 func (a *ServiceImpl) GetGroups2(
 	ctx _context.Context, getGroupsRequest *GetGroupsRequest,
 ) (*GetGroupsResponse, *_nethttp.Response, error) {
@@ -13064,6 +13418,7 @@ func (a *ServiceImpl) GetUser(
 }
 
 // GetUser2 executes the request.
+// Deprecated.
 func (a *ServiceImpl) GetUser2(
 	ctx _context.Context, id string, getUserRequest *GetUserRequest,
 ) (*ScimUser, *_nethttp.Response, error) {
@@ -13352,11 +13707,562 @@ func (a *ServiceImpl) GetUsers(
 }
 
 // GetUsers2 executes the request.
+// Deprecated.
 func (a *ServiceImpl) GetUsers2(
 	ctx _context.Context, getUsersRequest *GetUsersRequest,
 ) (*GetUsersResponse, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Users/.search"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if getUsersRequest == nil {
+		return nil, nil, reportError("getUsersRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = getUsersRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetUsersResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SearchGroup executes the request.
+func (a *ServiceImpl) SearchGroup(
+	ctx _context.Context, id string, getGroupRequest *GetGroupRequest,
+) (*ScimGroup, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Groups/{id}/.search"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if getGroupRequest == nil {
+		return nil, nil, reportError("getGroupRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = getGroupRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ScimGroup
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SearchGroups executes the request.
+func (a *ServiceImpl) SearchGroups(
+	ctx _context.Context, getGroupsRequest *GetGroupsRequest,
+) (*GetGroupsResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Groups/.search"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if getGroupsRequest == nil {
+		return nil, nil, reportError("getGroupsRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = getGroupsRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue GetGroupsResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SearchUser executes the request.
+func (a *ServiceImpl) SearchUser(
+	ctx _context.Context, id string, getUserRequest *GetUserRequest,
+) (*ScimUser, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/scim/v2/Users/{id}/.search"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if getUserRequest == nil {
+		return nil, nil, reportError("getUserRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = getUserRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ScimUser
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// SearchUsers executes the request.
+func (a *ServiceImpl) SearchUsers(
+	ctx _context.Context, getUsersRequest *GetUsersRequest,
+) (*GetUsersResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
 		localVarPostBody     interface{}
 		localVarFormFileName string
 		localVarFileName     string

@@ -1296,6 +1296,22 @@ func (mr *MockServiceMockRecorder) ListFolderContents(arg0, arg1, arg2 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFolderContents", reflect.TypeOf((*MockService)(nil).ListFolderContents), arg0, arg1, arg2)
 }
 
+// ListFolders mocks base method.
+func (m *MockService) ListFolders(arg0 context.Context, arg1 *client.ListFoldersOptions) (*client.ListFoldersResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListFolders", arg0, arg1)
+	ret0, _ := ret[0].(*client.ListFoldersResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListFolders indicates an expected call of ListFolders.
+func (mr *MockServiceMockRecorder) ListFolders(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFolders", reflect.TypeOf((*MockService)(nil).ListFolders), arg0, arg1)
+}
+
 // ListInvoices mocks base method.
 func (m *MockService) ListInvoices(arg0 context.Context) (*client.ListInvoicesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1438,6 +1454,70 @@ func (m *MockService) RemoveUserFromRole(arg0 context.Context, arg1, arg2, arg3,
 func (mr *MockServiceMockRecorder) RemoveUserFromRole(arg0, arg1, arg2, arg3, arg4 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RemoveUserFromRole", reflect.TypeOf((*MockService)(nil).RemoveUserFromRole), arg0, arg1, arg2, arg3, arg4)
+}
+
+// SearchGroup mocks base method.
+func (m *MockService) SearchGroup(arg0 context.Context, arg1 string, arg2 *client.GetGroupRequest) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchGroup indicates an expected call of SearchGroup.
+func (mr *MockServiceMockRecorder) SearchGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchGroup", reflect.TypeOf((*MockService)(nil).SearchGroup), arg0, arg1, arg2)
+}
+
+// SearchGroups mocks base method.
+func (m *MockService) SearchGroups(arg0 context.Context, arg1 *client.GetGroupsRequest) (*client.GetGroupsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchGroups", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetGroupsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchGroups indicates an expected call of SearchGroups.
+func (mr *MockServiceMockRecorder) SearchGroups(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchGroups", reflect.TypeOf((*MockService)(nil).SearchGroups), arg0, arg1)
+}
+
+// SearchUser mocks base method.
+func (m *MockService) SearchUser(arg0 context.Context, arg1 string, arg2 *client.GetUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchUser indicates an expected call of SearchUser.
+func (mr *MockServiceMockRecorder) SearchUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchUser", reflect.TypeOf((*MockService)(nil).SearchUser), arg0, arg1, arg2)
+}
+
+// SearchUsers mocks base method.
+func (m *MockService) SearchUsers(arg0 context.Context, arg1 *client.GetUsersRequest) (*client.GetUsersResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SearchUsers", arg0, arg1)
+	ret0, _ := ret[0].(*client.GetUsersResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// SearchUsers indicates an expected call of SearchUsers.
+func (mr *MockServiceMockRecorder) SearchUsers(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchUsers", reflect.TypeOf((*MockService)(nil).SearchUsers), arg0, arg1)
 }
 
 // SetAwsEndpointConnectionState mocks base method.

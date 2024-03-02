@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -30,15 +31,15 @@ import (
 
 const roleGrantPaginationLimit = 100
 
-type roleResource struct {
+type userRoleGrantsResource struct {
 	provider *provider
 }
 
-func (r *roleResource) Schema(
+func (r *userRoleGrantsResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Role grants for a single user.",
+		MarkdownDescription: "Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [user_role_grant](user_role_grant) resource for non-authoritative role grants.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -67,7 +68,7 @@ func (r *roleResource) Schema(
 						},
 						"resource_id": schema.StringAttribute{
 							Optional:    true,
-							Description: "ID of the resource. Omit if resource_type is 'ORGANIZATION'.",
+							Description: "ID of the resource. Required if the resource_type is 'FOLDER' or 'CLUSTER'. It should be omitted otherwise.",
 						},
 					},
 				},
@@ -76,13 +77,13 @@ func (r *roleResource) Schema(
 	}
 }
 
-func (r *roleResource) Metadata(
+func (r *userRoleGrantsResource) Metadata(
 	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_user_role_grants"
 }
 
-func (r *roleResource) Configure(
+func (r *userRoleGrantsResource) Configure(
 	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
 ) {
 	if req.ProviderData == nil {
@@ -95,7 +96,7 @@ func (r *roleResource) Configure(
 	}
 }
 
-func (r *roleResource) Create(
+func (r *userRoleGrantsResource) Create(
 	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
 ) {
 	if r.provider == nil || !r.provider.configured {
@@ -103,7 +104,7 @@ func (r *roleResource) Create(
 		return
 	}
 
-	var roleGrantSpec RoleGrant
+	var roleGrantSpec UserRoleGrants
 	diags := req.Plan.Get(ctx, &roleGrantSpec)
 	resp.Diagnostics.Append(diags...)
 
@@ -149,7 +150,7 @@ func (r *roleResource) Create(
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *roleResource) Read(
+func (r *userRoleGrantsResource) Read(
 	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
 ) {
 	if r.provider == nil || !r.provider.configured {
@@ -157,7 +158,7 @@ func (r *roleResource) Read(
 		return
 	}
 
-	var state RoleGrant
+	var state UserRoleGrants
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -210,11 +211,11 @@ func (r *roleResource) Read(
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *roleResource) Update(
+func (r *userRoleGrantsResource) Update(
 	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
 ) {
 	// Get plan values
-	var plan RoleGrant
+	var plan UserRoleGrants
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -222,7 +223,7 @@ func (r *roleResource) Update(
 	}
 
 	// Get current state
-	var state RoleGrant
+	var state UserRoleGrants
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -258,10 +259,10 @@ func (r *roleResource) Update(
 	resp.Diagnostics.Append(diags...)
 }
 
-func (r *roleResource) Delete(
+func (r *userRoleGrantsResource) Delete(
 	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
 ) {
-	var state RoleGrant
+	var state UserRoleGrants
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -282,14 +283,14 @@ func (r *roleResource) Delete(
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *roleResource) ImportState(
+func (r *userRoleGrantsResource) ImportState(
 	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
 ) {
 	resource.ImportStatePassthroughID(ctx, path.Root("user_id"), req, resp)
 }
 
-func NewRoleResource() resource.Resource {
-	return &roleResource{}
+func NewUserRoleGrantsResource() resource.Resource {
+	return &userRoleGrantsResource{}
 }
 
 func fromRoleToBuiltInRole(role Role) (*client.BuiltInRole, error) {
@@ -314,7 +315,7 @@ func fromRoleToBuiltInRole(role Role) (*client.BuiltInRole, error) {
 }
 
 func loadRolesToTerraformState(
-	userId string, roles *client.GetAllRolesForUserResponse, state *RoleGrant,
+	userId string, roles *client.GetAllRolesForUserResponse, state *UserRoleGrants,
 ) {
 	roleGrants := &client.UserRoleGrants{
 		Roles:  roles.GetRoles(),
@@ -323,7 +324,9 @@ func loadRolesToTerraformState(
 	loadListRolesToTerraformState(userId, roleGrants, state)
 }
 
-func loadListRolesToTerraformState(userId string, roles *client.UserRoleGrants, state *RoleGrant) {
+func loadListRolesToTerraformState(
+	userId string, roles *client.UserRoleGrants, state *UserRoleGrants,
+) {
 	state.UserId = types.StringValue(userId)
 	var tfRoles []Role
 	for _, role := range roles.GetRoles() {

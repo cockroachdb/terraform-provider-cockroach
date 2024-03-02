@@ -3,12 +3,12 @@
 page_title: "cockroach_private_endpoint_services Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  PrivateEndpointServices contains services that allow for for private connectivity to the CockroachDB Cloud cluster.
+  PrivateEndpointServices contains services that allow for private connectivity to the CockroachDB Cloud cluster.
 ---
 
 # cockroach_private_endpoint_services (Resource)
 
-PrivateEndpointServices contains services that allow for for private connectivity to the CockroachDB Cloud cluster.
+PrivateEndpointServices contains services that allow for private connectivity to the CockroachDB Cloud cluster.
 
 ## Example Usage
 
@@ -39,7 +39,7 @@ resource "cockroach_private_endpoint_services" "cockroach" {
 
 Read-Only:
 
-- `availability_zone_ids` (List of String) AZ IDs users should create their VPCs in to minimize their cost.
+- `availability_zone_ids` (List of String) Availability Zone IDs of the private endpoint service. It is recommended, for cost optimization purposes, to create the private endpoint spanning these same availability zones. For more information, see data transfer cost information for your cloud provider.
 - `aws` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--services--aws))
 - `cloud_provider` (String) Cloud provider associated with this service.
 - `endpoint_service_id` (String) Server side ID of the private endpoint connection.

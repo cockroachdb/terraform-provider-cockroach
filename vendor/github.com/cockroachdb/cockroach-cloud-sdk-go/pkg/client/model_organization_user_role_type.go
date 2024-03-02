@@ -22,13 +22,11 @@ import (
 	"fmt"
 )
 
-// OrganizationUserRoleType  - DEVELOPER: To be deprecated  - ADMIN: To be deprecated  - FOLDER_ADMIN: Limited Access: A folder admin role.  - FOLDER_MOVER: Limited Access: A folder mover role.
+// OrganizationUserRoleType  - FOLDER_ADMIN: Limited Access: A folder admin role.  - FOLDER_MOVER: Limited Access: A folder mover role.
 type OrganizationUserRoleType string
 
 // List of OrganizationUserRole.Type.
 const (
-	ORGANIZATIONUSERROLETYPE_DEVELOPER               OrganizationUserRoleType = "DEVELOPER"
-	ORGANIZATIONUSERROLETYPE_ADMIN                   OrganizationUserRoleType = "ADMIN"
 	ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR     OrganizationUserRoleType = "BILLING_COORDINATOR"
 	ORGANIZATIONUSERROLETYPE_ORG_ADMIN               OrganizationUserRoleType = "ORG_ADMIN"
 	ORGANIZATIONUSERROLETYPE_ORG_MEMBER              OrganizationUserRoleType = "ORG_MEMBER"
@@ -42,8 +40,6 @@ const (
 
 // All allowed values of OrganizationUserRoleType enum.
 var AllowedOrganizationUserRoleTypeEnumValues = []OrganizationUserRoleType{
-	"DEVELOPER",
-	"ADMIN",
 	"BILLING_COORDINATOR",
 	"ORG_ADMIN",
 	"ORG_MEMBER",

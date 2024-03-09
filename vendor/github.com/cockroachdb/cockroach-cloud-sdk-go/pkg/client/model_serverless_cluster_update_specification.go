@@ -20,7 +20,7 @@ package client
 
 // ServerlessClusterUpdateSpecification struct for ServerlessClusterUpdateSpecification.
 type ServerlessClusterUpdateSpecification struct {
-	// Preview: Specify which region should be made the primary region. This is only applicable to multi-region Serverless clusters. This field is required if the regions field contains more than one region.
+	// Specify which region should be made the primary region. This is only applicable to multi-region Serverless clusters. This field is required if the regions field contains more than one region.
 	PrimaryRegion *string `json:"primary_region,omitempty"`
 	// Region values should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. If this field is provided, the cluster's regions will be changed to match this list. Regions cannot currently be removed.
 	Regions *[]string `json:"regions,omitempty"`

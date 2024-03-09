@@ -117,7 +117,7 @@ func (r *privateEndpointTrustedOwnerResource) Create(
 		return
 	}
 
-	addReq := client.NewCockroachCloudAddPrivateEndpointTrustedOwnerRequest(
+	addReq := client.NewAddPrivateEndpointTrustedOwnerRequest(
 		plan.ExternalOwnerID.ValueString(),
 		client.PrivateEndpointTrustedOwnerTypeType(plan.Type.ValueString()),
 	)

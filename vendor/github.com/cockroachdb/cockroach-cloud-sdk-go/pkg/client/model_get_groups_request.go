@@ -22,6 +22,7 @@ package client
 type GetGroupsRequest struct {
 	Attributes         *string `json:"attributes,omitempty"`
 	ExcludedAttributes *string `json:"excludedAttributes,omitempty"`
+	Filter             *string `json:"filter,omitempty"`
 }
 
 // NewGetGroupsRequest instantiates a new GetGroupsRequest object.
@@ -59,4 +60,18 @@ func (o *GetGroupsRequest) GetExcludedAttributes() string {
 // SetExcludedAttributes gets a reference to the given string and assigns it to the ExcludedAttributes field.
 func (o *GetGroupsRequest) SetExcludedAttributes(v string) {
 	o.ExcludedAttributes = &v
+}
+
+// GetFilter returns the Filter field value if set, zero value otherwise.
+func (o *GetGroupsRequest) GetFilter() string {
+	if o == nil || o.Filter == nil {
+		var ret string
+		return ret
+	}
+	return *o.Filter
+}
+
+// SetFilter gets a reference to the given string and assigns it to the Filter field.
+func (o *GetGroupsRequest) SetFilter(v string) {
+	o.Filter = &v
 }

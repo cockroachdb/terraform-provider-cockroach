@@ -316,7 +316,7 @@ func NewDatabaseResource() resource.Resource {
 }
 
 func loadDatabaseToTerraformState(
-	clusterID string, databaseObj *client.ApiDatabase, state *Database,
+	clusterID string, databaseObj *client.Database, state *Database,
 ) {
 	state.ClusterId = types.StringValue(clusterID)
 	state.Name = types.StringValue(databaseObj.GetName())

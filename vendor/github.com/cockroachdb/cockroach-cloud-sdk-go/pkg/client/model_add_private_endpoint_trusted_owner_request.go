@@ -18,34 +18,34 @@
 
 package client
 
-// CockroachCloudAddPrivateEndpointTrustedOwnerRequest struct for CockroachCloudAddPrivateEndpointTrustedOwnerRequest.
-type CockroachCloudAddPrivateEndpointTrustedOwnerRequest struct {
+// AddPrivateEndpointTrustedOwnerRequest struct for AddPrivateEndpointTrustedOwnerRequest.
+type AddPrivateEndpointTrustedOwnerRequest struct {
 	// external_owner_id is the identifier of the owner within the cloud provider for private endpoint connections. A wildcard character (\"*\") can be used to denote all owners.
 	ExternalOwnerId string                              `json:"external_owner_id"`
 	Type            PrivateEndpointTrustedOwnerTypeType `json:"type"`
 }
 
-// NewCockroachCloudAddPrivateEndpointTrustedOwnerRequest instantiates a new CockroachCloudAddPrivateEndpointTrustedOwnerRequest object.
+// NewAddPrivateEndpointTrustedOwnerRequest instantiates a new AddPrivateEndpointTrustedOwnerRequest object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCockroachCloudAddPrivateEndpointTrustedOwnerRequest(externalOwnerId string, type_ PrivateEndpointTrustedOwnerTypeType) *CockroachCloudAddPrivateEndpointTrustedOwnerRequest {
-	p := CockroachCloudAddPrivateEndpointTrustedOwnerRequest{}
+func NewAddPrivateEndpointTrustedOwnerRequest(externalOwnerId string, type_ PrivateEndpointTrustedOwnerTypeType) *AddPrivateEndpointTrustedOwnerRequest {
+	p := AddPrivateEndpointTrustedOwnerRequest{}
 	p.ExternalOwnerId = externalOwnerId
 	p.Type = type_
 	return &p
 }
 
-// NewCockroachCloudAddPrivateEndpointTrustedOwnerRequestWithDefaults instantiates a new CockroachCloudAddPrivateEndpointTrustedOwnerRequest object.
+// NewAddPrivateEndpointTrustedOwnerRequestWithDefaults instantiates a new AddPrivateEndpointTrustedOwnerRequest object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewCockroachCloudAddPrivateEndpointTrustedOwnerRequestWithDefaults() *CockroachCloudAddPrivateEndpointTrustedOwnerRequest {
-	p := CockroachCloudAddPrivateEndpointTrustedOwnerRequest{}
+func NewAddPrivateEndpointTrustedOwnerRequestWithDefaults() *AddPrivateEndpointTrustedOwnerRequest {
+	p := AddPrivateEndpointTrustedOwnerRequest{}
 	return &p
 }
 
 // GetExternalOwnerId returns the ExternalOwnerId field value.
-func (o *CockroachCloudAddPrivateEndpointTrustedOwnerRequest) GetExternalOwnerId() string {
+func (o *AddPrivateEndpointTrustedOwnerRequest) GetExternalOwnerId() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -55,12 +55,12 @@ func (o *CockroachCloudAddPrivateEndpointTrustedOwnerRequest) GetExternalOwnerId
 }
 
 // SetExternalOwnerId sets field value.
-func (o *CockroachCloudAddPrivateEndpointTrustedOwnerRequest) SetExternalOwnerId(v string) {
+func (o *AddPrivateEndpointTrustedOwnerRequest) SetExternalOwnerId(v string) {
 	o.ExternalOwnerId = v
 }
 
 // GetType returns the Type field value.
-func (o *CockroachCloudAddPrivateEndpointTrustedOwnerRequest) GetType() PrivateEndpointTrustedOwnerTypeType {
+func (o *AddPrivateEndpointTrustedOwnerRequest) GetType() PrivateEndpointTrustedOwnerTypeType {
 	if o == nil {
 		var ret PrivateEndpointTrustedOwnerTypeType
 		return ret
@@ -70,6 +70,6 @@ func (o *CockroachCloudAddPrivateEndpointTrustedOwnerRequest) GetType() PrivateE
 }
 
 // SetType sets field value.
-func (o *CockroachCloudAddPrivateEndpointTrustedOwnerRequest) SetType(v PrivateEndpointTrustedOwnerTypeType) {
+func (o *AddPrivateEndpointTrustedOwnerRequest) SetType(v PrivateEndpointTrustedOwnerTypeType) {
 	o.Type = v
 }

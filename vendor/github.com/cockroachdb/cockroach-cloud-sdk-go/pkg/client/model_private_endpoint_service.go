@@ -20,9 +20,15 @@ package client
 
 // PrivateEndpointService struct for PrivateEndpointService.
 type PrivateEndpointService struct {
-	Aws           AWSPrivateLinkServiceDetail `json:"aws"`
-	CloudProvider CloudProviderType           `json:"cloud_provider"`
-	// region_name is the cloud provider region name (i.e. us-east-1).
+	// availability_zone_ids are the unique identifiers for the availability zones in which this service is available. Note these identifiers are unique even across typical cloud provider boundaries, for example AWS accounts or organizations. In AWS, availability zone ids for us-east-1 are use1-az1, use1-az2, use1-az3.
+	AvailabilityZoneIds []string                     `json:"availability_zone_ids"`
+	Aws                 *AWSPrivateLinkServiceDetail `json:"aws,omitempty"`
+	CloudProvider       CloudProviderType            `json:"cloud_provider"`
+	// endpoint_service_id uniquely identifies this private endpoint service. This is the cloud provider generated id for the service.
+	EndpointServiceId string `json:"endpoint_service_id"`
+	// name is the name of the private endpoints service.
+	Name string `json:"name"`
+	// region_name is the cloud provider region name (e.g. us-east-1).
 	RegionName string                           `json:"region_name"`
 	Status     PrivateEndpointServiceStatusType `json:"status"`
 }
@@ -31,10 +37,12 @@ type PrivateEndpointService struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPrivateEndpointService(aws AWSPrivateLinkServiceDetail, cloudProvider CloudProviderType, regionName string, status PrivateEndpointServiceStatusType) *PrivateEndpointService {
+func NewPrivateEndpointService(availabilityZoneIds []string, cloudProvider CloudProviderType, endpointServiceId string, name string, regionName string, status PrivateEndpointServiceStatusType) *PrivateEndpointService {
 	p := PrivateEndpointService{}
-	p.Aws = aws
+	p.AvailabilityZoneIds = availabilityZoneIds
 	p.CloudProvider = cloudProvider
+	p.EndpointServiceId = endpointServiceId
+	p.Name = name
 	p.RegionName = regionName
 	p.Status = status
 	return &p
@@ -48,19 +56,33 @@ func NewPrivateEndpointServiceWithDefaults() *PrivateEndpointService {
 	return &p
 }
 
-// GetAws returns the Aws field value.
-func (o *PrivateEndpointService) GetAws() AWSPrivateLinkServiceDetail {
+// GetAvailabilityZoneIds returns the AvailabilityZoneIds field value.
+func (o *PrivateEndpointService) GetAvailabilityZoneIds() []string {
 	if o == nil {
-		var ret AWSPrivateLinkServiceDetail
+		var ret []string
 		return ret
 	}
 
-	return o.Aws
+	return o.AvailabilityZoneIds
 }
 
-// SetAws sets field value.
+// SetAvailabilityZoneIds sets field value.
+func (o *PrivateEndpointService) SetAvailabilityZoneIds(v []string) {
+	o.AvailabilityZoneIds = v
+}
+
+// GetAws returns the Aws field value if set, zero value otherwise.
+func (o *PrivateEndpointService) GetAws() AWSPrivateLinkServiceDetail {
+	if o == nil || o.Aws == nil {
+		var ret AWSPrivateLinkServiceDetail
+		return ret
+	}
+	return *o.Aws
+}
+
+// SetAws gets a reference to the given AWSPrivateLinkServiceDetail and assigns it to the Aws field.
 func (o *PrivateEndpointService) SetAws(v AWSPrivateLinkServiceDetail) {
-	o.Aws = v
+	o.Aws = &v
 }
 
 // GetCloudProvider returns the CloudProvider field value.
@@ -76,6 +98,36 @@ func (o *PrivateEndpointService) GetCloudProvider() CloudProviderType {
 // SetCloudProvider sets field value.
 func (o *PrivateEndpointService) SetCloudProvider(v CloudProviderType) {
 	o.CloudProvider = v
+}
+
+// GetEndpointServiceId returns the EndpointServiceId field value.
+func (o *PrivateEndpointService) GetEndpointServiceId() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.EndpointServiceId
+}
+
+// SetEndpointServiceId sets field value.
+func (o *PrivateEndpointService) SetEndpointServiceId(v string) {
+	o.EndpointServiceId = v
+}
+
+// GetName returns the Name field value.
+func (o *PrivateEndpointService) GetName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.Name
+}
+
+// SetName sets field value.
+func (o *PrivateEndpointService) SetName(v string) {
+	o.Name = v
 }
 
 // GetRegionName returns the RegionName field value.

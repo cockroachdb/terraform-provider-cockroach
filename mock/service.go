@@ -84,8 +84,24 @@ func (mr *MockServiceMockRecorder) AddEgressRule(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddEgressRule", reflect.TypeOf((*MockService)(nil).AddEgressRule), arg0, arg1, arg2)
 }
 
+// AddPrivateEndpointConnection mocks base method.
+func (m *MockService) AddPrivateEndpointConnection(arg0 context.Context, arg1 string, arg2 *client.AddPrivateEndpointConnectionRequest) (*client.PrivateEndpointConnection, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "AddPrivateEndpointConnection", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.PrivateEndpointConnection)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// AddPrivateEndpointConnection indicates an expected call of AddPrivateEndpointConnection.
+func (mr *MockServiceMockRecorder) AddPrivateEndpointConnection(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddPrivateEndpointConnection", reflect.TypeOf((*MockService)(nil).AddPrivateEndpointConnection), arg0, arg1, arg2)
+}
+
 // AddPrivateEndpointTrustedOwner mocks base method.
-func (m *MockService) AddPrivateEndpointTrustedOwner(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudAddPrivateEndpointTrustedOwnerRequest) (*client.AddPrivateEndpointTrustedOwnerResponse, *http.Response, error) {
+func (m *MockService) AddPrivateEndpointTrustedOwner(arg0 context.Context, arg1 string, arg2 *client.AddPrivateEndpointTrustedOwnerRequest) (*client.AddPrivateEndpointTrustedOwnerResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "AddPrivateEndpointTrustedOwner", arg0, arg1, arg2)
 	ret0, _ := ret[0].(*client.AddPrivateEndpointTrustedOwnerResponse)
@@ -149,10 +165,10 @@ func (mr *MockServiceMockRecorder) CreateCluster(arg0, arg1 interface{}) *gomock
 }
 
 // CreateDatabase mocks base method.
-func (m *MockService) CreateDatabase(arg0 context.Context, arg1 string, arg2 *client.CreateDatabaseRequest) (*client.ApiDatabase, *http.Response, error) {
+func (m *MockService) CreateDatabase(arg0 context.Context, arg1 string, arg2 *client.CreateDatabaseRequest) (*client.Database, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateDatabase", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ApiDatabase)
+	ret0, _ := ret[0].(*client.Database)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -325,10 +341,10 @@ func (mr *MockServiceMockRecorder) DeleteCluster(arg0, arg1 interface{}) *gomock
 }
 
 // DeleteDatabase mocks base method.
-func (m *MockService) DeleteDatabase(arg0 context.Context, arg1, arg2 string) (*client.ApiDatabase, *http.Response, error) {
+func (m *MockService) DeleteDatabase(arg0 context.Context, arg1, arg2 string) (*client.Database, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteDatabase", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ApiDatabase)
+	ret0, _ := ret[0].(*client.Database)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -434,6 +450,37 @@ func (mr *MockServiceMockRecorder) DeleteMaintenanceWindow(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMaintenanceWindow", reflect.TypeOf((*MockService)(nil).DeleteMaintenanceWindow), arg0, arg1)
 }
 
+// DeletePrivateEndpointConnection mocks base method.
+func (m *MockService) DeletePrivateEndpointConnection(arg0 context.Context, arg1, arg2 string) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePrivateEndpointConnection", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeletePrivateEndpointConnection indicates an expected call of DeletePrivateEndpointConnection.
+func (mr *MockServiceMockRecorder) DeletePrivateEndpointConnection(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePrivateEndpointConnection", reflect.TypeOf((*MockService)(nil).DeletePrivateEndpointConnection), arg0, arg1, arg2)
+}
+
+// DeletePrometheusMetricExport mocks base method.
+func (m *MockService) DeletePrometheusMetricExport(arg0 context.Context, arg1 string) (*client.DeleteMetricExportResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeletePrometheusMetricExport", arg0, arg1)
+	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeletePrometheusMetricExport indicates an expected call of DeletePrometheusMetricExport.
+func (mr *MockServiceMockRecorder) DeletePrometheusMetricExport(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeletePrometheusMetricExport", reflect.TypeOf((*MockService)(nil).DeletePrometheusMetricExport), arg0, arg1)
+}
+
 // DeleteSQLUser mocks base method.
 func (m *MockService) DeleteSQLUser(arg0 context.Context, arg1, arg2 string) (*client.SQLUser, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -466,10 +513,10 @@ func (mr *MockServiceMockRecorder) DeleteUser(arg0, arg1 interface{}) *gomock.Ca
 }
 
 // EditDatabase mocks base method.
-func (m *MockService) EditDatabase(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateDatabaseRequest1) (*client.ApiDatabase, *http.Response, error) {
+func (m *MockService) EditDatabase(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateDatabaseRequest1) (*client.Database, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EditDatabase", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*client.ApiDatabase)
+	ret0, _ := ret[0].(*client.Database)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -482,10 +529,10 @@ func (mr *MockServiceMockRecorder) EditDatabase(arg0, arg1, arg2, arg3 interface
 }
 
 // EditDatabase2 mocks base method.
-func (m *MockService) EditDatabase2(arg0 context.Context, arg1 string, arg2 *client.UpdateDatabaseRequest) (*client.ApiDatabase, *http.Response, error) {
+func (m *MockService) EditDatabase2(arg0 context.Context, arg1 string, arg2 *client.UpdateDatabaseRequest) (*client.Database, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "EditDatabase2", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ApiDatabase)
+	ret0, _ := ret[0].(*client.Database)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -575,6 +622,22 @@ func (m *MockService) EnableLogExport(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) EnableLogExport(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableLogExport", reflect.TypeOf((*MockService)(nil).EnableLogExport), arg0, arg1, arg2)
+}
+
+// EnablePrometheusMetricExport mocks base method.
+func (m *MockService) EnablePrometheusMetricExport(arg0 context.Context, arg1 string, arg2 *map[string]interface{}) (*client.PrometheusMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnablePrometheusMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.PrometheusMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnablePrometheusMetricExport indicates an expected call of EnablePrometheusMetricExport.
+func (mr *MockServiceMockRecorder) EnablePrometheusMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnablePrometheusMetricExport", reflect.TypeOf((*MockService)(nil).EnablePrometheusMetricExport), arg0, arg1, arg2)
 }
 
 // GetAllRolesForUser mocks base method.
@@ -913,6 +976,22 @@ func (mr *MockServiceMockRecorder) GetPrivateEndpointTrustedOwner(arg0, arg1, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrivateEndpointTrustedOwner", reflect.TypeOf((*MockService)(nil).GetPrivateEndpointTrustedOwner), arg0, arg1, arg2)
 }
 
+// GetPrometheusMetricExportInfo mocks base method.
+func (m *MockService) GetPrometheusMetricExportInfo(arg0 context.Context, arg1 string) (*client.PrometheusMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPrometheusMetricExportInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.PrometheusMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetPrometheusMetricExportInfo indicates an expected call of GetPrometheusMetricExportInfo.
+func (mr *MockServiceMockRecorder) GetPrometheusMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrometheusMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetPrometheusMetricExportInfo), arg0, arg1)
+}
+
 // GetResourceType mocks base method.
 func (m *MockService) GetResourceType(arg0 context.Context, arg1 string, arg2 *client.GetResourceTypeOptions) (*client.ScimResourceType, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1170,10 +1249,10 @@ func (mr *MockServiceMockRecorder) ListClusters(arg0, arg1 interface{}) *gomock.
 }
 
 // ListDatabases mocks base method.
-func (m *MockService) ListDatabases(arg0 context.Context, arg1 string, arg2 *client.ListDatabasesOptions) (*client.ApiListDatabasesResponse, *http.Response, error) {
+func (m *MockService) ListDatabases(arg0 context.Context, arg1 string, arg2 *client.ListDatabasesOptions) (*client.ListDatabasesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListDatabases", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ApiListDatabasesResponse)
+	ret0, _ := ret[0].(*client.ListDatabasesResponse)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -1247,6 +1326,22 @@ func (m *MockService) ListMajorClusterVersions(arg0 context.Context, arg1 *clien
 func (mr *MockServiceMockRecorder) ListMajorClusterVersions(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMajorClusterVersions", reflect.TypeOf((*MockService)(nil).ListMajorClusterVersions), arg0, arg1)
+}
+
+// ListPrivateEndpointConnections mocks base method.
+func (m *MockService) ListPrivateEndpointConnections(arg0 context.Context, arg1 string) (*client.PrivateEndpointConnections, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPrivateEndpointConnections", arg0, arg1)
+	ret0, _ := ret[0].(*client.PrivateEndpointConnections)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListPrivateEndpointConnections indicates an expected call of ListPrivateEndpointConnections.
+func (mr *MockServiceMockRecorder) ListPrivateEndpointConnections(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointConnections", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointConnections), arg0, arg1)
 }
 
 // ListPrivateEndpointServices mocks base method.

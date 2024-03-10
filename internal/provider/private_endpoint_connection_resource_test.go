@@ -38,17 +38,18 @@ func TestAccDedicatedPrivateEndpointConnectionResource(t *testing.T) {
 }
 
 func TestAccServerlessPrivateEndpointConnectionResource(t *testing.T) {
-	t.Skip("Skipping until we can either integrate the AWS provider " +
-		"or import a permanent test fixture.")
+	// This test relies on a pre-created private endpoint created via the AWS
+	// console. The endpoint id is vpce-0011573c1fa6afa3d and lives in the
+	// staging AWS serverless cluster account.
 	t.Parallel()
 	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
 	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isServerless */)
 }
 
 func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
-	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
+	clusterName := fmt.Sprintf("private-connection-%s", GenerateRandomString(5))
 	clusterID := uuid.Nil.String()
-	endpointID := "endpoint-id"
+	endpointID := "vpce-0011573c1fa6afa3d"
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -70,15 +71,15 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			},
 		},
 	}
-	connection := client.AwsEndpointConnection{
-		RegionName:    "us-east-1",
-		CloudProvider: "AWS",
-		Status:        client.AWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE,
-		EndpointId:    endpointID,
-		ServiceId:     "service-id",
+	connection := client.PrivateEndpointConnection{
+		RegionName:        &services.Services[0].RegionName,
+		CloudProvider:     "AWS",
+		Status:            client.PRIVATEENDPOINTCONNECTIONSTATUS_AVAILABLE,
+		EndpointId:        endpointID,
+		EndpointServiceId: "service-id",
 	}
-	connections := &client.AwsEndpointConnections{
-		Connections: []client.AwsEndpointConnection{connection},
+	connections := &client.PrivateEndpointConnections{
+		Connections: []client.PrivateEndpointConnection{connection},
 	}
 
 	zeroSpendLimit := int32(0)
@@ -151,27 +152,19 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
 				Return(services, nil, nil).
 				Times(2)
-			available := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE
-			s.EXPECT().SetAwsEndpointConnectionState(
+			s.EXPECT().AddPrivateEndpointConnection(
 				gomock.Any(),
 				clusterID,
-				endpointID,
-				&client.SetAwsEndpointConnectionStateRequest{
-					Status: available,
-				}).
+				&client.AddPrivateEndpointConnectionRequest{EndpointId: endpointID}).
 				Return(&connection, nil, nil)
-			s.EXPECT().ListAwsEndpointConnections(gomock.Any(), clusterID).
+			s.EXPECT().ListPrivateEndpointConnections(gomock.Any(), clusterID).
 				Return(connections, nil, nil).
 				Times(3)
-			rejected := client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED
-			s.EXPECT().SetAwsEndpointConnectionState(
+			s.EXPECT().DeletePrivateEndpointConnection(
 				gomock.Any(),
 				clusterID,
-				endpointID,
-				&client.SetAwsEndpointConnectionStateRequest{
-					Status: rejected,
-				}).
-				Return(&connection, nil, nil)
+				endpointID).
+				Return(nil, nil)
 			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
 			testPrivateEndpointConnectionResource(
@@ -202,11 +195,11 @@ func testPrivateEndpointConnectionResource(
 			{
 				Config: privateEndpointConnectionResourceConfigFn(clusterName),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr(resourceName, "endpoint_id", "endpoint-id"),
-					resource.TestCheckResourceAttr(resourceName, "service_id", "service-id"),
-					resource.TestCheckResourceAttr(resourceName, "cluster_id", uuid.Nil.String()),
+					resource.TestCheckResourceAttr(resourceName, "endpoint_id", "vpce-0011573c1fa6afa3d"),
 					resource.TestCheckResourceAttr(resourceName, "region_name", "us-east-1"),
 					resource.TestCheckResourceAttr(resourceName, "cloud_provider", "AWS"),
+					resource.TestCheckResourceAttrSet(resourceName, "service_id"),
+					resource.TestCheckResourceAttrSet(resourceName, "cluster_id"),
 				),
 			},
 			{
@@ -238,7 +231,7 @@ resource "cockroach_private_endpoint_services" "services" {
 
 resource "cockroach_private_endpoint_connection" "connection" {
     cluster_id = cockroach_cluster.dedicated.id
-    endpoint_id = "endpoint-id"
+    endpoint_id = "vpce-0011573c1fa6afa3d"
 }
 `, clusterName)
 }
@@ -261,7 +254,7 @@ resource "cockroach_private_endpoint_services" "services" {
 
 resource "cockroach_private_endpoint_connection" "connection" {
     cluster_id = cockroach_cluster.serverless.id
-    endpoint_id = "endpoint-id"
+    endpoint_id = "vpce-0011573c1fa6afa3d"
 }
 `, clusterName)
 }

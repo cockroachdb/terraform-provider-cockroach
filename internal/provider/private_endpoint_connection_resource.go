@@ -48,7 +48,7 @@ func (r *privateEndpointConnectionResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "AWS PrivateLink Endpoint Connection.",
+		MarkdownDescription: "Private Endpoint Connection.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,
@@ -76,14 +76,14 @@ func (r *privateEndpointConnectionResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
-				Description: "Client side ID of the PrivateLink connection.",
+				Description: "Client side ID of the Private Endpoint Connection.",
 			},
 			"service_id": schema.StringAttribute{
 				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Description: "Server side ID of the PrivateLink connection.",
+				Description: "Server side ID of the Private Endpoint Connection.",
 			},
 			"cluster_id": schema.StringAttribute{
 				Required: true,
@@ -129,7 +129,8 @@ func (r *privateEndpointConnectionResource) Create(
 		return
 	}
 
-	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ClusterID.ValueString())
+	svc := r.provider.service
+	cluster, _, err := svc.GetCluster(ctx, plan.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
@@ -138,30 +139,22 @@ func (r *privateEndpointConnectionResource) Create(
 		return
 	}
 
-	if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
-		resp.Diagnostics.AddError(
-			"Incompatible cluster cloud provider",
-			"Private endpoint services are only available for AWS clusters",
-		)
-		return
+	addRequest := client.AddPrivateEndpointConnectionRequest{
+		EndpointId: plan.EndpointID.ValueString(),
 	}
 
-	connectionStateRequest := client.SetAwsEndpointConnectionStateRequest{
-		Status: client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE,
-	}
-
-	_, _, err = r.provider.service.SetAwsEndpointConnectionState(ctx, plan.ClusterID.ValueString(), plan.EndpointID.ValueString(), &connectionStateRequest)
+	_, _, err = svc.AddPrivateEndpointConnection(ctx, cluster.Id, &addRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error establishing AWS Endpoint Connection",
-			fmt.Sprintf("Could not establish AWS Endpoint Connection: %s", formatAPIErrorMessage(err)),
+			"Error establishing Private Endpoint Connection",
+			fmt.Sprintf("Could not establish Private Endpoint Connection: %s", formatAPIErrorMessage(err)),
 		)
 		return
 	}
 
-	var connection client.AwsEndpointConnection
+	var connection client.PrivateEndpointConnection
 	err = sdk_resource.RetryContext(ctx, endpointConnectionCreateTimeout,
-		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.ValueString(), r.provider.service, &connection))
+		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.ValueString(), svc, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error accepting private endpoint connection",
@@ -192,7 +185,7 @@ func (r *privateEndpointConnectionResource) Read(
 		return
 	}
 
-	connections, _, err := r.provider.service.ListAwsEndpointConnections(ctx, state.ClusterID.ValueString())
+	connections, _, err := r.provider.service.ListPrivateEndpointConnections(ctx, state.ClusterID.ValueString())
 	if err != nil {
 		diags.AddError("Unable to get endpoint connection status",
 			fmt.Sprintf("Unexpected error retrieving endpoint status: %s", formatAPIErrorMessage(err)))
@@ -212,14 +205,14 @@ func (r *privateEndpointConnectionResource) Read(
 }
 
 func loadEndpointConnectionIntoTerraformState(
-	apiConnection *client.AwsEndpointConnection, state *PrivateEndpointConnection,
+	apiConnection *client.PrivateEndpointConnection, state *PrivateEndpointConnection,
 ) {
 	state.EndpointID = types.StringValue(apiConnection.GetEndpointId())
 	state.ID = types.StringValue(fmt.Sprintf(
 		privateEndpointConnectionIDFmt,
 		state.ClusterID.ValueString(),
 		apiConnection.GetEndpointId()))
-	state.ServiceID = types.StringValue(apiConnection.GetServiceId())
+	state.ServiceID = types.StringValue(apiConnection.GetEndpointServiceId())
 	state.CloudProvider = types.StringValue(string(apiConnection.GetCloudProvider()))
 	state.RegionName = types.StringValue(apiConnection.GetRegionName())
 }
@@ -240,13 +233,11 @@ func (r *privateEndpointConnectionResource) Delete(
 		return
 	}
 
-	_, httpResp, err := r.provider.service.SetAwsEndpointConnectionState(
+	httpResp, err := r.provider.service.DeletePrivateEndpointConnection(
 		ctx,
 		state.ClusterID.ValueString(),
 		state.EndpointID.ValueString(),
-		&client.SetAwsEndpointConnectionStateRequest{
-			Status: client.SETAWSENDPOINTCONNECTIONSTATUSTYPE_REJECTED,
-		})
+	)
 	if err != nil && httpResp != nil && httpResp.StatusCode != http.StatusNotFound {
 		diags.AddError("Couldn't delete connection",
 			fmt.Sprintf("Unexpected error occurred while setting connection status: %s", formatAPIErrorMessage(err)))
@@ -284,10 +275,10 @@ func waitForEndpointConnectionCreatedFunc(
 	ctx context.Context,
 	clusterID, endpointID string,
 	cl client.Service,
-	connection *client.AwsEndpointConnection,
+	connection *client.PrivateEndpointConnection,
 ) sdk_resource.RetryFunc {
 	return func() *sdk_resource.RetryError {
-		connections, httpResp, err := cl.ListAwsEndpointConnections(ctx, clusterID)
+		connections, httpResp, err := cl.ListPrivateEndpointConnections(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
 				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
@@ -299,10 +290,16 @@ func waitForEndpointConnectionCreatedFunc(
 		for _, *connection = range connections.GetConnections() {
 			if connection.GetEndpointId() == endpointID {
 				switch status := connection.GetStatus(); status {
-				case client.AWSENDPOINTCONNECTIONSTATUSTYPE_AVAILABLE:
+				case client.PRIVATEENDPOINTCONNECTIONSTATUS_AVAILABLE:
 					return nil
-				case client.AWSENDPOINTCONNECTIONSTATUSTYPE_PENDING,
-					client.AWSENDPOINTCONNECTIONSTATUSTYPE_PENDING_ACCEPTANCE:
+				case client.PRIVATEENDPOINTCONNECTIONSTATUS_PENDING,
+					client.PRIVATEENDPOINTCONNECTIONSTATUS_PENDING_ACCEPTANCE,
+					client.PRIVATEENDPOINTCONNECTIONSTATUS_REJECTED:
+					// Note: A REJECTED state means the user previously called
+					// DeletePrivateEndpointConnection() on an existing
+					// connection. A user can re-attach a rejected connection
+					// by calling AddPrivateEndpointConnection() with the same
+					// endpointId.
 					return sdk_resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
 				default:
 					return sdk_resource.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))

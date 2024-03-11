@@ -89,6 +89,16 @@ func (p *provider) Configure(
 	}
 	cfg.UserAgent = UserAgent
 
+	logLevel := os.Getenv("TF_LOG")
+	if logLevel == "DEBUG" || logLevel == "TRACE" {
+		cfg.Debug = true
+	} else {
+		logLevel = os.Getenv("TF_LOG_PROVIDER")
+		if logLevel == "DEBUG" || logLevel == "TRACE" {
+			cfg.Debug = true
+		}
+	}
+
 	// retryablehttp gives us automatic retries with exponential backoff.
 	httpClient := retryablehttp.NewClient()
 	// The TF framework will pick up the default global logger.

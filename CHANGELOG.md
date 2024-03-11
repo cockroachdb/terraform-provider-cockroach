@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renamed example files to the correct name so they are automatically included
   in the docs.
 
+## Added
+
+- Allow the logging of requests to the cloud SDK by setting either TF_LOG or
+  TF_LOG_PROVIDER envvars to either DEBUG or TRACE.
+
 ## [1.3.1] - 2023-12-01
 
 ### Fixed

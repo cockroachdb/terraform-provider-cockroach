@@ -27,8 +27,10 @@ github.com/armon/go-radix v1.0.0/go.mod h1:ufUuZ+zHj4x4TnLV4JWEpy2hxWSpsRywHrMgI
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5/go.mod h1:wHh0iHkYZB8zMSxRWpUBQtwG5a7fFgvEO+odwuTv2gs=
 github.com/bgentry/speakeasy v0.1.0 h1:ByYyxL9InA1OWqxJqqp2A5pYHUrCiAL6K3J+LKSsQkY=
 github.com/bgentry/speakeasy v0.1.0/go.mod h1:+zsyZBPWlz7T6j88CTgSN5bM796AkVf0kBD4zp0CCIs=
-github.com/cockroachdb/cockroach-cloud-sdk-go v1.8.0 h1:bz/hTomytW/XM8uFtYSF7nay/LW2u4vh0R06kGBm5Bk=
-github.com/cockroachdb/cockroach-cloud-sdk-go v1.8.0/go.mod h1:oG9ylbcVGOF7IbVAW2nx5F6ry9a2dZD1H9rd+qd4P60=
+github.com/cockroachdb/cockroach-cloud-sdk-go v1.8.1-0.20240311183703-edd33a42c00a h1:pL0CIVX1Ki3RJ5ynCSE22A9G58cG9utydtTtNe5Qiio=
+github.com/cockroachdb/cockroach-cloud-sdk-go v1.8.1-0.20240311183703-edd33a42c00a/go.mod h1:oG9ylbcVGOF7IbVAW2nx5F6ry9a2dZD1H9rd+qd4P60=
+github.com/cockroachdb/cockroach-cloud-sdk-go v1.8.1-0.20240311195951-2aad98df9e83 h1:YWaXZxhWIqaiiNrUkPMEEiva6I6rja34SIXyFC9XLdY=
+github.com/cockroachdb/cockroach-cloud-sdk-go v1.8.1-0.20240311195951-2aad98df9e83/go.mod h1:oG9ylbcVGOF7IbVAW2nx5F6ry9a2dZD1H9rd+qd4P60=
 github.com/creack/pty v1.1.9/go.mod h1:oKZEueFk5CKHvIhNR5MUki03XCEU+Q6VDXinZuGJ33E=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=

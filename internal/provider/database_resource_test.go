@@ -76,10 +76,10 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 			},
 		},
 	}
-	database := client.ApiDatabase{
+	database := client.Database{
 		Name: databaseName,
 	}
-	updatedDatabase := client.ApiDatabase{
+	updatedDatabase := client.Database{
 		Name: newDatabaseName,
 	}
 
@@ -95,7 +95,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		&client.CreateDatabaseRequest{Name: databaseName},
 	).Return(&database, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
-		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{database}}, nil, nil).
+		Return(&client.ListDatabasesResponse{Databases: []client.Database{database}}, nil, nil).
 		Times(2)
 
 	// Update
@@ -103,11 +103,11 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(2)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
-		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{database}}, nil, nil)
+		Return(&client.ListDatabasesResponse{Databases: []client.Database{database}}, nil, nil)
 	s.EXPECT().EditDatabase(gomock.Any(), clusterID, databaseName, &client.UpdateDatabaseRequest1{NewName: newDatabaseName}).
 		Return(&updatedDatabase, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
-		Return(&client.ApiListDatabasesResponse{Databases: []client.ApiDatabase{updatedDatabase}}, nil, nil).
+		Return(&client.ListDatabasesResponse{Databases: []client.Database{updatedDatabase}}, nil, nil).
 		Times(3)
 
 	// Delete

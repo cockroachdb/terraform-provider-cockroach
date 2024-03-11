@@ -135,10 +135,13 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			services := &client.PrivateEndpointServices{}
 			for _, region := range regions {
 				services.Services = append(services.Services, client.PrivateEndpointService{
-					RegionName:    region,
-					CloudProvider: "AWS",
-					Status:        client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
-					Aws: client.AWSPrivateLinkServiceDetail{
+					RegionName:          region,
+					CloudProvider:       "AWS",
+					Status:              client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
+					Name:                "finalService-name",
+					EndpointServiceId:   "finalService-id",
+					AvailabilityZoneIds: []string{},
+					Aws: &client.AWSPrivateLinkServiceDetail{
 						ServiceName:         "finalService-name",
 						ServiceId:           "finalService-id",
 						AvailabilityZoneIds: []string{},

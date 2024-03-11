@@ -18,34 +18,34 @@
 
 package client
 
-// ApiListDatabasesResponse struct for ApiListDatabasesResponse.
-type ApiListDatabasesResponse struct {
-	Databases  []ApiDatabase             `json:"databases"`
+// ListDatabasesResponse struct for ListDatabasesResponse.
+type ListDatabasesResponse struct {
+	Databases  []Database                `json:"databases"`
 	Pagination *KeysetPaginationResponse `json:"pagination,omitempty"`
 }
 
-// NewApiListDatabasesResponse instantiates a new ApiListDatabasesResponse object.
+// NewListDatabasesResponse instantiates a new ListDatabasesResponse object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewApiListDatabasesResponse(databases []ApiDatabase) *ApiListDatabasesResponse {
-	p := ApiListDatabasesResponse{}
+func NewListDatabasesResponse(databases []Database) *ListDatabasesResponse {
+	p := ListDatabasesResponse{}
 	p.Databases = databases
 	return &p
 }
 
-// NewApiListDatabasesResponseWithDefaults instantiates a new ApiListDatabasesResponse object.
+// NewListDatabasesResponseWithDefaults instantiates a new ListDatabasesResponse object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewApiListDatabasesResponseWithDefaults() *ApiListDatabasesResponse {
-	p := ApiListDatabasesResponse{}
+func NewListDatabasesResponseWithDefaults() *ListDatabasesResponse {
+	p := ListDatabasesResponse{}
 	return &p
 }
 
 // GetDatabases returns the Databases field value.
-func (o *ApiListDatabasesResponse) GetDatabases() []ApiDatabase {
+func (o *ListDatabasesResponse) GetDatabases() []Database {
 	if o == nil {
-		var ret []ApiDatabase
+		var ret []Database
 		return ret
 	}
 
@@ -53,12 +53,12 @@ func (o *ApiListDatabasesResponse) GetDatabases() []ApiDatabase {
 }
 
 // SetDatabases sets field value.
-func (o *ApiListDatabasesResponse) SetDatabases(v []ApiDatabase) {
+func (o *ListDatabasesResponse) SetDatabases(v []Database) {
 	o.Databases = v
 }
 
 // GetPagination returns the Pagination field value if set, zero value otherwise.
-func (o *ApiListDatabasesResponse) GetPagination() KeysetPaginationResponse {
+func (o *ListDatabasesResponse) GetPagination() KeysetPaginationResponse {
 	if o == nil || o.Pagination == nil {
 		var ret KeysetPaginationResponse
 		return ret
@@ -67,6 +67,6 @@ func (o *ApiListDatabasesResponse) GetPagination() KeysetPaginationResponse {
 }
 
 // SetPagination gets a reference to the given KeysetPaginationResponse and assigns it to the Pagination field.
-func (o *ApiListDatabasesResponse) SetPagination(v KeysetPaginationResponse) {
+func (o *ListDatabasesResponse) SetPagination(v KeysetPaginationResponse) {
 	o.Pagination = &v
 }

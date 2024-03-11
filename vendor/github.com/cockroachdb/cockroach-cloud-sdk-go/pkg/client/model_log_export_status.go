@@ -27,12 +27,13 @@ type LogExportStatus string
 
 // List of LogExportStatus.
 const (
-	LOGEXPORTSTATUS_DISABLED       LogExportStatus = "DISABLED"
-	LOGEXPORTSTATUS_DISABLING      LogExportStatus = "DISABLING"
-	LOGEXPORTSTATUS_DISABLE_FAILED LogExportStatus = "DISABLE_FAILED"
-	LOGEXPORTSTATUS_ENABLED        LogExportStatus = "ENABLED"
-	LOGEXPORTSTATUS_ENABLING       LogExportStatus = "ENABLING"
-	LOGEXPORTSTATUS_ENABLE_FAILED  LogExportStatus = "ENABLE_FAILED"
+	LOGEXPORTSTATUS_DISABLED          LogExportStatus = "DISABLED"
+	LOGEXPORTSTATUS_DISABLING         LogExportStatus = "DISABLING"
+	LOGEXPORTSTATUS_DISABLE_FAILED    LogExportStatus = "DISABLE_FAILED"
+	LOGEXPORTSTATUS_ENABLED           LogExportStatus = "ENABLED"
+	LOGEXPORTSTATUS_ENABLING          LogExportStatus = "ENABLING"
+	LOGEXPORTSTATUS_ENABLE_FAILED     LogExportStatus = "ENABLE_FAILED"
+	LOGEXPORTSTATUS_CREDENTIALS_ERROR LogExportStatus = "CREDENTIALS_ERROR"
 )
 
 // All allowed values of LogExportStatus enum.
@@ -43,6 +44,7 @@ var AllowedLogExportStatusEnumValues = []LogExportStatus{
 	"ENABLED",
 	"ENABLING",
 	"ENABLE_FAILED",
+	"CREDENTIALS_ERROR",
 }
 
 // NewLogExportStatusFromValue returns a pointer to a valid LogExportStatus

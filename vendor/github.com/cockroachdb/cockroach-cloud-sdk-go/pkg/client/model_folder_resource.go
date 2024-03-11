@@ -24,7 +24,7 @@ type FolderResource struct {
 	Name string `json:"name"`
 	// organization_id is the id of the organization this resource belongs to.
 	OrganizationId string `json:"organization_id"`
-	// parent_id is the id of the resource's parent folder.  \"root\" represents a root level resource.
+	// parent_id is the id of the resource's parent folder. \"root\" represents a root level resource.
 	ParentId string `json:"parent_id"`
 	// path contains the ids and names of ancestors that make up the resource's lineage.
 	Path []PathSegment `json:"path"`

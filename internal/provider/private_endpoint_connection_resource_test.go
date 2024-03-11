@@ -56,10 +56,13 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 	services := &client.PrivateEndpointServices{
 		Services: []client.PrivateEndpointService{
 			{
-				RegionName:    "us-east-1",
-				CloudProvider: "AWS",
-				Status:        client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
-				Aws: client.AWSPrivateLinkServiceDetail{
+				RegionName:          "us-east-1",
+				CloudProvider:       "AWS",
+				Status:              client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
+				Name:                "service-name",
+				EndpointServiceId:   "service-id",
+				AvailabilityZoneIds: []string{},
+				Aws: &client.AWSPrivateLinkServiceDetail{
 					ServiceName:         "service-name",
 					ServiceId:           "service-id",
 					AvailabilityZoneIds: []string{},

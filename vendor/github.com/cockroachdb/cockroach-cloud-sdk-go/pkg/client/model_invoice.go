@@ -28,6 +28,8 @@ type Invoice struct {
 	Adjustments *[]InvoiceAdjustment `json:"adjustments,omitempty"`
 	// balances are the amounts of currency left at the time of the invoice.
 	Balances []CurrencyAmount `json:"balances"`
+	// FolderResources is a list of resources in the organization and their folder paths.
+	FolderResources *[]FolderResource `json:"folder_resources,omitempty"`
 	// invoice_id is the unique ID representing the invoice.
 	InvoiceId string `json:"invoice_id"`
 	// invoice_items are sorted by the cluster name.
@@ -90,6 +92,20 @@ func (o *Invoice) GetBalances() []CurrencyAmount {
 // SetBalances sets field value.
 func (o *Invoice) SetBalances(v []CurrencyAmount) {
 	o.Balances = v
+}
+
+// GetFolderResources returns the FolderResources field value if set, zero value otherwise.
+func (o *Invoice) GetFolderResources() []FolderResource {
+	if o == nil || o.FolderResources == nil {
+		var ret []FolderResource
+		return ret
+	}
+	return *o.FolderResources
+}
+
+// SetFolderResources gets a reference to the given []FolderResource and assigns it to the FolderResources field.
+func (o *Invoice) SetFolderResources(v []FolderResource) {
+	o.FolderResources = &v
 }
 
 // GetInvoiceId returns the InvoiceId field value.

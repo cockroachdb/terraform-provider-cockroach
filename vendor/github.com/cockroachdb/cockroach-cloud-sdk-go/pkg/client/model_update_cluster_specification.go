@@ -18,7 +18,7 @@
 
 package client
 
-// UpdateClusterSpecification Set `upgrade_status` to 'UPGRADE_RUNNING' to start an upgrade. Multi-node clusters will undergo a rolling upgrade and will remain available, but single-node clusters will be briefly unavailable while the upgrade takes place. Upgrades will be finalized automatically after 72 hours, or can be manually finalized by setting the value to 'FINALIZED'. Before the cluster is finalized, it can be rolled back by setting the value to 'ROLLBACK_RUNNING'. Version upgrade operations cannot be performed simultaneously with other update operations..
+// UpdateClusterSpecification struct for UpdateClusterSpecification.
 type UpdateClusterSpecification struct {
 	Dedicated *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
 	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" represents the root level.

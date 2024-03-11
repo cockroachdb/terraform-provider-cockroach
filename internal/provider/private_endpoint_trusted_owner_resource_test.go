@@ -88,7 +88,7 @@ func TestIntegrationPrivateEndpointTrustedOwnerResource(t *testing.T) {
 	s.EXPECT().AddPrivateEndpointTrustedOwner(
 		gomock.Any(),
 		cluster.Id,
-		&client.CockroachCloudAddPrivateEndpointTrustedOwnerRequest{
+		&client.AddPrivateEndpointTrustedOwnerRequest{
 			Type:            client.PRIVATEENDPOINTTRUSTEDOWNERTYPETYPE_AWS_ACCOUNT_ID,
 			ExternalOwnerId: trustedOwner.ExternalOwnerId,
 		},

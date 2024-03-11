@@ -18,32 +18,32 @@
 
 package client
 
-// ApiDatabase struct for ApiDatabase.
-type ApiDatabase struct {
+// Database struct for Database.
+type Database struct {
 	Name       string `json:"name"`
 	TableCount *int64 `json:"table_count,omitempty,string"`
 }
 
-// NewApiDatabase instantiates a new ApiDatabase object.
+// NewDatabase instantiates a new Database object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewApiDatabase(name string) *ApiDatabase {
-	p := ApiDatabase{}
+func NewDatabase(name string) *Database {
+	p := Database{}
 	p.Name = name
 	return &p
 }
 
-// NewApiDatabaseWithDefaults instantiates a new ApiDatabase object.
+// NewDatabaseWithDefaults instantiates a new Database object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewApiDatabaseWithDefaults() *ApiDatabase {
-	p := ApiDatabase{}
+func NewDatabaseWithDefaults() *Database {
+	p := Database{}
 	return &p
 }
 
 // GetName returns the Name field value.
-func (o *ApiDatabase) GetName() string {
+func (o *Database) GetName() string {
 	if o == nil {
 		var ret string
 		return ret
@@ -53,12 +53,12 @@ func (o *ApiDatabase) GetName() string {
 }
 
 // SetName sets field value.
-func (o *ApiDatabase) SetName(v string) {
+func (o *Database) SetName(v string) {
 	o.Name = v
 }
 
 // GetTableCount returns the TableCount field value if set, zero value otherwise.
-func (o *ApiDatabase) GetTableCount() int64 {
+func (o *Database) GetTableCount() int64 {
 	if o == nil || o.TableCount == nil {
 		var ret int64
 		return ret
@@ -67,6 +67,6 @@ func (o *ApiDatabase) GetTableCount() int64 {
 }
 
 // SetTableCount gets a reference to the given int64 and assigns it to the TableCount field.
-func (o *ApiDatabase) SetTableCount(v int64) {
+func (o *Database) SetTableCount(v int64) {
 	o.TableCount = &v
 }

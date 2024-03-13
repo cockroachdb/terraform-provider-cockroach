@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 // Package resourcevalidator provides validators to express relationships
 // between multiple attributes of a resource. For example, checking that
 // multiple attributes are not configured at the same time.

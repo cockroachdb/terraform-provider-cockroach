@@ -29,7 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var logExportAttributes = map[string]schema.Attribute{
@@ -217,7 +217,7 @@ func (r *logExportConfigResource) Create(
 	}
 
 	apiLogExportObj := &client.LogExportClusterInfo{}
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
+	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
 		ctx, clusterUpdateTimeout, r.provider.service,
 		clusterID, cluster, logExportRequest, apiLogExportObj,
 	))
@@ -228,7 +228,7 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForLogExportReadyFunc(ctx, clusterID, r.provider.service, apiLogExportObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -252,22 +252,22 @@ func retryEnableLogExport(
 	cluster *client.Cluster,
 	logExportRequest *client.EnableLogExportRequest,
 	apiLogExportObj *client.LogExportClusterInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiResp, httpResp, err := cl.EnableLogExport(ctx, clusterID, logExportRequest)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
 				// Wait for cluster to be ready.
-				clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
-					return sdk_resource.NonRetryableError(
+					return retry.NonRetryableError(
 						fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
 				}
-				return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+				return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
 			}
 
-			return sdk_resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("could not enable log export: %v", formatAPIErrorMessage(err)),
 			)
 		}
@@ -440,7 +440,7 @@ func (r *logExportConfigResource) Update(
 	clusterID := plan.ID.ValueString()
 	cluster := &client.Cluster{}
 	apiLogExportObj := &client.LogExportClusterInfo{}
-	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
+	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
 		ctx, clusterUpdateTimeout, r.provider.service,
 		clusterID, cluster, logExportRequest, apiLogExportObj,
 	))
@@ -451,7 +451,7 @@ func (r *logExportConfigResource) Update(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForLogExportReadyFunc(ctx, clusterID, r.provider.service, apiLogExportObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -546,8 +546,8 @@ func (r *logExportConfigResource) Delete(
 
 	clusterID := state.ID.ValueString()
 	cluster := &client.Cluster{}
-	retry := func() sdk_resource.RetryFunc {
-		return func() *sdk_resource.RetryError {
+	retryFunc := func() retry.RetryFunc {
+		return func() *retry.RetryError {
 			_, httpResp, err := r.provider.service.DeleteLogExport(ctx, clusterID)
 			if err != nil {
 				if httpResp != nil {
@@ -557,23 +557,23 @@ func (r *logExportConfigResource) Delete(
 					}
 					if httpResp.StatusCode == http.StatusServiceUnavailable {
 						// Wait for cluster to be ready.
-						clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
-							return sdk_resource.NonRetryableError(
+							return retry.NonRetryableError(
 								fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
 						}
-						return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+						return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
 					}
 				}
-				return sdk_resource.NonRetryableError(
+				return retry.NonRetryableError(
 					fmt.Errorf("could not delete log export config: %v", formatAPIErrorMessage(err)))
 			}
 			return nil
 		}
 	}
 
-	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retry())
+	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting log export config", err.Error(),
@@ -596,23 +596,23 @@ func waitForLogExportReadyFunc(
 	clusterID string,
 	cl client.Service,
 	logExportClusterInfo *client.LogExportClusterInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiLogExport, httpResp, err := cl.GetLogExportInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf("error getting log export info: %s", formatAPIErrorMessage(err)))
+				return retry.NonRetryableError(fmt.Errorf("error getting log export info: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading log export status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading log export status - trying again"))
 			}
 		}
 
 		*logExportClusterInfo = *apiLogExport
 		switch logExportClusterInfo.GetStatus() {
 		case client.LOGEXPORTSTATUS_DISABLE_FAILED, client.LOGEXPORTSTATUS_ENABLE_FAILED:
-			return sdk_resource.NonRetryableError(fmt.Errorf("log export update failed"))
+			return retry.NonRetryableError(fmt.Errorf("log export update failed"))
 		case client.LOGEXPORTSTATUS_ENABLING, client.LOGEXPORTSTATUS_DISABLING:
-			return sdk_resource.RetryableError(fmt.Errorf("log export is not ready yet"))
+			return retry.RetryableError(fmt.Errorf("log export is not ready yet"))
 		default:
 			return nil
 		}

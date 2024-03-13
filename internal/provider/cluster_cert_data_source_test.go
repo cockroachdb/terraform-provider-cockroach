@@ -27,7 +27,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
 
@@ -78,11 +78,15 @@ func TestIntegrationClusterCertDataSource(t *testing.T) {
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
-		Return(cluster, httpOkResponse, nil).Times(6)
+		Return(cluster, httpOkResponse, nil).Times(5)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterId)
 
 	testClusterCertDataSource(t, clusterName, true)
-	require.Equal(t, 4, numDownloads)
+
+	// The expected count here (3) is the number of times the framework calls
+	// Read on this resource. In that sense its somewhat meaningless. It was
+	// previously 4 with the sdkv2 framework.
+	require.Equal(t, 3, numDownloads)
 }
 
 func testClusterCertDataSource(t *testing.T, clusterName string, useMock bool) {

@@ -30,7 +30,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var metricExportDatadogConfigAttributes = map[string]schema.Attribute{
@@ -137,7 +137,7 @@ func (r *metricExportDatadogConfigResource) Create(
 	}
 
 	apiObj := &client.DatadogMetricExportInfo{}
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
+	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service, clusterID, cluster,
 		client.NewEnableDatadogMetricExportRequest(plan.ApiKey.ValueString(), *site),
 		apiObj,
@@ -149,7 +149,7 @@ func (r *metricExportDatadogConfigResource) Create(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForDatdogMetricExportReadyFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -175,24 +175,24 @@ func retryEnableDatadogMetricExport(
 	cluster *client.Cluster,
 	apiRequest *client.EnableDatadogMetricExportRequest,
 	apiObj *client.DatadogMetricExportInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiResp, httpResp, err := cl.EnableDatadogMetricExport(ctx, clusterID, apiRequest)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
-				clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
-					return sdk_resource.NonRetryableError(
+					return retry.NonRetryableError(
 						fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
 				}
-				return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+				return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
 			}
 
-			return sdk_resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("could not enable Datadog metric export: %v", apiErrMsg),
 			)
 		}
@@ -215,15 +215,15 @@ func waitForDatdogMetricExportReadyFunc(
 	clusterID string,
 	cl client.Service,
 	datadogMetricExportInfo *client.DatadogMetricExportInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiObj, httpResp, err := cl.GetDatadogMetricExportInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf(
+				return retry.NonRetryableError(fmt.Errorf(
 					"error getting Datadog metric export info: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf(
+				return retry.RetryableError(fmt.Errorf(
 					"encountered a server error while reading Datadog metric export status - trying again"))
 			}
 		}
@@ -235,9 +235,9 @@ func waitForDatdogMetricExportReadyFunc(
 			if datadogMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, datadogMetricExportInfo.GetUserMessage())
 			}
-			return sdk_resource.NonRetryableError(fmt.Errorf(errMsg))
+			return retry.NonRetryableError(fmt.Errorf(errMsg))
 		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
-			return sdk_resource.RetryableError(fmt.Errorf("the Datadog metric export is not ready yet"))
+			return retry.RetryableError(fmt.Errorf("the Datadog metric export is not ready yet"))
 		default:
 			return nil
 		}
@@ -347,7 +347,7 @@ func (r *metricExportDatadogConfigResource) Update(
 	clusterID := plan.ID.ValueString()
 	cluster := &client.Cluster{}
 	apiObj := &client.DatadogMetricExportInfo{}
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
+	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service, clusterID, cluster,
 		client.NewEnableDatadogMetricExportRequest(plan.ApiKey.ValueString(), *site),
 		apiObj,
@@ -359,7 +359,7 @@ func (r *metricExportDatadogConfigResource) Update(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForDatdogMetricExportReadyFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -389,8 +389,8 @@ func (r *metricExportDatadogConfigResource) Delete(
 
 	clusterID := state.ID.ValueString()
 	cluster := &client.Cluster{}
-	retry := func() sdk_resource.RetryFunc {
-		return func() *sdk_resource.RetryError {
+	retryFunc := func() retry.RetryFunc {
+		return func() *retry.RetryError {
 			_, httpResp, err := r.provider.service.DeleteDatadogMetricExport(ctx, clusterID)
 			if err != nil {
 				apiErrMsg := formatAPIErrorMessage(err)
@@ -403,23 +403,23 @@ func (r *metricExportDatadogConfigResource) Delete(
 					if httpResp.StatusCode == http.StatusServiceUnavailable ||
 						strings.Contains(apiErrMsg, "lock") {
 						// Wait for cluster to be ready.
-						clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
-							return sdk_resource.NonRetryableError(
+							return retry.NonRetryableError(
 								fmt.Errorf("Error checking cluster availability: %s", clusterErr.Error()))
 						}
-						return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+						return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
 					}
 				}
-				return sdk_resource.NonRetryableError(
+				return retry.NonRetryableError(
 					fmt.Errorf("could not delete Datadog metric export config: %v", apiErrMsg))
 			}
 			return nil
 		}
 	}
 
-	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retry())
+	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting Datadog metric export config", err.Error(),

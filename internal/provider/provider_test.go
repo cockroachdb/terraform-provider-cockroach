@@ -19,10 +19,8 @@ package provider
 import (
 	cryptorand "crypto/rand"
 	"math/big"
-	"math/rand"
 	"os"
 	"testing"
-	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
@@ -60,7 +58,6 @@ func testAccPreCheck(t *testing.T) {
 
 func GenerateRandomString(n int) string {
 	letters := "abcdefghijklmnopqrstuvwxyz"
-	rand.Seed(time.Now().UnixNano())
 	letterRunes := []rune(letters)
 	b := make([]rune, n)
 	for i := range b {

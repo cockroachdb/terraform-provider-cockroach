@@ -39,7 +39,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 const (
@@ -414,7 +414,7 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterCreateTimeout,
+	err = retry.RetryContext(ctx, clusterCreateTimeout,
 		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -636,7 +636,7 @@ func (r *clusterResource) Update(
 			return
 		}
 
-		err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+		err = retry.RetryContext(ctx, clusterUpdateTimeout,
 			waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -750,7 +750,7 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -955,14 +955,14 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 
 func waitForClusterReadyFunc(
 	ctx context.Context, id string, cl client.Service, cluster *client.Cluster,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
+				return retry.NonRetryableError(fmt.Errorf("error getting cluster: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading cluster status - trying again"))
 			}
 		}
 		*cluster = *apiCluster
@@ -970,12 +970,12 @@ func waitForClusterReadyFunc(
 			return nil
 		}
 		if cluster.State == client.CLUSTERSTATETYPE_CREATION_FAILED {
-			return sdk_resource.NonRetryableError(fmt.Errorf("cluster creation failed"))
+			return retry.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
 		if cluster.State == client.CLUSTERSTATETYPE_DELETED {
-			return sdk_resource.NonRetryableError(fmt.Errorf("cluster was deleted"))
+			return retry.NonRetryableError(fmt.Errorf("cluster was deleted"))
 		}
-		return sdk_resource.RetryableError(fmt.Errorf("cluster is not ready yet"))
+		return retry.RetryableError(fmt.Errorf("cluster is not ready yet"))
 	}
 }
 
@@ -991,7 +991,7 @@ func waitForClusterLock(
 			diags.AddError("Couldn't retrieve cluster info", formatAPIErrorMessage(err))
 			return
 		}
-		err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+		err = retry.RetryContext(ctx, clusterUpdateTimeout,
 			waitForClusterReadyFunc(ctx, clusterObj.Id, s, clusterObj))
 		if err != nil {
 			diags.AddError("Cluster is not ready", err.Error())

@@ -32,7 +32,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 type privateEndpointServicesResource struct {
@@ -176,7 +176,7 @@ func (r *privateEndpointServicesResource) Create(
 		}
 	}
 	var services client.PrivateEndpointServices
-	err = sdk_resource.RetryContext(ctx, endpointServicesCreateTimeout,
+	err = retry.RetryContext(ctx, endpointServicesCreateTimeout,
 		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, r.provider.service, &services))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -229,7 +229,9 @@ func (r *privateEndpointServicesResource) Read(
 	resp.Diagnostics.Append(diags...)
 }
 
-func loadEndpointServicesIntoTerraformState(ctx context.Context, apiServices *client.PrivateEndpointServices, state *PrivateEndpointServices) diag.Diagnostics {
+func loadEndpointServicesIntoTerraformState(
+	ctx context.Context, apiServices *client.PrivateEndpointServices, state *PrivateEndpointServices,
+) diag.Diagnostics {
 	serviceList := apiServices.GetServices()
 	services := make([]PrivateEndpointService, len(serviceList))
 	for i, service := range serviceList {
@@ -290,14 +292,14 @@ func waitForEndpointServicesCreatedFunc(
 	clusterID string,
 	cl client.Service,
 	services *client.PrivateEndpointServices,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
+				return retry.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
 			}
 		}
 		*services = *apiServices
@@ -309,11 +311,11 @@ func waitForEndpointServicesCreatedFunc(
 			if service.GetStatus() == client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING {
 				creating = true
 			} else if service.GetStatus() != client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE {
-				return sdk_resource.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
+				return retry.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
 			}
 		}
 		if creating {
-			return sdk_resource.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
+			return retry.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
 		}
 		return nil
 	}

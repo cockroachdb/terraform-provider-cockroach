@@ -27,7 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 const (
@@ -115,7 +115,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// poll until update completes
-	err = sdk_resource.RetryContext(ctx, clientCACertEndpointTimeout,
+	err = retry.RetryContext(ctx, clientCACertEndpointTimeout,
 		waitForClientCACertReady(ctx, plan.ID.ValueString(), r.provider.service, certInfo))
 	if err != nil {
 		resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
@@ -194,7 +194,7 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 
 		// poll until update completes
-		err = sdk_resource.RetryContext(ctx, clientCACertEndpointTimeout,
+		err = retry.RetryContext(ctx, clientCACertEndpointTimeout,
 			waitForClientCACertReady(ctx, plan.ID.ValueString(), r.provider.service, certInfo))
 		if err != nil {
 			resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
@@ -227,7 +227,7 @@ func (r *clientCACertResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	// poll until update completes
-	err = sdk_resource.RetryContext(ctx, clientCACertEndpointTimeout,
+	err = retry.RetryContext(ctx, clientCACertEndpointTimeout,
 		waitForClientCACertReady(ctx, state.ID.ValueString(), r.provider.service, certInfo))
 	if err != nil {
 		resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
@@ -242,23 +242,25 @@ func (r *clientCACertResource) ImportState(ctx context.Context, req resource.Imp
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func waitForClientCACertReady(ctx context.Context, clusterId string, cl client.Service, certInfo *client.ClientCACertInfo) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+func waitForClientCACertReady(
+	ctx context.Context, clusterId string, cl client.Service, certInfo *client.ClientCACertInfo,
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		res, httpResp, err := cl.GetClientCACert(ctx, clusterId)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf("error getting client ca cert: %s", formatAPIErrorMessage(err)))
+				return retry.NonRetryableError(fmt.Errorf("error getting client ca cert: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading client ca cert status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading client ca cert status - trying again"))
 			}
 		}
 
 		*certInfo = *res
 		switch status := certInfo.GetStatus(); status {
 		case client.CLIENTCACERTSTATUS_PENDING:
-			return sdk_resource.RetryableError(fmt.Errorf("client ca cert update is still pending"))
+			return retry.RetryableError(fmt.Errorf("client ca cert update is still pending"))
 		case client.CLIENTCACERTSTATUS_FAILED:
-			return sdk_resource.NonRetryableError(fmt.Errorf("client ca cert update failed"))
+			return retry.NonRetryableError(fmt.Errorf("client ca cert update failed"))
 		default:
 			return nil
 		}

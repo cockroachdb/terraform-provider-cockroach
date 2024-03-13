@@ -24,7 +24,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 // TestAccOrganizationDataSource attempts to read organzation info for
@@ -53,7 +53,7 @@ func TestIntegrationOrganizationDataSource(t *testing.T) {
 			Label:     "org-label",
 			Name:      "org-name",
 		}, nil, nil).
-		Times(5)
+		Times(3)
 
 	testOrganizationDataSource(t, true)
 }

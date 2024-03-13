@@ -30,7 +30,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var metricExportCloudWathConfigAttributes = map[string]schema.Attribute{
@@ -149,7 +149,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 	}
 
 	apiObj := &client.CloudWatchMetricExportInfo{}
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
+	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service,
 		clusterID, cluster, apiRequest, apiObj,
 	))
@@ -160,7 +160,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForCloudWatchMetricExportReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -184,24 +184,24 @@ func retryEnableCloudWatchMetricExport(
 	cluster *client.Cluster,
 	apiRequest *client.EnableCloudWatchMetricExportRequest,
 	apiObj *client.CloudWatchMetricExportInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiResp, httpResp, err := cl.EnableCloudWatchMetricExport(ctx, clusterID, apiRequest)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
-				clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
-					return sdk_resource.NonRetryableError(
+					return retry.NonRetryableError(
 						fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
 				}
-				return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+				return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
 			}
 
-			return sdk_resource.NonRetryableError(
+			return retry.NonRetryableError(
 				fmt.Errorf("could not enable CloudWatch metric export: %v", apiErrMsg),
 			)
 		}
@@ -237,15 +237,15 @@ func waitForCloudWatchMetricExportReadyFunc(
 	clusterID string,
 	cl client.Service,
 	cloudWatchMetricExportInfo *client.CloudWatchMetricExportInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiObj, httpResp, err := cl.GetCloudWatchMetricExportInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf(
+				return retry.NonRetryableError(fmt.Errorf(
 					"error getting CloudWatch metric export info: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf(
+				return retry.RetryableError(fmt.Errorf(
 					"encountered a server error while reading CloudWatch metric export status - trying again"))
 			}
 		}
@@ -257,9 +257,9 @@ func waitForCloudWatchMetricExportReadyFunc(
 			if cloudWatchMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, cloudWatchMetricExportInfo.GetUserMessage())
 			}
-			return sdk_resource.NonRetryableError(fmt.Errorf(errMsg))
+			return retry.NonRetryableError(fmt.Errorf(errMsg))
 		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
-			return sdk_resource.RetryableError(fmt.Errorf("the CloudWatch metric export is not ready yet"))
+			return retry.RetryableError(fmt.Errorf("the CloudWatch metric export is not ready yet"))
 		default:
 			return nil
 		}
@@ -367,7 +367,7 @@ func (r *metricExportCloudWatchConfigResource) Update(
 	clusterID := plan.ID.ValueString()
 	cluster := &client.Cluster{}
 	apiObj := &client.CloudWatchMetricExportInfo{}
-	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
+	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service,
 		clusterID, cluster, apiRequest, apiObj,
 	))
@@ -378,7 +378,7 @@ func (r *metricExportCloudWatchConfigResource) Update(
 		return
 	}
 
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForCloudWatchMetricExportReadyFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -406,8 +406,8 @@ func (r *metricExportCloudWatchConfigResource) Delete(
 
 	clusterID := state.ID.ValueString()
 	cluster := &client.Cluster{}
-	retry := func() sdk_resource.RetryFunc {
-		return func() *sdk_resource.RetryError {
+	retryFunc := func() retry.RetryFunc {
+		return func() *retry.RetryError {
 			_, httpResp, err := r.provider.service.DeleteCloudWatchMetricExport(ctx, clusterID)
 			if err != nil {
 				apiErrMsg := formatAPIErrorMessage(err)
@@ -419,23 +419,23 @@ func (r *metricExportCloudWatchConfigResource) Delete(
 					if httpResp.StatusCode == http.StatusServiceUnavailable ||
 						strings.Contains(apiErrMsg, "lock") {
 						// Wait for cluster to be ready.
-						clusterErr := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
-							return sdk_resource.NonRetryableError(
+							return retry.NonRetryableError(
 								fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
 						}
-						return sdk_resource.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+						return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
 					}
 				}
-				return sdk_resource.NonRetryableError(
+				return retry.NonRetryableError(
 					fmt.Errorf("could not delete CloudWatch metric export config: %v", apiErrMsg))
 			}
 			return nil
 		}
 	}
 
-	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout, retry())
+	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting CloudWatch metric export config", err.Error(),

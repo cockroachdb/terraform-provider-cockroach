@@ -29,7 +29,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 const (
@@ -153,7 +153,7 @@ func (r *privateEndpointConnectionResource) Create(
 	}
 
 	var connection client.PrivateEndpointConnection
-	err = sdk_resource.RetryContext(ctx, endpointConnectionCreateTimeout,
+	err = retry.RetryContext(ctx, endpointConnectionCreateTimeout,
 		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.ValueString(), svc, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -276,14 +276,14 @@ func waitForEndpointConnectionCreatedFunc(
 	clusterID, endpointID string,
 	cl client.Service,
 	connection *client.PrivateEndpointConnection,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		connections, httpResp, err := cl.ListPrivateEndpointConnections(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
+				return retry.NonRetryableError(fmt.Errorf("error getting endpoint connections: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading connection status - trying again"))
 			}
 		}
 
@@ -300,13 +300,13 @@ func waitForEndpointConnectionCreatedFunc(
 					// connection. A user can re-attach a rejected connection
 					// by calling AddPrivateEndpointConnection() with the same
 					// endpointId.
-					return sdk_resource.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
+					return retry.RetryableError(fmt.Errorf("endpoint connection is not ready yet"))
 				default:
-					return sdk_resource.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))
+					return retry.NonRetryableError(fmt.Errorf("endpoint connection failed with state: %s", status))
 				}
 			}
 		}
-		return sdk_resource.NonRetryableError(fmt.Errorf("endpoint connection lost, presumed failed"))
+		return retry.NonRetryableError(fmt.Errorf("endpoint connection lost, presumed failed"))
 	}
 }
 

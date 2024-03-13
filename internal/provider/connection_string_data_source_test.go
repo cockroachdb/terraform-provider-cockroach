@@ -28,7 +28,7 @@ import (
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 // TestAccConnectionStringDataSource attempts to retrieve a cluster's
@@ -92,7 +92,7 @@ func TestIntegrationConnectionStringDataSource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
 		Return(cluster, httpOkResponse, nil).Times(2)
 	s.EXPECT().GetConnectionString(gomock.Any(), clusterId, connectStringOptions).
-		Return(connectionStringResponse, httpOkResponse, nil).Times(4)
+		Return(connectionStringResponse, httpOkResponse, nil).Times(3)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterId)
 
 	testConnectionStringDataSource(t, clusterName, true)

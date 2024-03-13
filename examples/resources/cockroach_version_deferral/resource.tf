@@ -10,5 +10,5 @@ variable "offset_duration" {
 
 resource "cockroach_version_deferral" "example" {
   id              = var.cluster_id
-  deferral_policy = var.deferral_policy
+  deferral_policy = var.offset_duration
 }

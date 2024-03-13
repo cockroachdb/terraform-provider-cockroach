@@ -31,7 +31,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	sdk_resource "github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
 var cmekAttributes = map[string]schema.Attribute{
@@ -176,7 +176,7 @@ func (r *cmekResource) Create(
 		)
 		return
 	}
-	err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForCMEKReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -307,7 +307,7 @@ func (r *cmekResource) Update(
 			return
 		}
 
-		err = sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+		err = retry.RetryContext(ctx, clusterUpdateTimeout,
 			waitForClusterReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cluster))
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -332,7 +332,7 @@ func (r *cmekResource) Update(
 	}
 
 	var clusterInfo client.CMEKClusterInfo
-	err := sdk_resource.RetryContext(ctx, clusterUpdateTimeout,
+	err := retry.RetryContext(ctx, clusterUpdateTimeout,
 		waitForCMEKReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, &clusterInfo))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -437,14 +437,14 @@ func cmekRegionToClientSpec(region CMEKRegion) client.CMEKRegionSpecification {
 
 func waitForCMEKReadyFunc(
 	ctx context.Context, clusterID string, cl client.Service, cmek *client.CMEKClusterInfo,
-) sdk_resource.RetryFunc {
-	return func() *sdk_resource.RetryError {
+) retry.RetryFunc {
+	return func() *retry.RetryError {
 		apiCMEK, httpResp, err := cl.GetCMEKClusterInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return sdk_resource.NonRetryableError(fmt.Errorf("error getting cmek: %s", formatAPIErrorMessage(err)))
+				return retry.NonRetryableError(fmt.Errorf("error getting cmek: %s", formatAPIErrorMessage(err)))
 			} else {
-				return sdk_resource.RetryableError(fmt.Errorf("encountered a server error while reading cmek status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading cmek status - trying again"))
 			}
 		}
 		*cmek = *apiCMEK
@@ -458,9 +458,9 @@ func waitForCMEKReadyFunc(
 				client.CMEKSTATUS_ENABLE_FAILED,
 				client.CMEKSTATUS_REVOKE_FAILED,
 				client.CMEKSTATUS_ROTATE_FAILED:
-				return sdk_resource.NonRetryableError(fmt.Errorf("cmek update failed"))
+				return retry.NonRetryableError(fmt.Errorf("cmek update failed"))
 			default:
-				return sdk_resource.RetryableError(fmt.Errorf("cmek is not ready yet"))
+				return retry.RetryableError(fmt.Errorf("cmek is not ready yet"))
 			}
 		}
 		return nil

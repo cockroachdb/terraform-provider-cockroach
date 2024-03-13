@@ -3,12 +3,12 @@
 page_title: "cockroach_private_endpoint_connection Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  AWS PrivateLink Endpoint Connection.
+  Private Endpoint Connection.
 ---
 
 # cockroach_private_endpoint_connection (Resource)
 
-AWS PrivateLink Endpoint Connection.
+Private Endpoint Connection.
 
 
 
@@ -18,13 +18,13 @@ AWS PrivateLink Endpoint Connection.
 ### Required
 
 - `cluster_id` (String)
-- `endpoint_id` (String) Client side ID of the PrivateLink connection.
+- `endpoint_id` (String) Client side ID of the Private Endpoint Connection.
 
 ### Read-Only
 
 - `cloud_provider` (String) Cloud provider associated with this connection.
 - `id` (String) Used with `terraform import`. Format is "<cluster ID>:<endpoint ID>".
 - `region_name` (String) Cloud provider region code associated with this connection.
-- `service_id` (String) Server side ID of the PrivateLink connection.
+- `service_id` (String) Server side ID of the Private Endpoint Connection.
 
 

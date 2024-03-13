@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Notes
+
+- The `private_endpoint_connection` resource can now be used to create private
+  endpoint connections on every supported cloud-provider and cluster type,
+  except Serverless clusters on Azure as that configuration is not yet
+  available.
+
 ### Fixed
 
 - Renamed example files to the correct name so they are automatically included

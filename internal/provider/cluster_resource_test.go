@@ -62,14 +62,15 @@ func TestAccServerlessClusterResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10_000_000_000, 102_400),
-			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024),
-			onDemandSingleRegionClusterNoLimits(clusterName, "BASIC"),
-			onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10_000_000_000, 102_400),
-			onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC"),
-			onDemandSingleRegionClusterNoLimits(clusterName, "BASIC"),
-			legacyServerlessClusterWithSpendLimit(clusterName, 10_00),
-			onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC"),
+			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400),
+			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024),
+			onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC"),
+			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC"),
+			onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC"),
+			legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC"),
+			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 3000),
 		},
 	})
 }
@@ -85,8 +86,8 @@ func TestAccMultiRegionServerlessClusterResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			provisionedMultiRegionClusterWithLimit(clusterName),
-			provisionedMultiRegionClusterUpdated(clusterName),
+			provisionedMultiRegionClusterWithLimitStep(clusterName),
+			provisionedMultiRegionClusterUpdatedStep(clusterName),
 		},
 	})
 }
@@ -152,6 +153,30 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		}
 	}
 
+	provisionedSingleRegionCluster := func(planType client.PlanType, provisionedCapacity int64) client.Cluster {
+		return client.Cluster{
+			Id:               uuid.Nil.String(),
+			Name:             clusterName,
+			CockroachVersion: latestClusterPatchVersion,
+			CloudProvider:    "GCP",
+			State:            "CREATED",
+			Plan:             "STANDARD",
+			Config: client.ClusterConfig{
+				Serverless: &client.ServerlessClusterConfig{
+					UsageLimits: &client.UsageLimits{
+						ProvisionedCapacity: int64Ptr(provisionedCapacity),
+					},
+					RoutingId: "routing-id",
+				},
+			},
+			Regions: []client.Region{
+				{
+					Name: "us-central1",
+				},
+			},
+		}
+	}
+
 	provisionedMultiRegionCluster := func(provisionedCapacity int64, primaryIndex int) client.Cluster {
 		cluster := client.Cluster{
 			Id:               uuid.Nil.String(),
@@ -195,11 +220,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted to unlimited resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC")
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC")
 			},
 			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
 			// When testing import, skip validating the usage limits, because the
@@ -211,66 +236,77 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted to no limit resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
 		},
 		{
 			name: "single-region serverless BASIC cluster converted from unlimited resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimited(clusterName, "BASIC")
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC")
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 		},
 		{
 			name: "single-region serverless BASIC cluster converted from no limit resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 		},
 		{
 			name: "single-region serverless BASIC cluster with updated resource limits",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 10_000_000_000, 102_400)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 10_000_000_000, 102_400),
 		},
 		{
+			name: "single-region serverless BASIC cluster upgraded to STANDARD",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC")
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 5000)
+			},
+			finalCluster: provisionedSingleRegionCluster("STANDARD", 5000),
+		},
+		{
 			name: "multi-region serverless STANDARD cluster with provisioned limit",
 			createStep: func() resource.TestStep {
-				return provisionedMultiRegionClusterWithLimit(clusterName)
+				return provisionedMultiRegionClusterWithLimitStep(clusterName)
 			},
 			initialCluster: provisionedMultiRegionCluster(3000, 1),
 			updateStep: func() resource.TestStep {
-				return provisionedMultiRegionClusterUpdated(clusterName)
+				return provisionedMultiRegionClusterUpdatedStep(clusterName)
 			},
 			finalCluster: provisionedMultiRegionCluster(4000, 0),
 		},
 		{
 			name: "legacy serverless cluster from spend limit to higher spend limit",
 			createStep: func() resource.TestStep {
-				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+				return legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
 			updateStep: func() resource.TestStep {
-				return legacyServerlessClusterWithSpendLimit(clusterName, 20_00)
+				return legacyServerlessClusterWithSpendLimitStep(clusterName, 20_00)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 80_000_000, 8192),
 			// When testing import, skip validating the configs, because the test
@@ -286,33 +322,33 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "update legacy Serverless cluster with spend limit to use resource limits",
 			createStep: func() resource.TestStep {
-				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+				return legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimits(clusterName, "BASIC", 80_000_000, 8192)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 80_000_000, 8192)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 80_000_000, 8192),
 		},
 		{
 			name: "clear spend limit in legacy Serverless cluster",
 			createStep: func() resource.TestStep {
-				return legacyServerlessClusterWithSpendLimit(clusterName, 10_00)
+				return legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
 		},
 		{
 			name: "attempt to update name",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				step := onDemandSingleRegionClusterNoLimits("new-name", "BASIC")
+				step := onDemandSingleRegionClusterNoLimitsStep("new-name", "BASIC")
 				step.ExpectError = regexp.MustCompile("Cannot update cluster name")
 				return step
 			},
@@ -320,11 +356,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "attempt to update cloud provider",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				step := onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				step := onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 				step.Config = strings.Replace(step.Config, "GCP", "AWS", -1)
 				step.ExpectError = regexp.MustCompile("Cannot update cluster cloud provider")
 				return step
@@ -333,7 +369,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "attempt to update plan type",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterNoLimits(clusterName, "BASIC")
+				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
@@ -471,7 +507,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	}
 }
 
-func onDemandSingleRegionClusterNoLimits(
+func onDemandSingleRegionClusterNoLimitsStep(
 	clusterName string,
 	planType client.PlanType,
 ) resource.TestStep {
@@ -505,7 +541,7 @@ func onDemandSingleRegionClusterNoLimits(
 	}
 }
 
-func onDemandSingleRegionClusterWithLimits(
+func onDemandSingleRegionClusterWithLimitsStep(
 	clusterName string,
 	planType client.PlanType,
 	requestUnitLimit int64,
@@ -546,7 +582,7 @@ func onDemandSingleRegionClusterWithLimits(
 	}
 }
 
-func onDemandSingleRegionClusterWithUnlimited(
+func onDemandSingleRegionClusterWithUnlimitedStep(
 	clusterName string,
 	planType client.PlanType,
 ) resource.TestStep {
@@ -582,7 +618,46 @@ func onDemandSingleRegionClusterWithUnlimited(
 	}
 }
 
-func provisionedMultiRegionClusterWithLimit(clusterName string) resource.TestStep {
+func provisionedSingleRegionClusterStep(
+	clusterName string,
+	planType client.PlanType,
+	provisionedCapacity int,
+) resource.TestStep {
+	provisionedCapacityStr := strconv.Itoa(provisionedCapacity)
+	return resource.TestStep{
+		// Serverless cluster with provisioned resources.
+		Config: fmt.Sprintf(`
+			resource "cockroach_cluster" "test" {
+				name           = "%s"
+				cloud_provider = "GCP"
+				plan = "%s"
+				serverless = {
+					usage_limits = {
+						provisioned_capacity = %d
+					}
+				}
+				regions = [{
+					name = "us-central1"
+				}]
+			}
+
+			data "cockroach_cluster" "test" {
+				id = cockroach_cluster.test.id
+			}
+			`, clusterName, planType, provisionedCapacity),
+		Check: resource.ComposeTestCheckFunc(
+			makeDefaultServerlessResourceChecks(clusterName, planType),
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", provisionedCapacityStr),
+			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
+			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", provisionedCapacityStr),
+			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
+			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
+		),
+	}
+}
+
+func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.TestStep {
 	return resource.TestStep{
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
@@ -638,9 +713,9 @@ func provisionedMultiRegionClusterWithLimit(clusterName string) resource.TestSte
 	}
 }
 
-// provisionedMultiRegionClusterUpdated updates some of the fields in
-// provisionedMultiRegionClusterWithLimit.
-func provisionedMultiRegionClusterUpdated(clusterName string) resource.TestStep {
+// provisionedMultiRegionClusterUpdatedStep updates some of the fields in
+// provisionedMultiRegionClusterWithLimitStep.
+func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestStep {
 	return resource.TestStep{
 		Config: fmt.Sprintf(`
 			resource "cockroach_cluster" "test" {
@@ -695,7 +770,7 @@ func provisionedMultiRegionClusterUpdated(clusterName string) resource.TestStep 
 	}
 }
 
-func legacyServerlessClusterWithSpendLimit(
+func legacyServerlessClusterWithSpendLimitStep(
 	clusterName string,
 	spendLimit int64,
 ) resource.TestStep {

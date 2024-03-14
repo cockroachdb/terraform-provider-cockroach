@@ -120,6 +120,7 @@ func (r *clusterResource) Schema(
 			},
 			"plan": schema.StringAttribute{
 				Computed: true,
+				Optional: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -752,7 +753,7 @@ func (r *clusterResource) Update(
 	}
 
 	// Parent Id
-	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
+	if IsKnown(plan.ParentId) {
 		parentID := plan.ParentId.ValueString()
 		if plan.ParentId.ValueString() == "" {
 			resp.Diagnostics.AddError("Invalid parent_id",
@@ -769,6 +770,11 @@ func (r *clusterResource) Update(
 			}
 		}
 		clusterReq.SetParentId(parentID)
+	}
+
+	// Plan
+	if IsKnown(plan.Plan) {
+		clusterReq.SetPlan(client.PlanType(plan.Plan.ValueString()))
 	}
 
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)

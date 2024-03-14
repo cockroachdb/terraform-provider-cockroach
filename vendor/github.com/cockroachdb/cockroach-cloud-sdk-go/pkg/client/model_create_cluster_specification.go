@@ -23,6 +23,7 @@ type CreateClusterSpecification struct {
 	Dedicated *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
 	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" will create a cluster at the root level.
 	ParentId   *string                               `json:"parent_id,omitempty"`
+	Plan       *PlanType                             `json:"plan,omitempty"`
 	Serverless *ServerlessClusterCreateSpecification `json:"serverless,omitempty"`
 }
 
@@ -61,6 +62,20 @@ func (o *CreateClusterSpecification) GetParentId() string {
 // SetParentId gets a reference to the given string and assigns it to the ParentId field.
 func (o *CreateClusterSpecification) SetParentId(v string) {
 	o.ParentId = &v
+}
+
+// GetPlan returns the Plan field value if set, zero value otherwise.
+func (o *CreateClusterSpecification) GetPlan() PlanType {
+	if o == nil || o.Plan == nil {
+		var ret PlanType
+		return ret
+	}
+	return *o.Plan
+}
+
+// SetPlan gets a reference to the given PlanType and assigns it to the Plan field.
+func (o *CreateClusterSpecification) SetPlan(v PlanType) {
+	o.Plan = &v
 }
 
 // GetServerless returns the Serverless field value if set, zero value otherwise.

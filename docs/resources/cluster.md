@@ -29,6 +29,7 @@ CockroachDB Cloud cluster.
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 
 ### Read-Only
@@ -37,7 +38,6 @@ CockroachDB Cloud cluster.
 - `creator_id` (String) ID of the user who created the cluster.
 - `id` (String) The ID of this resource.
 - `operation_status` (String) Describes the current long-running operation, if any.
-- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
 

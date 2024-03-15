@@ -7,12 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Migrated the testing framework to
-  https://github.com/hashicorp/terraform-plugin-testing.
-
-## [1.3.2] - 2024-03-13
+## [1.3.2] - 2024-03-15
 
 ### Changed
 
@@ -21,7 +16,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   except Serverless clusters on Azure as that configuration is not yet
   available.
 
+- Migrated the testing framework to
+  https://github.com/hashicorp/terraform-plugin-testing.
+
+- The `private_endpoint_services` resource can now be used to create private
+  endpoint services on every supported cloud provider.
+
+- Use CockroachDB v23.1 and v23.2 in tests.
+
 ### Fixed
+
+- The `private_endpoint_services` resource could be created without populating
+  the state file with the service information.
 
 - Renamed example files to the correct name so they are automatically included
   in the docs.

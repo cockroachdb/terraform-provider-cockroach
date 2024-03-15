@@ -7,7 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.2] - 2024-03-15
+
 ### Changed
+
+- The `private_endpoint_connection` resource can now be used to create private
+  endpoint connections on every supported cloud-provider and cluster type,
+  except Serverless clusters on Azure as that configuration is not yet
+  available.
 
 - Migrated the testing framework to
   https://github.com/hashicorp/terraform-plugin-testing.
@@ -21,17 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The `private_endpoint_services` resource could be created without populating
   the state file with the service information.
-
-## [1.3.2] - 2024-03-13
-
-### Changed
-
-- The `private_endpoint_connection` resource can now be used to create private
-  endpoint connections on every supported cloud-provider and cluster type,
-  except Serverless clusters on Azure as that configuration is not yet
-  available.
-
-### Fixed
 
 - Renamed example files to the correct name so they are automatically included
   in the docs.

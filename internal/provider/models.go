@@ -107,10 +107,13 @@ type PrivateLinkServiceAWSDetail struct {
 }
 
 type PrivateEndpointService struct {
-	RegionName    types.String                `tfsdk:"region_name"`
-	CloudProvider types.String                `tfsdk:"cloud_provider"`
-	Status        types.String                `tfsdk:"status"`
-	Aws           PrivateLinkServiceAWSDetail `tfsdk:"aws"`
+	RegionName          types.String                `tfsdk:"region_name"`
+	CloudProvider       types.String                `tfsdk:"cloud_provider"`
+	Status              types.String                `tfsdk:"status"`
+	Name                types.String                `tfsdk:"name"`
+	EndpointServiceId   types.String                `tfsdk:"endpoint_service_id"`
+	AvailabilityZoneIds []types.String              `tfsdk:"availability_zone_ids"`
+	Aws                 PrivateLinkServiceAWSDetail `tfsdk:"aws"`
 }
 
 type PrivateEndpointServices struct {

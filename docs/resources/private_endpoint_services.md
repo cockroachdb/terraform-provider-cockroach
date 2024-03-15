@@ -3,12 +3,12 @@
 page_title: "cockroach_private_endpoint_services Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP).
+  PrivateEndpointServices contains services that allow for for private connectivity to the CockroachDB Cloud cluster.
 ---
 
 # cockroach_private_endpoint_services (Resource)
 
-PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP).
+PrivateEndpointServices contains services that allow for for private connectivity to the CockroachDB Cloud cluster.
 
 ## Example Usage
 
@@ -39,8 +39,11 @@ resource "cockroach_private_endpoint_services" "cockroach" {
 
 Read-Only:
 
-- `aws` (Attributes) (see [below for nested schema](#nestedatt--services--aws))
+- `availability_zone_ids` (List of String) AZ IDs users should create their VPCs in to minimize their cost.
+- `aws` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--services--aws))
 - `cloud_provider` (String) Cloud provider associated with this service.
+- `endpoint_service_id` (String) Server side ID of the private endpoint connection.
+- `name` (String) Name of the endpoint service.
 - `region_name` (String) Cloud provider region code associated with this service.
 - `status` (String) Operation status of the service.
 

@@ -42,7 +42,7 @@ type privateEndpointServicesResource struct {
 const endpointServicesCreateTimeout = time.Hour
 
 var endpointServicesSchema = schema.Schema{
-	MarkdownDescription: "PrivateEndpointServices contains services that allow for VPC communication, either via PrivateLink (AWS) or Peering (GCP).",
+	MarkdownDescription: "PrivateEndpointServices contains services that allow for private connectivity to the CockroachDB Cloud cluster.",
 	Attributes: map[string]schema.Attribute{
 		"cluster_id": schema.StringAttribute{
 			Required: true,
@@ -76,8 +76,22 @@ var endpointServicesSchema = schema.Schema{
 						Computed:    true,
 						Description: "Operation status of the service.",
 					},
+					"name": schema.StringAttribute{
+						Computed:    true,
+						Description: "Name of the endpoint service.",
+					},
+					"endpoint_service_id": schema.StringAttribute{
+						Computed:    true,
+						Description: "Server side ID of the private endpoint connection.",
+					},
+					"availability_zone_ids": schema.ListAttribute{
+						Computed:            true,
+						ElementType:         types.StringType,
+						MarkdownDescription: "Availability Zone IDs of the private endpoint service. It is recommended, for cost optimization purposes, to create the private endpoint spanning these same availability zones. For more information, see data transfer cost information for your cloud provider.",
+					},
 					"aws": schema.SingleNestedAttribute{
-						Computed: true,
+						DeprecationMessage: "nested aws fields have been moved one level up. These fields will be removed in a future version",
+						Computed:           true,
 						PlanModifiers: []planmodifier.Object{
 							objectplanmodifier.UseStateForUnknown(),
 						},
@@ -148,14 +162,6 @@ func (r *privateEndpointServicesResource) Create(
 		resp.Diagnostics.AddError(
 			"Error getting cluster",
 			fmt.Sprintf("Could not retrieve cluster info: %s", formatAPIErrorMessage(err)),
-		)
-		return
-	}
-
-	if cluster.CloudProvider != client.CLOUDPROVIDERTYPE_AWS {
-		resp.Diagnostics.AddError(
-			"Incompatible cluster cloud provider",
-			"Private endpoint services are currently only available for AWS clusters",
 		)
 		return
 	}
@@ -236,19 +242,26 @@ func loadEndpointServicesIntoTerraformState(
 	services := make([]PrivateEndpointService, len(serviceList))
 	for i, service := range serviceList {
 		services[i] = PrivateEndpointService{
-			RegionName:    types.StringValue(service.GetRegionName()),
-			CloudProvider: types.StringValue(string(service.GetCloudProvider())),
-			Status:        types.StringValue(string(service.GetStatus())),
-			Aws: PrivateLinkServiceAWSDetail{
+			RegionName:        types.StringValue(service.GetRegionName()),
+			CloudProvider:     types.StringValue(string(service.GetCloudProvider())),
+			Status:            types.StringValue(string(service.GetStatus())),
+			Name:              types.StringValue(service.GetName()),
+			EndpointServiceId: types.StringValue(service.GetEndpointServiceId()),
+		}
+
+		if services[i].CloudProvider.String() == "AWS" {
+			services[i].Aws = PrivateLinkServiceAWSDetail{
 				ServiceName: types.StringValue(service.Aws.GetServiceName()),
 				ServiceId:   types.StringValue(service.Aws.GetServiceId()),
-			},
+			}
 		}
-		apiAZs := service.Aws.GetAvailabilityZoneIds()
+
+		apiAZs := service.GetAvailabilityZoneIds()
 		azs := make([]types.String, len(apiAZs))
 		for j, az := range apiAZs {
 			azs[j] = types.StringValue(az)
 		}
+		services[i].AvailabilityZoneIds = azs
 		services[i].Aws.AvailabilityZoneIds = azs
 	}
 	var diags diag.Diagnostics
@@ -299,9 +312,14 @@ func waitForEndpointServicesCreatedFunc(
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
 				return retry.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
 			} else {
-				return retry.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again"))
+				return retry.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again: %v", err))
 			}
 		}
+
+		if len(apiServices.Services) == 0 {
+			return retry.RetryableError(fmt.Errorf("private endpoint services not yet created"))
+		}
+
 		*services = *apiServices
 		var creating bool
 		// If there's at least one still creating, keep checking.

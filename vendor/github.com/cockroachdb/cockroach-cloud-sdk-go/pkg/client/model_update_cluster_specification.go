@@ -23,6 +23,7 @@ type UpdateClusterSpecification struct {
 	Dedicated *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
 	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
 	ParentId      *string                               `json:"parent_id,omitempty"`
+	Plan          *PlanType                             `json:"plan,omitempty"`
 	Serverless    *ServerlessClusterUpdateSpecification `json:"serverless,omitempty"`
 	UpgradeStatus *ClusterUpgradeStatusType             `json:"upgrade_status,omitempty"`
 }
@@ -62,6 +63,20 @@ func (o *UpdateClusterSpecification) GetParentId() string {
 // SetParentId gets a reference to the given string and assigns it to the ParentId field.
 func (o *UpdateClusterSpecification) SetParentId(v string) {
 	o.ParentId = &v
+}
+
+// GetPlan returns the Plan field value if set, zero value otherwise.
+func (o *UpdateClusterSpecification) GetPlan() PlanType {
+	if o == nil || o.Plan == nil {
+		var ret PlanType
+		return ret
+	}
+	return *o.Plan
+}
+
+// SetPlan gets a reference to the given PlanType and assigns it to the Plan field.
+func (o *UpdateClusterSpecification) SetPlan(v PlanType) {
+	o.Plan = &v
 }
 
 // GetServerless returns the Serverless field value if set, zero value otherwise.

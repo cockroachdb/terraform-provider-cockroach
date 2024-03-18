@@ -288,6 +288,13 @@ type Folder struct {
 	ParentId types.String `tfsdk:"parent_id"`
 }
 
+type FolderDataSourceModel struct {
+	ID       types.String `tfsdk:"id"`
+	Path     types.String `tfsdk:"path"`
+	Name     types.String `tfsdk:"name"`
+	ParentId types.String `tfsdk:"parent_id"`
+}
+
 type ApiOidcConfig struct {
 	ID          types.String        `tfsdk:"id"`
 	Issuer      types.String        `tfsdk:"issuer"`

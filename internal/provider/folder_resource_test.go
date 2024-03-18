@@ -66,47 +66,51 @@ func TestIntegrationFolderResource(t *testing.T) {
 		ParentId:   rootParentID,
 	}
 
+	httpOkResponse := &http.Response{Status: http.StatusText(http.StatusOK)}
+
 	// Create
 	s.EXPECT().CreateFolder(gomock.Any(),
 		&client.CreateFolderRequest{Name: parentFolderName, ParentId: &rootParentID}).
-		Return(&parentFolder, nil, nil)
+		Return(&parentFolder, httpOkResponse, nil)
 	s.EXPECT().CreateFolder(gomock.Any(),
 		&client.CreateFolderRequest{Name: folderName, ParentId: &parentFolderID}).
-		Return(&childFolder, nil, nil)
+		Return(&childFolder, httpOkResponse, nil)
 
 	// Read
 	s.EXPECT().GetFolder(gomock.Any(), parentFolderID).
-		Return(&parentFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&parentFolder, httpOkResponse, nil).
 		Times(2)
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
-		Return(&childFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&childFolder, httpOkResponse, nil).
 		Times(2)
 
 	// Update
 	s.EXPECT().GetFolder(gomock.Any(), parentFolderID).
-		Return(&parentFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&parentFolder, httpOkResponse, nil).
 		Times(1)
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
-		Return(&childFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&childFolder, httpOkResponse, nil).
 		Times(1)
 	s.EXPECT().UpdateFolder(gomock.Any(), childFolderID,
 		&client.UpdateFolderSpecification{Name: &newFolderName, ParentId: &rootParentID}).
 		Return(&updatedChildFolder, nil, nil)
 	s.EXPECT().GetFolder(gomock.Any(), parentFolderID).
-		Return(&parentFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&parentFolder, httpOkResponse, nil).
 		Times(2)
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
-		Return(&updatedChildFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&updatedChildFolder, httpOkResponse, nil).
 		Times(2)
 
 	// Import
 	s.EXPECT().GetFolder(gomock.Any(), childFolderID).
-		Return(&updatedChildFolder, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(&updatedChildFolder, httpOkResponse, nil).
 		Times(1)
 
 	// Delete
-	s.EXPECT().DeleteFolder(gomock.Any(), childFolderID)
-	s.EXPECT().DeleteFolder(gomock.Any(), parentFolderID)
+	s.EXPECT().DeleteFolder(gomock.Any(), childFolderID).
+		Return(httpOkResponse, nil)
+	s.EXPECT().DeleteFolder(gomock.Any(), parentFolderID).
+		Return(httpOkResponse, nil)
 
 	testFolderResource(t, parentFolderName, folderName, newFolderName, true)
 }

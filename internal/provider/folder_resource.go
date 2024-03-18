@@ -6,11 +6,13 @@ import (
 	"net/http"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -41,6 +43,9 @@ func (r *folderResource) Schema(
 			"parent_id": schema.StringAttribute{
 				MarkdownDescription: "ID of the parent folder. Use 'root' for the root level (no parent folder).",
 				Required:            true,
+				Validators: []validator.String{
+					validators.FolderParentID(),
+				},
 			},
 		},
 	}

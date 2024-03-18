@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -37,6 +38,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
@@ -241,6 +243,9 @@ func (r *clusterResource) Schema(
 				Computed:            true,
 				Optional:            true,
 				MarkdownDescription: "The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.",
+				Validators: []validator.String{
+					validators.FolderParentID(),
+				},
 			},
 		},
 	}
@@ -387,11 +392,6 @@ func (r *clusterResource) Create(
 
 	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
 		parentID := plan.ParentId.ValueString()
-		if parentID == "" {
-			resp.Diagnostics.AddError("Invalid parent_id",
-				"If set, the parent_id must be a folder ID or 'root' for a root level cluster.")
-			return
-		}
 		if parentID != "root" {
 			_, _, err := r.provider.service.GetFolder(ctx, parentID)
 			if err != nil {
@@ -724,11 +724,6 @@ func (r *clusterResource) Update(
 	// Parent Id
 	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
 		parentID := plan.ParentId.ValueString()
-		if plan.ParentId.ValueString() == "" {
-			resp.Diagnostics.AddError("Invalid parent_id",
-				"If set, the parent_id must be a folder ID or 'root' for a root level cluster.")
-			return
-		}
 		if parentID != "root" {
 			_, _, err := r.provider.service.GetFolder(ctx, parentID)
 			if err != nil {

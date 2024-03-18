@@ -10,6 +10,7 @@ import (
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/go-retryablehttp"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -81,6 +82,11 @@ func formatAPIErrorMessage(err error) string {
 const uuidRegexString = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 var uuidRegex = regexp.MustCompile(uuidRegexString)
+
+var uuidValidator = stringvalidator.RegexMatches(
+	uuidRegex,
+	"must match UUID format",
+)
 
 // retryGetRequests implements the retryable-http CheckRetry type.
 func retryGetRequestsOnly(ctx context.Context, resp *http.Response, err error) (bool, error) {

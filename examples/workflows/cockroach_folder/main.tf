@@ -8,13 +8,6 @@ variable "folder_child_name" {
   nullable = false
 }
 
-// Get a service account's user id by visiting its detail page. 
-// The user id is in the url like "/service-accounts/{service account user id}".
-variable "service_account_user_id" {
-  type     = string
-  nullable = false
-}
-
 variable "cluster_name" {
   type     = string
   nullable = false
@@ -49,40 +42,32 @@ provider "cockroach" {
   # export COCKROACH_API_KEY with the cockroach cloud API Key
 }
 
-resource "cockroach_folder" "example-folder-parent" {
+resource "cockroach_folder" "example_folder_parent" {
   name      = var.folder_parent_name
   parent_id = "root"
 }
 
-resource "cockroach_folder" "example-folder-child" {
+resource "cockroach_folder" "example_folder_child" {
   name      = var.folder_child_name
-  parent_id = cockroach_folder.example-folder-parent.id
+  parent_id = cockroach_folder.example_folder_parent.id
 }
 
-resource "cockroach_user_role_grants" "example-service-account" {
-  user_id = var.service_account_user_id
-  roles = [
-    {
-      role_name     = "ORG_MEMBER",
-      resource_type = "ORGANIZATION",
-      resource_id   = ""
-    },
-    {
-      role_name     = "FOLDER_MOVER",
-      resource_type = "ORGANIZATION",
-      resource_id   = ""
-    },
-    {
-      role_name     = "FOLDER_ADMIN",
-      resource_type = "FOLDER",
-      resource_id   = cockroach_folder.example-folder-parent.id
-    },
-    {
-      role_name     = "CLUSTER_CREATOR",
-      resource_type = "FOLDER",
-      resource_id   = cockroach_folder.example-folder-parent.id
-    },
-  ]
+resource "cockroach_user_role_grant" "folder_admin_grant" {
+  user_id = cockroach_cluster.example.creator_id
+  role = {
+    role_name     = "FOLDER_ADMIN",
+    resource_type = "FOLDER",
+    resource_id   = cockroach_folder.example_folder_parent.id
+  }
+}
+
+resource "cockroach_user_role_grant" "cluster_creator_grant" {
+  user_id = cockroach_cluster.example.creator_id
+  role = {
+    role_name     = "CLUSTER_CREATOR",
+    resource_type = "FOLDER",
+    resource_id   = cockroach_folder.example_folder_parent.id
+  }
 }
 
 resource "cockroach_cluster" "example" {
@@ -92,5 +77,13 @@ resource "cockroach_cluster" "example" {
     spend_limit = var.serverless_spend_limit
   }
   regions   = [for r in var.cloud_provider_regions : { name = r }]
-  parent_id = cockroach_folder.example-folder-parent.id
+  parent_id = cockroach_folder.example_folder_parent.id
+}
+
+data "cockroach_folder" "child_folder_by_path" {
+  path = format("/%s/%s", cockroach_folder.example_folder_parent.name, cockroach_folder.example_folder_child.name)
+}
+
+output "child_folder_computed_path" {
+  value = data.cockroach_folder.child_folder_by_path.path
 }

@@ -35,7 +35,7 @@ import (
 // skipped if TF_ACC isn't set.
 func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("tftest-endpt-svc-%s", GenerateRandomString(2))
 	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, false /* isServerless */)
 }
 
@@ -44,14 +44,14 @@ func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 // skipped if TF_ACC isn't set.
 func TestAccServerlessPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("tftest-endpt-svc-%s", GenerateRandomString(2))
 	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, true /* isServerless */)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
 // a cluster and endpoint services, but uses a mocked API service.
 func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
-	clusterName := fmt.Sprintf("endpoint-services-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("tftest-endpt-svc-%s", GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -68,18 +68,18 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				CloudProvider: "AWS",
+				CloudProvider: "GCP",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
 						StorageGib:     15,
-						MachineType:    "m5.large",
+						MachineType:    "not verified",
 						NumVirtualCpus: 2,
 					},
 				},
 				State: "CREATED",
 				Regions: []client.Region{
 					{
-						Name:      "us-east-1",
+						Name:      "us-east1",
 						NodeCount: 1,
 					},
 				},
@@ -128,24 +128,21 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				Times(3)
 			var regions []string
 			if isServerless {
+				// AWS
 				regions = []string{"us-east-1", "eu-central-1"}
 			} else {
-				regions = []string{"us-east-1"}
+				// GCP
+				regions = []string{"us-east1"}
 			}
 			services := &client.PrivateEndpointServices{}
 			for _, region := range regions {
 				services.Services = append(services.Services, client.PrivateEndpointService{
 					RegionName:          region,
-					CloudProvider:       "AWS",
+					CloudProvider:       c.finalCluster.CloudProvider,
 					Status:              client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
 					Name:                "finalService-name",
 					EndpointServiceId:   "finalService-id",
 					AvailabilityZoneIds: []string{},
-					Aws: &client.AWSPrivateLinkServiceDetail{
-						ServiceName:         "finalService-name",
-						ServiceId:           "finalService-id",
-						AvailabilityZoneIds: []string{},
-					},
 				})
 			}
 			if !isServerless {
@@ -221,13 +218,13 @@ func getTestPrivateEndpointServicesResourceConfigForDedicated(clusterName string
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
-    cloud_provider = "AWS"
+    cloud_provider = "GCP"
     dedicated = {
 	  storage_gib = 15
 	  num_virtual_cpus = 2
     }
 	regions = [{
-		name: "us-east-1"
+		name: "us-east1"
 		node_count: 1
 	}]
 }

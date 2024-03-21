@@ -27,7 +27,7 @@ terraform provider
 
 ~~~shell
 # no trailing slash!
-export COCKROACH_SERVER=https://qaserver.com
+export COCKROACH_SERVER=https://apiserver.com
 ~~~
 
 ## Regenerating Docs
@@ -54,6 +54,55 @@ In a nutshell, a Terraform provider tells Terraform how to manage external resou
 Terraform users specify their desired state of the world in one or more [config files](https://developer.hashicorp.com/terraform/language/syntax/configuration).
 Terraform then uses the appropriate providers to read the actual state of the world and attempts to use CRUD operations
 to make the state match the plan.
+
+## Editor Support
+
+VSCode has a
+[Terraform extension](https://marketplace.visualstudio.com/items?itemName=HashiCorp.terraform)
+written by Hashicorp which I recommend.
+
+Goland appears to also have an
+[extension](https://plugins.jetbrains.com/plugin/7808-terraform-and-hcl)
+although it has poor reviews.
+
+## Debugging (VSCode)
+
+Using a debugger to run the provider is fairly straightforward.  You can set up
+a launch configuration like so:
+
+    {
+        "name": "Debug Terraform Provider",
+        "type": "go",
+        "request": "launch",
+        "mode": "debug",
+        "program": "${workspaceFolder}",
+        "env": {
+            "COCKROACH_SERVER": "https://apiserver.com",
+            "TF_LOG_PROVIDER": "DEBUG",
+        },
+        "args": [
+            "-debug",
+        ]
+    }
+
+One caveat to be aware of while running the provider in a debugger is that the
+provider needs to have access to the required environment variables.  They are
+not transferred passed through the cli. Note the setting of the COCKROACH_SERVER
+var above.
+
+You can additionally set the apikey within the provider block of the hcl that's
+being executed.  For example:
+
+    provider "cockroach" {
+        apikey="myabikey123123123"
+    }
+
+After running starting the provider debug process, a TF_REATTACH_PROVIDERS env
+var execution line will be printed to the DEBUG CONSOLE tab. Run that command
+
+    export TF_REATTACH_PROVIDERS='{"registry.terraform.io/cockroachdb/cockroach":{"Protocol":"grpc","ProtocolVersion":6,"Pid":33120,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/vy/ydj1pzwj42bg32lxy4dd49lh0000gq/T/plugin3119263782"}}}'
+
+At this point you should be able to use the terraform CLI as normal.
 
 ### Asynchronous Operations
 
@@ -117,7 +166,7 @@ importing it as a resource.
 
 ## Questions?
 
-If you're a CRL employee, feel free to reach out to the App Platform team or hop into #_cc-terraform.
+If you're a CRL employee, feel free to reach out to the Console team or hop into #_cc-terraform.
 
 If you're an external contributor, first of all, thank you! The best way to contact us is with a GitHub issue. Any and
 all feedback is welcome.

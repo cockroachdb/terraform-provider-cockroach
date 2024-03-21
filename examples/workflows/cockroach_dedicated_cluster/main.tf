@@ -140,7 +140,9 @@ data "cockroach_connection_string" "example" {
 
   # Caution: Including the `password` field will result in
   # the password showing up in plain text in the
-  # connection string output!
+  # connection string output! We recommend following terraform best practices
+  # for securing sensitive variables.
+  # https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables
   #
   # password = cockroach_sql_user.example.password
 

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Realign variables used in the cockroach_dedicated_cluster with the README
+
+- Removed mention of Limited Access for Azure clusters in README
+
+- Added some example values for clarity in README
+
 - The `user_role_grant` resource was added to allow management of a single role
   grant.  This resource will not affect other role grants. See
   [user_role_grants](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/user_role_grant)

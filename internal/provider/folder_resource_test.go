@@ -21,9 +21,9 @@ import (
 func TestAccFolderResource(t *testing.T) {
 	t.Parallel()
 	var (
-		folderName       = fmt.Sprintf("tftest-folder-%s", GenerateRandomString(4))
-		newFolderName    = fmt.Sprintf("tftest-folder-%s", GenerateRandomString(4))
-		parentFolderName = fmt.Sprintf("tftest-folder-%s", GenerateRandomString(4))
+		folderName       = fmt.Sprintf("%s-folder-%s", tfTestPrefix, GenerateRandomString(4))
+		newFolderName    = fmt.Sprintf("%s-folder-%s", tfTestPrefix, GenerateRandomString(4))
+		parentFolderName = fmt.Sprintf("%s-folder-%s", tfTestPrefix, GenerateRandomString(4))
 	)
 	testFolderResource(t, parentFolderName, folderName, newFolderName, false)
 }

@@ -31,7 +31,7 @@ import (
 )
 
 func TestAccDedicatedPrivateEndpointTrustedOwnerResource(t *testing.T) {
-	clusterName := fmt.Sprintf("trusted-owner-%s", GenerateRandomString(5))
+	clusterName := fmt.Sprintf("%s-trstd-own-%s", tfTestPrefix, GenerateRandomString(2))
 	testPrivateEndpointTrustedOwnerResource(t, clusterName, false /* useMock */)
 }
 
@@ -52,7 +52,7 @@ func TestIntegrationPrivateEndpointTrustedOwnerResource(t *testing.T) {
 
 	// States in the server.
 	cluster := client.Cluster{
-		Name:          fmt.Sprintf("trusted-owner-%s", GenerateRandomString(5)),
+		Name:          fmt.Sprintf("%s-trstd-own-%s", tfTestPrefix, GenerateRandomString(2)),
 		Id:            clusterID,
 		CloudProvider: "AWS",
 		Config: client.ClusterConfig{

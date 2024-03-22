@@ -18,6 +18,11 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// tfTestPrefix is the test prefix to use when creating resources in acceptance
+// tests.  This makes them easier to find when resources are left dangling after
+// failed cleanup.
+const tfTestPrefix = "tftest"
+
 func addConfigureProviderErr(diagnostics *diag.Diagnostics) {
 	diagnostics.AddError(
 		"Provider not configured",

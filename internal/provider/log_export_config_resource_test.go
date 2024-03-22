@@ -38,14 +38,14 @@ func TestAccLogExportConfigResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-logexp-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-logexp-%s", tfTestPrefix, GenerateRandomString(4))
 	testLogExportConfigResource(t, clusterName, false)
 }
 
 // TestIntegrationLogExportConfigResource attempts to create, check, and destroy
 // a cluster, but uses a mocked API service.
 func TestIntegrationLogExportConfigResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-logexp-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-logexp-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

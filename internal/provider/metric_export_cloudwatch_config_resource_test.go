@@ -38,14 +38,14 @@ func TestAccMetricExportCloudWatchConfigResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-cloudwatch-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-cloudwatch-%s", tfTestPrefix, GenerateRandomString(2))
 	testMetricExportCloudWatchConfigResource(t, clusterName, false)
 }
 
 // TestIntegrationMetricExportCloudWatchConfigResource attempts to create, check,
 // and destroy a cluster, but uses a mocked API service.
 func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-cloudwatch-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-cloudwatch-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

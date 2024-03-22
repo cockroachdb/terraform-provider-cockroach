@@ -35,13 +35,13 @@ import (
 // connection string. It will be skipped if TF_ACC isn't set.
 func TestAccConnectionStringDataSource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-connect-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-connect-%s", tfTestPrefix, GenerateRandomString(4))
 
 	testConnectionStringDataSource(t, clusterName, false)
 }
 
 func TestIntegrationConnectionStringDataSource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-connect-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-connect-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterId := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

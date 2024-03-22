@@ -34,8 +34,8 @@ import (
 // It will be skipped if TF_ACC isn't set.
 func TestAccFolderDataSource(t *testing.T) {
 	t.Parallel()
-	parentName := fmt.Sprintf("tftest-parent-%s", GenerateRandomString(4))
-	childName := fmt.Sprintf("tftest-child-%s", GenerateRandomString(4))
+	parentName := fmt.Sprintf("%s-parent-%s", tfTestPrefix, GenerateRandomString(4))
+	childName := fmt.Sprintf("%s-child-%s", tfTestPrefix, GenerateRandomString(4))
 
 	testFolderDataSource(t, parentName, childName, false)
 }
@@ -50,8 +50,8 @@ func TestIntegrationFolderDataSource(t *testing.T) {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
 
-	parentName := fmt.Sprintf("tftest-parent-%s", GenerateRandomString(4))
-	childName := fmt.Sprintf("tftest-child-%s", GenerateRandomString(4))
+	parentName := fmt.Sprintf("%s-parent-%s", tfTestPrefix, GenerateRandomString(4))
+	childName := fmt.Sprintf("%s-child-%s", tfTestPrefix, GenerateRandomString(4))
 
 	rootID := "root"
 	parentID := uuid.Must(uuid.Parse("00000000-0000-0000-0000-000000000001")).String()

@@ -34,7 +34,7 @@ import (
 // a real cluster and client CA certs. It will be skipped if TF_ACC isn't set.
 func TestAccClientCACertResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-clcacert-%s", GenerateRandomString(3))
+	clusterName := fmt.Sprintf("%s-clcacert-%s", tfTestPrefix, GenerateRandomString(3))
 
 	// test cert with CN=test1
 	cert1 := "-----BEGIN CERTIFICATE-----\nMIIDgTCCAmigAwIBAgIBADANBgkqhkiG9w0BAQ0FADBaMQswCQYDVQQGEwJ1czEL\nMAkGA1UECAwCV0ExDjAMBgNVBAoMBXRlc3QxMQ4wDAYDVQQDDAV0ZXN0MTEOMAwG\nA1UEBwwFdGVzdDExDjAMBgNVBAsMBXRlc3QxMB4XDTIzMDMyMTE5MDczN1oXDTI2\nMDMyMDE5MDczN1owWjELMAkGA1UEBhMCdXMxCzAJBgNVBAgMAldBMQ4wDAYDVQQK\nDAV0ZXN0MTEOMAwGA1UEAwwFdGVzdDExDjAMBgNVBAcMBXRlc3QxMQ4wDAYDVQQL\nDAV0ZXN0MTCCASMwDQYJKoZIhvcNAQEBBQADggEQADCCAQsCggECAL8DDMgY6Vck\nL1VfzXRXsGVYIdq/NQdVLUAUB/7WCd6/lVGvCMn/iR1uYUSDhTvW2CB4NqbFBE9Y\nBwS5OZMqficezfR8xxRDsIIqjSlpWzE0j7uROyCFxXpt9PyIgTVX2Hj8xov8Y7aT\nS5yddCURxjTC5/Fllwizn7PcJAqOcpzlqddHUXvcGKrEljyAf6fbpcCug4tR3Fq3\ngf5rfwm1YR8w+GyFRiWy3B27oIftEEZ4GaN/J9+d5MZGS00PemilcQ3HyD20k7VU\nbTylkYoDbTrt3ivK1SllkmOHtQ8eBZCF3S9kpctnF9ohy6k2F16wdLQ/XcGhMG5d\nJ9eRWAXfy2EpAgMBAAGjUDBOMB0GA1UdDgQWBBR+mcFGBlCHOQe3H49JSdZMrqqS\nnDAfBgNVHSMEGDAWgBR+mcFGBlCHOQe3H49JSdZMrqqSnDAMBgNVHRMEBTADAQH/\nMA0GCSqGSIb3DQEBDQUAA4IBAgAZwBCWrvwxTnJ/3LtE8yG5tfhjoXZg3q19ZrNh\nza0fElnvxONgNtLHjjNCWaf3er9EGW/Ge2NWuMGHjTwRwG9VzFETcnDrZVLf6uF7\noriyzsno0Ob5VZkgeyFw23l/nEzGYtVM549Fz65trzyASOtqi1AH95xTd6fh3goq\nd9ivSkP1FzGr4fwz8k9LQhE8YASgH6mZ5dO3ZNQjYzGsU7T5MIK/TYoyS4DDKQMM\nGbhUuJXSoTsHrs9Jma6mGoBQaxJet6RfTk1+fDnCl9OdlS66Ez3V7KsLJ4Lzzi8S\nJh5teJQymchzWt4Imn7VSHqedIF9psNaJ/ucHVaJAzkKBJGTzA==\n-----END CERTIFICATE-----"
@@ -45,7 +45,7 @@ func TestAccClientCACertResource(t *testing.T) {
 }
 
 func TestIntegrationClientCACertResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-clcacert-%s", GenerateRandomString(3))
+	clusterName := fmt.Sprintf("%s-clcacert-%s", tfTestPrefix, GenerateRandomString(3))
 	clusterId := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

@@ -36,7 +36,7 @@ import (
 // a real database and its cluster. It will be skipped if TF_ACC isn't set.
 func TestAccDatabaseResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-database-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-database-%s", tfTestPrefix, GenerateRandomString(4))
 	databaseName := "cockroach-database"
 	newDatabaseName := "cockroach-database-updated"
 
@@ -46,7 +46,7 @@ func TestAccDatabaseResource(t *testing.T) {
 // TestIntegrationDatabaseResource attempts to create, check, update, and
 // destroy a database and its cluster, but uses a mocked API service.
 func TestIntegrationDatabaseResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-database-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-database-%s", tfTestPrefix, GenerateRandomString(4))
 	databaseName := "test-database"
 	newDatabaseName := "test-database-updated"
 	clusterID := uuid.Nil.String()

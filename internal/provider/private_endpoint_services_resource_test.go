@@ -35,7 +35,7 @@ import (
 // skipped if TF_ACC isn't set.
 func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-endpt-svc-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-endpt-svc-%s", tfTestPrefix, GenerateRandomString(2))
 	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, false /* isServerless */)
 }
 
@@ -44,14 +44,14 @@ func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 // skipped if TF_ACC isn't set.
 func TestAccServerlessPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-endpt-svc-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-endpt-svc-%s", tfTestPrefix, GenerateRandomString(2))
 	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, true /* isServerless */)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
 // a cluster and endpoint services, but uses a mocked API service.
 func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-endpt-svc-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-endpt-svc-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

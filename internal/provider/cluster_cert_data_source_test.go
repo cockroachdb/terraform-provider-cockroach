@@ -35,13 +35,13 @@ import (
 // It will be skipped if TF_ACC isn't set.
 func TestAccClusterCertDataSource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-cert-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-cert-%s", tfTestPrefix, GenerateRandomString(4))
 
 	testClusterCertDataSource(t, clusterName, false)
 }
 
 func TestIntegrationClusterCertDataSource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-cert-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-cert-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterId := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

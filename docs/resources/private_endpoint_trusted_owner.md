@@ -38,5 +38,3 @@ resource "cockroach_private_endpoint_trusted_owner" "example" {
 
 - `id` (String) Used with `terraform import`. Format is "<cluster ID>:<owner ID>".
 - `owner_id` (String) UUID of the private endpoint trusted owner entry.
-
-

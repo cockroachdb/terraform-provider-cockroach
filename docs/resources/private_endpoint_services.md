@@ -55,5 +55,3 @@ Read-Only:
 - `availability_zone_ids` (List of String) AZ IDs users should create their VPCs in to minimize their cost.
 - `service_id` (String) Server side ID of the PrivateLink connection.
 - `service_name` (String) AWS service name used to create endpoints.
-
-

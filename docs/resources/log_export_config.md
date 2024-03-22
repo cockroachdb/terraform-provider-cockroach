@@ -81,5 +81,3 @@ Optional:
 
 - `min_level` (String) The minimum log level to filter to this log group.
 - `redact` (Boolean) Governs whether this log group should aggregate redacted logs if unset.
-
-

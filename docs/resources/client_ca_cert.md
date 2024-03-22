@@ -23,5 +23,3 @@ Manages client CA certs.
 ### Read-Only
 
 - `status` (String) Status of client CA certs on a cluster.
-
-

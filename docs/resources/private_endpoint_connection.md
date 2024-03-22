@@ -26,5 +26,3 @@ Private Endpoint Connection.
 - `id` (String) Used with `terraform import`. Format is "<cluster ID>:<endpoint ID>".
 - `region_name` (String) Cloud provider region code associated with this connection.
 - `service_id` (String) Server side ID of the Private Endpoint Connection.
-
-

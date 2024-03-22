@@ -34,5 +34,3 @@ resource "cockroach_finalize_version_upgrade" "cockroach" {
 
 - `cockroach_version` (String) Major version of the cluster to be finalized.
 - `id` (String) Cluster ID.
-
-

@@ -32,5 +32,3 @@ data "cockroach_person_user" "cockroach" {
 ### Read-Only
 
 - `id` (String) User ID.
-
-

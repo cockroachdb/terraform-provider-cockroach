@@ -87,7 +87,7 @@ a launch configuration like so:
 
 One caveat to be aware of while running the provider in a debugger is that the
 provider needs to have access to the required environment variables.  They are
-not transferred passed through the cli. Note the setting of the COCKROACH_SERVER
+not passed through the cli. Note the setting of the COCKROACH_SERVER
 var above.
 
 You can additionally set the apikey within the provider block of the hcl that's
@@ -97,8 +97,8 @@ being executed.  For example:
         apikey="myabikey123123123"
     }
 
-After running starting the provider debug process, a TF_REATTACH_PROVIDERS env
-var execution line will be printed to the DEBUG CONSOLE tab. Run that command
+After starting the provider debug process, a TF_REATTACH_PROVIDERS env
+var execution line will be printed to the DEBUG CONSOLE tab. Export that variable in your shell. For example:
 
     export TF_REATTACH_PROVIDERS='{"registry.terraform.io/cockroachdb/cockroach":{"Protocol":"grpc","ProtocolVersion":6,"Pid":33120,"Test":true,"Addr":{"Network":"unix","String":"/var/folders/vy/ydj1pzwj42bg32lxy4dd49lh0000gq/T/plugin3119263782"}}}'
 

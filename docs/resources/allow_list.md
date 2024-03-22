@@ -30,5 +30,3 @@ List of IP ranges allowed to access the cluster.
 ### Read-Only
 
 - `id` (String) A unique identifier with format `<cluster ID>:<CIDR IP>/<CIDR mask>`.
-
-

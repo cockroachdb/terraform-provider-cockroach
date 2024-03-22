@@ -30,5 +30,3 @@ resource "cockroach_folder" "cockroach" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
-
-

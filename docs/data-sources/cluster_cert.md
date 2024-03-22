@@ -35,5 +35,3 @@ data "cockroach_cluster_cert" "cockroach" {
 ### Read-Only
 
 - `cert` (String) Certificate contents.
-
-

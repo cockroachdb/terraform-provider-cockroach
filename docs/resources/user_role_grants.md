@@ -74,5 +74,3 @@ Required:
 Optional:
 
 - `resource_id` (String) ID of the resource. Required if the resource_type is 'FOLDER' or 'CLUSTER'. It should be omitted otherwise.
-
-

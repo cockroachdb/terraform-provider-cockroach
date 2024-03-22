@@ -21,5 +21,3 @@ Information about the organization associated with the user's API key.
 - `id` (String) Organization ID.
 - `label` (String) A short ID used by CockroachDB Support.
 - `name` (String) Name of the organization.
-
-

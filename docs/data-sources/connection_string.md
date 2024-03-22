@@ -79,5 +79,3 @@ Read-Only:
 - `password` (String, Sensitive) Password value to use in a connection URL.
 - `port` (String) Port value to use in a connection URL.
 - `username` (String) Username value to use in a connection URL.
-
-

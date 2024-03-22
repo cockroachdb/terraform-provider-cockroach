@@ -35,5 +35,3 @@ resource "cockroach_database" "cockroach" {
 
 - `id` (String) A unique identifier with format `<cluster ID>:<database name>`.
 - `table_count` (Number) Number of tables in the database.
-
-

@@ -62,5 +62,3 @@ Required:
 Optional:
 
 - `is_regex` (Boolean) Indicates that the token_principal field is a regex value.
-
-

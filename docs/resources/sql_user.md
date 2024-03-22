@@ -43,5 +43,3 @@ resource "cockroach_sql_user" "cockroach" {
 ### Read-Only
 
 - `id` (String) A unique identifier with format `<cluster ID>:<SQL user name>`.
-
-

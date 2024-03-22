@@ -33,14 +33,14 @@ import (
 // real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccMaintenanceWindowResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-mwin-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-mwin-%s", tfTestPrefix, GenerateRandomString(4))
 	testMaintenanceWindowResource(t, clusterName, false)
 }
 
 // TestIntegrationMaintenanceWindowResource attempts to create, check, and
 // destroy a cluster, but uses a mocked API service.
 func TestIntegrationMaintenanceWindowResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-mwin-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-mwin-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

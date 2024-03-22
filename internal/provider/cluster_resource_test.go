@@ -50,7 +50,7 @@ const (
 // a real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccServerlessClusterResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               false,
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -68,7 +68,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 // a real multi-region serverless cluster. It will be skipped if TF_ACC isn't set.
 func TestAccMultiRegionServerlessClusterResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-multi-region-serverless-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-multi-region-serverless-%s", tfTestPrefix, GenerateRandomString(2))
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               false,
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -91,7 +91,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	true_val := true
 	initialCluster := client.Cluster{
 		Id:               uuid.Nil.String(),
-		Name:             fmt.Sprintf("tftest-serverless-%s", GenerateRandomString(2)),
+		Name:             fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2)),
 		CockroachVersion: latestClusterPatchVersion,
 		Plan:             "SERVERLESS",
 		CloudProvider:    "GCP",
@@ -568,12 +568,12 @@ func multiRegionServerlessClusterResourceRegionUpdate(clusterName string) resour
 
 func TestAccDedicatedClusterResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
+	clusterName := fmt.Sprintf("%s-dedicated-%s", tfTestPrefix, GenerateRandomString(3))
 	testDedicatedClusterResource(t, clusterName, false)
 }
 
 func TestIntegrationDedicatedClusterResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-dedicated-%s", GenerateRandomString(3))
+	clusterName := fmt.Sprintf("%s-dedicated-%s", tfTestPrefix, GenerateRandomString(3))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

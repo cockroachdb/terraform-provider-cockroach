@@ -38,7 +38,7 @@ const testPassword = "random-password"
 // a real cluster and SQL user. It will be skipped if TF_ACC isn't set.
 func TestAccSqlUserResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-sql-user-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-sql-user-%s", tfTestPrefix, GenerateRandomString(4))
 	sqlUserNameWithPass := "cockroach-user"
 	sqlUserNameNoPass := "cockroach-user-nopass"
 
@@ -48,7 +48,7 @@ func TestAccSqlUserResource(t *testing.T) {
 // TestIntegrationSqlUserResource attempts to create, check, and destroy
 // a cluster and SQL user, but uses a mocked API service.
 func TestIntegrationSqlUserResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-sql-user-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-sql-user-%s", tfTestPrefix, GenerateRandomString(4))
 	sqlUserNameWithPass := "cockroach-user"
 	sqlUserNameNoPass := "cockroach-user-nopass"
 	sqlPassword := "cockroach@123456"

@@ -37,7 +37,7 @@ import (
 // isn't set.
 func TestAccDedicatedAllowlistEntryResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-networking-%s", tfTestPrefix, GenerateRandomString(2))
 	entryName := "default-allow-list"
 	entry := client.AllowlistEntry{
 		Name:     &entryName,
@@ -62,7 +62,7 @@ func TestAccDedicatedAllowlistEntryResource(t *testing.T) {
 // isn't set.
 func TestAccServerlessAllowlistEntryResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-networking-%s", tfTestPrefix, GenerateRandomString(2))
 	entryName := "default-allow-list"
 	entry := client.AllowlistEntry{
 		Name:     &entryName,
@@ -85,7 +85,7 @@ func TestAccServerlessAllowlistEntryResource(t *testing.T) {
 // TestIntegrationAllowlistEntryResource attempts to create, check, and
 // destroy a cluster and allowlist entry, but uses a mocked API service.
 func TestIntegrationAllowlistEntryResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-networking-%s", GenerateRandomString(2))
+	clusterName := fmt.Sprintf("%s-networking-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	name := "default-allow-list"
 	// Return another entry in the List call to make sure we're selecting

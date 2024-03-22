@@ -30,14 +30,14 @@ import (
 // real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccVersionDeferralResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-version-deferral-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-version-deferral-%s", tfTestPrefix, GenerateRandomString(4))
 	testVersionDeferralResource(t, clusterName, false)
 }
 
 // TestIntegrationVersionDeferralResource attempts to create, check, and
 // destroy a cluster, but uses a mocked API service.
 func TestIntegrationVersionDeferralResource(t *testing.T) {
-	clusterName := fmt.Sprintf("tftest-deferral-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-deferral-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")

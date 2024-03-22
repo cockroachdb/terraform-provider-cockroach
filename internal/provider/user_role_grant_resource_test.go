@@ -38,7 +38,7 @@ import (
 // real role grant for a user. It will be skipped if TF_ACC isn't set.
 func TestAccRoleGrantResource(t *testing.T) {
 	t.Parallel()
-	clusterName := fmt.Sprintf("tftest-rg-resource-%s", GenerateRandomString(4))
+	clusterName := fmt.Sprintf("%s-rg-resource-%s", tfTestPrefix, GenerateRandomString(4))
 
 	// Skip the org test for the Acceptance Test because the test relies on the
 	// user having access to set an org level role. In order to avoid adding

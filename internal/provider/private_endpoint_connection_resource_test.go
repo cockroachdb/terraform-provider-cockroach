@@ -33,7 +33,7 @@ func TestAccDedicatedPrivateEndpointConnectionResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
-	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
+	clusterName := fmt.Sprintf("%s-aws-conn-%s", tfTestPrefix, GenerateRandomString(3))
 	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, false /* isServerless */)
 }
 
@@ -41,12 +41,12 @@ func TestAccServerlessPrivateEndpointConnectionResource(t *testing.T) {
 	t.Skip("Skipping until we can either integrate the AWS provider " +
 		"or import a permanent test fixture.")
 	t.Parallel()
-	clusterName := fmt.Sprintf("aws-connection-%s", GenerateRandomString(5))
+	clusterName := fmt.Sprintf("%s-aws-conn-%s", tfTestPrefix, GenerateRandomString(3))
 	testPrivateEndpointConnectionResource(t, clusterName, false /* useMock */, true /* isServerless */)
 }
 
 func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
-	clusterName := fmt.Sprintf("private-connection-%s", GenerateRandomString(5))
+	clusterName := fmt.Sprintf("%s-priv-conn-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	endpointID := "endpoint-id"
 	if os.Getenv(CockroachAPIKey) == "" {

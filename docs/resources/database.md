@@ -35,3 +35,12 @@ resource "cockroach_database" "cockroach" {
 
 - `id` (String) A unique identifier with format `<cluster ID>:<database name>`.
 - `table_count` (Number) Number of tables in the database.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>:<database name>
+terraform import cockroach_database.my_database 1f69fdd2-600a-4cfc-a9ba-16995df0d77d:mydatabase
+```

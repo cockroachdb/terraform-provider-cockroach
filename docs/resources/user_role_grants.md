@@ -27,13 +27,13 @@ resource "cockroach_user_role_grants" "cockroach" {
     },
     {
       role_name     = "CLUSTER_ADMIN",
-      resource_type = "ORGANIZATION",
-      resource_id   = ""
+      resource_type = "CLUSTER",
+      resource_id   = cockroach_cluster.prod.id
     },
     {
-      role_name     = "ORG_MEMBER",
-      resource_type = "ORGANIZATION",
-      resource_id   = ""
+      role_name     = "FOLDER_ADMIN",
+      resource_type = "FOLDER",
+      resource_id   = cockroach_folder.dev.id
     },
   ]
 }
@@ -74,3 +74,12 @@ Required:
 Optional:
 
 - `resource_id` (String) ID of the resource. Required if the resource_type is 'FOLDER' or 'CLUSTER'. It should be omitted otherwise.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <user id>
+terraform import cockroach_user_role_grants.service_account 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

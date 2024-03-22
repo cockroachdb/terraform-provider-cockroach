@@ -17,8 +17,13 @@ variable "cluster_id" {
   type = string
 }
 
+# Remember that even variables marked sensitive will show up
+# in the Terraform state file. Always follow best practices
+# when managing sensitive info.
+# https://developer.hashicorp.com/terraform/tutorials/configuration-language/sensitive-variables#sensitive-values-in-state
 variable "sql_user_password" {
-  type = string
+  type      = string
+  sensitive = true
 }
 
 resource "cockroach_sql_user" "cockroach" {
@@ -43,3 +48,12 @@ resource "cockroach_sql_user" "cockroach" {
 ### Read-Only
 
 - `id` (String) A unique identifier with format `<cluster ID>:<SQL user name>`.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>:<sql user name>
+terraform import cockroach_sql_user.bill 1f69fdd2-600a-4cfc-a9ba-16995df0d77d:bill
+```

@@ -12,13 +12,13 @@ resource "cockroach_user_role_grants" "cockroach" {
     },
     {
       role_name     = "CLUSTER_ADMIN",
-      resource_type = "ORGANIZATION",
-      resource_id   = ""
+      resource_type = "CLUSTER",
+      resource_id   = cockroach_cluster.prod.id
     },
     {
-      role_name     = "ORG_MEMBER",
-      resource_type = "ORGANIZATION",
-      resource_id   = ""
+      role_name     = "FOLDER_ADMIN",
+      resource_type = "FOLDER",
+      resource_id   = cockroach_folder.dev.id
     },
   ]
 }

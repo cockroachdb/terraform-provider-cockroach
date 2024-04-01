@@ -48,7 +48,7 @@ func (r *privateEndpointConnectionResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Private Endpoint Connection.",
+		MarkdownDescription: "Private endpoint connections allow customer applications to connect to a CockroachDB Cloud cluster without traversing the public internet. All application-database traffic remains within the cloud-provider network.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed:            true,

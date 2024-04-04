@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2024-04-04
+
+## Added
+
+- Added `private_endpoint_connection` examples for AWS, Azure, GCP.
+
 ### Fixed
 
 - Added any missing examples for data sources, resources and imports.

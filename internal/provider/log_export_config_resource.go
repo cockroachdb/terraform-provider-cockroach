@@ -171,14 +171,6 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
-	if cluster.Config.Serverless != nil {
-		resp.Diagnostics.AddError(
-			"Incompatible cluster type",
-			"Log export services are only available for dedicated clusters",
-		)
-		return
-	}
-
 	configType, err := client.NewLogExportTypeFromValue(plan.Type.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(

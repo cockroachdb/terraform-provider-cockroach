@@ -249,6 +249,12 @@ type ClusterDatadogMetricExportConfig struct {
 	Status      types.String `tfsdk:"status"`
 }
 
+type ClusterPrometheusMetricExportConfig struct {
+	ID      types.String `tfsdk:"id"`
+	Status  types.String `tfsdk:"status"`
+	Targets types.Map    `tfsdk:"targets"`
+}
+
 type ClusterMaintenanceWindow struct {
 	ID             types.String `tfsdk:"id"`
 	OffsetDuration types.Int64  `tfsdk:"offset_duration"`

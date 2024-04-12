@@ -170,3 +170,7 @@ resource "cockroach_metric_export_datadog_config" "example" {
   site    = var.datadog_site
   api_key = var.datadog_api_key
 }
+
+resource "cockroach_metric_export_prometheus_config" "example" {
+  id = cockroach_cluster.example.id
+}

@@ -137,6 +137,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewLogExportConfigResource,
 		NewMetricExportDatadogConfigResource,
 		NewMetricExportCloudWatchConfigResource,
+		NewMetricExportPrometheusConfigResource,
 		NewClientCACertResource,
 		NewUserRoleGrantsResource,
 		NewUserRoleGrantResource,

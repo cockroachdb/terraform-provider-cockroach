@@ -20,7 +20,8 @@ package client
 
 // CreateClusterSpecification struct for CreateClusterSpecification.
 type CreateClusterSpecification struct {
-	Dedicated *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
+	Dedicated        *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
+	DeleteProtection *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
 	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" will create a cluster at the root level.
 	ParentId   *string                               `json:"parent_id,omitempty"`
 	Serverless *ServerlessClusterCreateSpecification `json:"serverless,omitempty"`
@@ -47,6 +48,20 @@ func (o *CreateClusterSpecification) GetDedicated() DedicatedClusterCreateSpecif
 // SetDedicated gets a reference to the given DedicatedClusterCreateSpecification and assigns it to the Dedicated field.
 func (o *CreateClusterSpecification) SetDedicated(v DedicatedClusterCreateSpecification) {
 	o.Dedicated = &v
+}
+
+// GetDeleteProtection returns the DeleteProtection field value if set, zero value otherwise.
+func (o *CreateClusterSpecification) GetDeleteProtection() DeleteProtectionStateType {
+	if o == nil || o.DeleteProtection == nil {
+		var ret DeleteProtectionStateType
+		return ret
+	}
+	return *o.DeleteProtection
+}
+
+// SetDeleteProtection gets a reference to the given DeleteProtectionStateType and assigns it to the DeleteProtection field.
+func (o *CreateClusterSpecification) SetDeleteProtection(v DeleteProtectionStateType) {
+	o.DeleteProtection = &v
 }
 
 // GetParentId returns the ParentId field value if set, zero value otherwise.

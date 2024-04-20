@@ -201,6 +201,7 @@ func testMetricExportDatadogConfigExists(
 		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
+		traceAPICall("GetDatadogMetricExportInfo")
 		apiObj, _, err := p.service.GetDatadogMetricExportInfo(context.TODO(), clusterID)
 		if err == nil {
 			if string(apiObj.GetSite()) == rs.Primary.Attributes["site"] {

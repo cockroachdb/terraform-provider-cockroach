@@ -103,6 +103,7 @@ func (r *versionDeferralResource) Read(
 	}
 
 	clusterID := state.ID.ValueString()
+	traceAPICall("GetClusterVersionDeferral")
 	obj, httpResp, err := r.provider.service.GetClusterVersionDeferral(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -163,6 +164,7 @@ func (r *versionDeferralResource) setVersionDeferral(
 ) {
 	clientVersionDeferral := client.NewClusterVersionDeferralWithDefaults()
 	clientVersionDeferral.DeferralPolicy = client.ClusterVersionDeferralPolicyType(versionDeferral.DeferralPolicy.ValueString())
+	traceAPICall("SetClusterVersionDeferral")
 	_, _, err := r.provider.service.SetClusterVersionDeferral(ctx, versionDeferral.ID.ValueString(), clientVersionDeferral)
 	if err != nil {
 		diags.AddError(

@@ -114,6 +114,7 @@ func (r *databaseResource) Create(
 		return
 	}
 
+	traceAPICall("GetCluster")
 	_, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -126,6 +127,7 @@ func (r *databaseResource) Create(
 	var databaseRequest client.CreateDatabaseRequest
 	databaseRequest.Name = databaseSpec.Name.ValueString()
 
+	traceAPICall("CreateDatabase")
 	databaseObj, _, err := r.provider.service.CreateDatabase(ctx, clusterID, &databaseRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -163,6 +165,7 @@ func (r *databaseResource) Read(
 	var page string
 	limit := int32(databasePaginationLimit)
 	for {
+		traceAPICall("ListDatabases")
 		apiResp, httpResp, err := r.provider.service.ListDatabases(
 			ctx, clusterID, &client.ListDatabasesOptions{
 				PaginationPage:  &page,
@@ -240,6 +243,7 @@ func (r *databaseResource) Update(
 	clusterID := plan.ClusterId.ValueString()
 	databaseName := state.Name.ValueString()
 
+	traceAPICall("EditDatabase")
 	databaseObj, _, err := r.provider.service.EditDatabase(ctx, clusterID, databaseName, &updateReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -268,6 +272,7 @@ func (r *databaseResource) Delete(
 		return
 	}
 
+	traceAPICall("DeleteDatabase")
 	_, httpResp, err := r.provider.service.DeleteDatabase(
 		ctx, state.ClusterId.ValueString(), state.Name.ValueString(),
 	)

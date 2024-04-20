@@ -299,6 +299,7 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
+		traceAPICall("ListAllowlistEntries")
 		if clusterResp, _, err := p.service.ListAllowlistEntries(context.TODO(), clusterID, &networkRule); err == nil {
 			for _, rule := range clusterResp.Allowlist {
 				if rule.GetCidrIp() == rs.Primary.Attributes["cidr_ip"] &&

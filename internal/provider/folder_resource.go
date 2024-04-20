@@ -86,6 +86,7 @@ func (r *folderResource) Create(
 	}
 
 	parentID := plan.ParentId.ValueString()
+	traceAPICall("CreateFolder")
 	folderObj, _, err := r.provider.service.CreateFolder(ctx, &client.CreateFolderRequest{
 		Name:     plan.Name.ValueString(),
 		ParentId: &parentID,
@@ -137,6 +138,7 @@ func (r *folderResource) Read(
 		return
 	}
 
+	traceAPICall("GetFolder")
 	folderObj, httpResp, err := r.provider.service.GetFolder(ctx, folderID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -184,6 +186,7 @@ func (r *folderResource) Update(
 		newName      = plan.Name.ValueString()
 		destParentID = plan.ParentId.ValueString()
 	)
+	traceAPICall("UpdateFolder")
 	folderObj, _, err := r.provider.service.UpdateFolder(
 		ctx,
 		plan.ID.ValueString(),
@@ -223,6 +226,7 @@ func (r *folderResource) Delete(
 		return
 	}
 
+	traceAPICall("DeleteFolder")
 	httpResp, err := r.provider.service.DeleteFolder(ctx, folderID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {

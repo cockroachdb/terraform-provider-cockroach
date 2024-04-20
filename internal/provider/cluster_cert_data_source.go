@@ -102,6 +102,7 @@ func (d *clusterCertDataSource) Read(ctx context.Context, req datasource.ReadReq
 		return
 	}
 
+	traceAPICall("GetCluster")
 	cluster, _, err := d.provider.service.GetCluster(ctx, cert.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to retrieve cluster info", formatAPIErrorMessage(err))

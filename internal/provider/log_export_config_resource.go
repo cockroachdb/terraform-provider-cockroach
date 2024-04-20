@@ -162,6 +162,7 @@ func (r *logExportConfigResource) Create(
 
 	clusterID := plan.ID.ValueString()
 	// Check cluster
+	traceAPICall("GetCluster")
 	cluster, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -254,6 +255,7 @@ func retryEnableLogExport(
 	apiLogExportObj *client.LogExportClusterInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("EnableLogExport")
 		apiResp, httpResp, err := cl.EnableLogExport(ctx, clusterID, logExportRequest)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
@@ -358,6 +360,7 @@ func (r *logExportConfigResource) Read(
 		return
 	}
 	clusterID := state.ID.ValueString()
+	traceAPICall("GetLogExportInfo")
 	apiLogExportObj, httpResp, err := r.provider.service.GetLogExportInfo(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -368,6 +371,7 @@ func (r *logExportConfigResource) Read(
 			return
 		} else {
 			// Check cluster existence.
+			traceAPICall("GetCluster")
 			cluster, clusterHttpResp, clusterErr := r.provider.service.GetCluster(ctx, clusterID)
 			if clusterErr != nil {
 				if clusterHttpResp != nil && clusterHttpResp.StatusCode == http.StatusNotFound {
@@ -548,6 +552,7 @@ func (r *logExportConfigResource) Delete(
 	cluster := &client.Cluster{}
 	retryFunc := func() retry.RetryFunc {
 		return func() *retry.RetryError {
+			traceAPICall("DeleteLogExport")
 			_, httpResp, err := r.provider.service.DeleteLogExport(ctx, clusterID)
 			if err != nil {
 				if httpResp != nil {
@@ -598,6 +603,7 @@ func waitForLogExportReadyFunc(
 	logExportClusterInfo *client.LogExportClusterInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("GetLogExportInfo")
 		apiLogExport, httpResp, err := cl.GetLogExportInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {

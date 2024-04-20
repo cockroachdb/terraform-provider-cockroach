@@ -115,6 +115,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 
 	clusterID := plan.ID.ValueString()
 	// Check cluster
+	traceAPICall("GetCluster")
 	cluster, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -186,6 +187,7 @@ func retryEnableCloudWatchMetricExport(
 	apiObj *client.CloudWatchMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("EnableCloudWatchMetricExport")
 		apiResp, httpResp, err := cl.EnableCloudWatchMetricExport(ctx, clusterID, apiRequest)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
@@ -239,6 +241,7 @@ func waitForCloudWatchMetricExportReadyFunc(
 	cloudWatchMetricExportInfo *client.CloudWatchMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("GetCloudWatchMetricExportInfo")
 		apiObj, httpResp, err := cl.GetCloudWatchMetricExportInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
@@ -282,6 +285,7 @@ func (r *metricExportCloudWatchConfigResource) Read(
 		return
 	}
 	clusterID := state.ID.ValueString()
+	traceAPICall("GetCloudWatchMetricExportInfo")
 	apiObj, httpResp, err := r.provider.service.GetCloudWatchMetricExportInfo(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -295,6 +299,7 @@ func (r *metricExportCloudWatchConfigResource) Read(
 			return
 		} else {
 			// Check cluster existence.
+			traceAPICall("GetCluster")
 			cluster, clusterHttpResp, clusterErr := r.provider.service.GetCluster(ctx, clusterID)
 			if clusterErr != nil {
 				if clusterHttpResp != nil && clusterHttpResp.StatusCode == http.StatusNotFound {
@@ -408,6 +413,7 @@ func (r *metricExportCloudWatchConfigResource) Delete(
 	cluster := &client.Cluster{}
 	retryFunc := func() retry.RetryFunc {
 		return func() *retry.RetryError {
+			traceAPICall("DeleteCloudWatchMetricExport")
 			_, httpResp, err := r.provider.service.DeleteCloudWatchMetricExport(ctx, clusterID)
 			if err != nil {
 				apiErrMsg := formatAPIErrorMessage(err)

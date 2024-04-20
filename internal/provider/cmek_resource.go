@@ -168,6 +168,7 @@ func (r *cmekResource) Create(
 	}
 	cmekSpec.SetRegionSpecs(regionSpecs)
 
+	traceAPICall("EnableCMEKSpec")
 	cmekObj, _, err := r.provider.service.EnableCMEKSpec(ctx, plan.ID.ValueString(), cmekSpec)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -208,6 +209,7 @@ func (r *cmekResource) Read(
 	}
 
 	clusterID := cmek.ID.ValueString()
+	traceAPICall("GetCMEKClusterInfo")
 	cmekObj, httpResp, err := r.provider.service.GetCMEKClusterInfo(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -276,6 +278,7 @@ func (r *cmekResource) Update(
 				"Can't revoke access and modify regions in the same operation")
 			return
 		}
+		traceAPICall("UpdateCMEKStatus")
 		if _, _, err := r.provider.service.UpdateCMEKStatus(ctx, plan.ID.ValueString(), &client.UpdateCMEKStatusRequest{
 			Action: client.CMEKCUSTOMERACTION_REVOKE,
 		}); err != nil {
@@ -294,6 +297,7 @@ func (r *cmekResource) Update(
 			return
 		}
 		var err error
+		traceAPICall("UpdateCluster")
 		cluster, _, err = r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), &client.UpdateClusterSpecification{
 			Dedicated: &client.DedicatedClusterUpdateSpecification{
 				RegionNodes:     regionNodes,
@@ -320,6 +324,7 @@ func (r *cmekResource) Update(
 	}
 
 	if len(updateRegions) != 0 {
+		traceAPICall("UpdateCMEKSpec")
 		_, _, err := r.provider.service.UpdateCMEKSpec(
 			ctx,
 			plan.ID.ValueString(),
@@ -439,6 +444,7 @@ func waitForCMEKReadyFunc(
 	ctx context.Context, clusterID string, cl client.Service, cmek *client.CMEKClusterInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("GetCMEKClusterInfo")
 		apiCMEK, httpResp, err := cl.GetCMEKClusterInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {

@@ -91,6 +91,7 @@ func (r *finalizeVersionUpgradeResource) Create(
 	}
 	clusterID := plan.ID.ValueString()
 
+	traceAPICall("GetCluster")
 	clusterObj, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError("Error retrieving cluster info", formatAPIErrorMessage(err))
@@ -115,6 +116,7 @@ func (r *finalizeVersionUpgradeResource) Create(
 	}
 
 	finalizedStatus := client.CLUSTERUPGRADESTATUSTYPE_FINALIZED
+	traceAPICall("UpdateCluster")
 	if _, _, err = r.provider.service.UpdateCluster(ctx, clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &finalizedStatus}); err != nil {
 		resp.Diagnostics.AddError("Error finalizing cluster upgrade", formatAPIErrorMessage(err))
 		return

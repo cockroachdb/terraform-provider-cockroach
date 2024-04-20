@@ -92,6 +92,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Ensure cluster is DEDICATED
+	traceAPICall("GetCluster")
 	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError("Error getting cluster info", formatAPIErrorMessage(err))
@@ -108,6 +109,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	// Generate API request from plan
 	setClientCACertReq := client.NewSetClientCACertRequest(plan.X509PemCert.ValueString())
 
+	traceAPICall("SetClientCACert")
 	certInfo, _, err := r.provider.service.SetClientCACert(ctx, plan.ID.ValueString(), setClientCACertReq)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating Client CA Cert", formatAPIErrorMessage(err))
@@ -142,6 +144,7 @@ func (r *clientCACertResource) Read(ctx context.Context, req resource.ReadReques
 	}
 
 	clusterId := state.ID.ValueString()
+	traceAPICall("GetClientCACert")
 	certInfo, httpResp, err := r.provider.service.GetClientCACert(ctx, clusterId)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -187,6 +190,7 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 	} else {
 		newCert := plan.X509PemCert.ValueString()
 		updateReq := client.UpdateClientCACertRequest{X509PemCert: &newCert}
+		traceAPICall("UpdateClientCACert")
 		certInfo, _, err := r.provider.service.UpdateClientCACert(ctx, plan.ID.ValueString(), &updateReq)
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating Client CA Cert", formatAPIErrorMessage(err))
@@ -216,6 +220,7 @@ func (r *clientCACertResource) Delete(ctx context.Context, req resource.DeleteRe
 		return
 	}
 
+	traceAPICall("DeleteClientCACert")
 	certInfo, httpResp, err := r.provider.service.DeleteClientCACert(ctx, state.ID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -246,6 +251,7 @@ func waitForClientCACertReady(
 	ctx context.Context, clusterId string, cl client.Service, certInfo *client.ClientCACertInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("GetClientCACert")
 		res, httpResp, err := cl.GetClientCACert(ctx, clusterId)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {

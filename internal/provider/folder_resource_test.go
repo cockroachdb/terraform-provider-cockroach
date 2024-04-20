@@ -176,6 +176,7 @@ func testCheckFolderExists(resourceName string) resource.TestCheckFunc {
 			rs.Primary.Attributes["parent_id"],
 		)
 
+		traceAPICall("GetFolder")
 		if _, _, err := p.service.GetFolder(context.Background(), id); err == nil {
 			return nil
 		}

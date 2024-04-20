@@ -39,7 +39,7 @@ func (r *userRoleGrantsResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [user_role_grant](user_role_grant) resource for non-authoritative role grants.",
+		MarkdownDescription: "Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [cockroach_user_role_grant](user_role_grant) resource for non-authoritative role grants.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,

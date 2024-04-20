@@ -20,7 +20,8 @@ package client
 
 // UpdateClusterSpecification struct for UpdateClusterSpecification.
 type UpdateClusterSpecification struct {
-	Dedicated *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
+	Dedicated        *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
+	DeleteProtection *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
 	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
 	ParentId      *string                               `json:"parent_id,omitempty"`
 	Serverless    *ServerlessClusterUpdateSpecification `json:"serverless,omitempty"`
@@ -48,6 +49,20 @@ func (o *UpdateClusterSpecification) GetDedicated() DedicatedClusterUpdateSpecif
 // SetDedicated gets a reference to the given DedicatedClusterUpdateSpecification and assigns it to the Dedicated field.
 func (o *UpdateClusterSpecification) SetDedicated(v DedicatedClusterUpdateSpecification) {
 	o.Dedicated = &v
+}
+
+// GetDeleteProtection returns the DeleteProtection field value if set, zero value otherwise.
+func (o *UpdateClusterSpecification) GetDeleteProtection() DeleteProtectionStateType {
+	if o == nil || o.DeleteProtection == nil {
+		var ret DeleteProtectionStateType
+		return ret
+	}
+	return *o.DeleteProtection
+}
+
+// SetDeleteProtection gets a reference to the given DeleteProtectionStateType and assigns it to the DeleteProtection field.
+func (o *UpdateClusterSpecification) SetDeleteProtection(v DeleteProtectionStateType) {
+	o.DeleteProtection = &v
 }
 
 // GetParentId returns the ParentId field value if set, zero value otherwise.

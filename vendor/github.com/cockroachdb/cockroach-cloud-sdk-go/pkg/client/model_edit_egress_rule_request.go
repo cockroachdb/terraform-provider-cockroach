@@ -26,7 +26,7 @@ type EditEgressRuleRequest struct {
 	Destination *string `json:"destination,omitempty"`
 	// idempotency_key uniquely identifies this request. If not set, it will be set by the server.
 	IdempotencyKey *string `json:"idempotency_key,omitempty"`
-	// paths are the allowed URL paths. If empty, all paths are allowed. Only valid if Type=\"FQDN\".
+	// Deprecated: This field is ignored and will be removed in the next version. paths are the allowed URL paths. If empty, all paths are allowed. Only valid if Type=\"FQDN\".
 	Paths *[]string `json:"paths,omitempty"`
 	// ports are the allowed ports for TCP protocol. If empty, all ports are allowed.
 	Ports *[]int32 `json:"ports,omitempty"`

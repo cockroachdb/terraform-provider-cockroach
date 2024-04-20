@@ -126,8 +126,17 @@ you're using GoLand, you can run them individually, setting `TF_ACC=1` and setti
 `COCKROACH_API_KEY` to appropriate values.
 
 Getting the mock calls right for integration tests can be challenging. You may be surprised at how many read calls are
-issued at each stage. A technique that I've found works well is using `.AnyTimes()` and setting break points in the mock
-controller's method implementations, then setting `.Times(n)` to the actual number of calls at each stage.
+issued at each stage. Some optional logging has been enabled which can help
+with this.  Enable it by setting the env var `TRACE_API_CALLS=1`. If you first
+run an acceptance test that performs the real operations, ie `TF_ACC=1
+TRACE_API_CALLS=1`, you can then use this record to determine the mock calls.
+
+example output:
+
+    CC API Call: CreateServiceAccount (github.com/cockroachdb/terraform-provider-cockroach/internal/provider.(*serviceAccountResource).Create)
+    CC API Call: GetServiceAccount (github.com/cockroachdb/terraform-provider-cockroach/internal/provider.testServiceAccountResource.testServiceAccountExists.func4)
+    CC API Call: GetServiceAccount (github.com/cockroachdb/terraform-provider-cockroach/internal/provider.(*serviceAccountResource).Read)
+    CC API Call: GetServiceAccount (github.com/cockroachdb/terraform-provider-cockroach/internal/provider.(*serviceAccountResource).Read)
 
 Tests should generally cover all of a resource's CRUD operations, plus `import`. That generally means at least three
 test steps. Data sources can either have their own simple test method or, if convenient, be dropped into an existing

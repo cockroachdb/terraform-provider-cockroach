@@ -229,6 +229,7 @@ func testLogExportConfigExists(resourceName, clusterResourceName string) resourc
 		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
+		traceAPICall("GetLogExportInfo")
 		logExportConfigResponse, _, err := p.service.GetLogExportInfo(context.TODO(), clusterID)
 		if err == nil {
 			if logExportConfigResponse.Spec.GetLogName() == rs.Primary.Attributes["log_name"] {

@@ -168,6 +168,7 @@ func testSqlUserExists(resourceName, clusterResourceName string) resource.TestCh
 		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
+		traceAPICall("ListSQLUsers")
 		clusterResp, _, err := p.service.ListSQLUsers(context.TODO(), clusterID, &listUserOptions)
 		if err == nil {
 			for _, user := range clusterResp.Users {

@@ -110,6 +110,7 @@ func (r *metricExportDatadogConfigResource) Create(
 
 	clusterID := plan.ID.ValueString()
 	// Check cluster
+	traceAPICall("GetCluster")
 	cluster, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -177,6 +178,7 @@ func retryEnableDatadogMetricExport(
 	apiObj *client.DatadogMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("EnableDatadogMetricExport")
 		apiResp, httpResp, err := cl.EnableDatadogMetricExport(ctx, clusterID, apiRequest)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
@@ -217,6 +219,7 @@ func waitForDatdogMetricExportReadyFunc(
 	datadogMetricExportInfo *client.DatadogMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("GetDatadogMetricExportInfo")
 		apiObj, httpResp, err := cl.GetDatadogMetricExportInfo(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
@@ -261,6 +264,7 @@ func (r *metricExportDatadogConfigResource) Read(
 	}
 
 	clusterID := state.ID.ValueString()
+	traceAPICall("GetDatadogMetricExportInfo")
 	apiObj, httpResp, err := r.provider.service.GetDatadogMetricExportInfo(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -274,6 +278,7 @@ func (r *metricExportDatadogConfigResource) Read(
 			return
 		} else {
 			// Check cluster existence.
+			traceAPICall("GetCluster")
 			cluster, clusterHttpResp, clusterErr := r.provider.service.GetCluster(ctx, clusterID)
 			if clusterErr != nil {
 				if clusterHttpResp != nil && clusterHttpResp.StatusCode == http.StatusNotFound {
@@ -391,6 +396,7 @@ func (r *metricExportDatadogConfigResource) Delete(
 	cluster := &client.Cluster{}
 	retryFunc := func() retry.RetryFunc {
 		return func() *retry.RetryError {
+			traceAPICall("DeleteDatadogMetricExport")
 			_, httpResp, err := r.provider.service.DeleteDatadogMetricExport(ctx, clusterID)
 			if err != nil {
 				apiErrMsg := formatAPIErrorMessage(err)

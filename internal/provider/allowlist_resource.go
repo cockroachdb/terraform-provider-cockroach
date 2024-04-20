@@ -147,6 +147,7 @@ func (r *allowListResource) Create(
 		allowList.Name = &name
 	}
 
+	traceAPICall("AddAllowlistEntry")
 	_, _, err := r.provider.service.AddAllowlistEntry(ctx, entry.ClusterId.ValueString(), &allowList)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -184,6 +185,7 @@ func (r *allowListResource) Read(
 	var page string
 	limit := int32(allowlistEntryPaginationLimit)
 	for {
+		traceAPICall("ListAllowlistEntries")
 		apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(
 			ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{
 				PaginationPage:  &page,
@@ -273,6 +275,7 @@ func (r *allowListResource) Update(
 		Name: &name,
 	}
 
+	traceAPICall("UpdateAllowlistEntry")
 	_, _, err := r.provider.service.UpdateAllowlistEntry(
 		ctx, clusterId, entryCIDRIp, entryCIDRMask, &updatedAllowList)
 	if err != nil {
@@ -300,6 +303,7 @@ func (r *allowListResource) Delete(
 		return
 	}
 
+	traceAPICall("DeleteAllowlistEntry")
 	_, httpResp, err := r.provider.service.DeleteAllowlistEntry(
 		ctx, state.ClusterId.ValueString(), state.CidrIp.ValueString(), int32(state.CidrMask.ValueInt64()))
 	if err != nil {

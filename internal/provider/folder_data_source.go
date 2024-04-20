@@ -119,6 +119,7 @@ func (d *folderDataSource) Read(
 
 		var httpResp *http.Response
 		var err error
+		traceAPICall("GetFolders")
 		folder, httpResp, err = d.provider.service.GetFolder(ctx, folderID)
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddError(
@@ -135,6 +136,7 @@ func (d *folderDataSource) Read(
 
 	} else if !folderDataSource.Path.IsNull() {
 		path := folderDataSource.Path.ValueString()
+		traceAPICall("ListFolders")
 		apiResp, _, err := d.provider.service.ListFolders(ctx, &client.ListFoldersOptions{Path: &path})
 		if err != nil {
 			resp.Diagnostics.AddError(

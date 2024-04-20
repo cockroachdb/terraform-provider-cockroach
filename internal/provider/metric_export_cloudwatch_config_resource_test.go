@@ -199,6 +199,7 @@ func testMetricExportCloudWatchConfigExists(
 		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
+		traceAPICall("GetCloudWatchMetricExportInfo")
 		apiObj, _, err := p.service.GetCloudWatchMetricExportInfo(context.TODO(), clusterID)
 		if err == nil {
 			if string(apiObj.GetLogGroupName()) == rs.Primary.Attributes["log_group_name"] {

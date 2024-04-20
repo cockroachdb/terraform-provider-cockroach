@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"regexp"
+	"runtime"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -154,4 +156,17 @@ type Knowable interface {
 // IsKnown is a shortcut that checks in a value is neither null nor unknown.
 func IsKnown[T Knowable](t T) bool {
 	return !t.IsUnknown() && !t.IsNull()
+}
+
+// traceAPICall is a helper for debugging which api calls are happening when to
+// make it easier to determine for understanding what the provider framework is
+// doing and for determining which calls will need to be mocked in our tests.
+// Currently it relies on being manually called at each api call site which is
+// unfortunate.
+func traceAPICall(endpoint string) {
+	val, exists := os.LookupEnv("TRACE_API_CALLS")
+	if exists && val == "1" {
+		pc, _, _, _ := runtime.Caller(1)
+		fmt.Printf("CC API Call: %s (%s)\n", endpoint, runtime.FuncForPC(pc).Name())
+	}
 }

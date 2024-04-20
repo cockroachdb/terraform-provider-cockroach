@@ -132,6 +132,7 @@ func (r *apiOidcConfigResource) Create(
 		IdentityMap: identityMapFromTerraformState(apiOIdcConfigSpec.IdentityMap),
 	}
 
+	traceAPICall("CreateApiOidcConfig")
 	apiResp, _, err := r.provider.service.CreateApiOidcConfig(ctx, createRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -161,6 +162,7 @@ func (r *apiOidcConfigResource) Read(
 		return
 	}
 
+	traceAPICall("GetApiOidcConfig")
 	apiResp, httpResp, err := r.provider.service.GetApiOidcConfig(ctx, state.ID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -200,6 +202,7 @@ func (r *apiOidcConfigResource) Update(
 		return
 	}
 
+	traceAPICall("UpdateApiOidcConfig")
 	apiResp, _, err := r.provider.service.UpdateApiOidcConfig(ctx, plan.ID.ValueString(), &client.ApiOidcConfig1{
 		Audience:    plan.Audience.ValueString(),
 		Claim:       plan.Claim.ValueStringPointer(),
@@ -230,6 +233,7 @@ func (r *apiOidcConfigResource) Delete(
 		return
 	}
 
+	traceAPICall("DeleteApiOidcConfig")
 	_, _, err := r.provider.service.DeleteApiOidcConfig(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(

@@ -149,6 +149,7 @@ func testApiOidcConfig(
 			return fmt.Errorf("no ID is set")
 		}
 
+		traceAPICall("GetApiOidcConfig")
 		roleResp, _, err := p.service.GetApiOidcConfig(context.TODO(), rs.Primary.ID)
 		if err == nil {
 			respIdentityMap := *roleResp.IdentityMap

@@ -221,6 +221,7 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
+	traceAPICall("GetCluster")
 	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, clusterID)
 	if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(

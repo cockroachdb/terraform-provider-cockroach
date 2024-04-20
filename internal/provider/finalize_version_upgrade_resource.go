@@ -91,6 +91,7 @@ func (r *finalizeVersionUpgradeResource) Create(
 	}
 	clusterID := plan.ID.ValueString()
 
+	traceAPICall("GetCluster")
 	clusterObj, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError("Error retrieving cluster info", formatAPIErrorMessage(err))

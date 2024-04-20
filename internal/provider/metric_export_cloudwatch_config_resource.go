@@ -115,6 +115,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 
 	clusterID := plan.ID.ValueString()
 	// Check cluster
+	traceAPICall("GetCluster")
 	cluster, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -295,6 +296,7 @@ func (r *metricExportCloudWatchConfigResource) Read(
 			return
 		} else {
 			// Check cluster existence.
+			traceAPICall("GetCluster")
 			cluster, clusterHttpResp, clusterErr := r.provider.service.GetCluster(ctx, clusterID)
 			if clusterErr != nil {
 				if clusterHttpResp != nil && clusterHttpResp.StatusCode == http.StatusNotFound {

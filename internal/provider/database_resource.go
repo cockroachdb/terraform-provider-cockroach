@@ -114,6 +114,7 @@ func (r *databaseResource) Create(
 		return
 	}
 
+	traceAPICall("GetCluster")
 	_, _, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		resp.Diagnostics.AddError(

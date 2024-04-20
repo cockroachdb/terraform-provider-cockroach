@@ -171,6 +171,7 @@ func testRoleMembership(
 			return fmt.Errorf("no ID is set")
 		}
 
+		traceAPICall("GetAllRolesForUser")
 		roleResp, _, err := p.service.GetAllRolesForUser(context.TODO(), userId)
 		if err == nil {
 			for _, role := range roleResp.GetRoles() {

@@ -121,6 +121,7 @@ func (r *privateEndpointTrustedOwnerResource) Create(
 		plan.ExternalOwnerID.ValueString(),
 		client.PrivateEndpointTrustedOwnerTypeType(plan.Type.ValueString()),
 	)
+	traceAPICall("AddPrivateEndpointTrustedOwner")
 	addResp, _, err := r.provider.service.AddPrivateEndpointTrustedOwner(ctx, plan.ClusterID.ValueString(), addReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -169,6 +170,7 @@ func (r *privateEndpointTrustedOwnerResource) Read(
 		return
 	}
 
+	traceAPICall("GetPrivateEndpointTrustedOwner")
 	getResp, httpResp, err := r.provider.service.GetPrivateEndpointTrustedOwner(ctx, clusterID, ownerUUID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -221,6 +223,7 @@ func (r *privateEndpointTrustedOwnerResource) Delete(
 		return
 	}
 
+	traceAPICall("RemovePrivateEndpointTrustedOwner")
 	_, _, err := r.provider.service.RemovePrivateEndpointTrustedOwner(
 		ctx,
 		state.ClusterID.ValueString(),

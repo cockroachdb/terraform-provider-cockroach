@@ -112,6 +112,7 @@ func (r *userRoleGrantsResource) Create(
 		return
 	}
 
+	traceAPICall("GetAllRolesForUser")
 	_, _, err := r.provider.service.GetAllRolesForUser(ctx, roleGrantSpec.UserId.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -136,6 +137,7 @@ func (r *userRoleGrantsResource) Create(
 	var setRoleRequest client.CockroachCloudSetRolesForUserRequest
 	setRoleRequest.SetRoles(roles)
 
+	traceAPICall("SetRolesForUser")
 	_, _, err = r.provider.service.SetRolesForUser(ctx, roleGrantSpec.UserId.ValueString(), &setRoleRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -175,6 +177,7 @@ func (r *userRoleGrantsResource) Read(
 			PaginationPage:  &page,
 			PaginationLimit: &limit,
 		}
+		traceAPICall("ListRoleGrants")
 		apiResp, _, err := r.provider.service.ListRoleGrants(ctx, options)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -245,6 +248,7 @@ func (r *userRoleGrantsResource) Update(
 	var setRoleRequest client.CockroachCloudSetRolesForUserRequest
 	setRoleRequest.SetRoles(roles)
 
+	traceAPICall("SetRolesForUser")
 	apiResp, _, err := r.provider.service.SetRolesForUser(ctx, plan.UserId.ValueString(), &setRoleRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -270,6 +274,7 @@ func (r *userRoleGrantsResource) Delete(
 	}
 
 	emptyRoleRequest := &client.CockroachCloudSetRolesForUserRequest{}
+	traceAPICall("SetRolesForUser")
 	_, _, err := r.provider.service.SetRolesForUser(ctx, state.UserId.ValueString(), emptyRoleRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(

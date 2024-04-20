@@ -784,6 +784,7 @@ func testCheckCockroachClusterExists(resourceName string) resource.TestCheckFunc
 		id := rs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] projectID: %s, name %s", rs.Primary.Attributes["id"], rs.Primary.Attributes["name"])
 
+		traceAPICall("GetCluster")
 		if _, _, err := p.service.GetCluster(context.Background(), id); err == nil {
 			return nil
 		}

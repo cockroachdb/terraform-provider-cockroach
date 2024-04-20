@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
+- The [cockroach_service_account](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/service_account)
+  resource was added.
+
 - Added `delete_protection` to the Cluster resource and data source. When set
   to true, attempts to delete the cluster will fail. Set to false to disable
   delete protection.

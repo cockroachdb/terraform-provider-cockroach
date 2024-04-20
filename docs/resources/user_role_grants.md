@@ -3,12 +3,12 @@
 page_title: "cockroach_user_role_grants Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the userrolegrant user_role_grant resource for non-authoritative role grants.
+  Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the cockroachuserrole_grant user_role_grant resource for non-authoritative role grants.
 ---
 
 # cockroach_user_role_grants (Resource)
 
-Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [user_role_grant](user_role_grant) resource for non-authoritative role grants.
+Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [cockroach_user_role_grant](user_role_grant) resource for non-authoritative role grants.
 
 ## Example Usage
 

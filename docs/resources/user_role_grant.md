@@ -3,13 +3,13 @@
 page_title: "cockroach_user_role_grant Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  A role grant for a user. This resource is recommended to be used when a user's roles are managed across multiple terraform projects or in conjunction with console UI granted roles. For authoritative management over a user's roles, use the userrolegrants user_role_grants resource.
+  A role grant for a user. This resource is recommended to be used when a user's roles are managed across multiple terraform projects or in conjunction with console UI granted roles. For authoritative management over a user's roles, use the cockroachuserrole_grants user_role_grants resource.
   As with all terraform resources, care must be taken to limit management of the same resource to a single project.
 ---
 
 # cockroach_user_role_grant (Resource)
 
-A role grant for a user. This resource is recommended to be used when a user's roles are managed across multiple terraform projects or in conjunction with console UI granted roles. For authoritative management over a user's roles, use the [user_role_grants](user_role_grants) resource.
+A role grant for a user. This resource is recommended to be used when a user's roles are managed across multiple terraform projects or in conjunction with console UI granted roles. For authoritative management over a user's roles, use the [cockroach_user_role_grants](user_role_grants) resource.
 
  As with all terraform resources, care must be taken to limit management of the same resource to a single project.
 

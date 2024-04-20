@@ -167,6 +167,7 @@ func (d *connectionStringDataSource) Read(
 		Os:       &os,
 	}
 
+	traceAPICall("GetConnectionString")
 	apiResp, _, err := d.provider.service.GetConnectionString(ctx, config.ID.ValueString(), options)
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to retrieve cluster info", formatAPIErrorMessage(err))

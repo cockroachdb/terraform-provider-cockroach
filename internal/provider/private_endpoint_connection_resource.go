@@ -130,6 +130,7 @@ func (r *privateEndpointConnectionResource) Create(
 	}
 
 	svc := r.provider.service
+	traceAPICall("GetCluster")
 	cluster, _, err := svc.GetCluster(ctx, plan.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -143,6 +144,7 @@ func (r *privateEndpointConnectionResource) Create(
 		EndpointId: plan.EndpointID.ValueString(),
 	}
 
+	traceAPICall("AddPrivateEndpointConnection")
 	_, _, err = svc.AddPrivateEndpointConnection(ctx, cluster.Id, &addRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -185,6 +187,7 @@ func (r *privateEndpointConnectionResource) Read(
 		return
 	}
 
+	traceAPICall("ListPrivateEndpointConnections")
 	connections, _, err := r.provider.service.ListPrivateEndpointConnections(ctx, state.ClusterID.ValueString())
 	if err != nil {
 		diags.AddError("Unable to get endpoint connection status",
@@ -233,6 +236,7 @@ func (r *privateEndpointConnectionResource) Delete(
 		return
 	}
 
+	traceAPICall("DeletePrivateEndpointConnection")
 	httpResp, err := r.provider.service.DeletePrivateEndpointConnection(
 		ctx,
 		state.ClusterID.ValueString(),
@@ -278,6 +282,7 @@ func waitForEndpointConnectionCreatedFunc(
 	connection *client.PrivateEndpointConnection,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("ListPrivateEndpointConnections")
 		connections, httpResp, err := cl.ListPrivateEndpointConnections(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {

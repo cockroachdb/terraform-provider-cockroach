@@ -398,6 +398,7 @@ func (r *clusterResource) Create(
 	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
 		parentID := plan.ParentId.ValueString()
 		if parentID != "root" {
+			traceAPICall("GetFolder")
 			_, _, err := r.provider.service.GetFolder(ctx, parentID)
 			if err != nil {
 				resp.Diagnostics.AddError(
@@ -416,6 +417,7 @@ func (r *clusterResource) Create(
 	clusterSpec.SetDeleteProtection(deleteProtection)
 
 	clusterReq := client.NewCreateClusterRequest(plan.Name.ValueString(), client.CloudProviderType(plan.CloudProvider.ValueString()), *clusterSpec)
+	traceAPICall("CreateCluster")
 	clusterObj, _, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -473,6 +475,7 @@ func (r *clusterResource) Read(
 		return
 	}
 
+	traceAPICall("GetCluster")
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -615,6 +618,7 @@ func (r *clusterResource) Update(
 		// Validate that the target version is valid.
 		planVersion := plan.CockroachVersion.ValueString()
 		stateVersion := state.CockroachVersion.ValueString()
+		traceAPICall("ListMajorClusterVersions")
 		apiResp, _, err := r.provider.service.ListMajorClusterVersions(ctx, &client.ListMajorClusterVersionsOptions{})
 		if err != nil {
 			resp.Diagnostics.AddError("Couldn't retrieve CockroachDB version list", formatAPIErrorMessage(err))
@@ -654,6 +658,7 @@ func (r *clusterResource) Update(
 			return
 		}
 
+		traceAPICall("UpdateCluster")
 		clusterObj, _, err := r.provider.service.UpdateCluster(ctx, plan.ID.ValueString(), &client.UpdateClusterSpecification{
 			UpgradeStatus: &upgradeStatus,
 		})
@@ -751,6 +756,7 @@ func (r *clusterResource) Update(
 	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
 		parentID := plan.ParentId.ValueString()
 		if parentID != "root" {
+			traceAPICall("GetFolder")
 			_, _, err := r.provider.service.GetFolder(ctx, parentID)
 			if err != nil {
 				resp.Diagnostics.AddError(
@@ -773,6 +779,7 @@ func (r *clusterResource) Update(
 		clusterReq.SetDeleteProtection(deleteProtection)
 	}
 
+	traceAPICall("UpdateCluster")
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -822,6 +829,7 @@ func (r *clusterResource) Delete(
 	}
 	clusterID := state.ID.ValueString()
 
+	traceAPICall("DeleteCluster")
 	_, httpResp, err := r.provider.service.DeleteCluster(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -996,6 +1004,7 @@ func waitForClusterReadyFunc(
 	ctx context.Context, id string, cl client.Service, cluster *client.Cluster,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("GetCluster")
 		apiCluster, httpResp, err := cl.GetCluster(ctx, id)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
@@ -1025,6 +1034,7 @@ func waitForClusterLock(
 ) {
 	if state.State.ValueString() == string(client.CLUSTERSTATETYPE_LOCKED) {
 		tflog.Info(ctx, "Cluster is locked. Waiting for the operation to finish.")
+		traceAPICall("GetCluster")
 		clusterObj, _, err := s.GetCluster(ctx, state.ID.ValueString())
 		if err != nil {
 			diags.AddError("Couldn't retrieve cluster info", formatAPIErrorMessage(err))
@@ -1077,6 +1087,7 @@ func reconcileRegionUpdate(
 		}
 	}
 	if regionUpdateRequired {
+		traceAPICall("GetCluster")
 		cluster, _, err := service.GetCluster(ctx, clusterID)
 		if err != nil {
 			diags := diag.Diagnostics{}

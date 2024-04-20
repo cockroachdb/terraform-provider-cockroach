@@ -74,6 +74,7 @@ func (d *organizationDataSource) Read(ctx context.Context, req datasource.ReadRe
 		return
 	}
 
+	traceAPICall("GetOrganizationInfo")
 	apiOrg, _, err := d.provider.service.GetOrganizationInfo(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError("Error retrieving organization info", formatAPIErrorMessage(err))

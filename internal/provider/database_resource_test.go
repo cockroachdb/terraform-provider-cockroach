@@ -174,6 +174,7 @@ func testDatabaseExists(resourceName, clusterResourceName string) resource.TestC
 		clusterID := clusterRs.Primary.Attributes["id"]
 		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
 
+		traceAPICall("ListDatabases")
 		clusterResp, _, err := p.service.ListDatabases(context.TODO(), clusterID, &client.ListDatabasesOptions{})
 		if err == nil {
 			for _, database := range clusterResp.GetDatabases() {

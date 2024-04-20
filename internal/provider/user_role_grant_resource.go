@@ -114,6 +114,7 @@ func (r *userRoleGrantResource) Create(
 	// that case, the project would think it owns this resource when it should not.
 	// There is a race condition here where another process adds the resource
 	// after our check but before adding the role.
+	traceAPICall("GetAllRolesForUser")
 	rolesResp, _, err := r.provider.service.GetAllRolesForUser(ctx, plan.UserID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -132,6 +133,7 @@ func (r *userRoleGrantResource) Create(
 		}
 	}
 
+	traceAPICall("AddUserToRole")
 	_, _, err = r.provider.service.AddUserToRole(
 		ctx,
 		plan.UserID.ValueString(),
@@ -168,6 +170,7 @@ func (r *userRoleGrantResource) Read(
 
 	stateUserID := state.UserID.ValueString()
 
+	traceAPICall("GetAllRolesRoleUser")
 	apiResp, _, err := r.provider.service.GetAllRolesForUser(ctx, stateUserID)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -228,6 +231,7 @@ func (r *userRoleGrantResource) Delete(
 		return
 	}
 
+	traceAPICall("RemoveUserFromRole")
 	_, _, err := r.provider.service.RemoveUserFromRole(ctx, state.UserID.ValueString(), state.Role.ResourceType.ValueString(), state.Role.ResourceId.ValueString(), state.Role.RoleName.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(

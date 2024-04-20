@@ -275,6 +275,7 @@ func verifyRemainingRolesIntact(clusterResourceName string) resource.TestCheckFu
 		}
 		userID := clusterResource.Primary.Attributes["creator_id"]
 
+		traceAPICall("GetAllRolesRoleUser")
 		roleResp, _, err := p.service.GetAllRolesForUser(ctx, userID)
 		if err != nil {
 			return fmt.Errorf("error fetching roles for user %s: %s", userID, err.Error())
@@ -324,6 +325,7 @@ func testRoleGrantExists(
 			ResourceId:   types.StringValue(resourceID),
 		}
 
+		traceAPICall("GetAllRolesRoleUser")
 		roleResp, _, err := p.service.GetAllRolesForUser(ctx, userID)
 		if err != nil {
 			return fmt.Errorf("error fetching roles for user %s: %s", userID, err.Error())

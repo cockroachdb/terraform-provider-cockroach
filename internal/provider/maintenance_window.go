@@ -112,6 +112,7 @@ func (r *maintenanceWindowResource) Read(
 	}
 
 	clusterID := state.ID.ValueString()
+	traceAPICall("GetMaintenanceWindow")
 	mwinObj, httpResp, err := r.provider.service.GetMaintenanceWindow(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -184,6 +185,7 @@ func (r *maintenanceWindowResource) setMaintenanceWindow(
 	clientMaintenanceWindow := client.NewMaintenanceWindowWithDefaults()
 	clientMaintenanceWindow.OffsetDuration = fmt.Sprintf("%ds", maintenanceWindow.OffsetDuration.ValueInt64())
 	clientMaintenanceWindow.WindowDuration = fmt.Sprintf("%ds", maintenanceWindow.WindowDuration.ValueInt64())
+	traceAPICall("SetMaintenanceWindow")
 	_, _, err := r.provider.service.SetMaintenanceWindow(ctx, maintenanceWindow.ID.ValueString(), clientMaintenanceWindow)
 	if err != nil {
 		diags.AddError(
@@ -205,6 +207,7 @@ func (r *maintenanceWindowResource) Delete(
 		return
 	}
 	clusterID := state.ID.ValueString()
+	traceAPICall("DeleteMaintenanceWindow")
 	_, httpResp, err := r.provider.service.DeleteMaintenanceWindow(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {

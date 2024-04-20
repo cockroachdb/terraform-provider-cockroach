@@ -140,6 +140,7 @@ func (r *sqlUserResource) Create(
 		return
 	}
 
+	traceAPICall("GetCluster")
 	_, _, err := r.provider.service.GetCluster(ctx, sqlUserSpec.ClusterId.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -162,6 +163,7 @@ func (r *sqlUserResource) Create(
 		sqlUserRequest.Password = sqlUserSpec.Password.ValueString()
 	}
 
+	traceAPICall("CreateSQLUser")
 	_, _, err = r.provider.service.CreateSQLUser(ctx, sqlUserSpec.ClusterId.ValueString(), &sqlUserRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -204,6 +206,7 @@ func (r *sqlUserResource) Read(
 			PaginationLimit: &limit,
 		}
 
+		traceAPICall("ListSQLUsers")
 		apiResp, httpResp, err := r.provider.service.ListSQLUsers(ctx, state.ClusterId.ValueString(), options)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -272,6 +275,7 @@ func (r *sqlUserResource) Update(
 		}
 	} else {
 		updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.ValueString()}
+		traceAPICall("UpdateSQLUserPassword")
 		_, _, err := r.provider.service.UpdateSQLUserPassword(ctx, plan.ClusterId.ValueString(), plan.Name.ValueString(), &updateReq)
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -299,6 +303,7 @@ func (r *sqlUserResource) Delete(
 		return
 	}
 
+	traceAPICall("DeleteSQLUser")
 	_, httpResp, err := r.provider.service.DeleteSQLUser(ctx, state.ClusterId.ValueString(), state.Name.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {

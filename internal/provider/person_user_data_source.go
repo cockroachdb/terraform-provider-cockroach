@@ -82,6 +82,7 @@ func (d *personUserDataSource) Read(
 	}
 
 	email := user.Email.ValueString()
+	traceAPICall("GetPersonUsersByEmail")
 	apiPerson, _, err := d.provider.service.GetPersonUsersByEmail(ctx, &email)
 	if err != nil {
 		resp.Diagnostics.AddError("Error retrieving person user info", formatAPIErrorMessage(err))

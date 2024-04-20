@@ -157,6 +157,7 @@ func (r *privateEndpointServicesResource) Create(
 		return
 	}
 
+	traceAPICall("GetCluster")
 	cluster, _, err := r.provider.service.GetCluster(ctx, plan.ClusterID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -172,6 +173,7 @@ func (r *privateEndpointServicesResource) Create(
 	if cluster.Config.Serverless == nil {
 		// If private endpoint services already exist for this dedicated cluster,
 		// this is a no-op. The API will gracefully return the existing services.
+		traceAPICall("CreatePrivateEndpointServices")
 		_, _, err = r.provider.service.CreatePrivateEndpointServices(ctx, plan.ClusterID.ValueString())
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -217,6 +219,7 @@ func (r *privateEndpointServicesResource) Read(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	traceAPICall("ListPrivateEndpointServices")
 	apiResp, httpResp, err := r.provider.service.ListPrivateEndpointServices(ctx, state.ClusterID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -256,6 +259,7 @@ func loadEndpointServicesIntoTerraformState(
 			}
 		}
 
+		traceAPICall("GetAvailabilityZoneIds")
 		apiAZs := service.GetAvailabilityZoneIds()
 		azs := make([]types.String, len(apiAZs))
 		for j, az := range apiAZs {
@@ -307,6 +311,7 @@ func waitForEndpointServicesCreatedFunc(
 	services *client.PrivateEndpointServices,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
+		traceAPICall("ListPrivateEndpointServices")
 		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
 		if err != nil {
 			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {

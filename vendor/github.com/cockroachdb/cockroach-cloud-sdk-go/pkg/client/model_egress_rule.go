@@ -38,7 +38,7 @@ type EgressRule struct {
 	Id string `json:"id"`
 	// name is the name of the egress rule.
 	Name string `json:"name"`
-	// paths are the allowed URL paths. Only valid if Type=\"FQDN\".
+	// Deprecated: This field is ignored and will be removed in the next version. paths are the allowed URL paths. Only valid if Type=\"FQDN\".
 	Paths *[]string `json:"paths,omitempty"`
 	// ports are the allowed ports for TCP protocol. If Empty, all ports are allowed.
 	Ports *[]int32 `json:"ports,omitempty"`

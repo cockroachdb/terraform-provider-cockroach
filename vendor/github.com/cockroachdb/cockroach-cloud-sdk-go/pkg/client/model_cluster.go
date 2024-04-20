@@ -24,19 +24,20 @@ import (
 
 // Cluster struct for Cluster.
 type Cluster struct {
-	AccountId           *string                  `json:"account_id,omitempty"`
-	CloudProvider       CloudProviderType        `json:"cloud_provider"`
-	CockroachVersion    string                   `json:"cockroach_version"`
-	Config              ClusterConfig            `json:"config"`
-	CreatedAt           *time.Time               `json:"created_at,omitempty"`
-	CreatorId           string                   `json:"creator_id"`
-	DeletedAt           *time.Time               `json:"deleted_at,omitempty"`
-	EgressTrafficPolicy *EgressTrafficPolicyType `json:"egress_traffic_policy,omitempty"`
-	Id                  string                   `json:"id"`
-	Name                string                   `json:"name"`
-	NetworkVisibility   *NetworkVisibilityType   `json:"network_visibility,omitempty"`
-	OperationStatus     ClusterStatusType        `json:"operation_status"`
-	// Limited Access: The parent ID is a folder ID. A \"root\" valued parent ID  refers to a cluster at the root level.
+	AccountId           *string                    `json:"account_id,omitempty"`
+	CloudProvider       CloudProviderType          `json:"cloud_provider"`
+	CockroachVersion    string                     `json:"cockroach_version"`
+	Config              ClusterConfig              `json:"config"`
+	CreatedAt           *time.Time                 `json:"created_at,omitempty"`
+	CreatorId           string                     `json:"creator_id"`
+	DeleteProtection    *DeleteProtectionStateType `json:"delete_protection,omitempty"`
+	DeletedAt           *time.Time                 `json:"deleted_at,omitempty"`
+	EgressTrafficPolicy *EgressTrafficPolicyType   `json:"egress_traffic_policy,omitempty"`
+	Id                  string                     `json:"id"`
+	Name                string                     `json:"name"`
+	NetworkVisibility   *NetworkVisibilityType     `json:"network_visibility,omitempty"`
+	OperationStatus     ClusterStatusType          `json:"operation_status"`
+	// Limited Access: The parent ID is a folder ID. A \"root\" valued parent ID refers to a cluster at the root level.
 	ParentId *string  `json:"parent_id,omitempty"`
 	Plan     PlanType `json:"plan"`
 	Regions  []Region `json:"regions"`
@@ -161,6 +162,20 @@ func (o *Cluster) GetCreatorId() string {
 // SetCreatorId sets field value.
 func (o *Cluster) SetCreatorId(v string) {
 	o.CreatorId = v
+}
+
+// GetDeleteProtection returns the DeleteProtection field value if set, zero value otherwise.
+func (o *Cluster) GetDeleteProtection() DeleteProtectionStateType {
+	if o == nil || o.DeleteProtection == nil {
+		var ret DeleteProtectionStateType
+		return ret
+	}
+	return *o.DeleteProtection
+}
+
+// SetDeleteProtection gets a reference to the given DeleteProtectionStateType and assigns it to the DeleteProtection field.
+func (o *Cluster) SetDeleteProtection(v DeleteProtectionStateType) {
+	o.DeleteProtection = &v
 }
 
 // GetDeletedAt returns the DeletedAt field value if set, zero value otherwise.

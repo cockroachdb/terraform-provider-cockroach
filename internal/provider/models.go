@@ -311,6 +311,14 @@ type IdentityMapEntry struct {
 	IsRegex       types.Bool   `tfsdk:"is_regex"`
 }
 
+type ServiceAccount struct {
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	CreatedAt   types.String `tfsdk:"created_at"`
+	CreatorName types.String `tfsdk:"creator_name"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

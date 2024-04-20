@@ -37,7 +37,7 @@ func (r *userRoleGrantResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "A role grant for a user. This resource is recommended to be used when a user's roles are managed across multiple terraform projects or in conjunction with console UI granted roles. For authoritative management over a user's roles, use the [user_role_grants](user_role_grants) resource.\n\n As with all terraform resources, care must be taken to limit management of the same resource to a single project.",
+		MarkdownDescription: "A role grant for a user. This resource is recommended to be used when a user's roles are managed across multiple terraform projects or in conjunction with console UI granted roles. For authoritative management over a user's roles, use the [cockroach_user_role_grants](user_role_grants) resource.\n\n As with all terraform resources, care must be taken to limit management of the same resource to a single project.",
 		Attributes: map[string]schema.Attribute{
 			"user_id": schema.StringAttribute{
 				Required:    true,

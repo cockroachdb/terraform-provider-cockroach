@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Added
 
+- The [cockroach_api_key](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/api_key) resource was added.
+
 - The [cockroach_service_account](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/service_account) resource was added.
 
 ## [1.4.1] - 2024-04-04

@@ -299,8 +299,6 @@ func (r *databaseResource) ImportState(
 		resp.Diagnostics.AddError(
 			"Invalid database ID format",
 			`When importing a database, the ID field should follow the format "<cluster ID>:<database name>")`)
-	}
-	if resp.Diagnostics.HasError() {
 		return
 	}
 

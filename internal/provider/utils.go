@@ -16,6 +16,7 @@ import (
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/stretchr/testify/require"
 )
@@ -90,10 +91,20 @@ const uuidRegexString = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f
 
 var uuidRegex = regexp.MustCompile(uuidRegexString)
 
-var uuidValidator = stringvalidator.RegexMatches(
+// uuidValidator is an array of string validators containing just the one
+// specific uuid validator. Its specified in this array format for convenience
+// because all current and expected future uses won't combine this with other
+// validators and it allows using it like so:
+//
+//   "some_id": schema.StringAttribute{
+//       Description:   "the description.",
+//       Optional:      true,
+//       Validators:    uuidValidator,
+//    },
+var uuidValidator = []validator.String{stringvalidator.RegexMatches(
 	uuidRegex,
 	"must match UUID format",
-)
+)}
 
 // retryGetRequests implements the retryable-http CheckRetry type.
 func retryGetRequestsOnly(ctx context.Context, resp *http.Response, err error) (bool, error) {

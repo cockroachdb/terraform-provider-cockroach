@@ -263,8 +263,6 @@ func (r *privateEndpointConnectionResource) ImportState(
 		resp.Diagnostics.AddError(
 			"Invalid private endpoint connection ID format",
 			`When importing a private endpoint connection, the ID field should follow the format "<cluster ID>:<endpoint ID>")`)
-	}
-	if resp.Diagnostics.HasError() {
 		return
 	}
 	connection := PrivateEndpointConnection{

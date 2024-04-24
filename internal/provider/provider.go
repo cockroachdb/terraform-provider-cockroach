@@ -145,6 +145,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewFolderResource,
 		NewApiOidcConfigResource,
 		NewServiceAccountResource,
+		NewAPIKeyResource,
 	}
 }
 

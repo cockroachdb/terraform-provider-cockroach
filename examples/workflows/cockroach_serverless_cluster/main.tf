@@ -67,3 +67,28 @@ resource "cockroach_database" "example" {
   name       = "example-database"
   cluster_id = cockroach_cluster.example.id
 }
+
+resource "cockroach_service_account" "example_scoped_sa" {
+  name        = "example-scoped-service-account"
+  description = "A service account providing limited read access to single cluster."
+}
+
+resource "cockroach_user_role_grant" "example_limited_access_scoped_grant" {
+  user_id = cockroach_service_account.example_scoped_sa.id
+  role = {
+    role_name     = "CLUSTER_OPERATOR_WRITER",
+    resource_type = "CLUSTER",
+    resource_id   = cockroach_cluster.example.id
+  }
+}
+
+resource "cockroach_api_key" "example_cluster_op_key_v1" {
+  name               = "example-cluster-operator-key-v1"
+  service_account_id = cockroach_service_account.example_scoped_sa.id
+}
+
+output "example_cluster_op_key_v1_secret" {
+  value       = cockroach_api_key.example_cluster_op_key_v1.secret
+  description = "The api key for example_cluster_op_key_v1_secret"
+  sensitive   = true
+}

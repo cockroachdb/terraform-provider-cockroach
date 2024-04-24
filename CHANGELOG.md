@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.6.0] - 2024-05-02
+
 ## Added
+
+- The [cockroach_api_key](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/api_key) 
+  resource was added.
 
 - The [cockroach_service_account](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/service_account)
   resource was added.
@@ -16,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to true, attempts to delete the cluster will fail. Set to false to disable
   delete protection.
 
-## [1.5.0] - 2024-05-26
+## [1.5.0] - 2024-04-26
 
 - No changes.
 

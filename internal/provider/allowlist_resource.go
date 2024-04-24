@@ -334,6 +334,7 @@ func (r *allowListResource) ImportState(
 		resp.Diagnostics.AddError(
 			"Invalid allowlist entry ID format",
 			`When importing an allowlist entry, the ID field should follow the format "<cluster ID>:<CIDR IP>/<CIDR mask>")`)
+		return
 	}
 	// We can swallow this error because it's already been regex-validated.
 	mask, _ = strconv.Atoi(matches[4])

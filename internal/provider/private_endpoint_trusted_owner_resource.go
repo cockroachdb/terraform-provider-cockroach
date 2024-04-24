@@ -254,8 +254,6 @@ func (r *privateEndpointTrustedOwnerResource) ImportState(
 		resp.Diagnostics.AddError(
 			"Invalid trusted owner terraform ID format",
 			`When importing a trusted owner entry, the ID field should follow the format "<cluster ID>:<owner ID>")`)
-	}
-	if resp.Diagnostics.HasError() {
 		return
 	}
 	resp.Diagnostics = resp.State.Set(ctx, &PrivateEndpointTrustedOwner{

@@ -27,7 +27,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -50,7 +49,7 @@ func (d *folderDataSource) Schema(
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The id the folder.",
 				Optional:            true,
-				Validators:          []validator.String{uuidValidator},
+				Validators:          uuidValidator,
 			},
 			"path": schema.StringAttribute{
 				MarkdownDescription: "An absolute path to the folder. Trailing slashes are optional. (i.e. /folder1/folder2)",

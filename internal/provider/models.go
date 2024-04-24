@@ -318,6 +318,14 @@ type ServiceAccount struct {
 	CreatorName types.String `tfsdk:"creator_name"`
 }
 
+type APIKey struct {
+	ID               types.String `tfsdk:"id"`
+	Name             types.String `tfsdk:"name"`
+	ServiceAccountID types.String `tfsdk:"service_account_id"`
+	CreatedAt        types.String `tfsdk:"created_at"`
+	Secret           types.String `tfsdk:"secret"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

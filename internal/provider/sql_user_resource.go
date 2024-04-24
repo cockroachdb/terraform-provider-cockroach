@@ -332,8 +332,6 @@ func (r *sqlUserResource) ImportState(
 		resp.Diagnostics.AddError(
 			"Invalid SQL user ID format",
 			`When importing a SQL user, the ID field should follow the format "<cluster ID>:<SQL user name>")`)
-	}
-	if resp.Diagnostics.HasError() {
 		return
 	}
 	sqlUser := SQLUser{

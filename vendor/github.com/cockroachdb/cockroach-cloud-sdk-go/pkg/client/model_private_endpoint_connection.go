@@ -28,19 +28,22 @@ type PrivateEndpointConnection struct {
 	// external_owner_id uniquely identifies the owner of the private endpoint connection cloud resource. This idenfier is the AWS account id owning the PrivateLink connection. This field is only valid on AWS clusters.
 	ExternalOwnerId *string `json:"external_owner_id,omitempty"`
 	// region_name is the cloud provider region name (e.g. us-east-1).
-	RegionName *string                         `json:"region_name,omitempty"`
-	Status     PrivateEndpointConnectionStatus `json:"status"`
+	RegionName *string `json:"region_name,omitempty"`
+	// service_name is the name of the private endpoints service that this connection corresponds to.
+	ServiceName string                          `json:"service_name"`
+	Status      PrivateEndpointConnectionStatus `json:"status"`
 }
 
 // NewPrivateEndpointConnection instantiates a new PrivateEndpointConnection object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPrivateEndpointConnection(cloudProvider CloudProviderType, endpointId string, endpointServiceId string, status PrivateEndpointConnectionStatus) *PrivateEndpointConnection {
+func NewPrivateEndpointConnection(cloudProvider CloudProviderType, endpointId string, endpointServiceId string, serviceName string, status PrivateEndpointConnectionStatus) *PrivateEndpointConnection {
 	p := PrivateEndpointConnection{}
 	p.CloudProvider = cloudProvider
 	p.EndpointId = endpointId
 	p.EndpointServiceId = endpointServiceId
+	p.ServiceName = serviceName
 	p.Status = status
 	return &p
 }
@@ -124,6 +127,21 @@ func (o *PrivateEndpointConnection) GetRegionName() string {
 // SetRegionName gets a reference to the given string and assigns it to the RegionName field.
 func (o *PrivateEndpointConnection) SetRegionName(v string) {
 	o.RegionName = &v
+}
+
+// GetServiceName returns the ServiceName field value.
+func (o *PrivateEndpointConnection) GetServiceName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.ServiceName
+}
+
+// SetServiceName sets field value.
+func (o *PrivateEndpointConnection) SetServiceName(v string) {
+	o.ServiceName = v
 }
 
 // GetStatus returns the Status field value.

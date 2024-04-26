@@ -11,6 +11,7 @@ resource "cockroach_cluster" "dedicated" {
       node_count = 1
     }
   ]
+  delete_protection = true
 }
 
 resource "cockroach_cluster" "serverless" {
@@ -24,4 +25,5 @@ resource "cockroach_cluster" "serverless" {
       name = "us-east1"
     }
   ]
+  delete_protection = false
 }

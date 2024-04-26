@@ -35,6 +35,7 @@ data "cockroach_cluster" "cockroach" {
 - `cockroach_version` (String) Full version of CockroachDB running on the cluster.
 - `creator_id` (String) ID of the user who created the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
+- `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
 - `id` (String) The ID of this resource.
 - `name` (String) Name of the cluster.
 - `operation_status` (String) Describes the current long-running operation, if any.

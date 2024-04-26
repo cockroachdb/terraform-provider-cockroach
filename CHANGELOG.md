@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- Added `delete_protection` to the Cluster resource and data source. When set
+  to true, attempts to delete the cluster will fail. Set to false to disable
+  delete protection.
+
+## [1.5.0] - 2024-05-26
+
+- No changes.
+
 ## [1.4.1] - 2024-04-04
 
 ## Added

@@ -58,6 +58,7 @@ resource "cockroach_cluster" "serverless" {
 
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
+- `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 

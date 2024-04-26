@@ -247,6 +247,11 @@ func (r *clusterResource) Schema(
 					validators.FolderParentID(),
 				},
 			},
+			"delete_protection": schema.BoolAttribute{
+				Computed:    true,
+				Optional:    true,
+				Description: "Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.",
+			},
 		},
 	}
 }
@@ -404,6 +409,12 @@ func (r *clusterResource) Create(
 		clusterSpec.SetParentId(parentID)
 	}
 
+	deleteProtection := client.DELETEPROTECTIONSTATETYPE_DISABLED
+	if plan.DeleteProtection.ValueBool() {
+		deleteProtection = client.DELETEPROTECTIONSTATETYPE_ENABLED
+	}
+	clusterSpec.SetDeleteProtection(deleteProtection)
+
 	clusterReq := client.NewCreateClusterRequest(plan.Name.ValueString(), client.CloudProviderType(plan.CloudProvider.ValueString()), *clusterSpec)
 	clusterObj, _, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
@@ -513,33 +524,48 @@ func (r *clusterResource) ModifyPlan(
 	var plan *CockroachCluster
 	diags = req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() || plan == nil {
+	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if plan.Name != state.Name {
-		resp.Diagnostics.AddError("Cannot update cluster name",
-			"To prevent accidental deletion of data, renaming clusters isn't allowed. "+
-				"Please explicitly destroy this cluster before changing its name.")
+	if plan != nil {
+		if plan.Name != state.Name {
+			resp.Diagnostics.AddError("Cannot update cluster name",
+				"To prevent accidental deletion of data, renaming clusters isn't allowed. "+
+					"Please explicitly destroy this cluster before changing its name.")
+		}
+		if plan.CloudProvider != state.CloudProvider {
+			resp.Diagnostics.AddError("Cannot update cluster cloud provider",
+				"To prevent accidental deletion of data, changing a cluster's cloud provider "+
+					"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
+		}
+		if ((plan.DedicatedConfig == nil) != (state.DedicatedConfig == nil)) ||
+			((plan.ServerlessConfig == nil) != (state.ServerlessConfig == nil)) {
+			resp.Diagnostics.AddError("Cannot update cluster plan type",
+				"To prevent accidental deletion of data, changing a cluster's plan type "+
+					"isn't allowed. Please explicitly destroy this cluster before changing between "+
+					"dedicated and serverless plans.")
+			return
+		}
+		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.PrivateNetworkVisibility != state.DedicatedConfig.PrivateNetworkVisibility {
+			resp.Diagnostics.AddError("Cannot update network visibility",
+				"To prevent accidental deletion of data, changing a cluster's network "+
+					"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
+					"network visibility.")
+		}
 	}
-	if plan.CloudProvider != state.CloudProvider {
-		resp.Diagnostics.AddError("Cannot update cluster cloud provider",
-			"To prevent accidental deletion of data, changing a cluster's cloud provider "+
-				"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
-	}
-	if ((plan.DedicatedConfig == nil) != (state.DedicatedConfig == nil)) ||
-		((plan.ServerlessConfig == nil) != (state.ServerlessConfig == nil)) {
-		resp.Diagnostics.AddError("Cannot update cluster plan type",
-			"To prevent accidental deletion of data, changing a cluster's plan type "+
-				"isn't allowed. Please explicitly destroy this cluster before changing between "+
-				"dedicated and serverless plans.")
-		return
-	}
-	if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.PrivateNetworkVisibility != state.DedicatedConfig.PrivateNetworkVisibility {
-		resp.Diagnostics.AddError("Cannot update network visibility",
-			"To prevent accidental deletion of data, changing a cluster's network "+
-				"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
-				"network visibility.")
+
+	if req.Plan.Raw.IsNull() {
+		// This is a plan to destroy the cluster. We'll check if this cluster
+		// has delete protection enabled and throw an error here if it does.
+		// This causes the apply to fail _before_ taking any action, which
+		// prevents _other_ resources peripheral to the cluster from being
+		// destroyed as well.
+		if state.DeleteProtection.ValueBool() {
+			resp.Diagnostics.AddError("Cannot destroy cluster with delete protection enabled",
+				"To prevent accidental deletion of data, destroying a cluster with delete protection "+
+					"enabled isn't allowed. Please disable delete protection before destroying this cluster.")
+		}
 	}
 }
 
@@ -736,6 +762,17 @@ func (r *clusterResource) Update(
 		clusterReq.SetParentId(parentID)
 	}
 
+	if !(plan.DeleteProtection.IsNull() || plan.DeleteProtection.IsUnknown()) &&
+		plan.DeleteProtection.ValueBool() != state.DeleteProtection.ValueBool() {
+		var deleteProtection client.DeleteProtectionStateType
+		if plan.DeleteProtection.ValueBool() {
+			deleteProtection = client.DELETEPROTECTIONSTATETYPE_ENABLED
+		} else {
+			deleteProtection = client.DELETEPROTECTIONSTATETYPE_DISABLED
+		}
+		clusterReq.SetDeleteProtection(deleteProtection)
+	}
+
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -880,6 +917,13 @@ func loadClusterToTerraformState(
 		state.ParentId = types.StringNull()
 	} else {
 		state.ParentId = types.StringValue(*clusterObj.ParentId)
+	}
+
+	if clusterObj.DeleteProtection != nil &&
+		*clusterObj.DeleteProtection == client.DELETEPROTECTIONSTATETYPE_ENABLED {
+		state.DeleteProtection = types.BoolValue(true)
+	} else {
+		state.DeleteProtection = types.BoolValue(false)
 	}
 
 	if clusterObj.Config.Serverless != nil {

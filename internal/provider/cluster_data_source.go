@@ -19,10 +19,11 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"net/http"
 )
 
 type clusterDataSource struct {
@@ -164,6 +165,10 @@ func (d *clusterDataSource) Schema(
 			"parent_id": schema.StringAttribute{
 				Computed:            true,
 				MarkdownDescription: "The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.",
+			},
+			"delete_protection": schema.BoolAttribute{
+				Computed:    true,
+				Description: "Set to true to enable delete protection on the cluster.",
 			},
 		},
 	}

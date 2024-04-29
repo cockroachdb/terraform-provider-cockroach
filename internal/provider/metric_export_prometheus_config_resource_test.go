@@ -3,27 +3,17 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"testing"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"log"
-	"net/http"
-	"os"
-	"testing"
 )
-
-// TestAccMetricExportPrometheusConfigResource attempts to create, check, and destroy
-// a real cluster. It will be skipped if TF_ACC isn't set.
-func TestAccMetricExportPrometheusConfigResource(t *testing.T) {
-	t.Skip("Skipping until we can either integrate the AWS provider " +
-		"or import a permanent test fixture.")
-	t.Parallel()
-	clusterName := fmt.Sprintf("%s-prometheus-%s", tfTestPrefix, GenerateRandomString(4))
-	testMetricExportPrometheusConfigResource(t, clusterName, false)
-}
 
 // TestIntegrationMetricExportPrometheusConfigResource attempts to create, check,
 // and destroy a cluster, but uses a mocked API service.
@@ -159,8 +149,6 @@ func testMetricExportPrometheusConfigExists(
 		}
 
 		clusterID := clusterRs.Primary.Attributes["id"]
-		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
-
 		_, _, err := p.service.GetPrometheusMetricExportInfo(context.TODO(), clusterID)
 		if err == nil {
 			return nil

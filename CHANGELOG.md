@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2024-05-17
+
 ## Added
 
 - New `cockroach_metric_export_prometheus_config` resource allows user to configure prometheus metric
@@ -26,7 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   to true, attempts to delete the cluster will fail. Set to false to disable
   delete protection.
 
-## [1.5.0] - 2024-05-26
+## [1.5.0] - 2024-04-26
 
 - No changes.
 

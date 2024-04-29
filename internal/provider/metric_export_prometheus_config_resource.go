@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -13,8 +17,12 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-	"net/http"
-	"strings"
+)
+
+const (
+	metricExportEnableTimeout  = time.Minute      // This request just triggers an async job that rolls out the integration
+	metricExportDisableTimeout = time.Minute      // Same as above. Different job, but the HTTP request behaves the same.
+	metricExportStableTimeout  = 10 * time.Minute // This might take a while. Stability here means the integration is up and running
 )
 
 var metricExportPrometheusConfigAttributes = map[string]schema.Attribute{
@@ -105,7 +113,7 @@ func (r *metricExportPrometheusConfigResource) Create(
 	}
 
 	apiObj := &client.PrometheusMetricExportInfo{}
-	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnablePrometheusMetricExport(
+	err = retry.RetryContext(ctx, metricExportEnableTimeout, retryEnablePrometheusMetricExport(
 		ctx, r.provider.service, clusterID, cluster,
 		apiObj,
 	))
@@ -116,7 +124,7 @@ func (r *metricExportPrometheusConfigResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, metricExportStableTimeout,
 		waitForPrometheusMetricExportStableFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -183,7 +191,10 @@ func retryEnablePrometheusMetricExport(
 }
 
 func loadPrometheusMetricExportIntoTerraformState(
-	ID types.String, status types.String, targets types.Map, state *ClusterPrometheusMetricExportConfig,
+	ID types.String,
+	status types.String,
+	targets types.Map,
+	state *ClusterPrometheusMetricExportConfig,
 ) {
 	state.ID = ID
 	state.Status = status
@@ -199,12 +210,15 @@ func waitForPrometheusMetricExportStableFunc(
 	return func() *retry.RetryError {
 		apiObj, httpResp, err := cl.GetPrometheusMetricExportInfo(ctx, clusterID)
 		if err != nil {
-			if httpResp != nil && httpResp.StatusCode < http.StatusServiceUnavailable {
+			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
 				return retry.NonRetryableError(fmt.Errorf(
 					"error getting Prometheus metric export info: %s", formatAPIErrorMessage(err)))
 			} else {
+				// if this is a server error, we should retry
+				tflog.Error(ctx, "encountered a server error while refreshing Prometheus metric export status. Retrying...")
 				return retry.RetryableError(fmt.Errorf(
-					"encountered a server error while reading Prometheus metric export status - trying again"))
+					"encountered a server error while refreshing Prometheus metric export status",
+				))
 			}
 		}
 
@@ -306,7 +320,7 @@ func (r *metricExportPrometheusConfigResource) Delete(
 
 	clusterID := state.ID.ValueString()
 	cluster := &client.Cluster{}
-	retryFunc := func() retry.RetryFunc {
+	deletePromMetricExport := func() retry.RetryFunc {
 		return func() *retry.RetryError {
 			apiObj, httpResp, err := r.provider.service.DeletePrometheusMetricExport(ctx, clusterID)
 			if err != nil {
@@ -341,7 +355,7 @@ func (r *metricExportPrometheusConfigResource) Delete(
 
 			if apiObj.GetStatus() == client.METRICEXPORTSTATUSTYPE_DISABLING {
 				// We are passing empty PrometheusMetricExportInfo object as we don't need it in stage management.
-				err = retry.RetryContext(ctx, clusterUpdateTimeout,
+				err = retry.RetryContext(ctx, metricExportStableTimeout,
 					waitForPrometheusMetricExportStableFunc(ctx, clusterID, r.provider.service, client.NewPrometheusMetricExportInfoWithDefaults()))
 				if err != nil {
 					resp.Diagnostics.AddError(
@@ -355,7 +369,7 @@ func (r *metricExportPrometheusConfigResource) Delete(
 		}
 	}
 
-	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
+	err := retry.RetryContext(ctx, metricExportDisableTimeout, deletePromMetricExport())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting Prometheus metric export config", err.Error(),

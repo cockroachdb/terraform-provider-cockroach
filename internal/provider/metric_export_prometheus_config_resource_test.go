@@ -3,23 +3,19 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"os"
+	"testing"
+
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"log"
-	"net/http"
-	"os"
-	"testing"
 )
 
-// TestAccMetricExportPrometheusConfigResource attempts to create, check, and destroy
-// a real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccMetricExportPrometheusConfigResource(t *testing.T) {
-	t.Skip("Skipping until we can either integrate the AWS provider " +
-		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-prometheus-%s", tfTestPrefix, GenerateRandomString(4))
 	testMetricExportPrometheusConfigResource(t, clusterName, false)
@@ -45,7 +41,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
 		Plan:             "DEDICATED",
-		CloudProvider:    "AWS",
+		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
@@ -149,7 +145,7 @@ func testMetricExportPrometheusConfigExists(
 		p := testAccProvider.(*provider)
 		p.service = NewService(cl)
 
-		rs, ok := s.RootModule().Resources[resourceName]
+		_, ok := s.RootModule().Resources[resourceName]
 		if !ok {
 			return fmt.Errorf("not found: %s", resourceName)
 		}
@@ -159,14 +155,16 @@ func testMetricExportPrometheusConfigExists(
 		}
 
 		clusterID := clusterRs.Primary.Attributes["id"]
-		log.Printf("[DEBUG] clusterID: %s, name %s", clusterRs.Primary.Attributes["id"], clusterRs.Primary.Attributes["name"])
-
-		_, _, err := p.service.GetPrometheusMetricExportInfo(context.TODO(), clusterID)
-		if err == nil {
-			return nil
+		config, _, err := p.service.GetPrometheusMetricExportInfo(context.TODO(), clusterID)
+		if err != nil {
+			return fmt.Errorf("metric export Prometheus config does not exist")
 		}
 
-		return fmt.Errorf("metric export Prometheus config with site %s does not exist", rs.Primary.Attributes["site"])
+		if config.GetStatus() != client.METRICEXPORTSTATUSTYPE_ENABLED {
+			return fmt.Errorf("metric export Prometheus config is not enabled")
+		}
+
+		return nil
 	}
 }
 
@@ -174,7 +172,7 @@ func getTestMetricExportPrometheusConfigResourceCreateConfig(name string) string
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
-  cloud_provider = "AWS"
+  cloud_provider = "GCP"
   dedicated = {
     storage_gib = 35
   	num_virtual_cpus = 4
@@ -195,7 +193,7 @@ func getTestMetricExportPrometheusConfigResourceUpdateConfig(name string) string
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
-  cloud_provider = "AWS"
+  cloud_provider = "GCP"
   dedicated = {
     storage_gib = 35
   	num_virtual_cpus = 4

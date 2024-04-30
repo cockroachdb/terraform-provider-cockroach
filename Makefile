@@ -3,7 +3,7 @@ HOSTNAME=registry.terraform.io
 NAMESPACE=cockroachdb
 NAME=cockroach
 BINARY=terraform-provider-${NAME}
-VERSION=0.4.3
+VERSION=1.6.0
 OS_ARCH=darwin_amd64
 
 default: install

@@ -26,6 +26,7 @@ resource "cockroach_cluster" "dedicated" {
       node_count = 1
     }
   ]
+  delete_protection = true
 }
 
 resource "cockroach_cluster" "serverless" {
@@ -39,6 +40,7 @@ resource "cockroach_cluster" "serverless" {
       name = "us-east1"
     }
   ]
+  delete_protection = false
 }
 ```
 
@@ -58,7 +60,7 @@ resource "cockroach_cluster" "serverless" {
 
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
-- `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
+- `delete_protection` (Boolean) Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 

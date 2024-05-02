@@ -63,3 +63,26 @@ jobs:
 
       - name: Build terraform-provider
         run: make install
+
+  docs-check:
+    name: docs-generated-check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Build docs
+        run: make generate
+
+      - name: Check changed files
+        id: changed-files
+        run: |
+          changed_files=$(git diff --name-only | xargs)
+          if [ "${#changed_files}" -gt "0" ]; then
+            echo "Unexpected changes found in the repo, did you remember to run \`make generate\`?" > $GITHUB_STEP_SUMMARY
+            echo "Changed files:" >> $GITHUB_STEP_SUMMARY
+            for file in ${changed_files}; do
+              echo "\`$file\`" >> $GITHUB_STEP_SUMMARY
+            done
+            exit 1
+          fi

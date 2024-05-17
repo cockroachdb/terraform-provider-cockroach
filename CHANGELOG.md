@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.0] - 2024-05-17
+
+## Added
+
+- New `cockroach_metric_export_prometheus_config` resource allows user to configure prometheus metric
+  export integration in AWS and GCP cloud providers.
+
 ## [1.6.0] - 2024-05-02
 
 ## Added

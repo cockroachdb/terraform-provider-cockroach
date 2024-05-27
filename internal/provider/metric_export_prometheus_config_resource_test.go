@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"net/http"
 	"os"
 	"testing"
@@ -53,7 +54,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-east-1",
+				Name:      "us-east1",
 				NodeCount: 3,
 			},
 		},
@@ -76,7 +77,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		Return(cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
+		Times(4)
 	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID, gomock.Any()).
 		Return(createdPrometheusClusterInfo, nil, nil)
 	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
@@ -86,7 +87,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 	// Update
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(cluster, nil, nil).
-		Times(2)
+		Times(3)
 	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
 		Return(createdPrometheusClusterInfo, nil, nil)
 	// It should not invoke EnablePrometheusMetricExport as request contains clusterID
@@ -164,6 +165,24 @@ func testMetricExportPrometheusConfigExists(
 			return fmt.Errorf("metric export Prometheus config is not enabled")
 		}
 
+		/*
+			Metric export changes take cluster lock. We are cleaning resource immediately as part of test cleanup.
+			This is causing failure intermittently as cluster lock might have not been released. We are checking & retrying
+			cluster state before destroy.
+		*/
+		cluster, _, err := p.service.GetCluster(context.TODO(), clusterID)
+		if err != nil {
+			return fmt.Errorf("fetching cluster details failed")
+		}
+
+		if cluster.GetState() == client.CLUSTERSTATETYPE_LOCKED {
+			err = retry.RetryContext(context.TODO(), metricExportEnableTimeout,
+				waitForClusterReadyFunc(context.TODO(), clusterID, p.service, cluster))
+			if err != nil {
+				return fmt.Errorf("error in checking cluster state")
+			}
+		}
+
 		return nil
 	}
 }
@@ -178,7 +197,7 @@ resource "cockroach_cluster" "test" {
   	num_virtual_cpus = 4
   }
   regions = [{
-    name = "us-east-1"
+    name = "us-east1"
     node_count: 3
   }]
 }
@@ -199,7 +218,7 @@ resource "cockroach_cluster" "test" {
   	num_virtual_cpus = 4
   }
   regions = [{
-    name = "us-east-1"
+    name = "us-east1"
     node_count: 3
   }]
 }

@@ -169,6 +169,10 @@ func IsKnown[T Knowable](t T) bool {
 	return !t.IsUnknown() && !t.IsNull()
 }
 
+func ptr[T any](in T) *T {
+	return &in
+}
+
 // traceAPICall is a helper for debugging which api calls are happening when to
 // make it easier to determine for understanding what the provider framework is
 // doing and for determining which calls will need to be mocked in our tests.

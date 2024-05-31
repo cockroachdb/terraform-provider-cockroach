@@ -953,7 +953,3 @@ func TestClusterSchemaInSync(t *testing.T) {
 	dAttrs := dSchema.Schema.Attributes
 	CheckSchemaAttributesMatch(t, rAttrs, dAttrs)
 }
-
-func ptr[T any](in T) *T {
-	return &in
-}

@@ -36,7 +36,7 @@ resource "cockroach_allow_list" "vpn" {
 
 ### Optional
 
-- `name` (String) Name of this allowlist entry.
+- `name` (String) Name of this allowlist entry. If not set explicitly, this value does not sync with the server.
 
 ### Read-Only
 

@@ -187,14 +187,13 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&cluster, nil, nil)
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-				Times(4)
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 			s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
+			// Called by testAllowlistEntryExists
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
-				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).
-				Times(3)
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil)
 
-			// Update
+			// Update 1
 			// The OpenAPI generator does something weird when part of an object lives in the URL
 			// and the rest in the request body, and it winds up as a partial object.
 			newEntryForUpdate := &client.AllowlistEntry1{
@@ -202,13 +201,62 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				Sql:  newEntry.Sql,
 				Ui:   newEntry.Ui,
 			}
+			// GetCluster and ListAllowListEntries called for each allow list entry
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(2)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).Times(2)
+			// One allowlist was updated
 			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntryForUpdate).
 				Return(&newEntry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			// Called by testAllowlistEntryExists
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).
-				Times(3)
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil)
+
+			// Update 2 - nil name (this should not make an update)
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil)
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).Times(2)
+
+			// Update 3 - add name back but make it empty string (this should an update)
+			newEntry2Update := &client.AllowlistEntry1{
+				Name: ptr(""),
+				Sql:  newEntry.Sql,
+				Ui:   newEntry.Ui,
+			}
+			newEntry2 := newEntry
+			newEntry2.Name = ptr("")
+
+			// Two pairs of these, one for each allowlist
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(2)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).Times(2)
+			// One allowlist was updated
+			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntry2Update).
+				Return(&newEntry2, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			// Called by testAllowlistEntryExists
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry2}}, nil, nil)
+
+			// Update 4 - Update to empty string again (no churn)
+			// Two pairs of these, one for each allowlist
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(2)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry2}}, nil, nil).Times(3)
 
 			// Delete
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry2}}, nil, nil).
+				Times(2)
 			s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
 			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
@@ -232,6 +280,11 @@ func testAllowlistEntryResource(
 	var clusterResourceName string
 	var allowlistEntryResourceConfigFn func(string, *client.AllowlistEntry) string
 	var uiVal string
+	entryWithNilName := newEntry
+	entryWithNilName.Name = nil
+	entryWithEmptyStringName := newEntry
+	entryWithEmptyStringName.Name = ptr("")
+
 	if isServerless {
 		clusterResourceName = serverlessClusterResourceName
 		allowlistEntryResourceConfigFn = getTestAllowlistEntryResourceConfigForServerless
@@ -262,6 +315,45 @@ func testAllowlistEntryResource(
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(resourceName, "name", *newEntry.Name),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
+					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
+				),
+			},
+			// Update that removes name from the resource
+			{
+				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithNilName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					// Expect that the server name is not affected if the name is not explicitly set
+					resource.TestCheckResourceAttr(resourceName, "name", *newEntry.Name),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
+					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
+				),
+			},
+			// Update to empty string name
+			{
+				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithEmptyStringName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					// Expect that the server name is not affected if the name is not explicitly set
+					resource.TestCheckResourceAttr(resourceName, "name", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
+					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
+				),
+			},
+			// Update to empty string name again to show no churn
+			{
+				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithEmptyStringName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					// Expect that the server name is not affected if the name is not explicitly set
+					resource.TestCheckResourceAttr(resourceName, "name", ""),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
 					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
@@ -316,6 +408,11 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 func getTestAllowlistEntryResourceConfigForDedicated(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
+	nameAttribute := ""
+	if entry.Name != nil {
+		nameAttribute = fmt.Sprintf("name = \"%s\"\n", *entry.Name)
+	}
+
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -330,19 +427,24 @@ resource "cockroach_cluster" "dedicated" {
     }]
 }
 resource "cockroach_allow_list" "network_list" {
-    name = "%s"
+    %s
     cidr_ip = "%s"
     cidr_mask = %d
     sql = %v
     ui = %v
     cluster_id = cockroach_cluster.dedicated.id
 }
-`, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
+`, clusterName, nameAttribute, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }
 
 func getTestAllowlistEntryResourceConfigForServerless(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
+	nameAttribute := ""
+	if entry.Name != nil {
+		nameAttribute = fmt.Sprintf("name = \"%s\"\n", *entry.Name)
+	}
+
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
@@ -355,12 +457,12 @@ resource "cockroach_cluster" "serverless" {
     }]
 }
 resource "cockroach_allow_list" "network_list" {
-    name = "%s"
+    %s
     cidr_ip = "%s"
     cidr_mask = %d
     sql = %v
     ui = %v
     cluster_id = cockroach_cluster.serverless.id
 }
-`, clusterName, *entry.Name, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
+`, clusterName, nameAttribute, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }

@@ -81,8 +81,9 @@ func (r *allowListResource) Schema(
 				Description: "Set to 'true' to allow SQL connections from this CIDR range.",
 			},
 			"name": schema.StringAttribute{
+				Computed:    true,
 				Optional:    true,
-				Description: "Name of this allowlist entry.",
+				Description: "Name of this allowlist entry. If not set explicitly, this value does not sync with the server.",
 			},
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -268,11 +269,12 @@ func (r *allowListResource) Update(
 	entryCIDRIp := plan.CidrIp.ValueString()
 	entryCIDRMask := int32(plan.CidrMask.ValueInt64())
 
-	name := plan.Name.ValueString()
 	updatedAllowList := client.AllowlistEntry1{
 		Ui:   plan.Ui.ValueBool(),
 		Sql:  plan.Sql.ValueBool(),
-		Name: &name,
+	}
+	if IsKnown(plan.Name) {
+		updatedAllowList.Name = ptr(plan.Name.ValueString())
 	}
 
 	traceAPICall("UpdateAllowlistEntry")

@@ -164,7 +164,7 @@ func (r *clusterResource) Schema(
 								PlanModifiers: []planmodifier.Int64{
 									int64planmodifier.UseStateForUnknown(),
 								},
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
+								MarkdownDescription: "Number of estimated vCPUs available to the cluster.",
 							},
 						},
 					},

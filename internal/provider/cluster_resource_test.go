@@ -70,7 +70,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 			onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC"),
 			legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00),
 			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC"),
-			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 3000),
+			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6),
 		},
 	})
 }
@@ -293,11 +293,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			createStep: func() resource.TestStep {
 				return provisionedMultiRegionClusterWithLimitStep(clusterName)
 			},
-			initialCluster: provisionedMultiRegionCluster(3000, 1),
+			initialCluster: provisionedMultiRegionCluster(6, 1),
 			updateStep: func() resource.TestStep {
 				return provisionedMultiRegionClusterUpdatedStep(clusterName)
 			},
-			finalCluster: provisionedMultiRegionCluster(4000, 0),
+			finalCluster: provisionedMultiRegionCluster(8, 0),
 		},
 		{
 			name: "legacy serverless cluster from spend limit to higher spend limit",
@@ -390,7 +390,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							serverless = {
 								usage_limits = {
 									request_unit_limit = 1000000
-									provisioned_capacity = 1000
+									provisioned_capacity = 2
 								}
 							}
 							regions = [{
@@ -412,7 +412,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							serverless = {
 								usage_limits = {
 									storage_mib_limit = 1024
-									provisioned_capacity = 1000
+									provisioned_capacity = 2
 								}
 							}
 							regions = [{
@@ -665,7 +665,7 @@ func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.Tes
 				cloud_provider = "GCP"
 				serverless = {
 					usage_limits = {
-						provisioned_capacity = 3000
+						provisioned_capacity = 6
 					}
 				}
 				regions = [
@@ -696,7 +696,7 @@ func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.Tes
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.1.primary", "true"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", "3000"),
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", "6"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "3"),
@@ -706,7 +706,7 @@ func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.Tes
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.1.primary", "true"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", "3000"),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", "6"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
 		),
@@ -723,7 +723,7 @@ func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestS
 				cloud_provider = "GCP"
 				serverless = {
 					usage_limits = {
-						provisioned_capacity = 4000
+						provisioned_capacity = 8
 					}
 				}
 				regions = [
@@ -753,7 +753,7 @@ func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestS
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.1.primary", "false"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", "4000"),
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", "8"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "3"),
@@ -763,7 +763,7 @@ func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestS
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.1.primary", "false"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", "4000"),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", "8"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
 		),

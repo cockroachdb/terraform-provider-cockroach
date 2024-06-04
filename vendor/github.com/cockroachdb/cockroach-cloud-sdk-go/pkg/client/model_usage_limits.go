@@ -20,7 +20,7 @@ package client
 
 // UsageLimits struct for UsageLimits.
 type UsageLimits struct {
-	// provisioned_capacity is the maximum number of request units that the cluster can consume per second. Once this limit is reached, operation latency may increase due to throttling. It is an error for this to be zero.
+	// provisioned_capacity is the number of estimated vCPUs available to the cluster. Once the provisioned compute capacity is reached, operation latency may increase due to throttling. It is an error for this to be zero.
 	ProvisionedCapacity *int64 `json:"provisioned_capacity,omitempty,string"`
 	// request_unit_limit is the maximum number of request units that the cluster can consume during the month. If this limit is exceeded, then the cluster is disabled until the limit is increased, or until the beginning of the next month when more free request units are granted. It is an error for this to be zero.
 	RequestUnitLimit *int64 `json:"request_unit_limit,omitempty,string"`

@@ -41,10 +41,10 @@ const (
 	// The patch versions are just for mocks. They don't need to be the actual
 	// latest available patch versions; they just need to resolve to the correct
 	// major versions.
-	minSupportedClusterMajorVersion = "v23.1"
-	minSupportedClusterPatchVersion = "v23.1.0"
-	latestClusterMajorVersion       = "v23.2"
-	latestClusterPatchVersion       = "v23.2.0"
+	minSupportedClusterMajorVersion = "v23.2"
+	minSupportedClusterPatchVersion = "v23.2.0"
+	latestClusterMajorVersion       = "v24.1"
+	latestClusterPatchVersion       = "v24.1.0"
 )
 
 // TestAccClusterResource attempts to create, check, update, and destroy

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.3] - 2024-06-06
+
+## Fixed
+
+- Updated goreleaser-action and ghaction-import-gpg actions.
+
 ## [1.7.2] - 2024-06-05
 
 ## Fixed

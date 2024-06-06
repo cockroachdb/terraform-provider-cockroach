@@ -7,15 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.4] - 2024-06-06
+## [1.7.5] - 2024-06-06
 
 ## Fixed
 
-- Updated goreleaser-action.
-
-- Updated cluster_resource tests for latest supported versions of the db.
-
-- Pinned version of go-releaser and updated arguments so it will work with version 2.
+- Pinned version of go-releaser to version 1
 
 - Fixed apply churn when the optional name attribute in the allowlist resource was
   not included.

@@ -7,23 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.7.3] - 2024-06-06
+## [1.7.4] - 2024-06-06
 
 ## Fixed
 
-- Updated goreleaser-action and ghaction-import-gpg actions.
-
-## [1.7.2] - 2024-06-05
-
-## Fixed
+- Updated goreleaser-action.
 
 - Updated cluster_resource tests for latest supported versions of the db.
 
 - Pinned version of go-releaser and updated arguments so it will work with version 2.
-
-## [1.7.1] - 2024-06-05
-
-## Fixed
 
 - Fixed apply churn when the optional name attribute in the allowlist resource was
   not included.

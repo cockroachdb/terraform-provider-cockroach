@@ -252,13 +252,6 @@ func loadEndpointServicesIntoTerraformState(
 			EndpointServiceId: types.StringValue(service.GetEndpointServiceId()),
 		}
 
-		if services[i].CloudProvider.String() == "AWS" {
-			services[i].Aws = PrivateLinkServiceAWSDetail{
-				ServiceName: types.StringValue(service.Aws.GetServiceName()),
-				ServiceId:   types.StringValue(service.Aws.GetServiceId()),
-			}
-		}
-
 		traceAPICall("GetAvailabilityZoneIds")
 		apiAZs := service.GetAvailabilityZoneIds()
 		azs := make([]types.String, len(apiAZs))
@@ -266,7 +259,15 @@ func loadEndpointServicesIntoTerraformState(
 			azs[j] = types.StringValue(az)
 		}
 		services[i].AvailabilityZoneIds = azs
-		services[i].Aws.AvailabilityZoneIds = azs
+
+		// Set the .AWS field for backward compatibility.
+		if services[i].CloudProvider.ValueString() == "AWS" {
+			services[i].Aws = PrivateLinkServiceAWSDetail{
+				ServiceName:         types.StringValue(service.GetName()),
+				ServiceId:           types.StringValue(service.GetEndpointServiceId()),
+				AvailabilityZoneIds: azs,
+			}
+		}
 	}
 	var diags diag.Diagnostics
 	state.Services, diags = types.ListValueFrom(

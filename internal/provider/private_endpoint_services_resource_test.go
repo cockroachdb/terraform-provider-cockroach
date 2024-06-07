@@ -36,7 +36,7 @@ import (
 func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-endpt-svc-%s", tfTestPrefix, GenerateRandomString(2))
-	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, false /* isServerless */)
+	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, false /* isServerless */, client.CLOUDPROVIDERTYPE_GCP)
 }
 
 // TestAccServerlessPrivateEndpointServicesResource attempts to create, check,
@@ -45,7 +45,7 @@ func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 func TestAccServerlessPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-endpt-svc-%s", tfTestPrefix, GenerateRandomString(2))
-	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, true /* isServerless */)
+	testPrivateEndpointServicesResource(t, clusterName, false /* useMock */, true /* isServerless */, client.CLOUDPROVIDERTYPE_AWS)
 }
 
 // TestIntegrationAllowlistEntryResource attempts to create, check, and destroy
@@ -64,7 +64,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 		finalCluster client.Cluster
 	}{
 		{
-			"dedicated cluster",
+			"dedicated GCP cluster",
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
@@ -85,6 +85,30 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				},
 			},
 		},
+
+		{
+			"dedicated AWS cluster",
+			client.Cluster{
+				Name:          clusterName,
+				Id:            uuid.Nil.String(),
+				CloudProvider: "AWS",
+				Config: client.ClusterConfig{
+					Dedicated: &client.DedicatedHardwareConfig{
+						StorageGib:     15,
+						MachineType:    "not verified",
+						NumVirtualCpus: 2,
+					},
+				},
+				State: "CREATED",
+				Regions: []client.Region{
+					{
+						Name:      "us-east-1",
+						NodeCount: 1,
+					},
+				},
+			},
+		},
+
 		{
 			"serverless cluster",
 			client.Cluster{
@@ -126,24 +150,32 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(3)
+
 			var regions []string
-			if isServerless {
-				// AWS
-				regions = []string{"us-east-1", "eu-central-1"}
-			} else {
-				// GCP
-				regions = []string{"us-east1"}
+			for _, r := range c.finalCluster.Regions {
+				regions = append(regions, r.Name)
 			}
+
 			services := &client.PrivateEndpointServices{}
 			for _, region := range regions {
-				services.Services = append(services.Services, client.PrivateEndpointService{
+				svc := client.PrivateEndpointService{
 					RegionName:          region,
 					CloudProvider:       c.finalCluster.CloudProvider,
 					Status:              client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE,
 					Name:                "finalService-name",
 					EndpointServiceId:   "finalService-id",
-					AvailabilityZoneIds: []string{},
-				})
+					AvailabilityZoneIds: []string{"az1", "az2", "az3"},
+				}
+
+				if c.finalCluster.CloudProvider == client.CLOUDPROVIDERTYPE_AWS {
+					svc.Aws = &client.AWSPrivateLinkServiceDetail{
+						ServiceName:         "finalService-name",
+						ServiceId:           "finalService-id",
+						AvailabilityZoneIds: []string{"az1", "az2", "az3"},
+					}
+				}
+
+				services.Services = append(services.Services, svc)
 			}
 			if !isServerless {
 				initialServices := &client.PrivateEndpointServices{}
@@ -164,13 +196,14 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 				clusterName,
 				true, /* useMock */
 				isServerless,
+				c.finalCluster.CloudProvider,
 			)
 		})
 	}
 }
 
 func testPrivateEndpointServicesResource(
-	t *testing.T, clusterName string, useMock bool, isServerless bool,
+	t *testing.T, clusterName string, useMock bool, isServerless bool, cloud client.CloudProviderType,
 ) {
 	resourceName := "cockroach_private_endpoint_services.services"
 	var clusterResourceName string
@@ -182,8 +215,13 @@ func testPrivateEndpointServicesResource(
 		numExpectedServices = 2
 	} else {
 		clusterResourceName = "cockroach_cluster.dedicated"
-		privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForDedicated
 		numExpectedServices = 1
+		switch cloud {
+		case client.CLOUDPROVIDERTYPE_AWS:
+			privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForDedicatedAWS
+		case client.CLOUDPROVIDERTYPE_GCP:
+			privateEndpointServicesResourceConfigFn = getTestPrivateEndpointServicesResourceConfigForDedicatedGCP
+		}
 	}
 
 	checks := []resource.TestCheckFunc{
@@ -191,9 +229,20 @@ func testPrivateEndpointServicesResource(
 		resource.TestCheckResourceAttr(resourceName, "services.#", strconv.Itoa(numExpectedServices)),
 	}
 	for i := 0; i < numExpectedServices; i++ {
+		svc := fmt.Sprintf("services.%d", i)
 		checks = append(checks,
-			resource.TestCheckResourceAttr(resourceName, fmt.Sprintf("services.%d.status", i), string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
+			resource.TestCheckResourceAttr(resourceName, svc+".status", string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
 		)
+
+		if cloud == client.CLOUDPROVIDERTYPE_AWS {
+			checks = append(checks, []resource.TestCheckFunc{
+				resource.TestCheckResourceAttrPair(resourceName, svc+".name", resourceName, svc+".aws.service_name"),
+				resource.TestCheckResourceAttrPair(resourceName, svc+".endpoint_service_id", resourceName, svc+".aws.service_id"),
+				resource.TestCheckResourceAttrPair(resourceName, svc+".availability_zone_ids", resourceName, svc+".aws.availability_zone_ids"),
+			}...)
+		} else {
+			checks = append(checks, resource.TestCheckNoResourceAttr(resourceName, svc+".aws.service_name"))
+		}
 	}
 
 	resource.Test(t, resource.TestCase{
@@ -214,7 +263,7 @@ func testPrivateEndpointServicesResource(
 	})
 }
 
-func getTestPrivateEndpointServicesResourceConfigForDedicated(clusterName string) string {
+func getTestPrivateEndpointServicesResourceConfigForDedicatedGCP(clusterName string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
@@ -225,6 +274,26 @@ resource "cockroach_cluster" "dedicated" {
     }
 	regions = [{
 		name: "us-east1"
+		node_count: 1
+	}]
+}
+resource "cockroach_private_endpoint_services" "services" {
+    cluster_id = cockroach_cluster.dedicated.id
+}
+`, clusterName)
+}
+
+func getTestPrivateEndpointServicesResourceConfigForDedicatedAWS(clusterName string) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "dedicated" {
+    name           = "%s"
+    cloud_provider = "AWS"
+    dedicated = {
+	  storage_gib = 15
+	  num_virtual_cpus = 2
+    }
+	regions = [{
+		name: "us-east-1"
 		node_count: 1
 	}]
 }

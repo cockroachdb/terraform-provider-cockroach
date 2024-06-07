@@ -23,7 +23,7 @@ variable "cluster_name" {
 variable "provisioned_capacity" {
   type     = number
   nullable = false
-  default  = 1000
+  default  = 2
 }
 
 variable "cloud_provider" {

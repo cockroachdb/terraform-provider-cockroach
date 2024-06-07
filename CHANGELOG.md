@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.7.6] - 2024-06-10
+
 ## Fixed
 
 - Update docs for allowlist resource to clear up with cidr_mask is
@@ -16,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed mention of Limited Access for Azure clusters in README
 
 - Added some example values for clarity in README
+
+- Fix bug when reading `cockroach_private_endpoint_services.#.aws.service_name`.
 
 ## [1.7.5] - 2024-06-06
 

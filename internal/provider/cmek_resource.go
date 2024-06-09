@@ -110,6 +110,10 @@ type cmekResource struct {
 	provider *provider
 }
 
+func (r *cmekResource) resourceType() string {
+	return providerResponseTypeName + "_cmek"
+}
+
 func (r *cmekResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
@@ -120,9 +124,9 @@ func (r *cmekResource) Schema(
 }
 
 func (r *cmekResource) Metadata(
-	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+	_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse,
 ) {
-	resp.TypeName = req.ProviderTypeName + "_cmek"
+	resp.TypeName = r.resourceType()
 }
 
 func (r *cmekResource) Configure(
@@ -169,6 +173,7 @@ func (r *cmekResource) Create(
 	cmekSpec.SetRegionSpecs(regionSpecs)
 
 	traceAPICall("EnableCMEKSpec")
+	ctx = contextWithResourceMetadata(ctx, r, plan.ID.ValueString())
 	cmekObj, _, err := r.provider.service.EnableCMEKSpec(ctx, plan.ID.ValueString(), cmekSpec)
 	if err != nil {
 		resp.Diagnostics.AddError(

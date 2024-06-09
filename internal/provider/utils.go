@@ -2,12 +2,15 @@ package provider
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 	"fmt"
+	"hash/fnv"
 	"net/http"
 	"os"
 	"regexp"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
@@ -25,6 +28,9 @@ import (
 // tests.  This makes them easier to find when resources are left dangling after
 // failed cleanup.
 const tfTestPrefix = "tftest"
+
+const contextValResourceType = "RESOURCE_TYPE"
+const contextValResourceIDHash = "RESOURCE_ID_HASH"
 
 func addConfigureProviderErr(diagnostics *diag.Diagnostics) {
 	diagnostics.AddError(
@@ -184,4 +190,25 @@ func traceAPICall(endpoint string) {
 		pc, _, _, _ := runtime.Caller(1)
 		fmt.Printf("CC API Call: %s (%s)\n", endpoint, runtime.FuncForPC(pc).Name())
 	}
+}
+
+type resourceTyper interface {
+	resourceType() string
+}
+
+func contextWithResourceMetadata(ctx context.Context, resource resourceTyper, resourceID string) context.Context {
+	ctx = context.WithValue(ctx, contextValResourceType, resource.resourceType())
+	ctx = context.WithValue(ctx, contextValResourceIDHash, hashString(resourceID))
+	return ctx
+}
+
+func hashString(s string) string {
+	hasher := fnv.New32()
+	hasher.Write([]byte(s))
+	encoded := base64.StdEncoding.EncodeToString(hasher.Sum(nil))
+	fillerIndex := strings.Index(encoded, "=")
+	if fillerIndex != -1 {
+		encoded = encoded[:fillerIndex]
+	}
+	return encoded
 }

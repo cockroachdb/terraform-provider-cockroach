@@ -39,7 +39,7 @@ func (r *userRoleGrantsResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [cockroach_user_role_grant](user_role_grant) resource for non-authoritative role grants.",
+		MarkdownDescription: "Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [cockroach_user_role_grant](user_role_grant) resource for non-authoritative role grants.  ORG_MEMBER is a required role and must be included.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -54,6 +54,7 @@ func (r *userRoleGrantsResource) Schema(
 			},
 			"roles": schema.SetNestedAttribute{
 				Required: true,
+				Description: "The list of roles to include. ORG_MEMBER must be included.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"role_name": schema.StringAttribute{

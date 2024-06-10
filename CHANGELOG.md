@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Fixed
 
+- Update the user_role_grants resource docs to indicate the requirement of ORG_MEMBER.
+
 - Fixed private_endpoint_connection documentation issues
 
 ## Added

@@ -16,14 +16,14 @@ Private endpoint connections allow customer applications to connect to a Cockroa
 ## Example with AWS PrivateLink
 
 # Enable the PrivateLink service on the CockroachDB Cloud cluster.
-resource "cockroach_private_endpoint_services" "services" {
+resource "cockroach_private_endpoint_services" "aws_cluster_services" {
   cluster_id = cockroach_cluster.my_cluster.id
 }
 
 # Create a PrivateLink endpoint and associate it with the PrivateLink Service. 
 resource "aws_vpc_endpoint" "my_endpoint" {
   vpc_id             = "vpc-7fc0a543"
-  service_name       = cockroach_private_endpoint_services.services.name
+  service_name       = cockroach_private_endpoint_services.aws_cluster_services.services[0].name
   vpc_endpoint_type  = "Interface"
   subnet_ids         = ["subnet-de0406d2"]
   security_group_ids = ["sg-3f238186"]
@@ -38,7 +38,7 @@ resource "cockroach_private_endpoint_connection" "connection" {
 ## Example with Azure Private Link
 
 # Enable the Private Link service on the CockroachDB Cloud cluster.
-resource "cockroach_private_endpoint_services" "services" {
+resource "cockroach_private_endpoint_services" "azure_cluster_services" {
   cluster_id = cockroach_cluster.my_cluster.id
 }
 
@@ -49,8 +49,8 @@ resource "azurerm_private_endpoint" "my_endpoint" {
   resource_group_name = var.resource_group_name
   subnet_id           = azurerm_subnet.my_subnet.id
   private_service_connection {
-    name                           = cockroach_private_endpoint_connection.services[0].name
-    private_connection_resource_id = cockroach_private_endpoint_connection.services[0].endpoint_service_id
+    name                           = cockroach_private_endpoint_services.azure_cluster_services.services[0].name
+    private_connection_resource_id = cockroach_private_endpoint_services.azure_cluster_services.services[0].endpoint_service_id
     is_manual_connection           = true
     request_message                = "Azure Private Link test"
   }
@@ -65,7 +65,7 @@ resource "cockroach_private_endpoint_connection" "connection" {
 ## Example with GCP Private Service Connect
 
 # Enable the Private Service Connect services on the CockroachDB Cloud cluster.
-resource "cockroach_private_endpoint_services" "services" {
+resource "cockroach_private_endpoint_services" "gcp_cluster_services" {
   cluster_id = cockroach_cluster.my_cluster.id
 }
 

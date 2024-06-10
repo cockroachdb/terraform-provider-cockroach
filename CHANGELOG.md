@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Fixed
+
+- Fixed private_endpoint_connection documentation issues
+
+## Added
+
 - Enable log export for serverless clusters.
 
 ## [1.7.6] - 2024-06-10

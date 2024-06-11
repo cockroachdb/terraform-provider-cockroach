@@ -8,9 +8,9 @@
 
 For information on developing `terraform-provider-cockroach` see [DEVELOPMENT.md](DEVELOPMENT.md).
 
-**Note: This is a preview release, suitable only for experimental use.**
-
 ## Get Started
+
+** If you intend to use this provider to provision [private endpoints]([url](https://github.com/cockroachdb/terraform-provider-cockroach/blob/main/docs/resources/private_endpoint_connection.md)) (AWS PrivateLink, GCP Private Service Connect, Azure Private Link) you must upgrade to [version 1.7.6]([url](https://github.com/cockroachdb/terraform-provider-cockroach/releases/tag/v1.7.6)) or later. **
 
 ### Prerequisites
 

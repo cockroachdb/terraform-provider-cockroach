@@ -145,7 +145,7 @@ resource "aws_subnet" "example" {
 
 resource "aws_vpc_endpoint" "example" {
   vpc_id             = aws_vpc.example.id
-  service_name       = cockroach_private_endpoint_services.example.services[0].aws.service_name
+  service_name       = cockroach_private_endpoint_services.example.services_map[var.aws_region].name
   vpc_endpoint_type  = "Interface"
   security_group_ids = [aws_security_group.example.id]
   subnet_ids         = [for s in aws_subnet.example : s.id]

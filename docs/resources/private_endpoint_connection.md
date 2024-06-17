@@ -4,19 +4,25 @@ page_title: "cockroach_private_endpoint_connection Resource - terraform-provider
 subcategory: ""
 description: |-
   Private endpoint connections allow customer applications to connect to a CockroachDB Cloud cluster without traversing the public internet. All application-database traffic remains within the cloud-provider network.
+  Warning: Use of private endpoints requires >=v1.7.6
+  If you intend to use this provider to provision private endpoints https://github.com/cockroachdb/terraform-provider-cockroach/blob/main/docs/resources/private_endpoint_connection.md:
+  - AWS PrivateLink https://www.cockroachlabs.com/docs/cockroachcloud/aws-privatelink
+  - GCP Private Service Connect https://www.cockroachlabs.com/docs/cockroachcloud/connect-to-your-cluster#gcp-private-service-connect
+  - Azure Private Link https://www.cockroachlabs.com/docs/cockroachcloud/cockroachdb-dedicated-on-azure
+  You must install/upgrade to version 1.7.6 https://github.com/cockroachdb/terraform-provider-cockroach/releases/tag/v1.7.6 or later https://registry.terraform.io/providers/cockroachdb/cockroach/latest
 ---
-
-## _Warning_: Use of *private endpoints* requires >=v1.7.6
-If you intend to use this provider to provision [private endpoints](https://github.com/cockroachdb/terraform-provider-cockroach/blob/main/docs/resources/private_endpoint_connection.md):
-- [AWS PrivateLink](https://www.cockroachlabs.com/docs/cockroachcloud/aws-privatelink)
-- [GCP Private Service Connect](https://www.cockroachlabs.com/docs/cockroachcloud/connect-to-your-cluster#gcp-private-service-connect)
-- [Azure Private Link](https://www.cockroachlabs.com/docs/cockroachcloud/cockroachdb-dedicated-on-azure)
-
-You must install/upgrade to [version 1.7.6](https://github.com/cockroachdb/terraform-provider-cockroach/releases/tag/v1.7.6) or [later](https://registry.terraform.io/providers/cockroachdb/cockroach/latest).
 
 # cockroach_private_endpoint_connection (Resource)
 
 Private endpoint connections allow customer applications to connect to a CockroachDB Cloud cluster without traversing the public internet. All application-database traffic remains within the cloud-provider network.
+
+### _Warning_: Use of *private endpoints* requires >=v1.7.6
+If you intend to use this provider to provision [private endpoints](https://github.com/cockroachdb/terraform-provider-cockroach/blob/main/docs/resources/private_endpoint_connection.md):
+- [AWS PrivateLink](https://www.cockroachlabs.com/docs/cockroachcloud/aws-privatelink)
+- [GCP Private Service Connect](https://www.cockroachlabs.com/docs/cockroachcloud/connect-to-your-cluster#gcp-private-service-connect)
+- [Azure Private Link](https://www.cockroachlabs.com/docs/cockroachcloud/cockroachdb-dedicated-on-azure)
+	
+You must install/upgrade to [version 1.7.6](https://github.com/cockroachdb/terraform-provider-cockroach/releases/tag/v1.7.6) or [later](https://registry.terraform.io/providers/cockroachdb/cockroach/latest)
 
 ## Example Usage
 

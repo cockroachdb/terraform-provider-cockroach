@@ -6,7 +6,7 @@ description: |-
   PrivateEndpointServices contains services that allow for private connectivity to the CockroachDB Cloud cluster.
 ---
 
-# _Warning_: Use of *private endpoints* requires >=v1.7.6
+## _Warning_: Use of *private endpoints* requires >=v1.7.6
 If you intend to use this provider to provision [private endpoints](https://github.com/cockroachdb/terraform-provider-cockroach/blob/main/docs/resources/private_endpoint_connection.md):
 - [AWS PrivateLink](https://www.cockroachlabs.com/docs/cockroachcloud/aws-privatelink)
 - [GCP Private Service Connect](https://www.cockroachlabs.com/docs/cockroachcloud/connect-to-your-cluster#gcp-private-service-connect)

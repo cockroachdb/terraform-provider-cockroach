@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enable log export for serverless clusters.
 
+- Add services_map to private_endpoint_services resource.
+
 ## [1.7.6] - 2024-06-10
 
 ## Fixed

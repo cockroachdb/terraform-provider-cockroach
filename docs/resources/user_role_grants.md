@@ -3,12 +3,12 @@
 page_title: "cockroach_user_role_grants Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the cockroachuserrole_grant user_role_grant resource for non-authoritative role grants.
+  Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the cockroachuserrole_grant user_role_grant resource for non-authoritative role grants.  ORG_MEMBER is a required role and must be included.
 ---
 
 # cockroach_user_role_grants (Resource)
 
-Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [cockroach_user_role_grant](user_role_grant) resource for non-authoritative role grants.
+Manage all the role grants for a user. This resource is authoritative.  If role grants are added elsewhere, for example, via the console UI or another terraform project, using this resource will try to reset them. Use the [cockroach_user_role_grant](user_role_grant) resource for non-authoritative role grants.  ORG_MEMBER is a required role and must be included.
 
 ## Example Usage
 
@@ -20,6 +20,11 @@ variable "user_id" {
 resource "cockroach_user_role_grants" "cockroach" {
   user_id = var.user_id
   roles = [
+    {
+      role_name     = "ORG_MEMBER",
+      resource_type = "ORGANIZATION",
+      resource_id   = ""
+    },
     {
       role_name     = "ORG_ADMIN",
       resource_type = "ORGANIZATION",
@@ -44,7 +49,7 @@ resource "cockroach_user_role_grants" "cockroach" {
 
 ### Required
 
-- `roles` (Attributes Set) (see [below for nested schema](#nestedatt--roles))
+- `roles` (Attributes Set) The list of roles to include. ORG_MEMBER must be included. (see [below for nested schema](#nestedatt--roles))
 - `user_id` (String) ID of the user to grant these roles to.
 
 ### Read-Only

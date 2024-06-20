@@ -47,6 +47,7 @@ resource "cockroach_private_endpoint_services" "cockroach" {
 
 - `id` (String) Always matches the cluster ID. Required by Terraform.
 - `services` (Attributes List) (see [below for nested schema](#nestedatt--services))
+- `services_map` (Attributes Map) a map of services keyed by the region name (see [below for nested schema](#nestedatt--services_map))
 
 <a id="nestedatt--services"></a>
 ### Nested Schema for `services`
@@ -63,6 +64,30 @@ Read-Only:
 
 <a id="nestedatt--services--aws"></a>
 ### Nested Schema for `services.aws`
+
+Read-Only:
+
+- `availability_zone_ids` (List of String) AZ IDs users should create their VPCs in to minimize their cost.
+- `service_id` (String) Server side ID of the PrivateLink connection.
+- `service_name` (String) AWS service name used to create endpoints.
+
+
+
+<a id="nestedatt--services_map"></a>
+### Nested Schema for `services_map`
+
+Read-Only:
+
+- `availability_zone_ids` (List of String) Availability Zone IDs of the private endpoint service. It is recommended, for cost optimization purposes, to create the private endpoint spanning these same availability zones. For more information, see data transfer cost information for your cloud provider.
+- `aws` (Attributes, Deprecated) (see [below for nested schema](#nestedatt--services_map--aws))
+- `cloud_provider` (String) Cloud provider associated with this service.
+- `endpoint_service_id` (String) Server side ID of the private endpoint connection.
+- `name` (String) Name of the endpoint service.
+- `region_name` (String) Cloud provider region code associated with this service.
+- `status` (String) Operation status of the service.
+
+<a id="nestedatt--services_map--aws"></a>
+### Nested Schema for `services_map.aws`
 
 Read-Only:
 

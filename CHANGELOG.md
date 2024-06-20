@@ -7,9 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+
 - Added warning about using private endpoints with old versions.
 
+## Fixed
+
+- Update the user_role_grants resource docs to indicate the requirement of ORG_MEMBER.
+
+- Fixed private_endpoint_connection documentation issues
+
+## Added
+
 - Enable log export for serverless clusters.
+
+- Add services_map to private_endpoint_services resource.
 
 ## [1.7.6] - 2024-06-10
 

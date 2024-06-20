@@ -227,11 +227,16 @@ func testPrivateEndpointServicesResource(
 	checks := []resource.TestCheckFunc{
 		resource.TestCheckResourceAttr(clusterResourceName, "name", clusterName),
 		resource.TestCheckResourceAttr(resourceName, "services.#", strconv.Itoa(numExpectedServices)),
+		resource.TestCheckResourceAttr(resourceName, "services_map.%", strconv.Itoa(numExpectedServices)),
 	}
 	for i := 0; i < numExpectedServices; i++ {
 		svc := fmt.Sprintf("services.%d", i)
 		checks = append(checks,
 			resource.TestCheckResourceAttr(resourceName, svc+".status", string(client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE)),
+		)
+
+		checks = append(checks,
+			resource.TestCheckResourceAttrPair(resourceName, svc, resourceName, "services_map.us-east-1"),
 		)
 
 		if cloud == client.CLOUDPROVIDERTYPE_AWS {

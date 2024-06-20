@@ -28,6 +28,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -65,60 +66,70 @@ You must install/upgrade to [version 1.7.6](https://github.com/cockroachdb/terra
 			},
 			MarkdownDescription: "Always matches the cluster ID. Required by Terraform.",
 		},
+		"services_map": schema.MapNestedAttribute{
+			Computed:    true,
+			Description: "a map of services keyed by the region name",
+			PlanModifiers: []planmodifier.Map{
+				mapplanmodifier.UseStateForUnknown(),
+			},
+			NestedObject: serviceObject,
+		},
 		"services": schema.ListNestedAttribute{
 			Computed: true,
 			PlanModifiers: []planmodifier.List{
 				listplanmodifier.UseStateForUnknown(),
 			},
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"region_name": schema.StringAttribute{
-						Computed:    true,
-						Description: "Cloud provider region code associated with this service.",
-					},
-					"cloud_provider": schema.StringAttribute{
-						Computed:    true,
-						Description: "Cloud provider associated with this service.",
-					},
-					"status": schema.StringAttribute{
-						Computed:    true,
-						Description: "Operation status of the service.",
-					},
-					"name": schema.StringAttribute{
-						Computed:    true,
-						Description: "Name of the endpoint service.",
-					},
-					"endpoint_service_id": schema.StringAttribute{
-						Computed:    true,
-						Description: "Server side ID of the private endpoint connection.",
-					},
-					"availability_zone_ids": schema.ListAttribute{
-						Computed:            true,
-						ElementType:         types.StringType,
-						MarkdownDescription: "Availability Zone IDs of the private endpoint service. It is recommended, for cost optimization purposes, to create the private endpoint spanning these same availability zones. For more information, see data transfer cost information for your cloud provider.",
-					},
-					"aws": schema.SingleNestedAttribute{
-						DeprecationMessage: "nested aws fields have been moved one level up. These fields will be removed in a future version",
-						Computed:           true,
-						PlanModifiers: []planmodifier.Object{
-							objectplanmodifier.UseStateForUnknown(),
-						},
-						Attributes: map[string]schema.Attribute{
-							"service_name": schema.StringAttribute{
-								Computed:    true,
-								Description: "AWS service name used to create endpoints.",
-							},
-							"service_id": schema.StringAttribute{
-								Computed:    true,
-								Description: "Server side ID of the PrivateLink connection.",
-							},
-							"availability_zone_ids": schema.ListAttribute{
-								Computed:            true,
-								ElementType:         types.StringType,
-								MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
-							},
-						},
-					},
+			NestedObject: serviceObject,
+		},
+	},
+}
+
+var serviceObject = schema.NestedAttributeObject{
+	Attributes: map[string]schema.Attribute{
+		"region_name": schema.StringAttribute{
+			Computed:    true,
+			Description: "Cloud provider region code associated with this service.",
+		},
+		"cloud_provider": schema.StringAttribute{
+			Computed:    true,
+			Description: "Cloud provider associated with this service.",
+		},
+		"status": schema.StringAttribute{
+			Computed:    true,
+			Description: "Operation status of the service.",
+		},
+		"name": schema.StringAttribute{
+			Computed:    true,
+			Description: "Name of the endpoint service.",
+		},
+		"endpoint_service_id": schema.StringAttribute{
+			Computed:    true,
+			Description: "Server side ID of the private endpoint connection.",
+		},
+		"availability_zone_ids": schema.ListAttribute{
+			Computed:            true,
+			ElementType:         types.StringType,
+			MarkdownDescription: "Availability Zone IDs of the private endpoint service. It is recommended, for cost optimization purposes, to create the private endpoint spanning these same availability zones. For more information, see data transfer cost information for your cloud provider.",
+		},
+		"aws": schema.SingleNestedAttribute{
+			DeprecationMessage: "nested aws fields have been moved one level up. These fields will be removed in a future version",
+			Computed:           true,
+			PlanModifiers: []planmodifier.Object{
+				objectplanmodifier.UseStateForUnknown(),
+			},
+			Attributes: map[string]schema.Attribute{
+				"service_name": schema.StringAttribute{
+					Computed:    true,
+					Description: "AWS service name used to create endpoints.",
+				},
+				"service_id": schema.StringAttribute{
+					Computed:    true,
+					Description: "Server side ID of the PrivateLink connection.",
+				},
+				"availability_zone_ids": schema.ListAttribute{
+					Computed:            true,
+					ElementType:         types.StringType,
+					MarkdownDescription: "AZ IDs users should create their VPCs in to minimize their cost.",
 				},
 			},
 		},
@@ -285,6 +296,21 @@ func loadEndpointServicesIntoTerraformState(
 		endpointServicesSchema.Attributes["services"].(schema.ListNestedAttribute).NestedObject.Type(),
 		services,
 	)
+
+	servicesMap := map[string]PrivateEndpointService{}
+	for _, svc := range services {
+		servicesMap[svc.RegionName.ValueString()] = svc
+	}
+
+	var diags2 diag.Diagnostics
+	state.ServicesMap, diags2 = types.MapValueFrom(
+		ctx,
+		endpointServicesSchema.Attributes["services_map"].(schema.MapNestedAttribute).NestedObject.Type(),
+		servicesMap,
+	)
+
+	diags.Append(diags2...)
+
 	return diags
 }
 

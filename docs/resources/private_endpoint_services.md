@@ -46,7 +46,7 @@ resource "cockroach_private_endpoint_services" "cockroach" {
 ### Read-Only
 
 - `id` (String) Always matches the cluster ID. Required by Terraform.
-- `services` (Attributes List) (see [below for nested schema](#nestedatt--services))
+- `services` (Attributes List) A list of regional private endpoint services for the cluster (see [below for nested schema](#nestedatt--services))
 - `services_map` (Attributes Map) a map of services keyed by the region name (see [below for nested schema](#nestedatt--services_map))
 
 <a id="nestedatt--services"></a>

@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- Ensure all cluster regions are ready when waiting or private endpoint
+  services.
 - Fixed an issue where enabling log export configs did not account for lock errors.
 - Exporting Cloudwatch metrics on a serverless Cluster no longer generates an error.
 - Exporting Cloudwatch metrics while on the Basic plan now generates an error.

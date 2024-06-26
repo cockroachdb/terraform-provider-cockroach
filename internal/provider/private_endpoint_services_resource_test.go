@@ -17,6 +17,7 @@
 package provider
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,7 +28,9 @@ import (
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAccDedicatedPrivateEndpointServicesResource attempts to create, check,
@@ -268,6 +271,66 @@ func testPrivateEndpointServicesResource(
 			},
 		},
 	})
+}
+
+func TestArePrivateEndpointsServicesCreated(t *testing.T) {
+	ctx := context.Background()
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+
+	cluster := &client.Cluster{
+		Id: "1111",
+		Regions: []client.Region{
+			{Name: "us-east-1"},
+			{Name: "us-west-2"},
+		},
+	}
+
+	for _, tc := range []struct {
+		desc     string
+		svcs     []client.PrivateEndpointService
+		retryErr *retry.RetryError
+	}{
+		{
+			desc: "all available",
+			svcs: []client.PrivateEndpointService{
+				{RegionName: "us-east-1", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+				{RegionName: "us-west-2", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+			},
+		},
+		{
+			desc: "one service creating",
+			svcs: []client.PrivateEndpointService{
+				{RegionName: "us-east-1", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+				{RegionName: "us-west-2", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING},
+			},
+			retryErr: retry.RetryableError(fmt.Errorf("endpoint services are not ready yet")),
+		},
+		{
+			desc: "extra regional service",
+			svcs: []client.PrivateEndpointService{
+				{RegionName: "us-east-1", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+				{RegionName: "us-west-2", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+				{RegionName: "us-central-2", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_DELETING},
+			},
+		},
+		{
+			desc: "missing service",
+			svcs: []client.PrivateEndpointService{
+				{RegionName: "us-east-1", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+			},
+			retryErr: retry.RetryableError(fmt.Errorf("endpoint services are not ready yet")),
+		},
+	} {
+		t.Run(tc.desc, func(t *testing.T) {
+			s.EXPECT().ListPrivateEndpointServices(gomock.Any(), "1111").Return(&client.PrivateEndpointServices{
+				Services: tc.svcs,
+			}, nil, nil)
+
+			_, retryErr := arePrivateEndpointsServicesCreated(ctx, cluster, s)
+			require.Equal(t, tc.retryErr, retryErr)
+		})
+	}
 }
 
 func getTestPrivateEndpointServicesResourceConfigForDedicatedGCP(clusterName string) string {

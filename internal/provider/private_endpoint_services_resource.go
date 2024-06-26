@@ -75,7 +75,8 @@ You must install/upgrade to [version 1.7.6](https://github.com/cockroachdb/terra
 			NestedObject: serviceObject,
 		},
 		"services": schema.ListNestedAttribute{
-			Computed: true,
+			Computed:            true,
+			MarkdownDescription: "A list of regional private endpoint services for the cluster",
 			PlanModifiers: []planmodifier.List{
 				listplanmodifier.UseStateForUnknown(),
 			},
@@ -202,9 +203,13 @@ func (r *privateEndpointServicesResource) Create(
 			return
 		}
 	}
-	var services client.PrivateEndpointServices
-	err = retry.RetryContext(ctx, endpointServicesCreateTimeout,
-		waitForEndpointServicesCreatedFunc(ctx, cluster.Id, r.provider.service, &services))
+	var services *client.PrivateEndpointServices
+	var retryErr *retry.RetryError
+	err = retry.RetryContext(ctx, endpointServicesCreateTimeout, func() *retry.RetryError {
+		services, retryErr = arePrivateEndpointsServicesCreated(ctx, cluster, r.provider.service)
+		return retryErr
+	})
+
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling private endpoint services",
@@ -215,7 +220,7 @@ func (r *privateEndpointServicesResource) Create(
 	var state PrivateEndpointServices
 	state.ClusterID = plan.ClusterID
 	state.ID = plan.ClusterID
-	diags = loadEndpointServicesIntoTerraformState(ctx, &services, &state)
+	diags = loadEndpointServicesIntoTerraformState(ctx, services, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -262,6 +267,7 @@ func loadEndpointServicesIntoTerraformState(
 ) diag.Diagnostics {
 	serviceList := apiServices.GetServices()
 	services := make([]PrivateEndpointService, len(serviceList))
+
 	for i, service := range serviceList {
 		services[i] = PrivateEndpointService{
 			RegionName:        types.StringValue(service.GetRegionName()),
@@ -288,21 +294,20 @@ func loadEndpointServicesIntoTerraformState(
 			}
 		}
 	}
-	var diags diag.Diagnostics
-	state.Services, diags = types.ListValueFrom(
+
+	var diags, diags2 diag.Diagnostics
+	state.Services, diags2 = types.ListValueFrom(
 		ctx,
-		// Yes, it really does apparently need to be this complicated.
-		// https://github.com/hashicorp/terraform-plugin-framework/issues/713
 		endpointServicesSchema.Attributes["services"].(schema.ListNestedAttribute).NestedObject.Type(),
 		services,
 	)
+	diags.Append(diags2...)
 
 	servicesMap := map[string]PrivateEndpointService{}
 	for _, svc := range services {
 		servicesMap[svc.RegionName.ValueString()] = svc
 	}
 
-	var diags2 diag.Diagnostics
 	state.ServicesMap, diags2 = types.MapValueFrom(
 		ctx,
 		endpointServicesSchema.Attributes["services_map"].(schema.MapNestedAttribute).NestedObject.Type(),
@@ -339,44 +344,55 @@ func (r *privateEndpointServicesResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("cluster_id"), req, resp)
 }
 
-func waitForEndpointServicesCreatedFunc(
+func arePrivateEndpointsServicesCreated(
 	ctx context.Context,
-	clusterID string,
+	cluster *client.Cluster,
 	cl client.Service,
-	services *client.PrivateEndpointServices,
-) retry.RetryFunc {
-	return func() *retry.RetryError {
-		traceAPICall("ListPrivateEndpointServices")
-		apiServices, httpResp, err := cl.ListPrivateEndpointServices(ctx, clusterID)
-		if err != nil {
-			if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
-				return retry.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
-			} else {
-				return retry.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again: %v", err))
-			}
+) (*client.PrivateEndpointServices, *retry.RetryError) {
+	// Set of all pendingClusterRegions.
+	pendingClusterRegions := func() map[string]bool {
+		m := map[string]bool{}
+		for _, r := range cluster.Regions {
+			m[r.Name] = true
 		}
+		return m
+	}()
 
-		if len(apiServices.Services) == 0 {
-			return retry.RetryableError(fmt.Errorf("private endpoint services not yet created"))
+	traceAPICall("ListPrivateEndpointServices")
+	services, httpResp, err := cl.ListPrivateEndpointServices(ctx, cluster.Id)
+	if err != nil {
+		if httpResp != nil && httpResp.StatusCode < http.StatusInternalServerError {
+			return nil, retry.NonRetryableError(fmt.Errorf("error getting endpoint services: %s", formatAPIErrorMessage(err)))
+		} else {
+			return nil, retry.RetryableError(fmt.Errorf("encountered a server error while reading endpoint status - trying again: %v", err))
 		}
-
-		*services = *apiServices
-		var creating bool
-		// If there's at least one still creating, keep checking.
-		// If any have failed or have any other non-available status, something went wrong.
-		// If all the services have been created, we're done.
-		for _, service := range services.GetServices() {
-			if service.GetStatus() == client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING {
-				creating = true
-			} else if service.GetStatus() != client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE {
-				return retry.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
-			}
-		}
-		if creating {
-			return retry.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
-		}
-		return nil
 	}
+
+	if len(services.Services) == 0 {
+		return nil, retry.RetryableError(fmt.Errorf("private endpoint services not yet created"))
+	}
+
+	for _, service := range services.GetServices() {
+		// We don't care about services in other regions.
+		if _, ok := pendingClusterRegions[service.GetRegionName()]; !ok {
+			continue
+		}
+
+		switch service.GetStatus() {
+		case client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE:
+			delete(pendingClusterRegions, service.RegionName)
+		case client.PRIVATEENDPOINTSERVICESTATUSTYPE_CREATING:
+			return nil, retry.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
+		default:
+			return nil, retry.NonRetryableError(fmt.Errorf("endpoint service creation failed"))
+		}
+	}
+
+	if len(pendingClusterRegions) > 0 {
+		return nil, retry.RetryableError(fmt.Errorf("endpoint services are not ready yet"))
+	}
+
+	return services, nil
 }
 
 func NewPrivateEndpointServicesResource() resource.Resource {

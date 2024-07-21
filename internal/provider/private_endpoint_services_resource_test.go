@@ -40,7 +40,7 @@ func TestAccDedicatedPrivateEndpointServicesResource(t *testing.T) {
 }
 
 // TestAccServerlessPrivateEndpointServicesResource attempts to create, check,
-// and destroy a real serverless cluster and endpoint services. It will be
+// and destroy a real Serverless cluster and endpoint services. It will be
 // skipped if TF_ACC isn't set.
 func TestAccServerlessPrivateEndpointServicesResource(t *testing.T) {
 	t.Parallel()
@@ -58,7 +58,6 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 	}
 
 	true_val := true
-	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
 		finalCluster client.Cluster
@@ -91,6 +90,7 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
+				Plan:          "ADVANCED",
 				CloudProvider: "AWS",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
@@ -114,13 +114,12 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				Plan:          "SERVERLESS",
+				Plan:          "BASIC",
 				CloudProvider: "AWS",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: &zeroSpendLimit,
-						RoutingId:  "routing-id",
+						RoutingId: "routing-id",
 					},
 				},
 				Regions: []client.Region{
@@ -315,9 +314,7 @@ func getTestPrivateEndpointServicesResourceConfigForServerless(clusterName strin
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "AWS"
-    serverless = {
-        spend_limit = 0
-    }
+    serverless = {}
     regions = [
         { name = "us-east-1", primary = true },
         { name = "eu-central-1" },

@@ -3,12 +3,12 @@
 page_title: "cockroach_cluster Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  CockroachDB Cloud cluster. Can be Dedicated or Serverless.
+  CockroachDB Cloud cluster.
 ---
 
 # cockroach_cluster (Resource)
 
-CockroachDB Cloud cluster. Can be Dedicated or Serverless.
+CockroachDB Cloud cluster.
 
 ## Example Usage
 
@@ -33,7 +33,9 @@ resource "cockroach_cluster" "serverless" {
   name           = "cockroach-serverless"
   cloud_provider = "GCP"
   serverless = {
-    spend_limit = 1
+    usage_limits = {
+      provisioned_capacity = 1000
+    }
   }
   regions = [
     {
@@ -70,7 +72,7 @@ resource "cockroach_cluster" "serverless" {
 - `creator_id` (String) ID of the user who created the cluster.
 - `id` (String) The ID of this resource.
 - `operation_status` (String) Describes the current long-running operation, if any.
-- `plan` (String) Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
 
@@ -84,7 +86,7 @@ Required:
 Optional:
 
 - `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
-- `primary` (Boolean) Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
+- `primary` (Boolean) Set to true to mark this region as the primary for a serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
 
 Read-Only:
 
@@ -114,7 +116,7 @@ Read-Only:
 
 Optional:
 
-- `spend_limit` (Number) Spend limit in US cents.
+- `spend_limit` (Number, Deprecated) Spend limit in US cents.
 - `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
 
 Read-Only:
@@ -124,7 +126,8 @@ Read-Only:
 <a id="nestedatt--serverless--usage_limits"></a>
 ### Nested Schema for `serverless.usage_limits`
 
-Required:
+Optional:
 
+- `provisioned_capacity` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.

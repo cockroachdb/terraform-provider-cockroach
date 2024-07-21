@@ -47,14 +47,17 @@ type DedicatedClusterConfig struct {
 }
 
 type ServerlessClusterConfig struct {
+	// TODO(andyk): SpendLimit is deprecated and will be removed in a future
+	// release.
 	SpendLimit  types.Int64  `tfsdk:"spend_limit"`
 	RoutingId   types.String `tfsdk:"routing_id"`
 	UsageLimits *UsageLimits `tfsdk:"usage_limits"`
 }
 
 type UsageLimits struct {
-	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
-	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
+	RequestUnitLimit    types.Int64 `tfsdk:"request_unit_limit"`
+	StorageMibLimit     types.Int64 `tfsdk:"storage_mib_limit"`
+	ProvisionedCapacity types.Int64 `tfsdk:"provisioned_capacity"`
 }
 
 type SQLUser struct {

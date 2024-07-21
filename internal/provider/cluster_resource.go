@@ -122,6 +122,7 @@ func (r *clusterResource) Schema(
 			},
 			"plan": schema.StringAttribute{
 				Computed: true,
+				Optional: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -784,7 +785,7 @@ func (r *clusterResource) Update(
 	}
 
 	// Parent Id
-	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
+	if IsKnown(plan.ParentId) {
 		parentID := plan.ParentId.ValueString()
 		if parentID != "root" {
 			traceAPICall("GetFolder")
@@ -810,7 +811,13 @@ func (r *clusterResource) Update(
 		clusterReq.SetDeleteProtection(deleteProtection)
 	}
 
+	// Plan
+	if IsKnown(plan.Plan) {
+		clusterReq.SetPlan(client.PlanType(plan.Plan.ValueString()))
+	}
+
 	traceAPICall("UpdateCluster")
+
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(

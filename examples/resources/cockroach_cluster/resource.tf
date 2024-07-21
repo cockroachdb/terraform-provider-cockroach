@@ -17,6 +17,7 @@ resource "cockroach_cluster" "dedicated" {
 resource "cockroach_cluster" "serverless" {
   name           = "cockroach-serverless"
   cloud_provider = "GCP"
+  plan           = "STANDARD"
   serverless = {
     usage_limits = {
       provisioned_capacity = 1000

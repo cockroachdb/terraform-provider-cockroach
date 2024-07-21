@@ -79,9 +79,9 @@ func (d *clusterDataSource) Schema(
 								Computed:            true,
 								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
 							},
-							"provisioned_capacity": schema.Int64Attribute{
+							"provisioned_virtual_cpus": schema.Int64Attribute{
 								Computed:            true,
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
+								MarkdownDescription: "Maximum number of vCPUs that the cluster can use.",
 							},
 						},
 					},

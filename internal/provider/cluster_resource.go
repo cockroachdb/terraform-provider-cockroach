@@ -161,12 +161,12 @@ func (r *clusterResource) Schema(
 								},
 								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
 							},
-							"provisioned_capacity": schema.Int64Attribute{
+							"provisioned_virtual_cpus": schema.Int64Attribute{
 								Optional: true,
 								PlanModifiers: []planmodifier.Int64{
 									int64planmodifier.UseStateForUnknown(),
 								},
-								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
+								MarkdownDescription: "Maximum number of vCPUs that the cluster can use.",
 							},
 						},
 					},
@@ -300,11 +300,11 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 		),
 		resourcevalidator.Conflicting(
 			path.MatchRoot("serverless").AtName("usage_limits").AtName("request_unit_limit"),
-			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_virtual_cpus"),
 		),
 		resourcevalidator.Conflicting(
 			path.MatchRoot("serverless").AtName("usage_limits").AtName("storage_mib_limit"),
-			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_virtual_cpus"),
 		),
 	}
 }
@@ -354,7 +354,7 @@ func (r *clusterResource) Create(
 			serverless.UsageLimits = client.NewUsageLimits()
 			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
 			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
-			serverless.UsageLimits.ProvisionedCapacity = usageLimits.ProvisionedCapacity.ValueInt64Pointer()
+			serverless.UsageLimits.ProvisionedVirtualCpus = usageLimits.ProvisionedVirtualCpus.ValueInt64Pointer()
 		}
 
 		clusterSpec.SetServerless(*serverless)
@@ -750,7 +750,7 @@ func (r *clusterResource) Update(
 		if usageLimits != nil {
 			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
 			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
-			serverless.UsageLimits.ProvisionedCapacity = usageLimits.ProvisionedCapacity.ValueInt64Pointer()
+			serverless.UsageLimits.ProvisionedVirtualCpus = usageLimits.ProvisionedVirtualCpus.ValueInt64Pointer()
 		}
 		clusterReq.SetServerless(*serverless)
 	} else if cfg := plan.DedicatedConfig; cfg != nil {
@@ -985,9 +985,9 @@ func loadClusterToTerraformState(
 			usageLimits := clusterObj.Config.Serverless.UsageLimits
 			if usageLimits != nil {
 				serverlessConfig.UsageLimits = &UsageLimits{
-					ProvisionedCapacity: types.Int64PointerValue(usageLimits.ProvisionedCapacity),
-					RequestUnitLimit:    types.Int64PointerValue(usageLimits.RequestUnitLimit),
-					StorageMibLimit:     types.Int64PointerValue(usageLimits.StorageMibLimit),
+					ProvisionedVirtualCpus: types.Int64PointerValue(usageLimits.ProvisionedVirtualCpus),
+					RequestUnitLimit: types.Int64PointerValue(usageLimits.RequestUnitLimit),
+					StorageMibLimit:  types.Int64PointerValue(usageLimits.StorageMibLimit),
 				}
 			} else if plan != nil && plan.ServerlessConfig != nil && plan.ServerlessConfig.UsageLimits != nil {
 				// There is no difference in behavior between UsageLimits = nil and

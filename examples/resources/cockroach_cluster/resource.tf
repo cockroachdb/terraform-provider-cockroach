@@ -20,7 +20,7 @@ resource "cockroach_cluster" "serverless" {
   plan           = "STANDARD"
   serverless = {
     usage_limits = {
-      provisioned_capacity = 1000
+      provisioned_virtual_cpus = 2
     }
   }
   regions = [

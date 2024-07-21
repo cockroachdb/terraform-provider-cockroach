@@ -13,10 +13,10 @@ variable "cluster_name" {
   nullable = false
 }
 
-variable "provisioned_capacity" {
+variable "provisioned_virtual_cpus" {
   type     = number
   nullable = false
-  default  = 1000
+  default  = 2
 }
 
 variable "cloud_provider" {
@@ -75,7 +75,7 @@ resource "cockroach_cluster" "example" {
   cloud_provider = var.cloud_provider
   serverless = {
     usage_limits = {
-      provisioned_capacity = var.provisioned_capacity
+      provisioned_virtual_cpus = var.provisioned_virtual_cpus
     }
   }
   regions   = [for r in var.cloud_provider_regions : { name = r }]

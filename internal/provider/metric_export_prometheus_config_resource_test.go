@@ -78,7 +78,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(4)
-	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID, gomock.Any()).
+	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID).
 		Return(createdPrometheusClusterInfo, nil, nil)
 	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
 		Return(createdPrometheusClusterInfo, nil, nil).
@@ -92,7 +92,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		Return(createdPrometheusClusterInfo, nil, nil)
 	// It should not invoke EnablePrometheusMetricExport as request contains clusterID
 	// which will not get changed.
-	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID, gomock.Any()).
+	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID).
 		Return(updatedPrometheusClusterInfo, nil, nil).Times(0)
 	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
 		Return(updatedPrometheusClusterInfo, nil, nil).

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `STANDARD` clusters with provisioned serverless capacity.
+
+### Changed
+
+- Renamed `SERVERLESS` plan type to `BASIC`.
+- Renamed `DEDICATED` plan type to `ADVANCED`.
+
+### Deprecated
+
+- Deprecated support for `spend_limit` attribute in `serverless` config. Users
+  can instead enforce resource limits with `usage_limits`.
+
 ## [1.7.7] - 2024-06-20
 
 - Added warning about using private endpoints with old versions.

@@ -70,7 +70,7 @@ func TestAccServerlessClusterResource(t *testing.T) {
 			onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC"),
 			legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00),
 			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC"),
-			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 3000),
+			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6),
 		},
 	})
 }
@@ -153,7 +153,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		}
 	}
 
-	provisionedSingleRegionCluster := func(planType client.PlanType, provisionedCapacity int64) client.Cluster {
+	provisionedSingleRegionCluster := func(planType client.PlanType, provisionedVcpus int64) client.Cluster {
 		return client.Cluster{
 			Id:               uuid.Nil.String(),
 			Name:             clusterName,
@@ -164,7 +164,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					UsageLimits: &client.UsageLimits{
-						ProvisionedCapacity: int64Ptr(provisionedCapacity),
+						ProvisionedVcpus: int64Ptr(provisionedVcpus),
 					},
 					RoutingId: "routing-id",
 				},
@@ -177,7 +177,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		}
 	}
 
-	provisionedMultiRegionCluster := func(provisionedCapacity int64, primaryIndex int) client.Cluster {
+	provisionedMultiRegionCluster := func(provisionedVcpus int64, primaryIndex int) client.Cluster {
 		cluster := client.Cluster{
 			Id:               uuid.Nil.String(),
 			Name:             clusterName,
@@ -188,7 +188,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					UsageLimits: &client.UsageLimits{
-						ProvisionedCapacity: int64Ptr(provisionedCapacity),
+						ProvisionedVcpus: int64Ptr(provisionedVcpus),
 					},
 					RoutingId: "routing-id",
 				},
@@ -284,20 +284,20 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 5000)
+				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 10)
 			},
-			finalCluster: provisionedSingleRegionCluster("STANDARD", 5000),
+			finalCluster: provisionedSingleRegionCluster("STANDARD", 10),
 		},
 		{
 			name: "multi-region serverless STANDARD cluster with provisioned limit",
 			createStep: func() resource.TestStep {
 				return provisionedMultiRegionClusterWithLimitStep(clusterName)
 			},
-			initialCluster: provisionedMultiRegionCluster(3000, 1),
+			initialCluster: provisionedMultiRegionCluster(6, 1),
 			updateStep: func() resource.TestStep {
 				return provisionedMultiRegionClusterUpdatedStep(clusterName)
 			},
-			finalCluster: provisionedMultiRegionCluster(4000, 0),
+			finalCluster: provisionedMultiRegionCluster(8, 0),
 		},
 		{
 			name: "legacy serverless cluster from spend limit to higher spend limit",
@@ -390,7 +390,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							serverless = {
 								usage_limits = {
 									request_unit_limit = 1000000
-									provisioned_capacity = 1000
+									provisioned_vcpus = 2
 								}
 							}
 							regions = [{
@@ -412,7 +412,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							serverless = {
 								usage_limits = {
 									storage_mib_limit = 1024
-									provisioned_capacity = 1000
+									provisioned_vcpus = 2
 								}
 							}
 							regions = [{
@@ -574,11 +574,11 @@ func onDemandSingleRegionClusterWithLimitsStep(
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.#", "1"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(requestUnitLimit))),
 			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageMibLimit))),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity"),
+			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_vcpus"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "1"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(requestUnitLimit))),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageMibLimit))),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity"),
+			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_vcpus"),
 		),
 	}
 }
@@ -608,11 +608,11 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 		Check: resource.ComposeTestCheckFunc(
 			makeDefaultServerlessResourceChecks(clusterName, planType),
 			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.#", "0"),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity"),
+			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_vcpus"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.#", "0"),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity"),
+			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_vcpus"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
 		),
@@ -622,9 +622,9 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 func provisionedSingleRegionClusterStep(
 	clusterName string,
 	planType client.PlanType,
-	provisionedCapacity int,
+	provisionedVcpus int,
 ) resource.TestStep {
-	provisionedCapacityStr := strconv.Itoa(provisionedCapacity)
+	provisionedVcpusStr := strconv.Itoa(provisionedVcpus)
 	return resource.TestStep{
 		// Serverless cluster with provisioned resources.
 		Config: fmt.Sprintf(`
@@ -634,7 +634,7 @@ func provisionedSingleRegionClusterStep(
 				plan = "%s"
 				serverless = {
 					usage_limits = {
-						provisioned_capacity = %d
+						provisioned_vcpus = %d
 					}
 				}
 				regions = [{
@@ -645,13 +645,13 @@ func provisionedSingleRegionClusterStep(
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, planType, provisionedCapacity),
+			`, clusterName, planType, provisionedVcpus),
 		Check: resource.ComposeTestCheckFunc(
 			makeDefaultServerlessResourceChecks(clusterName, planType),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", provisionedCapacityStr),
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_vcpus", provisionedVcpusStr),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", provisionedCapacityStr),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_vcpus", provisionedVcpusStr),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
 		),
@@ -666,7 +666,7 @@ func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.Tes
 				cloud_provider = "GCP"
 				serverless = {
 					usage_limits = {
-						provisioned_capacity = 3000
+						provisioned_vcpus = 6
 					}
 				}
 				regions = [
@@ -697,7 +697,7 @@ func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.Tes
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.1.primary", "true"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", "3000"),
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_vcpus", "6"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "3"),
@@ -707,7 +707,7 @@ func provisionedMultiRegionClusterWithLimitStep(clusterName string) resource.Tes
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.1.primary", "true"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", "3000"),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_vcpus", "6"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
 		),
@@ -724,7 +724,7 @@ func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestS
 				cloud_provider = "GCP"
 				serverless = {
 					usage_limits = {
-						provisioned_capacity = 4000
+						provisioned_vcpus = 8
 					}
 				}
 				regions = [
@@ -754,7 +754,7 @@ func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestS
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.1.primary", "false"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessResourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_capacity", "4000"),
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_vcpus", "8"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "3"),
@@ -764,7 +764,7 @@ func provisionedMultiRegionClusterUpdatedStep(clusterName string) resource.TestS
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.1.primary", "false"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.name", "us-west2"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.2.primary", "false"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity", "4000"),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_vcpus", "8"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
 			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "delete_protection", "false"),
@@ -805,7 +805,7 @@ func legacyServerlessClusterWithSpendLimitStep(
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.#", "0"),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(spendLimit*5_000_000*8/10/100))),
 			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(spendLimit*2*1024*2/10/100))),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_capacity"),
+			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_vcpus"),
 		),
 	}
 }

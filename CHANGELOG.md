@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New `STANDARD` clusters with provisioned serverless capacity.
+- Ability to upgrade from `BASIC` plan to `STANDARD` plan.
 
 ### Changed
 

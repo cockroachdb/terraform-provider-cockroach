@@ -84,7 +84,7 @@ var regionSchema = schema.NestedAttributeObject{
 		"primary": schema.BoolAttribute{
 			Optional:    true,
 			Computed:    true,
-			Description: "Set to true to mark this region as the primary for a Serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
+			Description: "Set to true to mark this region as the primary for a serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
 		},
 	},
 }
@@ -93,7 +93,7 @@ func (r *clusterResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Description: "CockroachDB Cloud cluster. Can be Dedicated or Serverless.",
+		Description: "CockroachDB Cloud cluster.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -125,7 +125,7 @@ func (r *clusterResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Description: "Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.",
+				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
 			},
 			"cloud_provider": schema.StringAttribute{
 				Required: true,
@@ -139,6 +139,7 @@ func (r *clusterResource) Schema(
 				},
 				Attributes: map[string]schema.Attribute{
 					"spend_limit": schema.Int64Attribute{
+						DeprecationMessage:  "The `spend_limit` attribute is deprecated and will be removed in a future release of the provider. Configure 'usage_limits' instead.",
 						Optional:            true,
 						MarkdownDescription: "Spend limit in US cents.",
 					},
@@ -146,18 +147,25 @@ func (r *clusterResource) Schema(
 						Optional: true,
 						Attributes: map[string]schema.Attribute{
 							"request_unit_limit": schema.Int64Attribute{
-								Required: true,
+								Optional: true,
 								PlanModifiers: []planmodifier.Int64{
 									int64planmodifier.UseStateForUnknown(),
 								},
 								MarkdownDescription: "Maximum number of Request Units that the cluster can consume during the month.",
 							},
 							"storage_mib_limit": schema.Int64Attribute{
-								Required: true,
+								Optional: true,
 								PlanModifiers: []planmodifier.Int64{
 									int64planmodifier.UseStateForUnknown(),
 								},
 								MarkdownDescription: "Maximum amount of storage (in MiB) that the cluster can have at any time during the month.",
+							},
+							"provisioned_capacity": schema.Int64Attribute{
+								Optional: true,
+								PlanModifiers: []planmodifier.Int64{
+									int64planmodifier.UseStateForUnknown(),
+								},
+								MarkdownDescription: "Maximum number of Request Units that the cluster can consume per second.",
 							},
 						},
 					},
@@ -290,6 +298,14 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("serverless").AtName("usage_limits"),
 		),
 		resourcevalidator.Conflicting(
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("request_unit_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("storage_mib_limit"),
+			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_capacity"),
+		),
+		resourcevalidator.Conflicting(
 			path.MatchRoot("regions").AtAnyListIndex().AtName("primary"),
 			path.MatchRoot("dedicated"),
 		),
@@ -305,10 +321,8 @@ func (r *clusterResource) Create(
 	}
 
 	var plan CockroachCluster
-
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -322,7 +336,7 @@ func (r *clusterResource) Create(
 			if region.Primary.ValueBool() {
 				if primaryRegion != "" {
 					resp.Diagnostics.AddError("Too many primary regions",
-						"Only one region may be marked primary when creating a multi-region Serverless cluster.")
+						"Only one region may be marked primary when creating a multi-region serverless cluster.")
 					return
 				}
 				primaryRegion = region.Name.ValueString()
@@ -331,23 +345,19 @@ func (r *clusterResource) Create(
 		}
 		if len(regions) > 1 && primaryRegion == "" {
 			resp.Diagnostics.AddError("Primary region missing",
-				"One region must be marked primary when creating a multi-region Serverless cluster.")
+				"One region must be marked primary when creating a multi-region serverless cluster.")
 		}
 		serverless := client.NewServerlessClusterCreateSpecification(regions)
 		if primaryRegion != "" {
 			serverless.PrimaryRegion = &primaryRegion
 		}
 
-		usageLimits := plan.ServerlessConfig.UsageLimits
+		usageLimits := r.getUsageLimits(plan.ServerlessConfig)
 		if usageLimits != nil {
-			serverless.UsageLimits = client.NewUsageLimits(
-				usageLimits.RequestUnitLimit.ValueInt64(), usageLimits.StorageMibLimit.ValueInt64())
-		} else {
-			spendLimit := plan.ServerlessConfig.SpendLimit
-			if IsKnown(spendLimit) {
-				val := int32(spendLimit.ValueInt64())
-				serverless.SpendLimit = &val
-			}
+			serverless.UsageLimits = client.NewUsageLimits()
+			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
+			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
+			serverless.UsageLimits.ProvisionedCapacity = usageLimits.ProvisionedCapacity.ValueInt64Pointer()
 		}
 
 		clusterSpec.SetServerless(*serverless)
@@ -437,9 +447,9 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	var state CockroachCluster
-	loadClusterToTerraformState(clusterObj, &state, &plan)
-	diags = resp.State.Set(ctx, state)
+	var newState CockroachCluster
+	loadClusterToTerraformState(clusterObj, &newState, &plan)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -454,18 +464,18 @@ func (r *clusterResource) Read(
 		return
 	}
 
-	var cluster CockroachCluster
-	diags := req.State.Get(ctx, &cluster)
+	var state CockroachCluster
+	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	if !IsKnown(cluster.ID) {
+	if !IsKnown(state.ID) {
 		return
 	}
-	clusterID := cluster.ID.ValueString()
+	clusterID := state.ID.ValueString()
 	// In case this was an import, validate the ID format.
 	if !uuidRegex.MatchString(clusterID) {
 		resp.Diagnostics.AddError(
@@ -499,16 +509,15 @@ func (r *clusterResource) Read(
 		return
 	}
 
-	// We actually want to use the current state as the plan here,
-	// since we're trying to see if it changed.
-	loadClusterToTerraformState(clusterObj, &cluster, &cluster)
-
-	diags = resp.State.Set(ctx, cluster)
+	// We actually want to use the current state as the plan here, since we're
+	// trying to see if it changed.
+	var newState CockroachCluster
+	loadClusterToTerraformState(clusterObj, &newState, &state)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 }
 
 // ModifyPlan is used to make sure the user isn't trying to modify an
@@ -570,6 +579,34 @@ func (r *clusterResource) ModifyPlan(
 					"enabled isn't allowed. Please disable delete protection before destroying this cluster.")
 		}
 	}
+}
+
+// getUsageLimits tries to derive usage limits from the given Serverless config.
+// If it already specifies limits, they are returned. If there is a spend limit,
+// it is translated into usage limits. Otherwise, nil is returned.
+func (r *clusterResource) getUsageLimits(config *ServerlessClusterConfig) *UsageLimits {
+	const (
+		// requestUnitsPerUSD is the number of request units that one dollar buys,
+		// using May 1st prices for the original Serverless offering.
+		requestUnitsPerUSD = 5_000_000
+		// storageMiBMonthsPerUSD is the number of MiB that can be stored per month
+		// for one dollar, using May 1st prices for the original Serverless offering.
+		storageMiBMonthsPerUSD = 2 * 1024
+	)
+
+	if config.UsageLimits != nil {
+		return config.UsageLimits
+	}
+
+	if !config.SpendLimit.IsNull() {
+		spendLimit := config.SpendLimit.ValueInt64()
+		return &UsageLimits{
+			RequestUnitLimit: types.Int64Value(spendLimit * requestUnitsPerUSD * 8 / 10 / 100),
+			StorageMibLimit:  types.Int64Value(spendLimit * storageMiBMonthsPerUSD * 2 / 10 / 100),
+		}
+	}
+
+	return nil
 }
 
 // Comparator for two CRDB versions to make validation simpler. Assumes biannual releases of the form vYY.H.
@@ -689,7 +726,7 @@ func (r *clusterResource) Update(
 				if region.Primary.ValueBool() {
 					if primaryRegion != "" {
 						resp.Diagnostics.AddError("Too many primary regions",
-							"Only one region may be marked primary when creating a multi-region Serverless cluster.")
+							"Only one region may be marked primary when creating a multi-region serverless cluster.")
 						return
 					}
 					primaryRegion = region.Name.ValueString()
@@ -698,27 +735,21 @@ func (r *clusterResource) Update(
 			}
 			if len(regions) > 1 && primaryRegion == "" {
 				resp.Diagnostics.AddError("Primary region missing",
-					"One region must be marked primary when updating a multi-region Serverless cluster.")
+					"One region must be marked primary when updating a multi-region serverless cluster.")
 				return
 			}
 			serverless.SetPrimaryRegion(primaryRegion)
 			serverless.SetRegions(regions)
 		}
 
-		// Set either usage limits or spend limit.
-		usageLimits := plan.ServerlessConfig.UsageLimits
+		// If usage limits are nil in the plan, send empty usage limits to the
+		// API server so that it will clear limits (i.e. "unlimited" case).
+		serverless.UsageLimits = client.NewUsageLimits()
+		usageLimits := r.getUsageLimits(plan.ServerlessConfig)
 		if usageLimits != nil {
-			serverless.UsageLimits = client.NewUsageLimits(
-				usageLimits.RequestUnitLimit.ValueInt64(), usageLimits.StorageMibLimit.ValueInt64())
-		} else {
-			// Always set a spend limit. If it's unknown/null, still set it to
-			// zero so that the server will clear limits.
-			// TODO(andyk): Update this code once there is a better way of telling
-			// the server to clear limits. Today, the Go SDK cannot distinguish
-			// between null values that mean "clear limits" and null values that
-			// mean "ignore these fields".
-			val := int32(plan.ServerlessConfig.SpendLimit.ValueInt64())
-			serverless.SpendLimit = &val
+			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
+			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
+			serverless.UsageLimits.ProvisionedCapacity = usageLimits.ProvisionedCapacity.ValueInt64Pointer()
 		}
 		clusterReq.SetServerless(*serverless)
 	} else if cfg := plan.DedicatedConfig; cfg != nil {
@@ -799,9 +830,10 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	// Set state
-	loadClusterToTerraformState(clusterObj, &state, &plan)
-	diags = resp.State.Set(ctx, state)
+	// Set state.
+	var newState CockroachCluster
+	loadClusterToTerraformState(clusterObj, &newState, &plan)
+	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -892,7 +924,7 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 	})
 }
 
-// loadCLusterToTerraformState translates the cluster from an API response into the
+// loadClusterToTerraformState translates the cluster from an API response into the
 // TF provider model. It's used in both the cluster resource and data source. The plan,
 // if available, is used to determine the sort order of the cluster's regions, as well as
 // special formatting of certain attribute values (e.g. "preview" for `cockroach_version`).
@@ -939,24 +971,25 @@ func loadClusterToTerraformState(
 			RoutingId: types.StringValue(clusterObj.Config.Serverless.RoutingId),
 		}
 
-		// The whole plan or just its serverless config can be nil.
-		var planConfig *ServerlessClusterConfig
-		if plan != nil {
-			planConfig = plan.ServerlessConfig
+		if plan != nil && plan.ServerlessConfig != nil && IsKnown(plan.ServerlessConfig.SpendLimit) {
+			// Map back to the spend limit if it was specified in the plan.
+			serverlessConfig.SpendLimit = plan.ServerlessConfig.SpendLimit
+		} else {
+			usageLimits := clusterObj.Config.Serverless.UsageLimits
+			if usageLimits != nil {
+				serverlessConfig.UsageLimits = &UsageLimits{
+					ProvisionedCapacity: types.Int64PointerValue(usageLimits.ProvisionedCapacity),
+					RequestUnitLimit:    types.Int64PointerValue(usageLimits.RequestUnitLimit),
+					StorageMibLimit:     types.Int64PointerValue(usageLimits.StorageMibLimit),
+				}
+			} else if plan != nil && plan.ServerlessConfig != nil && plan.ServerlessConfig.UsageLimits != nil {
+				// There is no difference in behavior between UsageLimits = nil and
+				// UsageLimits = &UsageLimits{}, but we need to match whichever form
+				// the plan requested.
+				serverlessConfig.UsageLimits = &UsageLimits{}
+			}
 		}
 
-		// Set either the spend limit or usage limits, depending on the plan.
-		// Both options are returned by the API. If there's no plan (import or
-		// data source), we default to usage limits.
-		if clusterObj.Config.Serverless.UsageLimits != nil && (planConfig == nil || planConfig.UsageLimits != nil) {
-			usageLimits := clusterObj.Config.Serverless.UsageLimits
-			serverlessConfig.UsageLimits = &UsageLimits{
-				RequestUnitLimit: types.Int64Value(usageLimits.RequestUnitLimit),
-				StorageMibLimit:  types.Int64Value(usageLimits.StorageMibLimit),
-			}
-		} else if clusterObj.Config.Serverless.SpendLimit != nil && planConfig != nil && IsKnown(planConfig.SpendLimit) {
-			serverlessConfig.SpendLimit = types.Int64Value(int64(clusterObj.Config.Serverless.GetSpendLimit()))
-		}
 		state.ServerlessConfig = serverlessConfig
 	} else if clusterObj.Config.Dedicated != nil {
 		state.DedicatedConfig = &DedicatedClusterConfig{

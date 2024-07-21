@@ -59,14 +59,14 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
 		return s
 	})()
-	spendLimit := int32(1)
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            uuid.Nil.String(),
+		Plan:          "BASIC",
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: &spendLimit,
+				RoutingId: "routing-id",
 			},
 		},
 		State: "CREATED",
@@ -193,12 +193,10 @@ func getTestDatabaseResourceConfig(clusterName, databaseName string) string {
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    serverless = {
-        spend_limit = 1
-    }
-	regions = [{
-		name = "us-central1"
-	}]
+    serverless = {}
+    regions = [{
+        name = "us-central1"
+    }]
 }
 
 resource "cockroach_database" "test_database" {

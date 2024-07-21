@@ -57,9 +57,9 @@ func TestAccDedicatedAllowlistEntryResource(t *testing.T) {
 	testAllowlistEntryResource(t, clusterName, entry, newEntry, false /* useMock */, false /* isServerless */)
 }
 
-// TestAccServerlessAllowlistEntryResource attempts to create, check, and destroy
-// a real serverless cluster and allowlist entry. It will be skipped if TF_ACC
-// isn't set.
+// TestAccServerlessAllowlistEntryResource attempts to create, check, and
+// destroy a real serverless cluster and allowlist entry. It will be skipped if
+// TF_ACC isn't set.
 func TestAccServerlessAllowlistEntryResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-networking-%s", tfTestPrefix, GenerateRandomString(2))
@@ -108,7 +108,6 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
 
-	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
 		entry        client.AllowlistEntry
@@ -134,6 +133,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 						NumVirtualCpus: 2,
 					},
 				},
+				Plan:  "ADVANCED",
 				State: "CREATED",
 				Regions: []client.Region{
 					{
@@ -155,13 +155,12 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				Plan:          "SERVERLESS",
+				Plan:          "BASIC",
 				CloudProvider: "GCP",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: &zeroSpendLimit,
-						RoutingId:  "routing-id",
+						RoutingId: "routing-id",
 					},
 				},
 				Regions: []client.Region{
@@ -449,9 +448,7 @@ func getTestAllowlistEntryResourceConfigForServerless(
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
-    serverless = {
-        spend_limit = 0
-    }
+    serverless = {}
     regions = [{
         name = "us-central1"
     }]

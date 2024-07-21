@@ -55,9 +55,9 @@ type ServerlessClusterConfig struct {
 }
 
 type UsageLimits struct {
-	RequestUnitLimit    types.Int64 `tfsdk:"request_unit_limit"`
-	StorageMibLimit     types.Int64 `tfsdk:"storage_mib_limit"`
-	ProvisionedCapacity types.Int64 `tfsdk:"provisioned_capacity"`
+	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
+	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
+	ProvisionedVcpus types.Int64 `tfsdk:"provisioned_vcpus"`
 }
 
 type SQLUser struct {

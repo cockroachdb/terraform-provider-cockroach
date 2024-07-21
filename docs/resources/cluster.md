@@ -32,6 +32,7 @@ resource "cockroach_cluster" "dedicated" {
 resource "cockroach_cluster" "serverless" {
   name           = "cockroach-serverless"
   cloud_provider = "GCP"
+  plan           = "STANDARD"
   serverless = {
     usage_limits = {
       provisioned_capacity = 1000
@@ -64,6 +65,7 @@ resource "cockroach_cluster" "serverless" {
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 
 ### Read-Only
@@ -72,7 +74,6 @@ resource "cockroach_cluster" "serverless" {
 - `creator_id` (String) ID of the user who created the cluster.
 - `id` (String) The ID of this resource.
 - `operation_status` (String) Describes the current long-running operation, if any.
-- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
 

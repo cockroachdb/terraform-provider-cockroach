@@ -68,15 +68,12 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 		Description: "A service account used for managing access to the test cluster",
 	}
 
-	spendLimit := int32(1)
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            clusterID,
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
-			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: &spendLimit,
-			},
+			Serverless: &client.ServerlessClusterConfig{},
 		},
 		State: "CREATED",
 		Regions: []client.Region{

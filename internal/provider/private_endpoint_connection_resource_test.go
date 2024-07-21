@@ -81,7 +81,6 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 		Connections: []client.PrivateEndpointConnection{connection},
 	}
 
-	zeroSpendLimit := int32(0)
 	cases := []struct {
 		name         string
 		finalCluster client.Cluster
@@ -91,6 +90,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            clusterID,
+				Plan:          "ADVANCED",
 				CloudProvider: "AWS",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
@@ -112,13 +112,12 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				Plan:          "SERVERLESS",
+				Plan:          "STANDARD",
 				CloudProvider: "AWS",
 				State:         "CREATED",
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
-						SpendLimit: &zeroSpendLimit,
-						RoutingId:  "routing-id",
+						RoutingId: "routing-id",
 					},
 				},
 				Regions: []client.Region{
@@ -240,9 +239,7 @@ func getTestPrivateEndpointConnectionResourceConfigForServerless(clusterName str
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "AWS"
-    serverless = {
-        spend_limit = 0
-    }
+    serverless = {}
     regions = [{
         name = "us-east-1"
     }]

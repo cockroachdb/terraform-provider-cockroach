@@ -40,7 +40,7 @@ data "cockroach_cluster" "cockroach" {
 - `name` (String) Name of the cluster.
 - `operation_status` (String) Describes the current long-running operation, if any.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
-- `plan` (String) Denotes cluster deployment type: 'DEDICATED' or 'SERVERLESS'.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
@@ -78,7 +78,7 @@ Read-Only:
 Read-Only:
 
 - `routing_id` (String) Cluster identifier in a connection string.
-- `spend_limit` (Number) Spend limit in US cents.
+- `spend_limit` (Number, Deprecated) Spend limit in US cents.
 - `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
 
 <a id="nestedatt--serverless--usage_limits"></a>
@@ -86,5 +86,6 @@ Read-Only:
 
 Read-Only:
 
+- `provisioned_capacity` (Number) Maximum number of Request Units that the cluster can consume per second.
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.

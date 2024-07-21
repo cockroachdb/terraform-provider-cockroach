@@ -61,7 +61,7 @@ func TestIntegrationMetricExportDatadogConfigResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
-		Plan:             "DEDICATED",
+		Plan:             "ADVANCED",
 		CloudProvider:    "AWS",
 		State:            "CREATED",
 		Config: client.ClusterConfig{

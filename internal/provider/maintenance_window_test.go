@@ -56,7 +56,7 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
-		Plan:             "DEDICATED",
+		Plan:             "ADVANCED",
 		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{

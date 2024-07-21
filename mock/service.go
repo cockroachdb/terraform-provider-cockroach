@@ -689,9 +689,9 @@ func (mr *MockServiceMockRecorder) EnableLogExport(arg0, arg1, arg2 interface{})
 }
 
 // EnablePrometheusMetricExport mocks base method.
-func (m *MockService) EnablePrometheusMetricExport(arg0 context.Context, arg1 string, arg2 *map[string]interface{}) (*client.PrometheusMetricExportInfo, *http.Response, error) {
+func (m *MockService) EnablePrometheusMetricExport(arg0 context.Context, arg1 string) (*client.PrometheusMetricExportInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "EnablePrometheusMetricExport", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "EnablePrometheusMetricExport", arg0, arg1)
 	ret0, _ := ret[0].(*client.PrometheusMetricExportInfo)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -699,9 +699,9 @@ func (m *MockService) EnablePrometheusMetricExport(arg0 context.Context, arg1 st
 }
 
 // EnablePrometheusMetricExport indicates an expected call of EnablePrometheusMetricExport.
-func (mr *MockServiceMockRecorder) EnablePrometheusMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) EnablePrometheusMetricExport(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnablePrometheusMetricExport", reflect.TypeOf((*MockService)(nil).EnablePrometheusMetricExport), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnablePrometheusMetricExport", reflect.TypeOf((*MockService)(nil).EnablePrometheusMetricExport), arg0, arg1)
 }
 
 // GetAllRolesForUser mocks base method.

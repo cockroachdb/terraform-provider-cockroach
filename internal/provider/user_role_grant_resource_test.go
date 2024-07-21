@@ -64,15 +64,12 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 		return s
 	})()
 
-	spendLimit := int32(1)
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            clusterID,
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
-			Serverless: &client.ServerlessClusterConfig{
-				SpendLimit: &spendLimit,
-			},
+			Serverless: &client.ServerlessClusterConfig{},
 		},
 		State: "CREATED",
 		Regions: []client.Region{

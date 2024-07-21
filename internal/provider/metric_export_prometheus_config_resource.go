@@ -165,8 +165,7 @@ func retryEnablePrometheusMetricExport(
 	apiObj *client.PrometheusMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
-		body := &map[string]interface{}{}
-		apiResp, httpResp, err := cl.EnablePrometheusMetricExport(ctx, clusterID, body)
+		apiResp, httpResp, err := cl.EnablePrometheusMetricExport(ctx, clusterID)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||

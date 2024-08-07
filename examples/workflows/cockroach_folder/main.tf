@@ -73,6 +73,7 @@ resource "cockroach_user_role_grant" "cluster_creator_grant" {
 resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = var.cloud_provider
+  plan           = "STANDARD"
   serverless = {
     usage_limits = {
       provisioned_virtual_cpus = var.provisioned_virtual_cpus

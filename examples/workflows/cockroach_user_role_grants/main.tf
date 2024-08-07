@@ -47,6 +47,7 @@ provider "cockroach" {
 resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = var.cloud_provider
+  plan           = "STANDARD"
   serverless = {
     usage_limits = {
       provisioned_virtual_cpus = var.provisioned_virtual_cpus

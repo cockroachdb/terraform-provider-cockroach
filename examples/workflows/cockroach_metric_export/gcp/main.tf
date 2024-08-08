@@ -18,7 +18,7 @@ variable "storage_gib" {
 variable "machine_type" {
   type     = string
   nullable = false
-  default  = "n1-standard-2"
+  default  = "n2-standard-2"
 }
 
 variable "gcp_region" {

@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"testing"
 
@@ -30,12 +31,27 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// TestIntegrationRoleResource attempts to create, check, and destroy
+// TestAccRoleGrantsResource attempts to create, check, and destroy a
+// real role grant for a user. It will be skipped if TF_ACC isn't set.
+func TestAccRoleGrantsResource(t *testing.T) {
+	t.Parallel()
+	// The Acceptance Test relies on the user having access to set an org level role.
+	// Please ensure that the service account used satisfies this condition.
+	testRoleResource(t, false /* useMock */)
+}
+
+// TestIntegrationRoleGrantsResource attempts to create, check, and destroy
 // a role grant to a user, but uses a mocked API service.
-func TestIntegrationRoleResource(t *testing.T) {
+func TestIntegrationRoleGrantsResource(t *testing.T) {
 	userId := uuid.Must(uuid.NewUUID()).String()
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	serviceAccount := client.ServiceAccount{
+		Id:          userId,
+		Name:        "Test cluster SA",
+		Description: "A service account used for managing access to the test cluster",
 	}
 
 	ctrl := gomock.NewController(t)
@@ -113,21 +129,27 @@ func TestIntegrationRoleResource(t *testing.T) {
 		},
 	}
 
+	s.EXPECT().CreateServiceAccount(gomock.Any(), gomock.Any()).
+		Return(&serviceAccount, nil, nil)
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userId).
 		Return(&restrictedGetResponse, nil, nil)
-	s.EXPECT().GetAllRolesForUser(gomock.Any(), userId).
-		Return(&permissionedGetResponse, nil, nil)
 	s.EXPECT().SetRolesForUser(gomock.Any(), userId, gomock.Any()).
 		Return(nil, nil, nil)
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userId).
+		Return(&permissionedGetResponse, nil, nil).Times(3)
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 	s.EXPECT().ListRoleGrants(gomock.Any(), gomock.Any()).
 		Return(&listResponse, nil, nil).Times(2)
 	s.EXPECT().SetRolesForUser(gomock.Any(), userId, &client.CockroachCloudSetRolesForUserRequest{}).
 		Return(nil, nil, nil)
+	s.EXPECT().DeleteServiceAccount(gomock.Any(), gomock.Any()).
+		Return(nil, nil, nil)
 
-	testRoleResource(t, userId, true)
+	testRoleResource(t, true /* useMock */)
 }
 
-func testRoleResource(t *testing.T, userId string, useMock bool) {
+func testRoleResource(t *testing.T, useMock bool) {
 	var (
 		resourceNameTest = "cockroach_user_role_grants.test"
 	)
@@ -140,10 +162,11 @@ func testRoleResource(t *testing.T, userId string, useMock bool) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestRoleFullyPermissionsedResourceConfig(userId),
+				Config: getTestRoleFullyPermissionsedResourceConfig(),
 				Check: resource.ComposeTestCheckFunc(
-					testRoleMembership(resourceNameTest, userId, "CLUSTER_ADMIN", true),
-					resource.TestCheckResourceAttr(resourceNameTest, "id", userId),
+					testRoleMembership(resourceNameTest, "CLUSTER_ADMIN", true /* hasRole */),
+					testRoleMembership(resourceNameTest, "ORG_MEMBER", true /* hasRole */),
+					testRoleMembership(resourceNameTest, "ORG_ADMIN", true /* hasRole */),
 				),
 			},
 			{
@@ -156,7 +179,7 @@ func testRoleResource(t *testing.T, userId string, useMock bool) {
 }
 
 func testRoleMembership(
-	resourceName, userId, roleName string, hasRole bool,
+	resourceName, roleName string, hasRole bool,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p := testAccProvider.(*provider)
@@ -169,6 +192,10 @@ func testRoleMembership(
 
 		if rs.Primary.ID == "" {
 			return fmt.Errorf("no ID is set")
+		}
+		userId := rs.Primary.Attributes["user_id"]
+		if rs.Primary.ID != userId {
+			return fmt.Errorf("user ID does not match resource ID")
 		}
 
 		traceAPICall("GetAllRolesForUser")
@@ -188,10 +215,15 @@ func testRoleMembership(
 	}
 }
 
-func getTestRoleFullyPermissionsedResourceConfig(userId string) string {
-	return fmt.Sprintf(`
+func getTestRoleFullyPermissionsedResourceConfig() string {
+	return `
+resource "cockroach_service_account" "test_sa" {
+  name        = "Test cluster SA"
+  description = "A service account used for managing access to the test cluster"
+}
+
 resource "cockroach_user_role_grants" "test" {
-  user_id = "%s"
+  user_id = cockroach_service_account.test_sa.id
   roles = [
     {
       role_name = "ORG_ADMIN",
@@ -210,5 +242,5 @@ resource "cockroach_user_role_grants" "test" {
     },
   ]
 }
-`, userId)
+`
 }

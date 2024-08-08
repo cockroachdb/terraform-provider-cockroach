@@ -123,7 +123,9 @@ process. Unit tests are great, but rare since TF provider methods don't usually 
 
 **It's generally a good idea to run acceptance tests affected by your change manually before submitting a PR.** If
 you're using GoLand, you can run them individually, setting `TF_ACC=1` and setting `COCKROACH_SERVER` and
-`COCKROACH_API_KEY` to appropriate values.
+`COCKROACH_API_KEY` to appropriate values. Please ensure the service account associated with the provided
+`COCKROACH_API_KEY` has the necessary role/permissions (Org Admin, Billing Coordinator, Cluster Admin, Folder Admin) to
+run the tests.
 
 Getting the mock calls right for integration tests can be challenging. You may be surprised at how many read calls are
 issued at each stage. Some optional logging has been enabled which can help

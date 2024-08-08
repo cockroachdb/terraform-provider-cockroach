@@ -93,6 +93,7 @@ provider "cockroach" {
 resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = var.cloud_provider
+  plan           = "ADVANCED"
   dedicated = {
     storage_gib      = var.storage_gib
     num_virtual_cpus = var.num_virtual_cpus

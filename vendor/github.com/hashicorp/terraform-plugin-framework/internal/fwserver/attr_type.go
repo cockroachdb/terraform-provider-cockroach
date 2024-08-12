@@ -26,8 +26,38 @@ func coerceBoolTypable(ctx context.Context, schemaPath path.Path, valuable baset
 	return typable, nil
 }
 
+func coerceFloat32Typable(ctx context.Context, schemaPath path.Path, valuable basetypes.Float32Valuable) (basetypes.Float32Typable, diag.Diagnostics) {
+	typable, ok := valuable.Type(ctx).(basetypes.Float32Typable)
+
+	// Type() of a Valuable should always be a Typable to recreate the Valuable,
+	// but if for some reason it is not, raise an implementation error instead
+	// of a panic.
+	if !ok {
+		return nil, diag.Diagnostics{
+			attributePlanModificationTypableError(schemaPath, valuable),
+		}
+	}
+
+	return typable, nil
+}
+
 func coerceFloat64Typable(ctx context.Context, schemaPath path.Path, valuable basetypes.Float64Valuable) (basetypes.Float64Typable, diag.Diagnostics) {
 	typable, ok := valuable.Type(ctx).(basetypes.Float64Typable)
+
+	// Type() of a Valuable should always be a Typable to recreate the Valuable,
+	// but if for some reason it is not, raise an implementation error instead
+	// of a panic.
+	if !ok {
+		return nil, diag.Diagnostics{
+			attributePlanModificationTypableError(schemaPath, valuable),
+		}
+	}
+
+	return typable, nil
+}
+
+func coerceInt32Typable(ctx context.Context, schemaPath path.Path, valuable basetypes.Int32Valuable) (basetypes.Int32Typable, diag.Diagnostics) {
+	typable, ok := valuable.Type(ctx).(basetypes.Int32Typable)
 
 	// Type() of a Valuable should always be a Typable to recreate the Valuable,
 	// but if for some reason it is not, raise an implementation error instead
@@ -133,6 +163,21 @@ func coerceSetTypable(ctx context.Context, schemaPath path.Path, valuable basety
 
 func coerceStringTypable(ctx context.Context, schemaPath path.Path, valuable basetypes.StringValuable) (basetypes.StringTypable, diag.Diagnostics) {
 	typable, ok := valuable.Type(ctx).(basetypes.StringTypable)
+
+	// Type() of a Valuable should always be a Typable to recreate the Valuable,
+	// but if for some reason it is not, raise an implementation error instead
+	// of a panic.
+	if !ok {
+		return nil, diag.Diagnostics{
+			attributePlanModificationTypableError(schemaPath, valuable),
+		}
+	}
+
+	return typable, nil
+}
+
+func coerceDynamicTypable(ctx context.Context, schemaPath path.Path, valuable basetypes.DynamicValuable) (basetypes.DynamicTypable, diag.Diagnostics) {
+	typable, ok := valuable.Type(ctx).(basetypes.DynamicTypable)
 
 	// Type() of a Valuable should always be a Typable to recreate the Valuable,
 	// but if for some reason it is not, raise an implementation error instead

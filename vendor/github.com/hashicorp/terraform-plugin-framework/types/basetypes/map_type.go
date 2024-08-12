@@ -7,11 +7,12 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/attr/xattr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
 var _ MapTypable = MapType{}
@@ -68,6 +69,20 @@ func (m MapType) ValueFromTerraform(ctx context.Context, in tftypes.Value) (attr
 	if !in.Type().Is(tftypes.Map{}) {
 		return nil, fmt.Errorf("can't use %s as value of MapValue, can only use tftypes.Map values", in.String())
 	}
+
+	// MAINTAINER NOTE:
+	// MapType does not support DynamicType as an element type. It is not explicitly prevented from being created with the
+	// Framework type system, but the Framework-supported MapAttribute and MapNestedAttribute prevent DynamicType
+	// from being used as an element type. An attempt to use DynamicType as the element type will eventually lead you to an error on this line :)
+	//
+	// In the future, if we ever need to support a map of dynamic element types, this type equality check will need to be modified to allow
+	// dynamic types to not return an error, as the tftypes.Value coming in (if known) will be a concrete value, for example:
+	//
+	// - m.TerraformType(ctx): tftypes.Map[tftypes.DynamicPseudoType]
+	// - in.Type(): tftypes.Map[tftypes.String]
+	//
+	// The `ValueFromTerraform` function for a dynamic type will be able create the correct concrete dynamic value with this modification in place.
+	//
 	if !in.Type().Equal(tftypes.Map{ElementType: m.ElementType().TerraformType(ctx)}) {
 		return nil, fmt.Errorf("can't use %s as value of Map with ElementType %T, can only use %s values", in.String(), m.ElementType(), m.ElementType().TerraformType(ctx).String())
 	}
@@ -160,6 +175,7 @@ func (m MapType) Validate(ctx context.Context, in tftypes.Value, path path.Path)
 		return diags
 	}
 
+	//nolint:staticcheck // xattr.TypeWithValidate is deprecated, but we still need to support it.
 	validatableType, isValidatable := m.ElementType().(xattr.TypeWithValidate)
 	if !isValidatable {
 		return diags

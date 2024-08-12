@@ -4,12 +4,20 @@
 package function
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwfunction"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwtype"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // Ensure the implementation satisifies the desired interfaces.
-var _ Parameter = ListParameter{}
+var (
+	_ Parameter                                      = ListParameter{}
+	_ fwfunction.ParameterWithValidateImplementation = ListParameter{}
+	_ ParameterWithListValidators                    = ListParameter{}
+)
 
 // ListParameter represents a function parameter that is an ordered list of a
 // single element type. Either the ElementType or CustomType field must be set.
@@ -27,6 +35,10 @@ var _ Parameter = ListParameter{}
 type ListParameter struct {
 	// ElementType is the type for all elements of the list. This field must be
 	// set.
+	//
+	// Element types that contain a dynamic type (i.e. types.Dynamic) are not supported.
+	// If underlying dynamic values are required, replace this parameter definition with
+	// DynamicParameter instead.
 	ElementType attr.Type
 
 	// AllowNullValue when enabled denotes that a null argument value can be
@@ -70,6 +82,15 @@ type ListParameter struct {
 	// alphabetical character and followed by alphanumeric or underscore
 	// characters.
 	Name string
+
+	// Validators is a list of list validators that should be applied to the
+	// parameter.
+	Validators []ListParameterValidator
+}
+
+// GetValidators returns the list of validators for the parameter.
+func (p ListParameter) GetValidators() []ListParameterValidator {
+	return p.Validators
 }
 
 // GetAllowNullValue returns if the parameter accepts a null value.
@@ -105,5 +126,29 @@ func (p ListParameter) GetType() attr.Type {
 
 	return basetypes.ListType{
 		ElemType: p.ElementType,
+	}
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the parameter to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (p ListParameter) ValidateImplementation(ctx context.Context, req fwfunction.ValidateParameterImplementationRequest, resp *fwfunction.ValidateParameterImplementationResponse) {
+	if p.CustomType == nil {
+		if fwtype.ContainsCollectionWithDynamic(p.GetType()) {
+			if req.ParameterPosition != nil {
+				resp.Diagnostics.Append(fwtype.ParameterCollectionWithDynamicTypeDiag(*req.ParameterPosition, p.GetName()))
+			} else {
+				resp.Diagnostics.Append(fwtype.VariadicParameterCollectionWithDynamicTypeDiag(p.GetName()))
+			}
+		}
+
+		if fwtype.ContainsMissingUnderlyingType(p.GetType()) {
+			resp.Diagnostics.Append(fwtype.ParameterMissingUnderlyingTypeDiag(p.GetName(), req.ParameterPosition))
+		}
+	}
+
+	if p.GetName() == "" {
+		resp.Diagnostics.Append(fwfunction.MissingParameterNameDiag(req.FunctionName, req.ParameterPosition))
 	}
 }

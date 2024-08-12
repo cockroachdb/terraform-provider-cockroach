@@ -4,18 +4,9 @@
 package function
 
 import (
+	"context"
+
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-)
-
-const (
-	// DefaultParameterNamePrefix is the prefix used to default the name of parameters which do not declare
-	// a name. Use this to prevent Terraform errors for missing names. This prefix is used with the parameter
-	// position in a function definition to create a unique name (param1, param2, etc.)
-	DefaultParameterNamePrefix = "param"
-
-	// DefaultVariadicParameterName is the default name given to a variadic parameter that does not declare
-	// a name. Use this to prevent Terraform errors for missing names.
-	DefaultVariadicParameterName = "varparam"
 )
 
 // Parameter is the interface for defining function parameters.
@@ -48,4 +39,28 @@ type Parameter interface {
 	// during a function call and the argument data type received by the
 	// Function type Run method.
 	GetType() attr.Type
+}
+
+// ValidateableParameter defines an interface for validating a parameter value.
+type ValidateableParameter interface {
+	// ValidateParameter returns any error generated during validation
+	// of the parameter. It is generally used to check the data format and ensure
+	// that it complies with the requirements of the attr.Value.
+	ValidateParameter(context.Context, ValidateParameterRequest, *ValidateParameterResponse)
+}
+
+// ValidateParameterRequest represents a request for the attr.Value to call its
+// validation logic. An instance of this request struct is supplied as an
+// argument to the attr.Value type ValidateParameter method.
+type ValidateParameterRequest struct {
+	// Position is the zero-ordered position of the parameter being validated.
+	Position int64
+}
+
+// ValidateParameterResponse represents a response to a ValidateParameterRequest.
+// An instance of this response struct is supplied as an argument to the
+// ValidateParameter method.
+type ValidateParameterResponse struct {
+	// Error is a function error generated during validation of the attr.Value.
+	Error *FuncError
 }

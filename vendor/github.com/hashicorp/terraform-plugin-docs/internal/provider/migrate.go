@@ -27,6 +27,8 @@ type migrator struct {
 	templatesDir string
 	examplesDir  string
 
+	providerName string
+
 	ui cli.Ui
 }
 
@@ -38,7 +40,7 @@ func (m *migrator) warnf(format string, a ...interface{}) {
 	m.ui.Warn(fmt.Sprintf(format, a...))
 }
 
-func Migrate(ui cli.Ui, providerDir string, templatesDir string, examplesDir string) error {
+func Migrate(ui cli.Ui, providerDir string, templatesDir string, examplesDir string, providerName string) error {
 	// Ensure provider directory is resolved absolute path
 	if providerDir == "" {
 		wd, err := os.Getwd()
@@ -69,6 +71,11 @@ func Migrate(ui cli.Ui, providerDir string, templatesDir string, examplesDir str
 		return fmt.Errorf("expected %q to be a directory", providerDir)
 	}
 
+	// Default providerName to provider directory name
+	if providerName == "" {
+		providerName = filepath.Base(providerDir)
+	}
+
 	// Determine website directory
 	websiteDir, err := determineWebsiteDir(providerDir)
 	if err != nil {
@@ -80,6 +87,7 @@ func Migrate(ui cli.Ui, providerDir string, templatesDir string, examplesDir str
 		templatesDir: templatesDir,
 		examplesDir:  examplesDir,
 		websiteDir:   websiteDir,
+		providerName: providerName,
 		ui:           ui,
 	}
 
@@ -172,28 +180,43 @@ func (m *migrator) MigrateTemplate(relDir string) fs.WalkDirFunc {
 		}
 
 		baseName, _, _ := strings.Cut(d.Name(), ".")
+		shortName := providerShortName(m.providerName)
+		fileName := strings.TrimPrefix(baseName, shortName+"_")
 
 		var exampleRelDir string
-		if baseName == "index" {
+		if fileName == "index" {
 			exampleRelDir = relDir
 		} else {
-			exampleRelDir = filepath.Join(relDir, baseName)
+			exampleRelDir = filepath.Join(relDir, fileName)
 		}
-		templateFilePath := filepath.Join(m.ProviderTemplatesDir(), relDir, baseName+".md.tmpl")
+		templateFilePath := filepath.Join(m.ProviderTemplatesDir(), relDir, fileName+".md.tmpl")
 
 		err = os.MkdirAll(filepath.Dir(templateFilePath), 0755)
 		if err != nil {
 			return fmt.Errorf("unable to create directory %q: %w", templateFilePath, err)
 		}
 
+		templateFile, err := os.OpenFile(templateFilePath, os.O_WRONLY|os.O_CREATE, 0600)
+
+		if err != nil {
+			return fmt.Errorf("unable to open file %q: %w", templateFilePath, err)
+		}
+
+		defer func(f *os.File) {
+			err := f.Close()
+			if err != nil {
+				m.warnf("unable to close file %q: %q", f.Name(), err)
+			}
+		}(templateFile)
+
 		m.infof("extracting YAML frontmatter to %q", templateFilePath)
-		err = m.ExtractFrontMatter(data, relDir, templateFilePath)
+		err = m.ExtractFrontMatter(data, relDir, templateFile)
 		if err != nil {
 			return fmt.Errorf("unable to extract front matter to %q: %w", templateFilePath, err)
 		}
 
 		m.infof("extracting code examples from %q", d.Name())
-		err = m.ExtractCodeExamples(data, exampleRelDir, templateFilePath)
+		err = m.ExtractCodeExamples(data, exampleRelDir, templateFile)
 		if err != nil {
 			return fmt.Errorf("unable to extract code examples from %q: %w", templateFilePath, err)
 		}
@@ -203,29 +226,18 @@ func (m *migrator) MigrateTemplate(relDir string) fs.WalkDirFunc {
 
 }
 
-func (m *migrator) ExtractFrontMatter(content []byte, relDir string, templateFilePath string) error {
-	templateFile, err := os.OpenFile(templateFilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return fmt.Errorf("unable to open file %q: %w", templateFilePath, err)
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			m.warnf("unable to close file %q: %q", templateFilePath, err)
-		}
-	}(templateFile)
-
+func (m *migrator) ExtractFrontMatter(content []byte, relDir string, templateFile *os.File) error {
 	fileScanner := bufio.NewScanner(bytes.NewReader(content))
 	fileScanner.Split(bufio.ScanLines)
 
 	hasFirstLine := fileScanner.Scan()
 	if !hasFirstLine || fileScanner.Text() != "---" {
-		m.warnf("no frontmatter found in %q", templateFilePath)
+		m.warnf("no frontmatter found in %q", templateFile.Name())
 		return nil
 	}
-	_, err = templateFile.WriteString(fileScanner.Text() + "\n")
+	_, err := templateFile.WriteString(fileScanner.Text() + "\n")
 	if err != nil {
-		return fmt.Errorf("unable to append frontmatter to %q: %w", templateFilePath, err)
+		return fmt.Errorf("unable to append frontmatter to %q: %w", templateFile.Name(), err)
 	}
 	exited := false
 	for fileScanner.Scan() {
@@ -235,7 +247,7 @@ func (m *migrator) ExtractFrontMatter(content []byte, relDir string, templateFil
 		}
 		_, err = templateFile.WriteString(fileScanner.Text() + "\n")
 		if err != nil {
-			return fmt.Errorf("unable to append frontmatter to %q: %w", templateFilePath, err)
+			return fmt.Errorf("unable to append frontmatter to %q: %w", templateFile.Name(), err)
 		}
 		if fileScanner.Text() == "---" {
 			exited = true
@@ -244,7 +256,7 @@ func (m *migrator) ExtractFrontMatter(content []byte, relDir string, templateFil
 	}
 
 	if !exited {
-		return fmt.Errorf("cannot find ending of frontmatter block in %q", templateFilePath)
+		return fmt.Errorf("cannot find ending of frontmatter block in %q", templateFile.Name())
 	}
 
 	// add comment to end of front matter briefly explaining template functionality
@@ -254,24 +266,13 @@ func (m *migrator) ExtractFrontMatter(content []byte, relDir string, templateFil
 		_, err = templateFile.WriteString(migrateProviderTemplateComment + "\n")
 	}
 	if err != nil {
-		return fmt.Errorf("unable to append template comment to %q: %w", templateFilePath, err)
+		return fmt.Errorf("unable to append template comment to %q: %w", templateFile.Name(), err)
 	}
 
 	return nil
 }
 
-func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templateFilePath string) error {
-	templateFile, err := os.OpenFile(templateFilePath, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-	if err != nil {
-		return fmt.Errorf("unable to open file %q: %w", templateFilePath, err)
-	}
-	defer func(f *os.File) {
-		err := f.Close()
-		if err != nil {
-			m.warnf("unable to close file %q: %q", templateFilePath, err)
-		}
-	}(templateFile)
-
+func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templateFile *os.File) error {
 	md := newMarkdownRenderer()
 	p := md.Parser()
 	root := p.Parse(text.NewReader(content))
@@ -279,7 +280,7 @@ func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templat
 	exampleCount := 0
 	importCount := 0
 
-	err = ast.Walk(root, func(node ast.Node, enter bool) (ast.WalkStatus, error) {
+	err := ast.Walk(root, func(node ast.Node, enter bool) (ast.WalkStatus, error) {
 		// skip the root node
 		if !enter || node.Type() == ast.TypeDocument {
 			return ast.WalkContinue, nil
@@ -294,20 +295,20 @@ func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templat
 				exampleCount++
 				ext = ".tf"
 				exampleName = "example_" + strconv.Itoa(exampleCount) + ext
-				examplePath = filepath.Join(m.ProviderExamplesDir(), newRelDir, exampleName)
+				examplePath = filepath.Join(m.examplesDir, newRelDir, exampleName)
 				template = fmt.Sprintf("{{tffile \"%s\"}}", examplePath)
-				m.infof("creating example file %q", examplePath)
+				m.infof("creating example file %q", filepath.Join(m.providerDir, examplePath))
 			case "console":
 				importCount++
 				ext = ".sh"
 				exampleName = "import_" + strconv.Itoa(importCount) + ext
-				examplePath = filepath.Join(m.ProviderExamplesDir(), newRelDir, exampleName)
+				examplePath = filepath.Join(m.examplesDir, newRelDir, exampleName)
 				template = fmt.Sprintf("{{codefile \"shell\" \"%s\"}}", examplePath)
-				m.infof("creating import file %q", examplePath)
+				m.infof("creating import file %q", filepath.Join(m.providerDir, examplePath))
 			default:
 				// Render node as is
 				m.infof("skipping code block with unknown language %q", lang)
-				err = md.Renderer().Render(templateFile, content, node)
+				err := md.Renderer().Render(templateFile, content, node)
 				if err != nil {
 					return ast.WalkStop, fmt.Errorf("unable to render node: %w", err)
 				}
@@ -322,7 +323,7 @@ func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templat
 			}
 
 			// create example file from code block
-			err = writeFile(examplePath, codeBuf.String())
+			err := writeFile(examplePath, codeBuf.String())
 			if err != nil {
 				return ast.WalkStop, fmt.Errorf("unable to write file %q: %w", examplePath, err)
 			}
@@ -337,7 +338,7 @@ func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templat
 		}
 
 		// Render non-code nodes as is
-		err = md.Renderer().Render(templateFile, content, node)
+		err := md.Renderer().Render(templateFile, content, node)
 		if err != nil {
 			return ast.WalkStop, fmt.Errorf("unable to render node: %w", err)
 		}
@@ -353,9 +354,9 @@ func (m *migrator) ExtractCodeExamples(content []byte, newRelDir string, templat
 
 	_, err = templateFile.WriteString("\n")
 	if err != nil {
-		return fmt.Errorf("unable to write to template %q: %w", templateFilePath, err)
+		return fmt.Errorf("unable to write to template %q: %w", templateFile.Name(), err)
 	}
-	m.infof("finished creating template %q", templateFilePath)
+	m.infof("finished creating template %q", templateFile.Name())
 
 	return nil
 }

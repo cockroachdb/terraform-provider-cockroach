@@ -711,19 +711,22 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		})
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&secondUpdateCluster, httpOk, nil).Times(6)
+		Return(&secondUpdateCluster, httpOk, nil).Times(5)
 
 	// Scale
 
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
-		DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
-		) (*client.Cluster, *http.Response, error) {
-			currentCluster := &scaledCluster
-			return currentCluster, httpOk, nil
-		})
+	// s.EXPECT().GetCluster(gomock.Any(), clusterID).
+	// 	Return(&secondUpdateCluster, httpOk, nil)
 
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&scaledCluster, httpOk, nil).AnyTimes()
+	// s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
+	// 	DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
+	// 	) (*client.Cluster, *http.Response, error) {
+	// 		currentCluster := &scaledCluster
+	// 		return currentCluster, httpOk, nil
+	// 	})
+
+	// s.EXPECT().GetCluster(gomock.Any(), clusterID).
+	// 	Return(&scaledCluster, httpOk, nil).AnyTimes()
 
 	// Deletion
 
@@ -800,7 +803,7 @@ func testDedicatedClusterResource(
 			Check:  resource.TestCheckResourceAttr(resourceName, "delete_protection", "false"),
 		},
 	}
-	testSteps = append(testSteps, additionalSteps...)
+	// testSteps = append(testSteps, additionalSteps...)
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,

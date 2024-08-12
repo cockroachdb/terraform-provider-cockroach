@@ -1,8 +1,6 @@
 name: Cockroach Terraform Provider CI
 on:
   pull_request:
-    branches:
-      - 'main'
 
 jobs:
 

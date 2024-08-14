@@ -698,11 +698,12 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		})
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&firstUpdateCluster, httpOk, nil).Times(7)
+		Return(&firstUpdateCluster, httpOk, nil).Times(6)
 
 	// Failed Delete Attempt
 
 	// Second Update
+
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
 		DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
 		) (*client.Cluster, *http.Response, error) {

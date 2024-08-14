@@ -40,18 +40,16 @@ func TestAccRoleGrantResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-rg-resource-%s", tfTestPrefix, GenerateRandomString(4))
 
-	// Skip the org test for the Acceptance Test because the test relies on the
-	// user having access to set an org level role. In order to avoid adding
-	// configuration, we use the service account user as the user to grant
-	// resources to.  This user doesn't seem to have the necessary permissions
-	// to perform the org grant so we skip it.
-	testRoleGrantResource(t, clusterName, true /* skipOrgTest */, false /* , false /* useMock */)
+	// The Acceptance Test relies on the user having access to set an org level role.
+	// Please ensure that the service account used satisfies this condition.
+	testRoleGrantResource(t, clusterName, false /* useMock */)
 }
 
 // TestIntegrationRoleGrantResource attempts to create, check, and destroy a
 // role grant for a user, but uses a mocked API service.
 func TestIntegrationRoleGrantResource(t *testing.T) {
 	userID := uuid.Must(uuid.NewUUID()).String()
+	creatorID := uuid.Must(uuid.NewUUID()).String()
 	clusterID := uuid.Must(uuid.NewUUID()).String()
 	clusterName := "test-cluster-name"
 	if os.Getenv(CockroachAPIKey) == "" {
@@ -63,6 +61,12 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
 		return s
 	})()
+
+	serviceAccount := client.ServiceAccount{
+		Id:          userID,
+		Name:        "Test cluster SA",
+		Description: "A service account used for managing access to the test cluster",
+	}
 
 	spendLimit := int32(1)
 	cluster := client.Cluster{
@@ -80,7 +84,7 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 				Name: "us-central1",
 			},
 		},
-		CreatorId: userID,
+		CreatorId: creatorID,
 	}
 
 	orgMemberRole := client.BuiltInRole{
@@ -128,6 +132,18 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 		},
 	}
 
+	PostDeleteGetResponse := client.GetAllRolesForUserResponse{
+		Roles: &[]client.BuiltInRole{
+			orgMemberRole,
+			orgAdminRole,
+			clusterOperatorWriteRole,
+		},
+	}
+
+	// Called by Service Account Create
+	s.EXPECT().CreateServiceAccount(gomock.Any(), gomock.Any()).
+		Return(&serviceAccount, nil, nil)
+
 	// Called by Cluster Create
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(&cluster, nil, nil)
@@ -138,6 +154,7 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 	// Called by Create - Cluster role addition
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
 		Return(&PreCreateGetResponse, nil, nil)
+
 	s.EXPECT().AddUserToRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_CLUSTER), clusterID, string(client.ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER)).
 		Return(nil, nil, nil)
 
@@ -150,19 +167,30 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 				clusterOperatorWriteRole,
 			},
 		}, nil, nil)
+
 	s.EXPECT().AddUserToRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_ORGANIZATION), "", string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR)).
 		Return(nil, nil, nil)
 
 	// Called by testRoleGrantExists below
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
-		Return(&PostCreateGetResponse, nil, nil).Times(4)
+		Return(&PostCreateGetResponse, nil, nil).Times(2)
+
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostCreateGetResponse, nil, nil).Times(2)
 
 	// Called by pre update Read for second step
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
 		Return(&PostCreateGetResponse, nil, nil).Times(2)
 
@@ -171,60 +199,77 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
 		Return(&PostCreateGetResponse, nil, nil)
 
-	// Called by the Import step
-	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
-		Return(&PostCreateGetResponse, nil, nil).Times(1)
+	// Called by pre delete Read for third step
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 
-	// Called by Delete
-	s.EXPECT().RemoveUserFromRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_CLUSTER), clusterID, string(client.ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER)).
-		Return(nil, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostCreateGetResponse, nil, nil).Times(2)
+
+	// Called by org role Delete in third step
 	s.EXPECT().RemoveUserFromRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_ORGANIZATION), "", string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR)).
 		Return(nil, nil, nil)
+
+	// Called by the Import step
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostDeleteGetResponse, nil, nil)
+
+	// Called by Delete
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostDeleteGetResponse, nil, nil).Times(2)
+
+	s.EXPECT().RemoveUserFromRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_CLUSTER), clusterID, string(client.ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER)).
+		Return(nil, nil, nil)
+
+	s.EXPECT().DeleteServiceAccount(gomock.Any(), gomock.Any()).
+		Return(nil, nil, nil)
+
 	s.EXPECT().DeleteCluster(gomock.Any(), gomock.Any()).
 		Return(nil, nil, nil)
 
-	// Post cleanup verification
-	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
-		Return(&PreCreateGetResponse, nil, nil)
-
-	testRoleGrantResource(t, clusterName, false /* skipOrgTest */, true /* useMock */)
+	testRoleGrantResource(t, clusterName, true /* useMock */)
 }
 
-func testRoleGrantResource(t *testing.T, clusterName string, skipOrgTest, useMock bool) {
+func testRoleGrantResource(t *testing.T, clusterName string, useMock bool) {
 	var (
 		orgGrantResourceName     = "cockroach_user_role_grant.org_grant"
 		clusterGrantResourceName = "cockroach_user_role_grant.cluster_grant"
-		clusterResourceName      = "cockroach_cluster.test"
 	)
 	defer HookGlobal(&generateRandomPassword, func() (string, error) {
 		return testPassword, nil
 	})()
 
-	// compose checkFuncs so we can optionally exclude the org test.
-	checkFuncs := []resource.TestCheckFunc{
-		testRoleGrantExists(clusterGrantResourceName, clusterResourceName, string(client.ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER), string(client.FOLDERRESOURCETYPETYPE_CLUSTER)),
-	}
-	if !skipOrgTest {
-		checkFuncs = append(checkFuncs, testRoleGrantExists(orgGrantResourceName, clusterResourceName, string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR), string(client.RESOURCETYPETYPE_ORGANIZATION)))
-	}
+	checkClusterRole := testRoleGrantExists(clusterGrantResourceName, string(client.ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER), string(client.FOLDERRESOURCETYPETYPE_CLUSTER))
+	checkOrgRole := testRoleGrantExists(orgGrantResourceName, string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR), string(client.RESOURCETYPETYPE_ORGANIZATION))
 
 	resource.Test(t, resource.TestCase{
-		// After removal of the test resources, verify that the user running the
-		// tests still has at least one non ORG_MEMBER role to show that this
-		// deletion did not remove the other roles like the user_role_grants
-		// resource would.
-		CheckDestroy:             verifyRemainingRolesIntact(clusterResourceName),
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestRoleGrantResourceConfig(clusterName, skipOrgTest),
-				Check:  resource.ComposeTestCheckFunc(checkFuncs...),
+				Config: getTestRoleGrantResourceConfig(clusterName, true /* includeOrgResource */),
+				Check:  resource.ComposeTestCheckFunc(checkClusterRole, checkOrgRole),
 			},
 			{
-				Config:      getTestRoleGrantResourceConfigUpdated(clusterName, skipOrgTest),
+				Config:      getTestRoleGrantResourceWithDuplicateRole(clusterName),
 				ExpectError: regexp.MustCompile(`Role already exists`),
+			},
+			// After removal of the org role, verify that the associated user still
+			// has the cluster role to show that this deletion did not remove the
+			// other roles like the user_role_grants resource would.
+			{
+				Config: getTestRoleGrantResourceConfig(clusterName, false /* includeOrgResource */),
+				Check:  checkClusterRole,
 			},
 			{
 				ResourceName: clusterGrantResourceName,
@@ -238,16 +283,12 @@ func testRoleGrantResource(t *testing.T, clusterName string, skipOrgTest, useMoc
 				// 2. we need to look up the userID from the fetched resource
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					resources := s.RootModule().Resources
-					clusterResource, ok := resources[clusterResourceName]
-					if !ok {
-						return "", fmt.Errorf("not found: %s", clusterResourceName)
-					}
-					userID := clusterResource.Primary.Attributes["creator_id"]
 					roleGrantResource, ok := resources[clusterGrantResourceName]
 					if !ok {
 						return "", fmt.Errorf("not found: %s", clusterGrantResourceName)
 					}
 					resourceID := roleGrantResource.Primary.Attributes["role.resource_id"]
+					userID := roleGrantResource.Primary.Attributes["user_id"]
 					return fmt.Sprintf("%s,%s,%s,%s", userID, string(client.ORGANIZATIONUSERROLETYPE_CLUSTER_OPERATOR_WRITER), string(client.FOLDERRESOURCETYPETYPE_CLUSTER), resourceID), nil
 				},
 			},
@@ -255,51 +296,8 @@ func testRoleGrantResource(t *testing.T, clusterName string, skipOrgTest, useMoc
 	})
 }
 
-// verifyRemainingRolesIntact checks to ensure our user account still has some
-// non ORG_MEMBER roles attached to it. What differentiates the user_role_grant
-// resource from the user_role_grants resource (besides an s) is that it manages
-// only a single role grant.  If more roles are removed than just this one, this
-// is an error case.  A side affect of this check is that it relies on other
-// role grants already existing for this user.
-func verifyRemainingRolesIntact(clusterResourceName string) resource.TestCheckFunc {
-	return func(s *terraform.State) error {
-		ctx := context.Background()
-		p := testAccProvider.(*provider)
-		p.service = NewService(cl)
-		resources := s.RootModule().Resources
-
-		// Grab the userID from the cluster Resource
-		clusterResource, ok := resources[clusterResourceName]
-		if !ok {
-			return fmt.Errorf("not found: %s", clusterResourceName)
-		}
-		userID := clusterResource.Primary.Attributes["creator_id"]
-
-		traceAPICall("GetAllRolesRoleUser")
-		roleResp, _, err := p.service.GetAllRolesForUser(ctx, userID)
-		if err != nil {
-			return fmt.Errorf("error fetching roles for user %s: %s", userID, err.Error())
-		}
-
-		for _, role := range roleResp.GetRoles() {
-			if role.Name != client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER {
-				return nil
-			}
-		}
-
-		return fmt.Errorf(
-			"no non ORG_MEMBER roles found for user after resource cleanup."+
-				"(user_id=%s). The failure case this is checking for is whether roles "+
-				"were removed inadvertently.  More likely, is that the service "+
-				"account user needs to have at least one additional role beside "+
-				"ORG_MEMBER assigned to it. ",
-			userID,
-		)
-	}
-}
-
 func testRoleGrantExists(
-	roleGrantResourceName, clusterResourceName, roleName, resourceType string,
+	roleGrantResourceName, roleName, resourceType string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		ctx := context.Background()
@@ -312,12 +310,7 @@ func testRoleGrantExists(
 			return fmt.Errorf("not found: %s", roleGrantResourceName)
 		}
 		resourceID := resource.Primary.Attributes["role.resource_id"]
-
-		clusterResource, ok := resources[clusterResourceName]
-		if !ok {
-			return fmt.Errorf("not found: %s", clusterResourceName)
-		}
-		userID := clusterResource.Primary.Attributes["creator_id"]
+		userID := resource.Primary.Attributes["user_id"]
 
 		resourceRole := Role{
 			RoleName:     types.StringValue(roleName),
@@ -445,10 +438,10 @@ func TestParseRoleGrantResourceID(t *testing.T) {
 	}
 }
 
-func getTestRoleGrantResourceConfig(clusterName string, skipOrgTest bool) string {
+func getTestRoleGrantResourceConfig(clusterName string, includeOrgResource bool) string {
 	orgResource := `
 resource "cockroach_user_role_grant" "org_grant" {
-	user_id = cockroach_cluster.test.creator_id
+	user_id = cockroach_service_account.test_sa.id
 	role = {
 		role_name = "BILLING_COORDINATOR",
 		resource_type = "ORGANIZATION",
@@ -460,6 +453,11 @@ resource "cockroach_user_role_grant" "org_grant" {
 	`
 
 	baseResources := fmt.Sprintf(`
+resource "cockroach_service_account" "test_sa" {
+  name        = "Test cluster SA"
+  description = "A service account used for managing access to the test cluster"
+}
+
 resource "cockroach_cluster" "test" {
 	name           = "%s"
 	cloud_provider = "GCP"
@@ -472,7 +470,7 @@ resource "cockroach_cluster" "test" {
 }
 
 resource "cockroach_user_role_grant" "cluster_grant" {
-	user_id = cockroach_cluster.test.creator_id
+	user_id = cockroach_service_account.test_sa.id
 	role = {
 		role_name = "CLUSTER_OPERATOR_WRITER",
 		resource_type = "CLUSTER",
@@ -481,18 +479,18 @@ resource "cockroach_user_role_grant" "cluster_grant" {
 }
 `, clusterName)
 
-	if skipOrgTest {
-		return baseResources
-	} else {
+	if includeOrgResource {
 		return baseResources + orgResource
+	} else {
+		return baseResources
 	}
 }
 
-func getTestRoleGrantResourceConfigUpdated(clusterName string, skipOrgTest bool) string {
-	return getTestRoleGrantResourceConfig(clusterName, skipOrgTest) + `
+func getTestRoleGrantResourceWithDuplicateRole(clusterName string) string {
+	return getTestRoleGrantResourceConfig(clusterName, true /* includeOrgResource */) + `
 
 resource "cockroach_user_role_grant" "a_duplicate_grant" {
-	user_id = cockroach_cluster.test.creator_id
+	user_id = cockroach_service_account.test_sa.id
 	role = {
 		role_name = "CLUSTER_OPERATOR_WRITER",
 		resource_type = "CLUSTER",

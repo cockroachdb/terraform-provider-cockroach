@@ -197,7 +197,7 @@ func (r *serviceAccountResource) Update(
 	}
 
 	// Only send the description if the value is present in resource.
-	if !(plan.Description.IsNull() || plan.Description.IsUnknown()) {
+	if IsKnown(plan.Description) {
 		updateSpec.SetDescription(plan.Description.ValueString())
 	}
 

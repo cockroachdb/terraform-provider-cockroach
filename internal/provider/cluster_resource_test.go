@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -217,19 +218,35 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	cases := []struct {
 		name              string
 		createStep        func() resource.TestStep
+		validateCreate    func(req *client.CreateClusterRequest) error
 		initialCluster    client.Cluster
 		updateStep        func() resource.TestStep
+		validateUpdate    func(spec *client.UpdateClusterSpecification) error
 		finalCluster      client.Cluster
 		ignoreImportPaths []string
 	}{
 		{
 			name: "single-region serverless BASIC cluster converted to unlimited resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
+			},
+			validateCreate: func(req *client.CreateClusterRequest) error {
+				// Ensure that provider passes the plan type to Create.
+				if req.Spec.Plan == nil || *req.Spec.Plan != client.PLANTYPE_BASIC {
+					return errors.New(fmt.Sprintf("unexpected plan type in create request: %v", req.Spec.Plan))
+				}
+				return nil
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
 				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC")
+			},
+			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
+				// Ensure that provider passes the plan type to Update.
+				if spec.Plan == nil || *spec.Plan != client.PLANTYPE_BASIC {
+					return errors.New(fmt.Sprintf("unexpected plan type in update request: %v", spec.Plan))
+				}
+				return nil
 			},
 			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
 			// When testing import, skip validating the usage limits, because the
@@ -241,7 +258,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted to no limit resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
@@ -291,6 +308,13 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 10)
 			},
+			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
+				// Ensure that provider passes the new plan type to Update.
+				if spec.Plan == nil || *spec.Plan != client.PLANTYPE_STANDARD {
+					return errors.New(fmt.Sprintf("unexpected plan type in update request: %v", spec.Plan))
+				}
+				return nil
+			},
 			finalCluster: provisionedSingleRegionCluster("STANDARD", 10),
 		},
 		{
@@ -301,6 +325,13 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			initialCluster: provisionedSingleRegionCluster("STANDARD", 10),
 			updateStep: func() resource.TestStep {
 				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400)
+			},
+			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
+				// Ensure that provider passes the new plan type to Update.
+				if spec.Plan == nil || *spec.Plan != client.PLANTYPE_BASIC {
+					return errors.New(fmt.Sprintf("unexpected plan type in update request: %v", spec.Plan))
+				}
+				return nil
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 10_000_000_000, 102_400),
 		},
@@ -450,6 +481,24 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "invalid plan name",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: `
+						resource "cockroach_cluster" "test" {
+							name = "foo"
+							cloud_provider = "GCP"
+							plan = "SERVERLESS"
+							serverless = {}
+							regions = [{
+								name = "us-central1"
+							}]
+						}`,
+					ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
+				}
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -481,7 +530,12 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				// Use DoAndReturn so that it's easy to set break points.
 				s.EXPECT().
 					CreateCluster(gomock.Any(), gomock.Any()).
-					DoAndReturn(func(context.Context, *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+					DoAndReturn(func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+						if c.validateCreate != nil {
+							if err := c.validateCreate(req); err != nil {
+								return nil, nil, err
+							}
+						}
 						return &c.initialCluster, nil, nil
 					})
 				s.EXPECT().
@@ -496,7 +550,12 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				if updateStep.ExpectError == nil {
 					s.EXPECT().
 						UpdateCluster(gomock.Any(), gomock.Any(), gomock.Any()).
-						DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+						DoAndReturn(func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+							if c.validateUpdate != nil {
+								if err := c.validateUpdate(spec); err != nil {
+									return nil, nil, err
+								}
+							}
 							updateCalled = true
 							return &c.finalCluster, nil, nil
 						})

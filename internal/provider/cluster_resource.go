@@ -28,6 +28,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -126,6 +127,7 @@ func (r *clusterResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
+				Validators:  []validator.String{stringvalidator.OneOf("BASIC", "STANDARD", "ADVANCED")},
 				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
 			},
 			"cloud_provider": schema.StringAttribute{
@@ -326,6 +328,10 @@ func (r *clusterResource) Create(
 
 	clusterSpec := client.NewCreateClusterSpecification()
 
+	if IsKnown(plan.Plan) {
+		clusterSpec.SetPlan(client.PlanType(plan.Plan.ValueString()))
+	}
+
 	if plan.ServerlessConfig != nil {
 		var regions []string
 		var primaryRegion string
@@ -406,7 +412,7 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	if !(plan.ParentId.IsNull() || plan.ParentId.IsUnknown()) {
+	if IsKnown(plan.ParentId) {
 		parentID := plan.ParentId.ValueString()
 		if parentID != "root" {
 			traceAPICall("GetFolder")

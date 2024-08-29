@@ -20,8 +20,9 @@ package client
 
 // EnableLogExportRequest struct for EnableLogExportRequest.
 type EnableLogExportRequest struct {
-	// auth_principal is either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging.
 	AuthPrincipal string `json:"auth_principal"`
+	// The primary or the secondary connected sources client authentication key. This is used to export logs to Azure Log Analytics.
+	AzureSharedKey *string `json:"azure_shared_key,omitempty"`
 	// groups is a collection of log group configurations that allows the customer to define collections of CRDB log channels that are aggregated separately at the target sink.
 	Groups *[]LogExportGroup `json:"groups,omitempty"`
 	// log_name is an identifier for the logs in the customer's log sink.
@@ -68,6 +69,20 @@ func (o *EnableLogExportRequest) GetAuthPrincipal() string {
 // SetAuthPrincipal sets field value.
 func (o *EnableLogExportRequest) SetAuthPrincipal(v string) {
 	o.AuthPrincipal = v
+}
+
+// GetAzureSharedKey returns the AzureSharedKey field value if set, zero value otherwise.
+func (o *EnableLogExportRequest) GetAzureSharedKey() string {
+	if o == nil || o.AzureSharedKey == nil {
+		var ret string
+		return ret
+	}
+	return *o.AzureSharedKey
+}
+
+// SetAzureSharedKey gets a reference to the given string and assigns it to the AzureSharedKey field.
+func (o *EnableLogExportRequest) SetAzureSharedKey(v string) {
+	o.AzureSharedKey = &v
 }
 
 // GetGroups returns the Groups field value if set, zero value otherwise.

@@ -16,7 +16,7 @@ generate:
 	go generate
 
 update-sdk:
-	go get github.com/cockroachdb/cockroach-cloud-sdk-go
+	go get github.com/cockroachdb/cockroach-cloud-sdk-go/v2
 	go generate ./mock
 
 release:

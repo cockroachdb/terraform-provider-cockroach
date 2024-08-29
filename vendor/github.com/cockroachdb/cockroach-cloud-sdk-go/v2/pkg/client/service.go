@@ -166,13 +166,28 @@ type Service interface {
 	// Add a new CIDR address to the IP allowlist
 	AddAllowlistEntry(ctx _context.Context, clusterId string, allowlistEntry *AllowlistEntry) (*AllowlistEntry, *_nethttp.Response, error)
 	// Add a new CIDR address to the IP allowlist
-	AddAllowlistEntry2(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+	AddAllowlistEntry2(ctx _context.Context, clusterId string, cidrIp string, cidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
 	// Delete an IP allowlist entry
 	DeleteAllowlistEntry(ctx _context.Context, clusterId string, cidrIp string, cidrMask int32) (*AllowlistEntry, *_nethttp.Response, error)
 	// Get the IP allowlist and propagation status for a cluster
 	ListAllowlistEntries(ctx _context.Context, clusterId string, options *ListAllowlistEntriesOptions) (*ListAllowlistEntriesResponse, *_nethttp.Response, error)
 	// Update an IP allowlist entry
-	UpdateAllowlistEntry(ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+	UpdateAllowlistEntry(ctx _context.Context, clusterId string, cidrIp string, cidrMask int32, allowlistEntry1 *AllowlistEntry1) (*AllowlistEntry, *_nethttp.Response, error)
+
+	//
+	// JWTIssuers
+	//
+
+	// Add a JWT Issuer
+	AddJWTIssuer(ctx _context.Context, addJWTIssuerRequest *AddJWTIssuerRequest) (*JWTIssuer, *_nethttp.Response, error)
+	// Delete a JWT Issuer
+	DeleteJWTIssuer(ctx _context.Context, id string) (*JWTIssuer, *_nethttp.Response, error)
+	// Get a JWT Issuer
+	GetJWTIssuer(ctx _context.Context, id string) (*JWTIssuer, *_nethttp.Response, error)
+	// List all JWT Issuers
+	ListJWTIssuers(ctx _context.Context, options *ListJWTIssuersOptions) (*ListJWTIssuersResponse, *_nethttp.Response, error)
+	// Update a JWT Issuer
+	UpdateJWTIssuer(ctx _context.Context, id string, updateJWTIssuerRequest *UpdateJWTIssuerRequest) (*JWTIssuer, *_nethttp.Response, error)
 
 	//
 	// LogExport
@@ -204,14 +219,14 @@ type Service interface {
 	DeleteCloudWatchMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
 	// Delete the Datadog Metric Export configuration for a cluster
 	DeleteDatadogMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
-	// Delete the Prometheus Metric Export configuration for a cluster
+	// Disable Prometheus Metric Export for a cluster
 	DeletePrometheusMetricExport(ctx _context.Context, clusterId string) (*DeleteMetricExportResponse, *_nethttp.Response, error)
 	// Create or update the CloudWatch Metric Export configuration for a cluster
 	EnableCloudWatchMetricExport(ctx _context.Context, clusterId string, enableCloudWatchMetricExportRequest *EnableCloudWatchMetricExportRequest) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
 	// Create or update the Datadog Metric Export configuration for a cluster
 	EnableDatadogMetricExport(ctx _context.Context, clusterId string, enableDatadogMetricExportRequest *EnableDatadogMetricExportRequest) (*DatadogMetricExportInfo, *_nethttp.Response, error)
-	// Create or update the Prometheus Metric Export configuration for a cluster
-	EnablePrometheusMetricExport(ctx _context.Context, clusterId string, body *map[string]interface{}) (*PrometheusMetricExportInfo, *_nethttp.Response, error)
+	// Enable Prometheus Metric Export for a cluster
+	EnablePrometheusMetricExport(ctx _context.Context, clusterId string) (*PrometheusMetricExportInfo, *_nethttp.Response, error)
 	// Get the CloudWatch Metric Export configuration for a cluster
 	GetCloudWatchMetricExportInfo(ctx _context.Context, clusterId string) (*CloudWatchMetricExportInfo, *_nethttp.Response, error)
 	// Get the Datadog Metric Export configuration for a cluster
@@ -223,15 +238,15 @@ type Service interface {
 	// OpenIDConnectConfiguration
 	//
 
-	// Create an API OIDC configuration
+	// Deprecated: Create an API OIDC configuration (Deprecated)
 	CreateApiOidcConfig(ctx _context.Context, createApiOidcConfigRequest *CreateApiOidcConfigRequest) (*ApiOidcConfig, *_nethttp.Response, error)
-	// Delete an API OIDC configuration
+	// Deprecated: Delete an API OIDC configuration (Deprecated)
 	DeleteApiOidcConfig(ctx _context.Context, id string) (*ApiOidcConfig, *_nethttp.Response, error)
-	// Get an API OIDC configuration
+	// Deprecated: Get an API OIDC configuration (Deprecated)
 	GetApiOidcConfig(ctx _context.Context, id string) (*ApiOidcConfig, *_nethttp.Response, error)
-	// List all API OIDC configurations
+	// Deprecated: List all API OIDC configurations (Deprecated)
 	ListApiOidcConfig(ctx _context.Context, options *ListApiOidcConfigOptions) (*ListApiOidcConfigResponse, *_nethttp.Response, error)
-	// Update an API OIDC configuration
+	// Deprecated: Update an API OIDC configuration (Deprecated)
 	UpdateApiOidcConfig(ctx _context.Context, id string, apiOidcConfig1 *ApiOidcConfig1) (*ApiOidcConfig, *_nethttp.Response, error)
 
 	//
@@ -6471,7 +6486,7 @@ func (a *ServiceImpl) AddAllowlistEntry(
 
 // AddAllowlistEntry2 executes the request.
 func (a *ServiceImpl) AddAllowlistEntry2(
-	ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1,
+	ctx _context.Context, clusterId string, cidrIp string, cidrMask int32, allowlistEntry1 *AllowlistEntry1,
 ) (*AllowlistEntry, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
@@ -6483,10 +6498,10 @@ func (a *ServiceImpl) AddAllowlistEntry2(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{entry.cidr_ip}/{entry.cidr_mask}"
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{cidr_ip}/{cidr_mask}"
 	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_ip"+"}", _neturl.PathEscape(parameterToString(entryCidrIp, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_mask"+"}", _neturl.PathEscape(parameterToString(entryCidrMask, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cidr_ip"+"}", _neturl.PathEscape(parameterToString(cidrIp, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cidr_mask"+"}", _neturl.PathEscape(parameterToString(cidrMask, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -6903,7 +6918,7 @@ func (a *ServiceImpl) ListAllowlistEntries(
 
 // UpdateAllowlistEntry executes the request.
 func (a *ServiceImpl) UpdateAllowlistEntry(
-	ctx _context.Context, clusterId string, entryCidrIp string, entryCidrMask int32, allowlistEntry1 *AllowlistEntry1,
+	ctx _context.Context, clusterId string, cidrIp string, cidrMask int32, allowlistEntry1 *AllowlistEntry1,
 ) (*AllowlistEntry, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
@@ -6915,10 +6930,10 @@ func (a *ServiceImpl) UpdateAllowlistEntry(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{entry.cidr_ip}/{entry.cidr_mask}"
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/allowlist/{cidr_ip}/{cidr_mask}"
 	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_ip"+"}", _neturl.PathEscape(parameterToString(entryCidrIp, "")), -1)
-	localVarPath = strings.Replace(localVarPath, "{"+"entry.cidr_mask"+"}", _neturl.PathEscape(parameterToString(entryCidrMask, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cidr_ip"+"}", _neturl.PathEscape(parameterToString(cidrIp, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"cidr_mask"+"}", _neturl.PathEscape(parameterToString(cidrMask, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
@@ -7029,6 +7044,703 @@ func (a *ServiceImpl) UpdateAllowlistEntry(
 	}
 
 	var localVarReturnValue AllowlistEntry
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// AddJWTIssuer executes the request.
+func (a *ServiceImpl) AddJWTIssuer(
+	ctx _context.Context, addJWTIssuerRequest *AddJWTIssuerRequest,
+) (*JWTIssuer, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/jwt-issuers"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if addJWTIssuerRequest == nil {
+		return nil, nil, reportError("addJWTIssuerRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = addJWTIssuerRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue JWTIssuer
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// DeleteJWTIssuer executes the request.
+func (a *ServiceImpl) DeleteJWTIssuer(
+	ctx _context.Context, id string,
+) (*JWTIssuer, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/jwt-issuers/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue JWTIssuer
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetJWTIssuer executes the request.
+func (a *ServiceImpl) GetJWTIssuer(
+	ctx _context.Context, id string,
+) (*JWTIssuer, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/jwt-issuers/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue JWTIssuer
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListJWTIssuersOptions contains optional parameters for ListJWTIssuers.
+type ListJWTIssuersOptions struct {
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListJWTIssuers executes the request.
+func (a *ServiceImpl) ListJWTIssuers(
+	ctx _context.Context, options *ListJWTIssuersOptions,
+) (*ListJWTIssuersResponse, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/jwt-issuers"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ListJWTIssuersResponse
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// UpdateJWTIssuer executes the request.
+func (a *ServiceImpl) UpdateJWTIssuer(
+	ctx _context.Context, id string, updateJWTIssuerRequest *UpdateJWTIssuerRequest,
+) (*JWTIssuer, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/jwt-issuers/{id}"
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateJWTIssuerRequest == nil {
+		return nil, nil, reportError("updateJWTIssuerRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateJWTIssuerRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue JWTIssuer
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -8526,7 +9238,7 @@ func (a *ServiceImpl) EnableDatadogMetricExport(
 
 // EnablePrometheusMetricExport executes the request.
 func (a *ServiceImpl) EnablePrometheusMetricExport(
-	ctx _context.Context, clusterId string, body *map[string]interface{},
+	ctx _context.Context, clusterId string,
 ) (*PrometheusMetricExportInfo, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPost
@@ -8544,12 +9256,9 @@ func (a *ServiceImpl) EnablePrometheusMetricExport(
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
-	if body == nil {
-		return nil, nil, reportError("body is required and must be specified")
-	}
 
 	// Determine the Content-Type header.
-	localVarHTTPContentTypes := []string{"application/json"}
+	localVarHTTPContentTypes := []string{}
 
 	// Set Content-Type header.
 	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
@@ -8565,8 +9274,6 @@ func (a *ServiceImpl) EnablePrometheusMetricExport(
 	if localVarHTTPHeaderAccept != "" {
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
-	// Body params.
-	localVarPostBody = body
 	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, nil, err
@@ -9062,6 +9769,7 @@ func (a *ServiceImpl) GetPrometheusMetricExportInfo(
 }
 
 // CreateApiOidcConfig executes the request.
+// Deprecated.
 func (a *ServiceImpl) CreateApiOidcConfig(
 	ctx _context.Context, createApiOidcConfigRequest *CreateApiOidcConfigRequest,
 ) (*ApiOidcConfig, *_nethttp.Response, error) {
@@ -9199,6 +9907,7 @@ func (a *ServiceImpl) CreateApiOidcConfig(
 }
 
 // DeleteApiOidcConfig executes the request.
+// Deprecated.
 func (a *ServiceImpl) DeleteApiOidcConfig(
 	ctx _context.Context, id string,
 ) (*ApiOidcConfig, *_nethttp.Response, error) {
@@ -9332,6 +10041,7 @@ func (a *ServiceImpl) DeleteApiOidcConfig(
 }
 
 // GetApiOidcConfig executes the request.
+// Deprecated.
 func (a *ServiceImpl) GetApiOidcConfig(
 	ctx _context.Context, id string,
 ) (*ApiOidcConfig, *_nethttp.Response, error) {
@@ -9477,6 +10187,7 @@ type ListApiOidcConfigOptions struct {
 }
 
 // ListApiOidcConfig executes the request.
+// Deprecated.
 func (a *ServiceImpl) ListApiOidcConfig(
 	ctx _context.Context, options *ListApiOidcConfigOptions,
 ) (*ListApiOidcConfigResponse, *_nethttp.Response, error) {
@@ -9621,6 +10332,7 @@ func (a *ServiceImpl) ListApiOidcConfig(
 }
 
 // UpdateApiOidcConfig executes the request.
+// Deprecated.
 func (a *ServiceImpl) UpdateApiOidcConfig(
 	ctx _context.Context, id string, apiOidcConfig1 *ApiOidcConfig1,
 ) (*ApiOidcConfig, *_nethttp.Response, error) {

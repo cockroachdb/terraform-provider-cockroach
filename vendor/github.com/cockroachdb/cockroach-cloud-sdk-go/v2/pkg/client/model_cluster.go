@@ -37,7 +37,7 @@ type Cluster struct {
 	Name                string                     `json:"name"`
 	NetworkVisibility   *NetworkVisibilityType     `json:"network_visibility,omitempty"`
 	OperationStatus     ClusterStatusType          `json:"operation_status"`
-	// Limited Access: The parent ID is a folder ID. A \"root\" valued parent ID refers to a cluster at the root level.
+	// Preview: The parent ID is a folder ID. A \"root\" valued parent ID refers to a cluster at the root level.
 	ParentId *string  `json:"parent_id,omitempty"`
 	Plan     PlanType `json:"plan"`
 	Regions  []Region `json:"regions"`

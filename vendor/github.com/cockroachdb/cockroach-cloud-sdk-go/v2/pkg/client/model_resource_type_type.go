@@ -22,37 +22,37 @@ import (
 	"fmt"
 )
 
-// OperatingSystemType the model 'OperatingSystemType'.
-type OperatingSystemType string
+// ResourceTypeType  - ORGANIZATION: An organization.  - CLUSTER: A cluster resource.  - FOLDER: Preview: A folder resource.
+type ResourceTypeType string
 
-// List of OperatingSystem.Type.
+// List of ResourceType.Type.
 const (
-	OPERATINGSYSTEMTYPE_MAC     OperatingSystemType = "MAC"
-	OPERATINGSYSTEMTYPE_LINUX   OperatingSystemType = "LINUX"
-	OPERATINGSYSTEMTYPE_WINDOWS OperatingSystemType = "WINDOWS"
+	RESOURCETYPETYPE_ORGANIZATION ResourceTypeType = "ORGANIZATION"
+	RESOURCETYPETYPE_CLUSTER      ResourceTypeType = "CLUSTER"
+	RESOURCETYPETYPE_FOLDER       ResourceTypeType = "FOLDER"
 )
 
-// All allowed values of OperatingSystemType enum.
-var AllowedOperatingSystemTypeEnumValues = []OperatingSystemType{
-	"MAC",
-	"LINUX",
-	"WINDOWS",
+// All allowed values of ResourceTypeType enum.
+var AllowedResourceTypeTypeEnumValues = []ResourceTypeType{
+	"ORGANIZATION",
+	"CLUSTER",
+	"FOLDER",
 }
 
-// NewOperatingSystemTypeFromValue returns a pointer to a valid OperatingSystemType
+// NewResourceTypeTypeFromValue returns a pointer to a valid ResourceTypeType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewOperatingSystemTypeFromValue(v string) (*OperatingSystemType, error) {
-	ev := OperatingSystemType(v)
+func NewResourceTypeTypeFromValue(v string) (*ResourceTypeType, error) {
+	ev := ResourceTypeType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for OperatingSystemType: valid values are %v", v, AllowedOperatingSystemTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for ResourceTypeType: valid values are %v", v, AllowedResourceTypeTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v OperatingSystemType) IsValid() bool {
-	for _, existing := range AllowedOperatingSystemTypeEnumValues {
+func (v ResourceTypeType) IsValid() bool {
+	for _, existing := range AllowedResourceTypeTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -60,7 +60,7 @@ func (v OperatingSystemType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to OperatingSystem.Type value.
-func (v OperatingSystemType) Ptr() *OperatingSystemType {
+// Ptr returns reference to ResourceType.Type value.
+func (v ResourceTypeType) Ptr() *ResourceTypeType {
 	return &v
 }

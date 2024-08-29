@@ -22,7 +22,7 @@ package client
 type CreateClusterSpecification struct {
 	Dedicated        *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
 	DeleteProtection *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
-	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" will create a cluster at the root level.
+	// Preview: The parent ID is a folder ID. An empty string or \"root\" will create a cluster at the root level.
 	ParentId   *string                               `json:"parent_id,omitempty"`
 	Serverless *ServerlessClusterCreateSpecification `json:"serverless,omitempty"`
 }

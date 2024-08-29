@@ -54,6 +54,7 @@ resource "cockroach_log_export_config" "example" {
 - `type` (String) The cloud selection being exported to along with the cloud logging platform. Possible values are:
   * AWS_CLOUDWATCH
   * GCP_CLOUD_LOGGING
+  * AZURE_LOG_ANALYTICS
 
 ### Optional
 

@@ -22,37 +22,37 @@ import (
 	"fmt"
 )
 
-// ResourceTypeType  - ORGANIZATION: An organization.  - CLUSTER: A cluster resource.  - FOLDER: Limited Access: A folder resource.
-type ResourceTypeType string
+// OperatingSystemType the model 'OperatingSystemType'.
+type OperatingSystemType string
 
-// List of ResourceType.Type.
+// List of OperatingSystemType.
 const (
-	RESOURCETYPETYPE_ORGANIZATION ResourceTypeType = "ORGANIZATION"
-	RESOURCETYPETYPE_CLUSTER      ResourceTypeType = "CLUSTER"
-	RESOURCETYPETYPE_FOLDER       ResourceTypeType = "FOLDER"
+	OPERATINGSYSTEMTYPE_MAC     OperatingSystemType = "MAC"
+	OPERATINGSYSTEMTYPE_LINUX   OperatingSystemType = "LINUX"
+	OPERATINGSYSTEMTYPE_WINDOWS OperatingSystemType = "WINDOWS"
 )
 
-// All allowed values of ResourceTypeType enum.
-var AllowedResourceTypeTypeEnumValues = []ResourceTypeType{
-	"ORGANIZATION",
-	"CLUSTER",
-	"FOLDER",
+// All allowed values of OperatingSystemType enum.
+var AllowedOperatingSystemTypeEnumValues = []OperatingSystemType{
+	"MAC",
+	"LINUX",
+	"WINDOWS",
 }
 
-// NewResourceTypeTypeFromValue returns a pointer to a valid ResourceTypeType
+// NewOperatingSystemTypeFromValue returns a pointer to a valid OperatingSystemType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewResourceTypeTypeFromValue(v string) (*ResourceTypeType, error) {
-	ev := ResourceTypeType(v)
+func NewOperatingSystemTypeFromValue(v string) (*OperatingSystemType, error) {
+	ev := OperatingSystemType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for ResourceTypeType: valid values are %v", v, AllowedResourceTypeTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for OperatingSystemType: valid values are %v", v, AllowedOperatingSystemTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v ResourceTypeType) IsValid() bool {
-	for _, existing := range AllowedResourceTypeTypeEnumValues {
+func (v OperatingSystemType) IsValid() bool {
+	for _, existing := range AllowedOperatingSystemTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -60,7 +60,7 @@ func (v ResourceTypeType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to ResourceType.Type value.
-func (v ResourceTypeType) Ptr() *ResourceTypeType {
+// Ptr returns reference to OperatingSystemType value.
+func (v OperatingSystemType) Ptr() *OperatingSystemType {
 	return &v
 }

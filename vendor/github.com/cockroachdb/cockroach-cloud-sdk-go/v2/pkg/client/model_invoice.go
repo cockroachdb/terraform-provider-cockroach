@@ -28,7 +28,7 @@ type Invoice struct {
 	Adjustments *[]InvoiceAdjustment `json:"adjustments,omitempty"`
 	// balances are the amounts of currency left at the time of the invoice.
 	Balances []CurrencyAmount `json:"balances"`
-	// FolderResources is a list of resources in the organization and their folder paths.
+	// Preview: FolderResources is a list of resources in the organization and their folder paths.
 	FolderResources *[]FolderResource `json:"folder_resources,omitempty"`
 	// invoice_id is the unique ID representing the invoice.
 	InvoiceId string `json:"invoice_id"`

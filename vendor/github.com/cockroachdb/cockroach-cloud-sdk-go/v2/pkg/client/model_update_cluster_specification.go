@@ -22,7 +22,7 @@ package client
 type UpdateClusterSpecification struct {
 	Dedicated        *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
 	DeleteProtection *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
-	// Limited Access: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
+	// Preview: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
 	ParentId      *string                               `json:"parent_id,omitempty"`
 	Serverless    *ServerlessClusterUpdateSpecification `json:"serverless,omitempty"`
 	UpgradeStatus *ClusterUpgradeStatusType             `json:"upgrade_status,omitempty"`

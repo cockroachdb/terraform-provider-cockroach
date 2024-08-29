@@ -19,14 +19,15 @@ package provider
 import (
 	"context"
 	"fmt"
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"net/http"
+
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v2/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"net/http"
 )
 
 type apiOidcConfigResource struct {
@@ -133,6 +134,7 @@ func (r *apiOidcConfigResource) Create(
 	}
 
 	traceAPICall("CreateApiOidcConfig")
+	//nolint:staticcheck
 	apiResp, _, err := r.provider.service.CreateApiOidcConfig(ctx, createRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -163,6 +165,7 @@ func (r *apiOidcConfigResource) Read(
 	}
 
 	traceAPICall("GetApiOidcConfig")
+	//nolint:staticcheck
 	apiResp, httpResp, err := r.provider.service.GetApiOidcConfig(ctx, state.ID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -203,6 +206,7 @@ func (r *apiOidcConfigResource) Update(
 	}
 
 	traceAPICall("UpdateApiOidcConfig")
+	//nolint:staticcheck
 	apiResp, _, err := r.provider.service.UpdateApiOidcConfig(ctx, plan.ID.ValueString(), &client.ApiOidcConfig1{
 		Audience:    plan.Audience.ValueString(),
 		Claim:       plan.Claim.ValueStringPointer(),
@@ -234,6 +238,7 @@ func (r *apiOidcConfigResource) Delete(
 	}
 
 	traceAPICall("DeleteApiOidcConfig")
+	//nolint:staticcheck
 	_, _, err := r.provider.service.DeleteApiOidcConfig(ctx, state.ID.ValueString())
 	if err != nil {
 		resp.Diagnostics.AddError(

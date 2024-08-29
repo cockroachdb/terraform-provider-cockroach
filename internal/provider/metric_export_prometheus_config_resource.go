@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v2/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -165,8 +165,7 @@ func retryEnablePrometheusMetricExport(
 	apiObj *client.PrometheusMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
-		body := &map[string]interface{}{}
-		apiResp, httpResp, err := cl.EnablePrometheusMetricExport(ctx, clusterID, body)
+		apiResp, httpResp, err := cl.EnablePrometheusMetricExport(ctx, clusterID)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||

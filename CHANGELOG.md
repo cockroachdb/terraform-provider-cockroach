@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Clarify cluster.private_network_visibility attribute documentation.
 
+## Changed
+
+- Replaced `api_oidc_config` with `jwt_issuer` resource
+
 ## [1.8.0] - 2024-09-18
 
 ### Added

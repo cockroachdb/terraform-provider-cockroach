@@ -144,7 +144,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewMaintenanceWindowResource,
 		NewVersionDeferralResource,
 		NewFolderResource,
-		NewApiOidcConfigResource,
+		NewJWTIssuerResource,
 		NewServiceAccountResource,
 		NewAPIKeyResource,
 	}

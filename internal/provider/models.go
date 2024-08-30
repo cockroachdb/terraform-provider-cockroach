@@ -307,9 +307,9 @@ type FolderDataSourceModel struct {
 	ParentId types.String `tfsdk:"parent_id"`
 }
 
-type ApiOidcConfig struct {
+type JWTIssuer struct {
 	ID          types.String        `tfsdk:"id"`
-	Issuer      types.String        `tfsdk:"issuer"`
+	IssuerURL   types.String        `tfsdk:"issuer_url"`
 	Audience    types.String        `tfsdk:"audience"`
 	Jwks        types.String        `tfsdk:"jwks"`
 	Claim       types.String        `tfsdk:"claim"`
@@ -319,7 +319,6 @@ type ApiOidcConfig struct {
 type IdentityMapEntry struct {
 	TokenIdentity types.String `tfsdk:"token_identity"`
 	CcIdentity    types.String `tfsdk:"cc_identity"`
-	IsRegex       types.Bool   `tfsdk:"is_regex"`
 }
 
 type ServiceAccount struct {

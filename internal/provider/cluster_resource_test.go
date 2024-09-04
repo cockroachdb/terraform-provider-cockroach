@@ -18,7 +18,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -233,7 +232,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			validateCreate: func(req *client.CreateClusterRequest) error {
 				// Ensure that provider passes the plan type to Create.
 				if req.Spec.Plan == nil || *req.Spec.Plan != client.PLANTYPE_BASIC {
-					return errors.New(fmt.Sprintf("unexpected plan type in create request: %v", req.Spec.Plan))
+					return fmt.Errorf("unexpected plan type in create request: %v", req.Spec.Plan)
 				}
 				return nil
 			},
@@ -244,7 +243,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the plan type to Update.
 				if spec.Plan == nil || *spec.Plan != client.PLANTYPE_BASIC {
-					return errors.New(fmt.Sprintf("unexpected plan type in update request: %v", spec.Plan))
+					return fmt.Errorf("unexpected plan type in update request: %v", spec.Plan)
 				}
 				return nil
 			},
@@ -311,7 +310,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the new plan type to Update.
 				if spec.Plan == nil || *spec.Plan != client.PLANTYPE_STANDARD {
-					return errors.New(fmt.Sprintf("unexpected plan type in update request: %v", spec.Plan))
+					return fmt.Errorf("unexpected plan type in update request: %v", spec.Plan)
 				}
 				return nil
 			},
@@ -329,7 +328,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the new plan type to Update.
 				if spec.Plan == nil || *spec.Plan != client.PLANTYPE_BASIC {
-					return errors.New(fmt.Sprintf("unexpected plan type in update request: %v", spec.Plan))
+					return fmt.Errorf("unexpected plan type in update request: %v", spec.Plan)
 				}
 				return nil
 			},
@@ -769,9 +768,7 @@ func provisionedMultiRegionClusterWithLimitStep(
 	planType client.PlanType,
 ) resource.TestStep {
 	var plan string
-	if planType == "" {
-		planType = client.PLANTYPE_STANDARD
-	} else {
+	if planType != "" {
 		plan = fmt.Sprintf("plan = \"%s\"", planType)
 	}
 
@@ -838,9 +835,7 @@ func provisionedMultiRegionClusterUpdatedStep(
 	planType client.PlanType,
 ) resource.TestStep {
 	var plan string
-	if planType == "" {
-		planType = client.PLANTYPE_STANDARD
-	} else {
+	if planType != "" {
 		plan = fmt.Sprintf("plan = \"%s\"", planType)
 	}
 

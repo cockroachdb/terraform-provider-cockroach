@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v2/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/pkg/client"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"

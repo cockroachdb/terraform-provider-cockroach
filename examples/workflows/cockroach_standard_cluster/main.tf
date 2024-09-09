@@ -37,6 +37,12 @@ variable "cloud_provider_regions" {
   default  = ["us-central1"]
 }
 
+variable "upgrade_type" {
+  type     = string
+  nullable = false
+  default  = "AUTOMATIC"
+}
+
 terraform {
   required_providers {
     cockroach = {
@@ -56,6 +62,7 @@ resource "cockroach_cluster" "example" {
     usage_limits = {
       provisioned_virtual_cpus = var.provisioned_virtual_cpus
     }
+    upgrade_type = var.upgrade_type
   }
   regions = [for r in var.cloud_provider_regions : { name = r }]
 }

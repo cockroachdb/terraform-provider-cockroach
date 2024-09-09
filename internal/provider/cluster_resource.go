@@ -56,6 +56,14 @@ type clusterResource struct {
 	provider *provider
 }
 
+var AllowedUpgradeTypeTypeEnumValueStrings = func() []string {
+	var strings []string
+	for i := range client.AllowedUpgradeTypeTypeEnumValues {
+		strings = append(strings, string(client.AllowedUpgradeTypeTypeEnumValues[i]))
+	}
+	return strings
+}()
+
 var regionSchema = schema.NestedAttributeObject{
 	Attributes: map[string]schema.Attribute{
 		"name": schema.StringAttribute{
@@ -178,6 +186,16 @@ func (r *clusterResource) Schema(
 							stringplanmodifier.UseStateForUnknown(),
 						},
 						Description: "Cluster identifier in a connection string.",
+					},
+					"upgrade_type": schema.StringAttribute{
+						Computed: true,
+						Optional: true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+						Validators:  []validator.String{stringvalidator.OneOf(AllowedUpgradeTypeTypeEnumValueStrings...)},
+						MarkdownDescription: "Dictates the behavior of cockroach major version upgrades. If plan type is 'BASIC', this attribute must be left empty or set to 'AUTOMATIC'. Allowed values are: " +
+							formatEnumMarkdownList(AllowedUpgradeTypeTypeEnumValueStrings),
 					},
 				},
 			},
@@ -361,6 +379,16 @@ func (r *clusterResource) Create(
 			serverless.UsageLimits.RequestUnitLimit = usageLimits.RequestUnitLimit.ValueInt64Pointer()
 			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
 			serverless.UsageLimits.ProvisionedVirtualCpus = usageLimits.ProvisionedVirtualCpus.ValueInt64Pointer()
+		}
+
+		upgradeTypeString := plan.ServerlessConfig.UpgradeType.ValueString()
+		if upgradeTypeString != "" {
+			upgradeType, err := client.NewUpgradeTypeTypeFromValue(upgradeTypeString)
+			if err != nil {
+				resp.Diagnostics.AddError("Invalid Upgrade Type", err.Error())
+			} else {
+				serverless.SetUpgradeType(*upgradeType)
+			}
 		}
 
 		clusterSpec.SetServerless(*serverless)
@@ -758,6 +786,30 @@ func (r *clusterResource) Update(
 			serverless.UsageLimits.StorageMibLimit = usageLimits.StorageMibLimit.ValueInt64Pointer()
 			serverless.UsageLimits.ProvisionedVirtualCpus = usageLimits.ProvisionedVirtualCpus.ValueInt64Pointer()
 		}
+
+		planUpgradeType := plan.ServerlessConfig.UpgradeType.ValueString()
+		stateUpgradeType := state.ServerlessConfig.UpgradeType.ValueString()
+
+		// Only add the upgrade_type if it changed.
+		if planUpgradeType != "" && planUpgradeType != stateUpgradeType {
+
+			upgradeTypePtr, err := client.NewUpgradeTypeTypeFromValue(plan.ServerlessConfig.UpgradeType.ValueString())
+			if err != nil {
+				resp.Diagnostics.AddError("Invalid value for upgrade_type", err.Error())
+				return
+			}
+			upgradeType := *upgradeTypePtr
+
+			// Check this combination explicitly to provide a better message
+			// than the ccapi is currently returning for this case.
+			if plan.Plan.ValueString() == string(client.PLANTYPE_BASIC) && upgradeType == client.UPGRADETYPETYPE_MANUAL {
+				resp.Diagnostics.AddError("Invalid value for upgrade_type", "plan type BASIC does not allow upgrade_type MANUAL")
+				return
+			}
+
+			serverless.SetUpgradeType(upgradeType)
+		}
+
 		clusterReq.SetServerless(*serverless)
 	} else if cfg := plan.DedicatedConfig; cfg != nil {
 		dedicated := client.NewDedicatedClusterUpdateSpecification()
@@ -823,7 +875,6 @@ func (r *clusterResource) Update(
 	}
 
 	traceAPICall("UpdateCluster")
-
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -982,6 +1033,7 @@ func loadClusterToTerraformState(
 	if clusterObj.Config.Serverless != nil {
 		serverlessConfig := &ServerlessClusterConfig{
 			RoutingId: types.StringValue(clusterObj.Config.Serverless.RoutingId),
+			UpgradeType: types.StringValue(string(clusterObj.Config.Serverless.UpgradeType)),
 		}
 
 		if plan != nil && plan.ServerlessConfig != nil && IsKnown(plan.ServerlessConfig.SpendLimit) {

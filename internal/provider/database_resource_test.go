@@ -67,6 +67,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				RoutingId: "routing-id",
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 			},
 		},
 		State: "CREATED",

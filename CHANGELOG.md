@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `upgrade_type` was added as an attribute for serverless clusters.
 - New `STANDARD` clusters with provisioned serverless capacity.
 - Ability to upgrade from `BASIC` plan to `STANDARD` plan.
 

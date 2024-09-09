@@ -118,6 +118,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
 						RoutingId: "routing-id",
+						UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 					},
 				},
 				Regions: []client.Region{

@@ -89,6 +89,10 @@ func (d *clusterDataSource) Schema(
 						Computed:    true,
 						Description: "Cluster identifier in a connection string.",
 					},
+					"upgrade_type": schema.StringAttribute{
+						Computed:    true,
+						Description: "Dictates the behavior of cockroach major version upgrades.",
+					},
 				},
 			},
 			"dedicated": schema.SingleNestedAttribute{

@@ -51,6 +51,7 @@ type ServerlessClusterConfig struct {
 	// release.
 	SpendLimit  types.Int64  `tfsdk:"spend_limit"`
 	RoutingId   types.String `tfsdk:"routing_id"`
+	UpgradeType types.String `tfsdk:"upgrade_type"`
 	UsageLimits *UsageLimits `tfsdk:"usage_limits"`
 }
 

@@ -23,6 +23,7 @@ resource "cockroach_cluster" "standard" {
     usage_limits = {
       provisioned_vcpus = 2
     }
+    upgrade_type = "AUTOMATIC"
   }
   regions = [
     {

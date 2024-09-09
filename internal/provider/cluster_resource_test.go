@@ -68,14 +68,90 @@ func TestAccServerlessClusterResource(t *testing.T) {
 			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024),
 			onDemandSingleRegionClusterNoLimitsStep(clusterName, defaultPlanType),
 			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400),
-			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */),
 			onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC"),
 			legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00),
-			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */),
 			// Upgrade to STANDARD.
-			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6),
+			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil),
 			// Downgrade to BASIC.
-			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC"),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */),
+		},
+	})
+}
+
+// TestAccServerlessUpgradeType is an acceptance test focused only on testing
+// upgrade_type.  Since the serverless tests are relatively quick, no
+// integration test version of this is added.  It will be skipped if TF_ACC
+// isn't set.
+func TestAccServerlessUpgradeType(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	checkUpgradeTypeResources := func(upgradeType client.UpgradeTypeType) resource.TestCheckFunc {
+		return resource.ComposeTestCheckFunc(
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.upgrade_type", string(upgradeType)),
+			resource.TestCheckResourceAttr(serverlessDataSourceName , "serverless.upgrade_type", string(upgradeType)),
+		)
+	}
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create a provisioned cluster with the default value for upgrade_type
+			{
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
+			// Explicitly updating the value to MANUAL performs the update
+			{
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
+			},
+			// Removal of the optional value from the config makes no change
+			{
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
+			},
+			// Change it back to automatic so we can downgrade the cluster to
+			// BASIC.  Currently the ccapi doesn't allow downgrading to BASIC
+			// unless upgrade_type is AUTOMATIC already.
+			{
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
+			// Downgrade to Basic, the upgrade_type remains AUTOMATIC
+			{
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
+			// Setting the value to MANUAL is not allowed for Basic
+			{
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
+				ExpectError: regexp.MustCompile("plan type BASIC does not allow upgrade_type MANUAL"),
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
+			// Setting completely invalid value for upgrade_type
+			{
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UpgradeTypeType("hi"))).Config,
+				ExpectError: regexp.MustCompile("Attribute serverless.upgrade_type value must be one of"),
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
+			// Basic clusters can also accept a value of AUTOMATIC.
+			{
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
+			// Destroy the cluster so we can create it again in the next step
+			{
+				Config:      " ",
+				Destroy:     true,
+			},
+			// Basic clusters can also be created with a value of AUTOMATIC
+			{
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+			},
 		},
 	})
 }
@@ -119,6 +195,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					RoutingId: "routing-id",
+					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 				},
 			},
 			Regions: []client.Region{
@@ -143,6 +220,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Plan:             planType,
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
+					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 					UsageLimits: &client.UsageLimits{
 						RequestUnitLimit: int64Ptr(ruLimit),
 						StorageMibLimit:  int64Ptr(storageLimit),
@@ -168,6 +246,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Plan:             "STANDARD",
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
+					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 					UsageLimits: &client.UsageLimits{
 						ProvisionedVirtualCpus: int64Ptr(provisionedVirtualCpus),
 					},
@@ -192,6 +271,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Plan:             "STANDARD",
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
+					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 					UsageLimits: &client.UsageLimits{
 						ProvisionedVirtualCpus: int64Ptr(provisionedVirtualCpus),
 					},
@@ -238,7 +318,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC")
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */)
 			},
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the plan type to Update.
@@ -268,7 +348,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted from unlimited resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType)
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */)
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
@@ -301,11 +381,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster upgraded to STANDARD",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType)
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */)
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 10)
+				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 10, nil)
 			},
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the new plan type to Update.
@@ -319,7 +399,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless STANDARD cluster downgraded to BASIC",
 			createStep: func() resource.TestStep {
-				return provisionedSingleRegionClusterStep(clusterName, defaultPlanType, 10)
+				return provisionedSingleRegionClusterStep(clusterName, defaultPlanType, 10, nil)
 			},
 			initialCluster: provisionedSingleRegionCluster("STANDARD", 10),
 			updateStep: func() resource.TestStep {
@@ -676,12 +756,35 @@ func onDemandSingleRegionClusterWithLimitsStep(
 func onDemandSingleRegionClusterWithUnlimitedStep(
 	clusterName string,
 	planType client.PlanType,
+	upgradeType *client.UpgradeTypeType,
 ) resource.TestStep {
 	var plan string
 	if planType == "" {
 		planType = client.PLANTYPE_BASIC
 	} else {
 		plan = fmt.Sprintf("plan = \"%s\"", planType)
+	}
+
+	testCheckFuncs := []resource.TestCheckFunc{
+		makeDefaultServerlessResourceChecks(clusterName, planType),
+		resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.#", "0"),
+		resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
+		resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
+		resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
+		resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.#", "0"),
+		resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
+		resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
+		resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
+	}
+
+	var upgradeTypeConfig string
+	if upgradeType != nil {
+		upgradeTypeConfig = fmt.Sprintf("upgrade_type = \"%s\"", *upgradeType)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.upgrade_type", string(*upgradeType)),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.upgrade_type", string(*upgradeType)),
+		)
 	}
 
 	return resource.TestStep{
@@ -693,6 +796,7 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 				%s
 				serverless = {
 					usage_limits = {}
+					%s
 				}
 				regions = [{
 					name = "us-central1"
@@ -702,18 +806,8 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, plan),
-		Check: resource.ComposeTestCheckFunc(
-			makeDefaultServerlessResourceChecks(clusterName, planType),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.#", "0"),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.#", "0"),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
-		),
+			`, clusterName, plan, upgradeTypeConfig),
+		Check: resource.ComposeTestCheckFunc(testCheckFuncs...),
 	}
 }
 
@@ -721,7 +815,10 @@ func provisionedSingleRegionClusterStep(
 	clusterName string,
 	planType client.PlanType,
 	provisionedVirtualCpus int,
+	upgradeType *client.UpgradeTypeType,
 ) resource.TestStep {
+	provisionedVirtualCpusStr := strconv.Itoa(provisionedVirtualCpus)
+
 	var plan string
 	if planType == "" {
 		planType = client.PLANTYPE_STANDARD
@@ -729,7 +826,26 @@ func provisionedSingleRegionClusterStep(
 		plan = fmt.Sprintf("plan = \"%s\"", planType)
 	}
 
-	provisionedVirtualCpusStr := strconv.Itoa(provisionedVirtualCpus)
+	testCheckFuncs := []resource.TestCheckFunc{
+		makeDefaultServerlessResourceChecks(clusterName, planType),
+		resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", provisionedVirtualCpusStr),
+		resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
+		resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
+		resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_virtual_cpus", provisionedVirtualCpusStr),
+		resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
+		resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
+	}
+
+	var upgradeTypeConfig string
+	if upgradeType != nil {
+		upgradeTypeConfig = fmt.Sprintf("upgrade_type = \"%s\"", *upgradeType)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.upgrade_type", string(*upgradeType)),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.upgrade_type", string(*upgradeType)),
+		)
+	}
+
 	return resource.TestStep{
 		// Serverless cluster with provisioned resources.
 		Config: fmt.Sprintf(`
@@ -741,6 +857,7 @@ func provisionedSingleRegionClusterStep(
 					usage_limits = {
 						provisioned_virtual_cpus = %d
 					}
+					%s
 				}
 				regions = [{
 					name = "us-central1"
@@ -750,16 +867,8 @@ func provisionedSingleRegionClusterStep(
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, plan, provisionedVirtualCpus),
-		Check: resource.ComposeTestCheckFunc(
-			makeDefaultServerlessResourceChecks(clusterName, planType),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", provisionedVirtualCpusStr),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit"),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_virtual_cpus", provisionedVirtualCpusStr),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit"),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit"),
-		),
+			`, clusterName, plan, provisionedVirtualCpus, upgradeTypeConfig),
+		Check: resource.ComposeTestCheckFunc(testCheckFuncs...),
 	}
 }
 

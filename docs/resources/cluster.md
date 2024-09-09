@@ -38,6 +38,7 @@ resource "cockroach_cluster" "standard" {
     usage_limits = {
       provisioned_virtual_cpus = 2
     }
+    upgrade_type = "AUTOMATIC"
   }
   regions = [
     {
@@ -132,6 +133,9 @@ Read-Only:
 Optional:
 
 - `spend_limit` (Number, Deprecated) Spend limit in US cents.
+- `upgrade_type` (String) Dictates the behavior of cockroach major version upgrades. If plan type is 'BASIC', this attribute must be left empty or set to 'AUTOMATIC'. Allowed values are: 
+  * MANUAL
+  * AUTOMATIC
 - `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
 
 Read-Only:

@@ -22,37 +22,35 @@ import (
 	"fmt"
 )
 
-// OperatingSystemType the model 'OperatingSystemType'.
-type OperatingSystemType string
+// ReleaseTypeType the model 'ReleaseTypeType'.
+type ReleaseTypeType string
 
-// List of OperatingSystemType.
+// List of ReleaseType.Type.
 const (
-	OPERATINGSYSTEMTYPE_MAC     OperatingSystemType = "MAC"
-	OPERATINGSYSTEMTYPE_LINUX   OperatingSystemType = "LINUX"
-	OPERATINGSYSTEMTYPE_WINDOWS OperatingSystemType = "WINDOWS"
+	RELEASETYPETYPE_REGULAR    ReleaseTypeType = "REGULAR"
+	RELEASETYPETYPE_INNOVATION ReleaseTypeType = "INNOVATION"
 )
 
-// All allowed values of OperatingSystemType enum.
-var AllowedOperatingSystemTypeEnumValues = []OperatingSystemType{
-	"MAC",
-	"LINUX",
-	"WINDOWS",
+// All allowed values of ReleaseTypeType enum.
+var AllowedReleaseTypeTypeEnumValues = []ReleaseTypeType{
+	"REGULAR",
+	"INNOVATION",
 }
 
-// NewOperatingSystemTypeFromValue returns a pointer to a valid OperatingSystemType
+// NewReleaseTypeTypeFromValue returns a pointer to a valid ReleaseTypeType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewOperatingSystemTypeFromValue(v string) (*OperatingSystemType, error) {
-	ev := OperatingSystemType(v)
+func NewReleaseTypeTypeFromValue(v string) (*ReleaseTypeType, error) {
+	ev := ReleaseTypeType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for OperatingSystemType: valid values are %v", v, AllowedOperatingSystemTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for ReleaseTypeType: valid values are %v", v, AllowedReleaseTypeTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v OperatingSystemType) IsValid() bool {
-	for _, existing := range AllowedOperatingSystemTypeEnumValues {
+func (v ReleaseTypeType) IsValid() bool {
+	for _, existing := range AllowedReleaseTypeTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -60,7 +58,7 @@ func (v OperatingSystemType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to OperatingSystemType value.
-func (v OperatingSystemType) Ptr() *OperatingSystemType {
+// Ptr returns reference to ReleaseType.Type value.
+func (v ReleaseTypeType) Ptr() *ReleaseTypeType {
 	return &v
 }

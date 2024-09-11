@@ -22,37 +22,35 @@ import (
 	"fmt"
 )
 
-// OperatingSystemType the model 'OperatingSystemType'.
-type OperatingSystemType string
+// UpgradeTypeType the model 'UpgradeTypeType'.
+type UpgradeTypeType string
 
-// List of OperatingSystemType.
+// List of UpgradeType.Type.
 const (
-	OPERATINGSYSTEMTYPE_MAC     OperatingSystemType = "MAC"
-	OPERATINGSYSTEMTYPE_LINUX   OperatingSystemType = "LINUX"
-	OPERATINGSYSTEMTYPE_WINDOWS OperatingSystemType = "WINDOWS"
+	UPGRADETYPETYPE_MANUAL    UpgradeTypeType = "MANUAL"
+	UPGRADETYPETYPE_AUTOMATIC UpgradeTypeType = "AUTOMATIC"
 )
 
-// All allowed values of OperatingSystemType enum.
-var AllowedOperatingSystemTypeEnumValues = []OperatingSystemType{
-	"MAC",
-	"LINUX",
-	"WINDOWS",
+// All allowed values of UpgradeTypeType enum.
+var AllowedUpgradeTypeTypeEnumValues = []UpgradeTypeType{
+	"MANUAL",
+	"AUTOMATIC",
 }
 
-// NewOperatingSystemTypeFromValue returns a pointer to a valid OperatingSystemType
+// NewUpgradeTypeTypeFromValue returns a pointer to a valid UpgradeTypeType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewOperatingSystemTypeFromValue(v string) (*OperatingSystemType, error) {
-	ev := OperatingSystemType(v)
+func NewUpgradeTypeTypeFromValue(v string) (*UpgradeTypeType, error) {
+	ev := UpgradeTypeType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for OperatingSystemType: valid values are %v", v, AllowedOperatingSystemTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for UpgradeTypeType: valid values are %v", v, AllowedUpgradeTypeTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v OperatingSystemType) IsValid() bool {
-	for _, existing := range AllowedOperatingSystemTypeEnumValues {
+func (v UpgradeTypeType) IsValid() bool {
+	for _, existing := range AllowedUpgradeTypeTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -60,7 +58,7 @@ func (v OperatingSystemType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to OperatingSystemType value.
-func (v OperatingSystemType) Ptr() *OperatingSystemType {
+// Ptr returns reference to UpgradeType.Type value.
+func (v UpgradeTypeType) Ptr() *UpgradeTypeType {
 	return &v
 }

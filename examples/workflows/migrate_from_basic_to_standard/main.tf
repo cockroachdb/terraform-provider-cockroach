@@ -1,3 +1,12 @@
+#
+# This example shows how to migrate plans from Basic to Standard
+# Migrating involves first creating a Basic cluster resource (Step 1)
+# and then modifying that cluster resource to make it a Standard cluster (Step 2).
+# To complete this example you'll first run `terraform apply` on the Step 1 config (original state of this file)
+# You'll then modify this file as indicated below, removing the Basic resource and uncommented the Standard resource
+# And then you'll re-run `terraform apply` to arrive at the end state: a Standard plan cluster
+#
+
 variable "cluster_name" {
   type     = string
   nullable = false

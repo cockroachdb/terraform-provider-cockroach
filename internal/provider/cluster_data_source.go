@@ -91,7 +91,7 @@ func (d *clusterDataSource) Schema(
 					},
 					"upgrade_type": schema.StringAttribute{
 						Computed:    true,
-						Description: "Dictates the behavior of cockroach major version upgrades.",
+						Description: "Dictates the behavior of CockroachDB major version upgrades.",
 					},
 				},
 			},

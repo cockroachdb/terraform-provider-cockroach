@@ -79,7 +79,7 @@ Read-Only:
 
 - `routing_id` (String) Cluster identifier in a connection string.
 - `spend_limit` (Number, Deprecated) Spend limit in US cents.
-- `upgrade_type` (String) Dictates the behavior of cockroach major version upgrades.
+- `upgrade_type` (String) Dictates the behavior of CockroachDB major version upgrades.
 - `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
 
 <a id="nestedatt--serverless--usage_limits"></a>

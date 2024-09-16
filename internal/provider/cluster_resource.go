@@ -194,7 +194,7 @@ func (r *clusterResource) Schema(
 							stringplanmodifier.UseStateForUnknown(),
 						},
 						Validators:  []validator.String{stringvalidator.OneOf(AllowedUpgradeTypeTypeEnumValueStrings...)},
-						MarkdownDescription: "Dictates the behavior of cockroach major version upgrades. If plan type is 'BASIC', this attribute must be left empty or set to 'AUTOMATIC'. Allowed values are: " +
+						MarkdownDescription: "Dictates the behavior of CockroachDB major version upgrades. Manual upgrades are not supported on CockroachDB Basic. Manual or automatic upgrades are supported on CockroachDB Standard. If you omit the field, it defaults to `AUTOMATIC`. Allowed values are:" +
 							formatEnumMarkdownList(AllowedUpgradeTypeTypeEnumValueStrings),
 					},
 				},

@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v2/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"

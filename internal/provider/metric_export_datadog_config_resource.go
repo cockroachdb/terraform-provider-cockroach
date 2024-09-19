@@ -184,9 +184,7 @@ func retryEnableDatadogMetricExport(
 			apiErrMsg := formatAPIErrorMessage(err)
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
-				// Wait for cluster to be ready.
-				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
-					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
+				clusterErr := waitForClusterReady(ctx, clusterID, cl, cluster, clusterUpdateTimeout)
 				if clusterErr != nil {
 					return retry.NonRetryableError(
 						fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
@@ -408,9 +406,7 @@ func (r *metricExportDatadogConfigResource) Delete(
 
 					if httpResp.StatusCode == http.StatusServiceUnavailable ||
 						strings.Contains(apiErrMsg, "lock") {
-						// Wait for cluster to be ready.
-						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
-							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
+						clusterErr := waitForClusterReady(ctx, clusterID, r.provider.service, cluster, clusterUpdateTimeout)
 						if clusterErr != nil {
 							return retry.NonRetryableError(
 								fmt.Errorf("Error checking cluster availability: %s", clusterErr.Error()))

@@ -311,8 +311,7 @@ func (r *cmekResource) Update(
 			return
 		}
 
-		err = retry.RetryContext(ctx, clusterUpdateTimeout,
-			waitForClusterReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cluster))
+		err = waitForClusterReady(ctx, plan.ID.ValueString(), r.provider.service, cluster, clusterUpdateTimeout)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Adding new regions failed",

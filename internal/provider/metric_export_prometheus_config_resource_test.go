@@ -7,8 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
@@ -144,6 +142,7 @@ func testMetricExportPrometheusConfigExists(
 	resourceName, clusterResourceName string,
 ) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
+		ctx := context.TODO()
 		p := testAccProvider.(*provider)
 		p.service = NewService(cl)
 
@@ -157,9 +156,9 @@ func testMetricExportPrometheusConfigExists(
 		}
 
 		clusterID := clusterRs.Primary.Attributes["id"]
-		config, _, err := p.service.GetPrometheusMetricExportInfo(context.TODO(), clusterID)
+		config, _, err := p.service.GetPrometheusMetricExportInfo(ctx, clusterID)
 		if err != nil {
-			return fmt.Errorf("metric export Prometheus config does not exist")
+			return fmt.Errorf("metric export Prometheus config does not exist: %w", err)
 		}
 
 		if config.GetStatus() != client.METRICEXPORTSTATUSTYPE_ENABLED {
@@ -171,17 +170,9 @@ func testMetricExportPrometheusConfigExists(
 			This is causing failure intermittently as cluster lock might have not been released. We are checking & retrying
 			cluster state before destroy.
 		*/
-		cluster, _, err := p.service.GetCluster(context.TODO(), clusterID)
+		err = waitForClusterReady(ctx, clusterID, p.service, &client.Cluster{}, metricExportEnableTimeout)
 		if err != nil {
-			return fmt.Errorf("fetching cluster details failed")
-		}
-
-		if cluster.GetState() == client.CLUSTERSTATETYPE_LOCKED {
-			err = retry.RetryContext(context.TODO(), metricExportEnableTimeout,
-				waitForClusterReadyFunc(context.TODO(), clusterID, p.service, cluster))
-			if err != nil {
-				return fmt.Errorf("error in checking cluster state")
-			}
+			return fmt.Errorf("error in checking cluster state: %w", err)
 		}
 
 		return nil

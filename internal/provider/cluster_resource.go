@@ -52,6 +52,8 @@ const (
 	clusterVersionPreview = "preview"
 )
 
+var errClusterDeleted = fmt.Errorf("cluster was deleted")
+
 type clusterResource struct {
 	provider *provider
 }
@@ -472,8 +474,7 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterCreateTimeout,
-		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
+	err = waitForClusterReady(ctx, clusterObj.Id, r.provider.service, clusterObj, clusterCreateTimeout)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Cluster creation failed",
@@ -739,8 +740,7 @@ func (r *clusterResource) Update(
 			return
 		}
 
-		err = retry.RetryContext(ctx, clusterUpdateTimeout,
-			waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
+		err = waitForClusterReady(ctx, clusterObj.Id, r.provider.service, clusterObj, clusterUpdateTimeout)
 		if err != nil {
 			resp.Diagnostics.AddError(
 				"Cluster version update failed",
@@ -884,8 +884,7 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
-		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
+	err = waitForClusterReady(ctx, clusterObj.Id, r.provider.service, clusterObj, clusterUpdateTimeout)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Cluster update failed",
@@ -1098,6 +1097,11 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 	return regions
 }
 
+func waitForClusterReady(ctx context.Context, clusterID string, service client.Service, cluster *client.Cluster, timeout time.Duration) error {
+	return retry.RetryContext(ctx, timeout,
+		waitForClusterReadyFunc(ctx, clusterID, service, cluster))
+}
+
 func waitForClusterReadyFunc(
 	ctx context.Context, id string, cl client.Service, cluster *client.Cluster,
 ) retry.RetryFunc {
@@ -1119,7 +1123,7 @@ func waitForClusterReadyFunc(
 			return retry.NonRetryableError(fmt.Errorf("cluster creation failed"))
 		}
 		if cluster.State == client.CLUSTERSTATETYPE_DELETED {
-			return retry.NonRetryableError(fmt.Errorf("cluster was deleted"))
+			return retry.NonRetryableError(errClusterDeleted)
 		}
 		return retry.RetryableError(fmt.Errorf("cluster is not ready yet"))
 	}

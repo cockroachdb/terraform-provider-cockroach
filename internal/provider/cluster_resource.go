@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -41,7 +42,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
@@ -681,8 +681,10 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	waitForClusterLock(ctx, state, r.provider.service, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
+	// Ensure the cluster is not locked before trying to update it.
+	err := waitForClusterReady(ctx, state.ID.ValueString(), r.provider.service, &client.Cluster{}, clusterUpdateTimeout)
+	if err != nil {
+		resp.Diagnostics.AddError("Cluster is not ready", err.Error())
 		return
 	}
 
@@ -913,16 +915,27 @@ func (r *clusterResource) Delete(
 		return
 	}
 
-	waitForClusterLock(ctx, state, r.provider.service, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Get cluster ID from state
 	if !IsKnown(state.ID) {
 		return
 	}
 	clusterID := state.ID.ValueString()
+
+	// Make sure the cluster isn't locked before we try to delete.
+	err := waitForClusterReady(ctx, clusterID, r.provider.service, &client.Cluster{}, metricExportEnableTimeout)
+	if err != nil {
+		if errors.Is(err, errClusterDeleted) {
+			// Remove resource from state
+			resp.State.RemoveResource(ctx)
+			return
+		}
+
+		resp.Diagnostics.AddError(
+			"Error waiting for cluster",
+			fmt.Sprintf("error in checking cluster state: %s", err.Error()),
+		)
+		return
+	}
 
 	traceAPICall("DeleteCluster")
 	_, httpResp, err := r.provider.service.DeleteCluster(ctx, clusterID)
@@ -1126,27 +1139,6 @@ func waitForClusterReadyFunc(
 			return retry.NonRetryableError(errClusterDeleted)
 		}
 		return retry.RetryableError(fmt.Errorf("cluster is not ready yet"))
-	}
-}
-
-// waitForClusterLock checks to see if the cluster is locked by any sort of automatic job,
-// and waits if necessary before proceeding.
-func waitForClusterLock(
-	ctx context.Context, state CockroachCluster, s client.Service, diags *diag.Diagnostics,
-) {
-	if state.State.ValueString() == string(client.CLUSTERSTATETYPE_LOCKED) {
-		tflog.Info(ctx, "Cluster is locked. Waiting for the operation to finish.")
-		traceAPICall("GetCluster")
-		clusterObj, _, err := s.GetCluster(ctx, state.ID.ValueString())
-		if err != nil {
-			diags.AddError("Couldn't retrieve cluster info", formatAPIErrorMessage(err))
-			return
-		}
-		err = retry.RetryContext(ctx, clusterUpdateTimeout,
-			waitForClusterReadyFunc(ctx, clusterObj.Id, s, clusterObj))
-		if err != nil {
-			diags.AddError("Cluster is not ready", err.Error())
-		}
 	}
 }
 

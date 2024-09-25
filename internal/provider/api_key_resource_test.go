@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -38,7 +38,7 @@ func TestAccAPIKeyResource(t *testing.T) {
 	serviceAccountName := fmt.Sprintf("%s-sa-resource-%s", tfTestPrefix, GenerateRandomString(4))
 	apiKeyName := fmt.Sprintf("%s-api-key-res-%s", tfTestPrefix, GenerateRandomString(4))
 
-	testAPIKeyResource(t, serviceAccountName, apiKeyName, apiKeyName + "-updated", false /* , false /* useMock */)
+	testAPIKeyResource(t, serviceAccountName, apiKeyName, apiKeyName+"-updated", false /* , false /* useMock */)
 }
 
 // TestIntegrationAPIKeyResource attempts to create, check, and destroy a api
@@ -59,11 +59,11 @@ func TestIntegrationAPIKeyResource(t *testing.T) {
 	saID := uuid.Must(uuid.NewUUID()).String()
 	serviceAccountName := "a service account"
 	serviceAccount := &client.ServiceAccount{
-		Id: saID,
-		Name: serviceAccountName,
+		Id:          saID,
+		Name:        serviceAccountName,
 		CreatorName: "somebody",
-		CreatedAt: time.Now(),
-		GroupRoles: []client.BuiltInFromGroups{},
+		CreatedAt:   time.Now(),
+		GroupRoles:  []client.BuiltInFromGroups{},
 		Roles: []client.BuiltInRole{{
 			Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
 			Resource: client.Resource{
@@ -76,9 +76,9 @@ func TestIntegrationAPIKeyResource(t *testing.T) {
 	createTime := time.Now()
 	secret := apiKeyID + "_abcdeFGd81Mtx3djD45iwPfgtnaRv01234Z9047K"
 	apiKey := &client.ApiKey{
-		Id: apiKeyID,
-		Name: apiKeyName,
-		CreatedAt: createTime,
+		Id:               apiKeyID,
+		Name:             apiKeyName,
+		CreatedAt:        createTime,
 		ServiceAccountId: saID,
 	}
 
@@ -91,7 +91,7 @@ func TestIntegrationAPIKeyResource(t *testing.T) {
 
 	// Called by Create
 	s.EXPECT().CreateApiKey(gomock.Any(), &client.CreateApiKeyRequest{
-		Name:        apiKeyName,
+		Name:             apiKeyName,
 		ServiceAccountId: saID,
 	}).Return(&client.CreateApiKeyResponse{
 		ApiKey: *apiKey,
@@ -107,11 +107,11 @@ func TestIntegrationAPIKeyResource(t *testing.T) {
 
 	// Make a copy
 	apiKeyUpdated := *apiKey
-	apiKeyUpdated.Name = apiKeyNameUpdated 
+	apiKeyUpdated.Name = apiKeyNameUpdated
 
 	// Called by Update
 	s.EXPECT().UpdateApiKey(gomock.Any(), apiKeyID, &client.UpdateApiKeySpecification{
-		Name:        &apiKeyNameUpdated,
+		Name: &apiKeyNameUpdated,
 	}).Return(&apiKeyUpdated, nil, nil)
 
 	// Called by testAPIKeyExists
@@ -151,8 +151,8 @@ func testAPIKeyResource(t *testing.T, serviceAccountName, apiKeyName, apiKeyName
 				Check:  testAPIKeyExists(apiKeyResourceName),
 			},
 			{
-				ResourceName: apiKeyResourceName,
-				ImportState:  true,
+				ResourceName:      apiKeyResourceName,
+				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateIdFunc: func(s *terraform.State) (string, error) {
 					resources := s.RootModule().Resources
@@ -187,7 +187,7 @@ func testAPIKeyExists(apiKeyResourceName string) resource.TestCheckFunc {
 		}
 
 		if resp.Id == apiKeyID ||
-		   resp.Name != resource.Primary.Attributes["name"] {
+			resp.Name != resource.Primary.Attributes["name"] {
 			return nil
 		}
 

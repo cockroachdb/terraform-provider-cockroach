@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -59,12 +59,12 @@ func TestIntegrationServiceAccountResource(t *testing.T) {
 	id := uuid.Must(uuid.NewUUID()).String()
 	createTime := time.Now()
 	serviceAccount := &client.ServiceAccount{
-		Id: id,
-		Name: serviceAccountName,
+		Id:          id,
+		Name:        serviceAccountName,
 		Description: "",
 		CreatorName: "somebody",
-		CreatedAt: createTime,
-		GroupRoles: []client.BuiltInFromGroups{},
+		CreatedAt:   createTime,
+		GroupRoles:  []client.BuiltInFromGroups{},
 		Roles: []client.BuiltInRole{{
 			Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
 			Resource: client.Resource{
@@ -120,7 +120,7 @@ func TestIntegrationServiceAccountResource(t *testing.T) {
 
 	// Called by send update.
 	s.EXPECT().UpdateServiceAccount(gomock.Any(), id, &client.UpdateServiceAccountSpecification{
-		Name:        &nameUpdated,
+		Name: &nameUpdated,
 	}).Return(&serviceAccountUpdatedAgain, nil, nil)
 
 	// Called by testServiceAccountExists
@@ -165,13 +165,13 @@ func testServiceAccountResource(t *testing.T, serviceAccountName string, useMock
 			},
 			// Step 3: Excluding the description means its not sent in the update.
 			{
-				Config: getTestServiceAccountResourceConfig(serviceAccountName + " updated", "", false /* includeDescription */),
+				Config: getTestServiceAccountResourceConfig(serviceAccountName+" updated", "", false /* includeDescription */),
 				Check:  testServiceAccountExists(serviceAccountResourceName),
 			},
 			// Step 4: Import
 			{
-				ResourceName: serviceAccountResourceName,
-				ImportState:  true,
+				ResourceName:      serviceAccountResourceName,
+				ImportState:       true,
 				ImportStateVerify: true,
 			},
 		},
@@ -198,8 +198,8 @@ func testServiceAccountExists(serviceAccountResourceName string) resource.TestCh
 		}
 
 		if resp.Id == serviceAccountID ||
-		   resp.Name != resource.Primary.Attributes["name"] ||
-		   resp.Description != resource.Primary.Attributes["description"] {
+			resp.Name != resource.Primary.Attributes["name"] ||
+			resp.Description != resource.Primary.Attributes["description"] {
 			return nil
 		}
 

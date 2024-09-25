@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -53,7 +53,7 @@ func (r *userRoleGrantsResource) Schema(
 				Description: "ID of the user to grant these roles to.",
 			},
 			"roles": schema.SetNestedAttribute{
-				Required: true,
+				Required:    true,
 				Description: "The list of roles to include. ORG_MEMBER must be included.",
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{

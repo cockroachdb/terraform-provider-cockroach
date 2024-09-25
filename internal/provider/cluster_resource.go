@@ -22,10 +22,11 @@ import (
 	"net/http"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -193,7 +194,7 @@ func (r *clusterResource) Schema(
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},
-						Validators:  []validator.String{stringvalidator.OneOf(AllowedUpgradeTypeTypeEnumValueStrings...)},
+						Validators: []validator.String{stringvalidator.OneOf(AllowedUpgradeTypeTypeEnumValueStrings...)},
 						MarkdownDescription: "Dictates the behavior of CockroachDB major version upgrades. Manual upgrades are not supported on CockroachDB Basic. Manual or automatic upgrades are supported on CockroachDB Standard. If you omit the field, it defaults to `AUTOMATIC`. Allowed values are:" +
 							formatEnumMarkdownList(AllowedUpgradeTypeTypeEnumValueStrings),
 					},
@@ -233,8 +234,8 @@ func (r *clusterResource) Schema(
 						Description: "Number of virtual CPUs per node in the cluster.",
 					},
 					"private_network_visibility": schema.BoolAttribute{
-						Optional:    true,
-						Computed:    true,
+						Optional:            true,
+						Computed:            true,
 						MarkdownDescription: "Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
@@ -644,23 +645,6 @@ func (r *clusterResource) getUsageLimits(config *ServerlessClusterConfig) *Usage
 	return nil
 }
 
-// Comparator for two CRDB versions to make validation simpler. Assumes biannual releases of the form vYY.H.
-// Result is the number of releases apart, negative if r is later and positive is l is later. For example,
-// compareCrdbVersions("v22.1", "v22.2") = -1, compareCrdbVersions("v22.1", "v19.2") = 3
-func compareCrdbVersions(l, r string, d *diag.Diagnostics) int {
-	var lMaj, lMin, rMaj, rMin int
-	if _, err := fmt.Sscanf(l, "v%d.%d", &lMaj, &lMin); err != nil {
-		d.AddError("Couldn't parse version number", fmt.Sprintf("Couldn't parse version '%s'.", l))
-		return 0
-	}
-	if _, err := fmt.Sscanf(r, "v%d.%d", &rMaj, &rMin); err != nil {
-		d.AddError("Couldn't parse version number", fmt.Sprintf("Couldn't parse version '%s'.", r))
-		return 0
-	}
-
-	return (rMaj*2 + rMin - 1) - (lMaj*2 + lMin - 1)
-}
-
 func (r *clusterResource) Update(
 	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
 ) {
@@ -685,9 +669,8 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	// CRDB Versions
+	// CRDB Upgrades/Downgrades
 	if IsKnown(plan.CockroachVersion) && plan.CockroachVersion != state.CockroachVersion {
-		// Validate that the target version is valid.
 		planVersion := plan.CockroachVersion.ValueString()
 		stateVersion := state.CockroachVersion.ValueString()
 		traceAPICall("ListMajorClusterVersions")
@@ -696,11 +679,13 @@ func (r *clusterResource) Update(
 			resp.Diagnostics.AddError("Couldn't retrieve CockroachDB version list", formatAPIErrorMessage(err))
 			return
 		}
+
+		// Target version must be a valid major version
 		var versionValid bool
 		for _, v := range apiResp.Versions {
 			if v.Version == planVersion {
 				versionValid = true
-				continue
+				break
 			}
 		}
 		if !versionValid {
@@ -716,23 +701,40 @@ func (r *clusterResource) Update(
 			return
 		}
 
-		upgradeStatus := client.CLUSTERUPGRADESTATUSTYPE_MAJOR_UPGRADE_RUNNING
-		cmp := compareCrdbVersions(stateVersion, planVersion, &resp.Diagnostics)
-		if cmp < 0 {
-			// Make sure we're rolling back to the previous version.
-			if cmp < -1 {
-				resp.Diagnostics.AddError("Invalid rollback version", "Can only roll back to the previous version.")
+		// Next, if we are upgrading, it must be a valid upgrade from the
+		// current version, according to the ListMajorClusterVersions API.
+		if upgrading, err := isUpgrade(stateVersion, planVersion); upgrading {
+			var currentVersionInfo client.ClusterMajorVersion
+			for _, v := range apiResp.Versions {
+				if v.Version == stateVersion {
+					currentVersionInfo = v
+					break
+				}
+			}
+
+			var validUpgrade bool
+			for _, v := range currentVersionInfo.AllowedUpgrades {
+				if v == planVersion {
+					validUpgrade = true
+					break
+				}
+			}
+			if !validUpgrade {
+				resp.Diagnostics.AddError("Invalid CockroachDB version",
+					fmt.Sprintf(
+						"Cannot change major version to '%s'. Valid upgrade versions include [%s]",
+						planVersion,
+						strings.Join(currentVersionInfo.AllowedUpgrades, "|")))
 				return
 			}
-			upgradeStatus = client.CLUSTERUPGRADESTATUSTYPE_ROLLBACK_RUNNING
-		} else if cmp > 1 {
-			resp.Diagnostics.AddError("Invalid upgrade version", "Can't skip versions. Upgrades must be performed one version at a time.")
+		} else if err != nil {
+			resp.Diagnostics.AddError("Invalid CockroachDB version", err.Error())
 			return
 		}
 
 		traceAPICall("UpdateCluster")
 		clusterObj, _, err := r.provider.service.UpdateCluster(ctx, plan.ID.ValueString(), &client.UpdateClusterSpecification{
-			UpgradeStatus: &upgradeStatus,
+			CockroachVersion: &planVersion,
 		})
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating cluster", formatAPIErrorMessage(err))
@@ -971,6 +973,45 @@ func simplifyClusterVersion(version string, planSpecifiesPreviewString bool) str
 	return fmt.Sprintf("v%s.%s", parts[1], parts[2])
 }
 
+var majorVersionRE = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
+
+func parseMajorVersion(majorVersion string) (int, int, error) {
+	parts := majorVersionRE.FindStringSubmatch(majorVersion)
+	if len(parts) == 0 {
+		return 0, 0, fmt.Errorf("'%s' is not a valid major CockroachDB version.", majorVersion)
+	}
+	// regex guarantees we'll have parsable ints
+	major, _ := strconv.Atoi(parts[1])
+	minor, _ := strconv.Atoi(parts[2])
+	return major, minor, nil
+}
+
+// isUpgrade returns true if toMajorVersion is newer than fromMajorVersion
+func isUpgrade(fromMajorVersion, toMajorVersion string) (bool, error) {
+	fromYear, fromOrdinal, err := parseMajorVersion(fromMajorVersion)
+	if err != nil {
+		return false, err
+	}
+	toYear, toOrdinal, err := parseMajorVersion(toMajorVersion)
+	if err != nil {
+		return false, err
+	}
+	return toYear > fromYear || (toYear == fromYear && toOrdinal > fromOrdinal), nil
+}
+
+// isDowngrade returns true if toMajorVersion is older than fromMajorVersion
+func isDowngrade(fromMajorVersion, toMajorVersion string) (bool, error) {
+	fromYear, fromOrdinal, err := parseMajorVersion(fromMajorVersion)
+	if err != nil {
+		return false, err
+	}
+	toYear, toOrdinal, err := parseMajorVersion(toMajorVersion)
+	if err != nil {
+		return false, err
+	}
+	return toYear < fromYear || (toYear == fromYear && toOrdinal < fromOrdinal), nil
+}
+
 // Since the API response will always sort regions by name, we need to
 // resort the list, so it matches up with the plan. If the response and
 // plan regions don't match up, the sort won't work right, but we can
@@ -1032,7 +1073,7 @@ func loadClusterToTerraformState(
 
 	if clusterObj.Config.Serverless != nil {
 		serverlessConfig := &ServerlessClusterConfig{
-			RoutingId: types.StringValue(clusterObj.Config.Serverless.RoutingId),
+			RoutingId:   types.StringValue(clusterObj.Config.Serverless.RoutingId),
 			UpgradeType: types.StringValue(string(clusterObj.Config.Serverless.UpgradeType)),
 		}
 
@@ -1044,8 +1085,8 @@ func loadClusterToTerraformState(
 			if usageLimits != nil {
 				serverlessConfig.UsageLimits = &UsageLimits{
 					ProvisionedVirtualCpus: types.Int64PointerValue(usageLimits.ProvisionedVirtualCpus),
-					RequestUnitLimit: types.Int64PointerValue(usageLimits.RequestUnitLimit),
-					StorageMibLimit:  types.Int64PointerValue(usageLimits.StorageMibLimit),
+					RequestUnitLimit:       types.Int64PointerValue(usageLimits.RequestUnitLimit),
+					StorageMibLimit:        types.Int64PointerValue(usageLimits.StorageMibLimit),
 				}
 			} else if plan != nil && plan.ServerlessConfig != nil && plan.ServerlessConfig.UsageLimits != nil {
 				// There is no difference in behavior between UsageLimits = nil and

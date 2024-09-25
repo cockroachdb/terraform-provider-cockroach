@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -90,7 +90,7 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 	checkUpgradeTypeResources := func(upgradeType client.UpgradeTypeType) resource.TestCheckFunc {
 		return resource.ComposeTestCheckFunc(
 			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.upgrade_type", string(upgradeType)),
-			resource.TestCheckResourceAttr(serverlessDataSourceName , "serverless.upgrade_type", string(upgradeType)),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.upgrade_type", string(upgradeType)),
 		)
 	}
 	resource.Test(t, resource.TestCase{
@@ -101,56 +101,56 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 			// Create a provisioned cluster with the default value for upgrade_type
 			{
 				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Explicitly updating the value to MANUAL performs the update
 			{
 				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
 			},
 			// Removal of the optional value from the config makes no change
 			{
 				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
 			},
 			// Change it back to automatic so we can downgrade the cluster to
 			// BASIC.  Currently the ccapi doesn't allow downgrading to BASIC
 			// unless upgrade_type is AUTOMATIC already.
 			{
 				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Downgrade to Basic, the upgrade_type remains AUTOMATIC
 			{
 				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Setting the value to MANUAL is not allowed for Basic
 			{
-				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
+				Config:      onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
 				ExpectError: regexp.MustCompile("plan type BASIC does not allow upgrade_type MANUAL"),
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:       checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Setting completely invalid value for upgrade_type
 			{
-				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UpgradeTypeType("hi"))).Config,
+				Config:      onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UpgradeTypeType("hi"))).Config,
 				ExpectError: regexp.MustCompile("Attribute serverless.upgrade_type value must be one of"),
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:       checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Basic clusters can also accept a value of AUTOMATIC.
 			{
 				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Destroy the cluster so we can create it again in the next step
 			{
-				Config:      " ",
-				Destroy:     true,
+				Config:  " ",
+				Destroy: true,
 			},
 			// Basic clusters can also be created with a value of AUTOMATIC
 			{
 				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
-				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 		},
 	})
@@ -194,7 +194,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			Plan:             planType,
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
-					RoutingId: "routing-id",
+					RoutingId:   "routing-id",
 					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 				},
 			},
@@ -1135,19 +1135,25 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Versions: []client.ClusterMajorVersion{
 			{
 				Version: minSupportedClusterMajorVersion,
+				AllowedUpgrades: []string{
+					latestClusterMajorVersion,
+				},
 			},
 			{
-				Version: latestClusterMajorVersion,
+				Version:         latestClusterMajorVersion,
+				AllowedUpgrades: []string{},
 			},
 		},
 	}, nil, nil)
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{UpgradeStatus: &upgradingCluster.UpgradeStatus}).
-		DoAndReturn(
-			func(context.Context, string, *client.UpdateClusterSpecification,
-			) (*client.Cluster, *http.Response, error) {
-				return &upgradingCluster, httpOk, nil
-			},
-		)
+
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		CockroachVersion: ptr(latestClusterMajorVersion),
+	}).DoAndReturn(
+		func(context.Context, string, *client.UpdateClusterSpecification,
+		) (*client.Cluster, *http.Response, error) {
+			return &upgradingCluster, httpOk, nil
+		},
+	)
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&upgradingCluster, httpOk, nil)
@@ -1165,11 +1171,12 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 
 	// Finalize
 
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
-		DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
-		) (*client.Cluster, *http.Response, error) {
-			return &finalizedCluster, httpOk, nil
-		})
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		UpgradeStatus: ptr(client.CLUSTERUPGRADESTATUSTYPE_FINALIZED),
+	}).DoAndReturn(func(context.Context, string, *client.UpdateClusterSpecification,
+	) (*client.Cluster, *http.Response, error) {
+		return &finalizedCluster, httpOk, nil
+	})
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&finalizedCluster, httpOk, nil).Times(6)
@@ -1441,4 +1448,62 @@ func TestClusterSchemaInSync(t *testing.T) {
 	rAttrs := rSchema.Schema.Attributes
 	dAttrs := dSchema.Schema.Attributes
 	CheckSchemaAttributesMatch(t, rAttrs, dAttrs)
+}
+
+func TestIsUpgrade(t *testing.T) {
+	_, err := isUpgrade("v22.2", "foo")
+	require.Error(t, err)
+
+	upgrade, err := isUpgrade("v24.1", "v24.2")
+	require.NoError(t, err)
+	require.True(t, upgrade)
+
+	upgrade, err = isUpgrade("v24.1", "v24.3")
+	require.NoError(t, err)
+	require.True(t, upgrade)
+
+	upgrade, err = isUpgrade("v23.2", "v24.1")
+	require.NoError(t, err)
+	require.True(t, upgrade)
+
+	upgrade, err = isUpgrade("v24.2", "v24.2")
+	require.NoError(t, err)
+	require.False(t, upgrade)
+
+	upgrade, err = isUpgrade("v24.2", "v24.1")
+	require.NoError(t, err)
+	require.False(t, upgrade)
+
+	upgrade, err = isUpgrade("v24.2", "v23.2")
+	require.NoError(t, err)
+	require.False(t, upgrade)
+}
+
+func TestIsDowngrade(t *testing.T) {
+	_, err := isDowngrade("v22.2", "foo")
+	require.Error(t, err)
+
+	upgrade, err := isDowngrade("v24.2", "v24.1")
+	require.NoError(t, err)
+	require.True(t, upgrade)
+
+	upgrade, err = isDowngrade("v24.2", "v23.2")
+	require.NoError(t, err)
+	require.True(t, upgrade)
+
+	upgrade, err = isDowngrade("v24.2", "v24.2")
+	require.NoError(t, err)
+	require.False(t, upgrade)
+
+	upgrade, err = isDowngrade("v24.1", "v24.2")
+	require.NoError(t, err)
+	require.False(t, upgrade)
+
+	upgrade, err = isDowngrade("v24.1", "v24.3")
+	require.NoError(t, err)
+	require.False(t, upgrade)
+
+	upgrade, err = isDowngrade("v23.2", "v24.1")
+	require.NoError(t, err)
+	require.False(t, upgrade)
 }

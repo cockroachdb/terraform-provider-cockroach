@@ -5,8 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.9.0] - 2024-10-07
 
+- Added support for skipping [Innovation
+  Releases](https://www.cockroachlabs.com/docs/cockroachcloud/upgrade-policy#innovation-releases)
+  when upgrading dedicated clusters.
 - Clarify cluster.private_network_visibility attribute documentation.
 
 ## Changed

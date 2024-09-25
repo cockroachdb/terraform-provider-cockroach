@@ -20,6 +20,8 @@ package client
 
 // UpdateClusterSpecification struct for UpdateClusterSpecification.
 type UpdateClusterSpecification struct {
+	// The desired CockroachDB major version for the cluster.  It can be used to orchestrate version changes.  Setting the version to a later version will initiate an upgrade to that version.  After an upgrade is initiated but before it's finalized, setting the version back to the previous version will initiate a rollback.
+	CockroachVersion *string                              `json:"cockroach_version,omitempty"`
 	Dedicated        *DedicatedClusterUpdateSpecification `json:"dedicated,omitempty"`
 	DeleteProtection *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
 	// Preview: The parent ID is a folder ID. An empty string or \"root\" represents the root level.
@@ -36,6 +38,20 @@ type UpdateClusterSpecification struct {
 func NewUpdateClusterSpecification() *UpdateClusterSpecification {
 	p := UpdateClusterSpecification{}
 	return &p
+}
+
+// GetCockroachVersion returns the CockroachVersion field value if set, zero value otherwise.
+func (o *UpdateClusterSpecification) GetCockroachVersion() string {
+	if o == nil || o.CockroachVersion == nil {
+		var ret string
+		return ret
+	}
+	return *o.CockroachVersion
+}
+
+// SetCockroachVersion gets a reference to the given string and assigns it to the CockroachVersion field.
+func (o *UpdateClusterSpecification) SetCockroachVersion(v string) {
+	o.CockroachVersion = &v
 }
 
 // GetDedicated returns the Dedicated field value if set, zero value otherwise.

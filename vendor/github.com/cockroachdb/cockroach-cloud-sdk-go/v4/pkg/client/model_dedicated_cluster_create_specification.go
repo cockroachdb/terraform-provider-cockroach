@@ -20,7 +20,7 @@ package client
 
 // DedicatedClusterCreateSpecification struct for DedicatedClusterCreateSpecification.
 type DedicatedClusterCreateSpecification struct {
-	// The CockroachDB version for the cluster. The current version is used if omitted.
+	// The CockroachDB major version for the cluster. i.e. v24.1  The latest version is used if omitted. The version passed must be one of the currently supported versions.
 	CockroachVersion  *string                              `json:"cockroach_version,omitempty"`
 	Hardware          DedicatedHardwareCreateSpecification `json:"hardware"`
 	NetworkVisibility *NetworkVisibilityType               `json:"network_visibility,omitempty"`

@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -160,7 +160,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				State:         "CREATED",
 				Config: client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
-						RoutingId: "routing-id",
+						RoutingId:   "routing-id",
 						UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 					},
 				},

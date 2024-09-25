@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -47,7 +47,7 @@ During API key creation, a sensitive key is created and stored in the terraform 
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "Name of the api key.",
-				Required: true,
+				Required:            true,
 			},
 			"created_at": schema.StringAttribute{
 				MarkdownDescription: "Creation time of the api key.",
@@ -160,7 +160,7 @@ func (r *apiKeyResource) Read(
 		return
 	}
 
-	loadAPIKeyToTerraformState(apiKeyObj, nil /* secret */,  &state)
+	loadAPIKeyToTerraformState(apiKeyObj, nil /* secret */, &state)
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -200,7 +200,7 @@ func (r *apiKeyResource) Update(
 		ctx,
 		plan.ID.ValueString(),
 		&client.UpdateApiKeySpecification{
-			Name:     &newName,
+			Name: &newName,
 		})
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -273,7 +273,7 @@ func (r *apiKeyResource) ImportState(
 	secret := req.ID
 
 	apiKey := APIKey{
-		ID: types.StringValue(apiKeyID),
+		ID:     types.StringValue(apiKeyID),
 		Secret: types.StringValue(secret),
 	}
 	resp.Diagnostics = resp.State.Set(ctx, &apiKey)

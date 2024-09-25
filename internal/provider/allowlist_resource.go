@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -270,8 +270,8 @@ func (r *allowListResource) Update(
 	entryCIDRMask := int32(plan.CidrMask.ValueInt64())
 
 	updatedAllowList := client.AllowlistEntry1{
-		Ui:   plan.Ui.ValueBool(),
-		Sql:  plan.Sql.ValueBool(),
+		Ui:  plan.Ui.ValueBool(),
+		Sql: plan.Sql.ValueBool(),
 	}
 	if IsKnown(plan.Name) {
 		updatedAllowList.Name = ptr(plan.Name.ValueString())

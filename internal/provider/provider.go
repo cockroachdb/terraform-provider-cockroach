@@ -20,7 +20,7 @@ import (
 	"context"
 	"os"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"

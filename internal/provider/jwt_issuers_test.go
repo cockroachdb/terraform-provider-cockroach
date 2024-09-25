@@ -25,12 +25,11 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/knownvalue"
 	"github.com/hashicorp/terraform-plugin-testing/statecheck"
@@ -277,16 +276,12 @@ func testJWTIssuer(resourceName, issuerURL string) resource.TestCheckFunc {
 			Claim:     &testClaim,
 			IdentityMap: &[]client.JWTIssuerIdentityMapEntry{
 				{
-					TokenIdentity: testIdentityMap[0].TokenIdentity.ValueStringPointer(),
-					CcIdentity:    testIdentityMap[0].CcIdentity.ValueStringPointer(),
-					// TODO: Need to remove once the field has been removed from the API.
-					IsRegex: basetypes.NewBoolValue(false).ValueBoolPointer(),
+					TokenIdentity: testIdentityMap[0].TokenIdentity.ValueString(),
+					CcIdentity:    testIdentityMap[0].CcIdentity.ValueString(),
 				},
 				{
-					TokenIdentity: testIdentityMap[1].TokenIdentity.ValueStringPointer(),
-					CcIdentity:    testIdentityMap[1].CcIdentity.ValueStringPointer(),
-					// TODO: Need to remove once the field has been removed from the API.
-					IsRegex: basetypes.NewBoolValue(false).ValueBoolPointer(),
+					TokenIdentity: testIdentityMap[1].TokenIdentity.ValueString(),
+					CcIdentity:    testIdentityMap[1].CcIdentity.ValueString(),
 				},
 			},
 		}
@@ -327,10 +322,8 @@ func testJWTIssuerUpdated(resourceName, issuerURL string) resource.TestCheckFunc
 			Claim:     &testClaimUpdated,
 			IdentityMap: &[]client.JWTIssuerIdentityMapEntry{
 				{
-					TokenIdentity: testIdentityMapUpdated[0].TokenIdentity.ValueStringPointer(),
-					CcIdentity:    testIdentityMapUpdated[0].CcIdentity.ValueStringPointer(),
-					// TODO: Need to remove once the field has been removed from the API.
-					IsRegex: basetypes.NewBoolValue(false).ValueBoolPointer(),
+					TokenIdentity: testIdentityMapUpdated[0].TokenIdentity.ValueString(),
+					CcIdentity:    testIdentityMapUpdated[0].CcIdentity.ValueString(),
 				},
 			},
 		}

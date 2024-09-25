@@ -31,6 +31,7 @@ const (
 	QUANTITYUNITTYPE_REQUEST_UNITS QuantityUnitType = "REQUEST_UNITS"
 	QUANTITYUNITTYPE_GIB           QuantityUnitType = "GIB"
 	QUANTITYUNITTYPE_GIB_HOURS     QuantityUnitType = "GIB_HOURS"
+	QUANTITYUNITTYPE_VCPU_HOURS    QuantityUnitType = "VCPU_HOURS"
 )
 
 // All allowed values of QuantityUnitType enum.
@@ -39,6 +40,7 @@ var AllowedQuantityUnitTypeEnumValues = []QuantityUnitType{
 	"REQUEST_UNITS",
 	"GIB",
 	"GIB_HOURS",
+	"VCPU_HOURS",
 }
 
 // NewQuantityUnitTypeFromValue returns a pointer to a valid QuantityUnitType

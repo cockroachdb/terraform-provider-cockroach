@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -283,10 +283,8 @@ func identityMapFromTerraformState(identityMap *[]IdentityMapEntry) *[]client.JW
 	var out []client.JWTIssuerIdentityMapEntry
 	for _, mapEntry := range *identityMap {
 		out = append(out, client.JWTIssuerIdentityMapEntry{
-			TokenIdentity: mapEntry.TokenIdentity.ValueStringPointer(),
-			CcIdentity:    mapEntry.CcIdentity.ValueStringPointer(),
-			// TODO: Need to remove once the field has been removed from the API.
-			IsRegex: types.BoolValue(false).ValueBoolPointer(),
+			TokenIdentity: mapEntry.TokenIdentity.ValueString(),
+			CcIdentity:    mapEntry.CcIdentity.ValueString(),
 		})
 	}
 	return &out
@@ -299,8 +297,8 @@ func identityMapToTerraformState(identityMap *[]client.JWTIssuerIdentityMapEntry
 	var out []IdentityMapEntry
 	for _, mapEntry := range *identityMap {
 		out = append(out, IdentityMapEntry{
-			TokenIdentity: types.StringPointerValue(mapEntry.TokenIdentity),
-			CcIdentity:    types.StringPointerValue(mapEntry.CcIdentity),
+			TokenIdentity: types.StringValue(mapEntry.TokenIdentity),
+			CcIdentity:    types.StringValue(mapEntry.CcIdentity),
 		})
 	}
 	return &out

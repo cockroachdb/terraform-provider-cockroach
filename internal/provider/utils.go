@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v3/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -96,11 +96,11 @@ var uuidRegex = regexp.MustCompile(uuidRegexString)
 // because all current and expected future uses won't combine this with other
 // validators and it allows using it like so:
 //
-//   "some_id": schema.StringAttribute{
-//       Description:   "the description.",
-//       Optional:      true,
-//       Validators:    uuidValidator,
-//    },
+//	"some_id": schema.StringAttribute{
+//	    Description:   "the description.",
+//	    Optional:      true,
+//	    Validators:    uuidValidator,
+//	 },
 var uuidValidator = []validator.String{stringvalidator.RegexMatches(
 	uuidRegex,
 	"must match UUID format",

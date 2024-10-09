@@ -7,19 +7,30 @@ import (
 	"context"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwfunction"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwtype"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 // Ensure the implementation satisifies the desired interfaces.
-var _ Return = ObjectReturn{}
+var (
+	_ Return                                      = ObjectReturn{}
+	_ fwfunction.ReturnWithValidateImplementation = ObjectReturn{}
+)
 
 // ObjectReturn represents a function return that is mapping of defined
 // attribute names to values. When setting the value for this return, use
 // [types.Object] or a compatible Go struct as the value type unless the
 // CustomType field is set. The AttributeTypes field must be set.
+//
+// Return documentation is expected in the function [Definition] documentation.
 type ObjectReturn struct {
 	// AttributeTypes is the mapping of underlying attribute names to attribute
 	// types. This field must be set.
+	//
+	// Attribute types that contain a collection with a nested dynamic type (i.e. types.List[types.Dynamic]) are not supported.
+	// If underlying dynamic collection values are required, replace this return definition with
+	// DynamicReturn instead.
 	AttributeTypes map[string]attr.Type
 
 	// CustomType enables the use of a custom data type in place of the
@@ -51,4 +62,20 @@ func (r ObjectReturn) NewResultData(ctx context.Context) (ResultData, *FuncError
 	valuable, diags := r.CustomType.ValueFromObject(ctx, value)
 
 	return NewResultData(valuable), FuncErrorFromDiags(ctx, diags)
+}
+
+// ValidateImplementation contains logic for validating the
+// provider-defined implementation of the Return to prevent unexpected
+// errors or panics. This logic runs during the GetProviderSchema RPC and
+// should never include false positives.
+func (p ObjectReturn) ValidateImplementation(ctx context.Context, req fwfunction.ValidateReturnImplementationRequest, resp *fwfunction.ValidateReturnImplementationResponse) {
+	if p.CustomType == nil {
+		if fwtype.ContainsCollectionWithDynamic(p.GetType()) {
+			resp.Diagnostics.Append(fwtype.ReturnCollectionWithDynamicTypeDiag())
+		}
+
+		if fwtype.ContainsMissingUnderlyingType(p.GetType()) {
+			resp.Diagnostics.Append(fwtype.ReturnMissingUnderlyingTypeDiag())
+		}
+	}
 }

@@ -8,12 +8,10 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/internal/fwfunction"
 )
 
 // Definition is a function definition. Always set at least the Result field.
-//
-// NOTE: Provider-defined function support is in technical preview and offered
-// without compatibility promises until Terraform 1.8 is generally available.
 type Definition struct {
 	// Parameters is the ordered list of function parameters and their
 	// associated data types.
@@ -50,46 +48,11 @@ type Definition struct {
 	DeprecationMessage string
 }
 
-// Parameter returns the Parameter for a given argument position. This may be
-// from the Parameters field or, if defined, the VariadicParameter field. An
-// error diagnostic is raised if the position is outside the expected arguments.
-func (d Definition) Parameter(ctx context.Context, position int) (Parameter, diag.Diagnostics) {
-	if d.VariadicParameter != nil && position >= len(d.Parameters) {
-		return d.VariadicParameter, nil
-	}
-
-	if len(d.Parameters) == 0 {
-		return nil, diag.Diagnostics{
-			diag.NewErrorDiagnostic(
-				"Invalid Parameter Position for Definition",
-				"When determining the parameter for the given argument position, an invalid value was given. "+
-					"This is always an issue in the provider code and should be reported to the provider developers.\n\n"+
-					"Function does not implement parameters.\n"+
-					fmt.Sprintf("Given position: %d", position),
-			),
-		}
-	}
-
-	if position >= len(d.Parameters) {
-		return nil, diag.Diagnostics{
-			diag.NewErrorDiagnostic(
-				"Invalid Parameter Position for Definition",
-				"When determining the parameter for the given argument position, an invalid value was given. "+
-					"This is always an issue in the provider code and should be reported to the provider developers.\n\n"+
-					fmt.Sprintf("Max argument position: %d\n", len(d.Parameters)-1)+
-					fmt.Sprintf("Given position: %d", position),
-			),
-		}
-	}
-
-	return d.Parameters[position], nil
-}
-
 // ValidateImplementation contains logic for validating the provider-defined
 // implementation of the definition to prevent unexpected errors or panics. This
 // logic runs during the GetProviderSchema RPC, or via provider-defined unit
 // testing, and should never include false positives.
-func (d Definition) ValidateImplementation(ctx context.Context) diag.Diagnostics {
+func (d Definition) ValidateImplementation(ctx context.Context, req DefinitionValidateRequest, resp *DefinitionValidateResponse) {
 	var diags diag.Diagnostics
 
 	if d.Return == nil {
@@ -97,33 +60,50 @@ func (d Definition) ValidateImplementation(ctx context.Context) diag.Diagnostics
 			"Invalid Function Definition",
 			"When validating the function definition, an implementation issue was found. "+
 				"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-				"Definition Return field is undefined",
+				fmt.Sprintf("Function %q - Definition Return field is undefined", req.FuncName),
 		)
 	} else if d.Return.GetType() == nil {
 		diags.AddError(
 			"Invalid Function Definition",
 			"When validating the function definition, an implementation issue was found. "+
 				"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
-				"Definition return data type is undefined",
+				fmt.Sprintf("Function %q - Definition return data type is undefined", req.FuncName),
 		)
+	} else if returnWithValidateImplementation, ok := d.Return.(fwfunction.ReturnWithValidateImplementation); ok {
+		req := fwfunction.ValidateReturnImplementationRequest{}
+		resp := &fwfunction.ValidateReturnImplementationResponse{}
+
+		returnWithValidateImplementation.ValidateImplementation(ctx, req, resp)
+
+		diags.Append(resp.Diagnostics...)
 	}
 
 	paramNames := make(map[string]int, len(d.Parameters))
 	for pos, param := range d.Parameters {
-		name := param.GetName()
-		// If name is not set, default the param name based on position: "param1", "param2", etc.
-		if name == "" {
-			name = fmt.Sprintf("%s%d", DefaultParameterNamePrefix, pos+1)
+		parameterPosition := int64(pos)
+
+		if paramWithValidateImplementation, ok := param.(fwfunction.ParameterWithValidateImplementation); ok {
+			req := fwfunction.ValidateParameterImplementationRequest{
+				FunctionName:      req.FuncName,
+				ParameterPosition: &parameterPosition,
+			}
+			resp := &fwfunction.ValidateParameterImplementationResponse{}
+
+			paramWithValidateImplementation.ValidateImplementation(ctx, req, resp)
+
+			diags.Append(resp.Diagnostics...)
 		}
 
+		name := param.GetName()
 		conflictPos, exists := paramNames[name]
-		if exists {
+
+		if exists && name != "" {
 			diags.AddError(
 				"Invalid Function Definition",
 				"When validating the function definition, an implementation issue was found. "+
 					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
 					"Parameter names must be unique. "+
-					fmt.Sprintf("Parameters at position %d and %d have the same name %q", conflictPos, pos, name),
+					fmt.Sprintf("Function %q - Parameters at position %d and %d have the same name %q", req.FuncName, conflictPos, pos, name),
 			)
 			continue
 		}
@@ -132,25 +112,32 @@ func (d Definition) ValidateImplementation(ctx context.Context) diag.Diagnostics
 	}
 
 	if d.VariadicParameter != nil {
-		name := d.VariadicParameter.GetName()
-		// If name is not set, default the variadic param name
-		if name == "" {
-			name = DefaultVariadicParameterName
+		if paramWithValidateImplementation, ok := d.VariadicParameter.(fwfunction.ParameterWithValidateImplementation); ok {
+			req := fwfunction.ValidateParameterImplementationRequest{
+				FunctionName: req.FuncName,
+			}
+			resp := &fwfunction.ValidateParameterImplementationResponse{}
+
+			paramWithValidateImplementation.ValidateImplementation(ctx, req, resp)
+
+			diags.Append(resp.Diagnostics...)
 		}
 
+		name := d.VariadicParameter.GetName()
 		conflictPos, exists := paramNames[name]
-		if exists {
+
+		if exists && name != "" {
 			diags.AddError(
 				"Invalid Function Definition",
 				"When validating the function definition, an implementation issue was found. "+
 					"This is always an issue with the provider and should be reported to the provider developers.\n\n"+
 					"Parameter names must be unique. "+
-					fmt.Sprintf("Parameter at position %d and the variadic parameter have the same name %q", conflictPos, name),
+					fmt.Sprintf("Function %q - Parameter at position %d and the variadic parameter have the same name %q", req.FuncName, conflictPos, name),
 			)
 		}
 	}
 
-	return diags
+	resp.Diagnostics.Append(diags...)
 }
 
 // DefinitionRequest represents a request for the Function to return its
@@ -168,5 +155,23 @@ type DefinitionResponse struct {
 
 	// Diagnostics report errors or warnings related to defining the function.
 	// An empty slice indicates success, with no warnings or errors generated.
+	Diagnostics diag.Diagnostics
+}
+
+// DefinitionValidateRequest represents a request for the Function to validate its
+// definition. An instance of this request struct is supplied as an argument to
+// the Definition type ValidateImplementation method.
+type DefinitionValidateRequest struct {
+	// FuncName is the name of the function definition being validated.
+	FuncName string
+}
+
+// DefinitionValidateResponse represents a response to a DefinitionValidateRequest.
+// An instance of this response struct is supplied as an argument to the Definition
+// type ValidateImplementation method.
+type DefinitionValidateResponse struct {
+	// Diagnostics report errors or warnings related to validation of a function
+	// definition. An empty slice indicates success, with no warnings or errors
+	// generated.
 	Diagnostics diag.Diagnostics
 }

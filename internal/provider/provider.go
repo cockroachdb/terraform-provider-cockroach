@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
@@ -27,10 +28,13 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 )
 
 // NewService overrides the client method for testing.
 var NewService = client.NewService
+
+var providerResponseTypeName = "cockroach"
 
 // provider satisfies the tfsdk.Provider interface and usually is included
 // with all Resource and DataSource implementations.
@@ -89,24 +93,18 @@ func (p *provider) Configure(
 	}
 	cfg.UserAgent = UserAgent
 
-	logLevel := os.Getenv("TF_LOG")
-	if logLevel == "DEBUG" || logLevel == "TRACE" {
-		cfg.Debug = true
-	} else {
-		logLevel = os.Getenv("TF_LOG_PROVIDER")
-		if logLevel == "DEBUG" || logLevel == "TRACE" {
-			cfg.Debug = true
-		}
-	}
-
 	// retryablehttp gives us automatic retries with exponential backoff.
 	httpClient := retryablehttp.NewClient()
+
 	// The TF framework will pick up the default global logger.
 	// HTTP requests are logged at DEBUG level.
 	httpClient.Logger = &leveledTFLogger{baseCtx: ctx}
 	httpClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	httpClient.CheckRetry = retryGetRequestsOnly
 	cfg.HTTPClient = httpClient.StandardClient()
+	cfg.HTTPClient.Transport = ApiWrapperRoundTripper{
+		next: logging.NewLoggingHTTPTransport(cfg.HTTPClient.Transport),
+	}
 
 	cl := client.NewClient(cfg)
 	p.service = NewService(cl)
@@ -119,7 +117,7 @@ func (p *provider) Configure(
 func (p *provider) Metadata(
 	_ context.Context, _ tf_provider.MetadataRequest, resp *tf_provider.MetadataResponse,
 ) {
-	resp.TypeName = "cockroach"
+	resp.TypeName = providerResponseTypeName
 	resp.Version = p.version
 }
 
@@ -181,4 +179,31 @@ func New(version string) func() tf_provider.Provider {
 			version: version,
 		}
 	}
+}
+
+// This type implements the http.RoundTripper interface
+type ApiWrapperRoundTripper struct {
+	// TODO(fitzner): What's a good name for this?
+    next http.RoundTripper
+}
+
+func (rt ApiWrapperRoundTripper) RoundTrip(req *http.Request) (res *http.Response, e error) {
+
+	ctx := req.Context()
+
+	resourceType := ctx.Value(contextValResourceType)
+	resourceIDHash := ctx.Value(contextValResourceIDHash)
+	if resourceType != nil || resourceIDHash != nil {
+		// make a copy
+		req = req.Clone(ctx)
+
+		if resourceType != nil && resourceType.(string) != "" {
+			req.Header.Set("Cc-Tf-Resource-Type", resourceType.(string))
+		}
+		if resourceIDHash != nil && resourceIDHash.(string) != "" {
+			req.Header.Set("Cc-Tf-Resource-Id-Hash", resourceIDHash.(string))
+		}
+	}
+
+	return rt.next.RoundTrip(req)
 }

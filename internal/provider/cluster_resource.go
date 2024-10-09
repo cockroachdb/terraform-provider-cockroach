@@ -286,10 +286,14 @@ func (r *clusterResource) Schema(
 	}
 }
 
+func (r *clusterResource) resourceType() string {
+	return providerResponseTypeName + "_cluster"
+}
+
 func (r *clusterResource) Metadata(
-	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+	_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse,
 ) {
-	resp.TypeName = req.ProviderTypeName + "_cluster"
+	resp.TypeName = r.resourceType()
 }
 
 func (r *clusterResource) Configure(
@@ -522,6 +526,7 @@ func (r *clusterResource) Read(
 	}
 
 	traceAPICall("GetCluster")
+	ctx = contextWithResourceMetadata(ctx, r, clusterID)
 	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {

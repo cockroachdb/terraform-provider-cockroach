@@ -51,10 +51,14 @@ func (r *folderResource) Schema(
 	}
 }
 
+func (r *folderResource) resourceType() string {
+	return providerResponseTypeName + "_folder"
+}
+
 func (r *folderResource) Metadata(
 	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
 ) {
-	resp.TypeName = req.ProviderTypeName + "_folder"
+	resp.TypeName = r.resourceType()
 }
 
 func (r *folderResource) Configure(
@@ -87,6 +91,7 @@ func (r *folderResource) Create(
 
 	parentID := plan.ParentId.ValueString()
 	traceAPICall("CreateFolder")
+	ctx = contextWithResourceMetadata(ctx, r, "")
 	folderObj, _, err := r.provider.service.CreateFolder(ctx, &client.CreateFolderRequest{
 		Name:     plan.Name.ValueString(),
 		ParentId: &parentID,
@@ -139,6 +144,7 @@ func (r *folderResource) Read(
 	}
 
 	traceAPICall("GetFolder")
+	ctx = contextWithResourceMetadata(ctx, r, folderID)
 	folderObj, httpResp, err := r.provider.service.GetFolder(ctx, folderID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
@@ -187,6 +193,7 @@ func (r *folderResource) Update(
 		destParentID = plan.ParentId.ValueString()
 	)
 	traceAPICall("UpdateFolder")
+	ctx = contextWithResourceMetadata(ctx, r, plan.ID.ValueString())
 	folderObj, _, err := r.provider.service.UpdateFolder(
 		ctx,
 		plan.ID.ValueString(),
@@ -227,6 +234,7 @@ func (r *folderResource) Delete(
 	}
 
 	traceAPICall("DeleteFolder")
+	ctx = contextWithResourceMetadata(ctx, r, folderID.ValueString())
 	httpResp, err := r.provider.service.DeleteFolder(ctx, folderID.ValueString())
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {

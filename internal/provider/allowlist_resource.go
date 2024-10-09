@@ -109,10 +109,14 @@ func (r *allowListResource) Configure(
 	}
 }
 
+func (r *allowListResource) resourceType() string {
+	return providerResponseTypeName + "_allow_list"
+}
+
 func (r *allowListResource) Metadata(
-	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
+	_ context.Context, _ resource.MetadataRequest, resp *resource.MetadataResponse,
 ) {
-	resp.TypeName = req.ProviderTypeName + "_allow_list"
+	resp.TypeName = r.resourceType()
 }
 
 func (r *allowListResource) Create(
@@ -149,6 +153,7 @@ func (r *allowListResource) Create(
 	}
 
 	traceAPICall("AddAllowlistEntry")
+	ctx = contextWithResourceMetadata(ctx, r, entry.ID.ValueString())
 	_, _, err := r.provider.service.AddAllowlistEntry(ctx, entry.ClusterId.ValueString(), &allowList)
 	if err != nil {
 		resp.Diagnostics.AddError(

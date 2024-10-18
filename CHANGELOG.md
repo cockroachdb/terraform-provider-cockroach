@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+### Added
+
+- The new [cockroach_backup_config](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/backup_config) resource adds support for configuring [cluster backups](https://www.cockroachlabs.com/docs/cockroachcloud/managed-backups).
+
 ## [1.9.0] - 2024-10-07
 
 - Added support for skipping [Innovation

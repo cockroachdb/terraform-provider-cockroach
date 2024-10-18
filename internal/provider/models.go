@@ -271,6 +271,13 @@ type ClusterVersionDeferral struct {
 	DeferralPolicy types.String `tfsdk:"deferral_policy"`
 }
 
+type ClusterBackupConfiguration struct {
+	ID               types.String `tfsdk:"id"`
+	Enabled          types.Bool   `tfsdk:"enabled"`
+	RetentionDays    types.Int64  `tfsdk:"retention_days"`
+	FrequencyMinutes types.Int64  `tfsdk:"frequency_minutes"`
+}
+
 type ClientCACertResourceModel struct {
 	ID          types.String `tfsdk:"id"`
 	X509PemCert types.String `tfsdk:"x509_pem_cert"`

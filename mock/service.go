@@ -784,6 +784,22 @@ func (mr *MockServiceMockRecorder) GetApiOidcConfig(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApiOidcConfig", reflect.TypeOf((*MockService)(nil).GetApiOidcConfig), arg0, arg1)
 }
 
+// GetBackupConfiguration mocks base method.
+func (m *MockService) GetBackupConfiguration(arg0 context.Context, arg1 string) (*client.BackupConfiguration, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBackupConfiguration", arg0, arg1)
+	ret0, _ := ret[0].(*client.BackupConfiguration)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetBackupConfiguration indicates an expected call of GetBackupConfiguration.
+func (mr *MockServiceMockRecorder) GetBackupConfiguration(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBackupConfiguration", reflect.TypeOf((*MockService)(nil).GetBackupConfiguration), arg0, arg1)
+}
+
 // GetCMEKClusterInfo mocks base method.
 func (m *MockService) GetCMEKClusterInfo(arg0 context.Context, arg1 string) (*client.CMEKClusterInfo, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1853,6 +1869,22 @@ func (m *MockService) UpdateApiOidcConfig(arg0 context.Context, arg1 string, arg
 func (mr *MockServiceMockRecorder) UpdateApiOidcConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApiOidcConfig", reflect.TypeOf((*MockService)(nil).UpdateApiOidcConfig), arg0, arg1, arg2)
+}
+
+// UpdateBackupConfiguration mocks base method.
+func (m *MockService) UpdateBackupConfiguration(arg0 context.Context, arg1 string, arg2 *client.UpdateBackupConfigurationSpec) (*client.BackupConfiguration, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateBackupConfiguration", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.BackupConfiguration)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateBackupConfiguration indicates an expected call of UpdateBackupConfiguration.
+func (mr *MockServiceMockRecorder) UpdateBackupConfiguration(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBackupConfiguration", reflect.TypeOf((*MockService)(nil).UpdateBackupConfiguration), arg0, arg1, arg2)
 }
 
 // UpdateCMEKSpec mocks base method.

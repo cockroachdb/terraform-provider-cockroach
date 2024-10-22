@@ -31,7 +31,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-// TestIntegrationServiceAccountResource attempts to create, check, and destroy a
+// TestAccServiceAccountResource attempts to create, check, and destroy a
 // real service account. It will be skipped if TF_ACC isn't set.
 func TestAccServiceAccountResource(t *testing.T) {
 	t.Parallel()

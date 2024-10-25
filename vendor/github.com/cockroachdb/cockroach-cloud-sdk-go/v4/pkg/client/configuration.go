@@ -42,7 +42,7 @@ type Configuration struct {
 func NewConfiguration(apiKey string) *Configuration {
 	cfg := &Configuration{
 		DefaultHeader: make(map[string]string),
-		UserAgent:     "ccloud-sdk-go/4.0.0",
+		UserAgent:     "ccloud-sdk-go/4.1.0",
 		Debug:         false,
 		ServerURL:     DefaultServerURL,
 		apiKey:        apiKey,

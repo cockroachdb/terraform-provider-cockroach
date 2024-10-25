@@ -83,6 +83,8 @@ func TestIntegrationPrivateEndpointTrustedOwnerResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), cluster.Id).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(2)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
 	// Create owner entry.
 	s.EXPECT().AddPrivateEndpointTrustedOwner(

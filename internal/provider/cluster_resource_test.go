@@ -54,6 +54,9 @@ const (
 	defaultPlanType = ""
 )
 
+var httpOk = &http.Response{Status: http.StatusText(http.StatusOK)}
+var httpFail = &http.Response{Status: http.StatusText(http.StatusBadRequest)}
+
 // TestAccServerlessClusterResource attempts to create, check, update, and
 // destroy a real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccServerlessClusterResource(t *testing.T) {
@@ -154,6 +157,317 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 			},
 		},
 	})
+}
+
+// Shared Test objects
+var initialBackupConfig = &client.BackupConfiguration{
+	Enabled: true,
+	FrequencyMinutes: 60,
+	RetentionDays: 30,
+}
+
+var initialBackupConfigDisabled = &client.BackupConfiguration{
+	Enabled: false,
+	FrequencyMinutes: initialBackupConfig.FrequencyMinutes,
+	RetentionDays: initialBackupConfig.RetentionDays,
+}
+
+var updatedBackupConfig = &client.BackupConfiguration{
+	Enabled: true,
+	RetentionDays: 7,
+	FrequencyMinutes: 5,
+}
+
+var secondUpdatedBackupConfig = &client.BackupConfiguration{
+	Enabled: updatedBackupConfig.Enabled,
+	RetentionDays: updatedBackupConfig.RetentionDays,
+	FrequencyMinutes: 1440,
+}
+
+// TestAccBackupConfig is an acceptance test focused only on testing the
+// backup_config parameter. It will be skipped if TF_ACC isn't set.
+func TestAccClusterWithBackupConfig(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	testClusterWithBackupConfig(t, clusterName, false /* useMock */)
+}
+
+// TestAccBackupConfig is an acceptance test focused only on testing the
+// backup_config parameter. It will be skipped if TF_ACC isn't set.
+func TestIntegrationClusterWithBackupConfig(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               uuid.Nil.String(),
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Plan:             "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+	}
+
+	expectUpdateSequence := func(update *client.UpdateBackupConfigurationSpec, before, after *client.BackupConfiguration) {
+		// Pre-update read
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(before, httpOk, nil)
+		// Actual update
+		s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(&cluster, httpOk, nil)
+		s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, update).Return(after, httpOk, nil)
+		// checkBackupConfig
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(after, httpOk, nil)
+		// post update read
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(after, httpOk, nil)
+	}
+
+	expectStateMatchesServerSequence := func(backupConfig *client.BackupConfiguration) {
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(backupConfig, httpOk, nil).Times(3)
+	}
+
+	expectErrorSequence := func(update *client.UpdateBackupConfigurationSpec, before *client.BackupConfiguration, err error) {
+		// Pre-update read
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(before, httpOk, nil)
+		// Actual update
+		s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(&cluster, httpOk, nil)
+		s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, update).Return(before, httpFail, err)
+	}
+
+	// Our cluster never changes so to avoid complexity, we'll just return it
+	// as many times as its asked for.
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).AnyTimes()
+
+	// Step: a cluster without a backup config block still has a default config
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil).Times(3)
+
+	// Step: a backup config with an empty block
+	expectStateMatchesServerSequence(initialBackupConfig)
+
+	// Step: a backup config with just the enabled field
+	expectStateMatchesServerSequence(initialBackupConfig)
+
+	// Step: disabling backups without specifying any other fields
+	expectUpdateSequence(&client.UpdateBackupConfigurationSpec{
+		Enabled: ptr(false),
+	}, initialBackupConfig, initialBackupConfigDisabled)
+
+	// Step: reenable passing in the default values
+	expectUpdateSequence(&client.UpdateBackupConfigurationSpec{
+		Enabled: ptr(true),
+	}, initialBackupConfigDisabled, initialBackupConfig)
+
+	// Step: update frequency and retention
+	expectUpdateSequence(&client.UpdateBackupConfigurationSpec{
+		RetentionDays: ptr(updatedBackupConfig.RetentionDays),
+		FrequencyMinutes: ptr(updatedBackupConfig.FrequencyMinutes),
+	}, initialBackupConfig, updatedBackupConfig)
+
+	// Step: error case: invalid retention_days
+	expectErrorSequence(&client.UpdateBackupConfigurationSpec{
+		RetentionDays: ptr(int32(12345)),
+	}, updatedBackupConfig, fmt.Errorf("retention_days must be one of []"))
+
+	// Step: error case: invalid frequency_minutes
+	expectErrorSequence(&client.UpdateBackupConfigurationSpec{
+		FrequencyMinutes: ptr(int32(12345)),
+	}, updatedBackupConfig, fmt.Errorf("frequency_minutes must be one of []"))
+
+	// Step: remove the backup configuration block, cluster still has the last one that was set
+	expectStateMatchesServerSequence(updatedBackupConfig)
+
+	// Step: destroy cluster in prep for next step
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	// Step: test setting backup config values during the create
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, &client.UpdateBackupConfigurationSpec{
+		Enabled: ptr(true),
+		FrequencyMinutes: ptr(int32(secondUpdatedBackupConfig.FrequencyMinutes)),
+	}).Return(secondUpdatedBackupConfig, httpOk, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(secondUpdatedBackupConfig, httpOk, nil)
+
+	// Delete phase
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(secondUpdatedBackupConfig, httpOk, nil)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	testClusterWithBackupConfig(t, clusterName, true /* useMock */)
+}
+
+func testClusterWithBackupConfig(t *testing.T, clusterName string, useMock bool) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() {
+					traceMessageStep("a cluster without a backup config block still has a default config")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: false,
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("a backup config with an empty block")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("a backup config with just the enabled field")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled: ptr(true),
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("disabling backups without specifying any other fields")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled: ptr(false),
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfigDisabled),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("reenable passing in the default values")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled:   ptr(true),
+					retention: ptr(initialBackupConfig.RetentionDays),
+					frequency: ptr(initialBackupConfig.FrequencyMinutes),
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("update frequency and retention")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled:   ptr(true),
+					retention: ptr(updatedBackupConfig.RetentionDays),
+					frequency: ptr(updatedBackupConfig.FrequencyMinutes),
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("error case: invalid retention_days")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled:   ptr(true),
+					retention: ptr(int32(12345)),
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+				// Setting single line mode because error is broken across lines.
+				ExpectError: regexp.MustCompile(`(?s)retention_days.*must.*be.*one.*of`),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("error case: invalid frequency_minutes")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled:   ptr(true),
+					frequency: ptr(int32(12345)),
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+				// Setting single line mode because error is broken across lines.
+				ExpectError: regexp.MustCompile(`(?s)frequency_minutes.*must.*be.*one.*of`),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("remove the backup configuration block, cluster still has the last one that was set")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: false,
+				}),
+				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("destroy cluster in prep for next step")
+				},
+				Config:      " ",
+				Destroy:     true,
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("test setting backup config values during the create")
+				},
+				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
+					includeBackupConfig: true,
+					enabled:   ptr(true),
+					frequency: ptr(secondUpdatedBackupConfig.FrequencyMinutes),
+				}),
+				Check:  resource.ComposeTestCheckFunc(
+					checkBackupConfig(serverlessResourceName, secondUpdatedBackupConfig),
+					traceEndOfPlan(),
+				),
+			},
+		},
+	})
+}
+
+func checkBackupConfig(clusterResourceName string, expected *client.BackupConfiguration) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		p := testAccProvider.(*provider)
+		p.service = NewService(cl)
+
+		clusterRs, ok := s.RootModule().Resources[clusterResourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", clusterResourceName)
+		}
+
+		clusterID := clusterRs.Primary.Attributes["id"]
+
+		traceAPICall("GetBackupConfiguration")
+		resp, _, err := p.service.GetBackupConfiguration(context.TODO(), clusterID)
+		if err != nil {
+			return fmt.Errorf("unexpected error during config lookup: %w", err)
+		}
+
+		if *resp != *expected {
+			return fmt.Errorf("expected backup configuration did not match actual. expected: %v, actual %v", expected, resp)
+		}
+
+		return nil
+	}
 }
 
 // TestAccMultiRegionServerlessClusterResource attempts to create, update, check,
@@ -600,6 +914,8 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 					}
 					return cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil
 				}).AnyTimes()
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), c.initialCluster.Id).
+				Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
 			var steps []resource.TestStep
 			createStep := c.createStep()
@@ -1120,12 +1436,14 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	*scaledCluster.Config.Dedicated = *secondUpdateCluster.Config.Dedicated
 	scaledCluster.Config.Dedicated.NumVirtualCpus = 4
 
-	httpOk := &http.Response{Status: http.StatusText(http.StatusOK)}
-
 	// Creation
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(&initialCluster, nil, nil)
+	// This test doesn't modify BackupConfiguration, so we just allow the mocked
+	// to be called AnyTimes for simplicity.
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&initialCluster, httpOk, nil).Times(7)
 
@@ -1370,6 +1688,57 @@ resource "cockroach_finalize_version_upgrade" "test" {
 	}
 
 	return config
+}
+
+type backupCreateConfig struct {
+	includeBackupConfig bool
+	enabled             *bool
+	retention           *int32
+	frequency           *int32
+}
+
+func getTestClusterWithBackupConfig(clusterName string, config backupCreateConfig) string {
+
+	backupConfigString := ""
+	if config.includeBackupConfig {
+		backupConfigOptions := ""
+
+		if config.enabled != nil {
+			backupConfigOptions = backupConfigOptions + fmt.Sprintf(`
+    enabled = %t
+`, *config.enabled)
+		}
+		if config.frequency != nil {
+			backupConfigOptions = backupConfigOptions + fmt.Sprintf(`
+    frequency_minutes = %d
+`, *config.frequency)
+		}
+		if config.retention != nil {
+			backupConfigOptions = backupConfigOptions + fmt.Sprintf(`
+    retention_days = %d
+`, *config.retention)
+		}
+
+		backupConfigString  = fmt.Sprintf(`
+  backup_config = {%s}
+`, backupConfigOptions)
+	}
+
+	return fmt.Sprintf(`
+	resource "cockroach_cluster" "test" {
+		name           = "%s"
+		cloud_provider = "GCP"
+		plan = "STANDARD"
+		serverless = {
+			usage_limits = {
+				provisioned_virtual_cpus = 2
+			}
+		}
+		regions = [{
+			name = "us-central1"
+		}] %s
+	}
+	`, clusterName, backupConfigString)
 }
 
 func TestSortRegionsByPlan(t *testing.T) {

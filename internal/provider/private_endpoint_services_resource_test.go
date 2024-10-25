@@ -150,6 +150,8 @@ func TestIntegrationPrivateEndpointServicesResource(t *testing.T) {
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(3)
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+				Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
 			var regions []string
 			for _, r := range c.finalCluster.Regions {

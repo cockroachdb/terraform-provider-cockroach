@@ -144,6 +144,8 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 				Times(4)
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+				Return(initialBackupConfig, httpOk, nil).AnyTimes()
 			if !isServerless {
 				s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
 					Return(services, nil, nil)

@@ -13,6 +13,11 @@ resource "cockroach_cluster" "advanced" {
     }
   ]
   delete_protection = true
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
 }
 
 resource "cockroach_cluster" "standard" {
@@ -31,6 +36,11 @@ resource "cockroach_cluster" "standard" {
     }
   ]
   delete_protection = false
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
 }
 
 resource "cockroach_cluster" "basic" {

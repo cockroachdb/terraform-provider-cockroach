@@ -18,6 +18,8 @@ import (
 	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"github.com/stretchr/testify/require"
 )
 
@@ -183,5 +185,23 @@ func traceAPICall(endpoint string) {
 	if exists && val == "1" {
 		pc, _, _, _ := runtime.Caller(1)
 		fmt.Printf("CC API Call: %s (%s)\n", endpoint, runtime.FuncForPC(pc).Name())
+	}
+}
+
+func traceSupportMessageRaw(message string) {
+	val, exists := os.LookupEnv("TRACE_API_CALLS")
+	if exists && val == "1" {
+			fmt.Print(message)
+	}
+}
+
+func traceMessageStep(message string) {
+	traceSupportMessageRaw(fmt.Sprintf("\n// Step: %s\n", message))
+}
+
+func traceEndOfPlan() resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		traceSupportMessageRaw("\n// Delete phase\n")
+		return nil
 	}
 }

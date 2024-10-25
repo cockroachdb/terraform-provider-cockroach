@@ -104,6 +104,11 @@ resource "cockroach_cluster" "example" {
       node_count = var.cluster_node_count
     }
   ]
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
 }
 
 data "cockroach_cluster_cert" "example" {

@@ -55,6 +55,12 @@ type ServerlessClusterConfig struct {
 	UsageLimits *UsageLimits `tfsdk:"usage_limits"`
 }
 
+type ClusterBackupConfig struct {
+	Enabled          types.Bool  `tfsdk:"enabled"`
+	RetentionDays    types.Int64 `tfsdk:"retention_days"`
+	FrequencyMinutes types.Int64 `tfsdk:"frequency_minutes"`
+}
+
 type UsageLimits struct {
 	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
 	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
@@ -93,6 +99,7 @@ type CockroachCluster struct {
 	UpgradeStatus    types.String             `tfsdk:"upgrade_status"`
 	ParentId         types.String             `tfsdk:"parent_id"`
 	DeleteProtection types.Bool               `tfsdk:"delete_protection"`
+	BackupConfig     types.Object             `tfsdk:"backup_config"`
 }
 
 type AllowlistEntry struct {
@@ -269,6 +276,13 @@ type ClusterMaintenanceWindow struct {
 type ClusterVersionDeferral struct {
 	ID             types.String `tfsdk:"id"`
 	DeferralPolicy types.String `tfsdk:"deferral_policy"`
+}
+
+type ClusterBackupConfiguration struct {
+	ID               types.String `tfsdk:"id"`
+	Enabled          types.Bool   `tfsdk:"enabled"`
+	RetentionDays    types.Int64  `tfsdk:"retention_days"`
+	FrequencyMinutes types.Int64  `tfsdk:"frequency_minutes"`
 }
 
 type ClientCACertResourceModel struct {

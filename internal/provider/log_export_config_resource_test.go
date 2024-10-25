@@ -131,6 +131,8 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(3)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
 		&client.EnableLogExportRequest{
 			Groups:          &createdGroups,

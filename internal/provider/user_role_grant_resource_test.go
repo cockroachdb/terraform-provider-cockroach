@@ -147,6 +147,8 @@ func TestIntegrationRoleGrantResource(t *testing.T) {
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
 	// Called by Create - Cluster role addition
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).

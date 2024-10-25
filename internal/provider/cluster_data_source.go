@@ -179,6 +179,23 @@ func (d *clusterDataSource) Schema(
 				Computed:    true,
 				Description: "Set to true to enable delete protection on the cluster.",
 			},
+			"backup_config": schema.SingleNestedAttribute{
+				Computed: true,
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Computed:    true,
+						Description: "Indicates whether backups are enabled.",
+					},
+					"retention_days": schema.Int64Attribute{
+						Computed:   true,
+						MarkdownDescription: "The number of days to retain backups for.",
+					},
+					"frequency_minutes": schema.Int64Attribute{
+						Computed:   true,
+						Description: "The frequency of backups in minutes.",
+					},
+				},
+			},
 		},
 	}
 }
@@ -250,10 +267,21 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
+	traceAPICall("GetBackupConfiguration")
+	remoteBackupConfig, _, err := d.provider.service.GetBackupConfiguration(ctx, cockroachCluster.Id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error getting backup configuration",
+			fmt.Sprintf("Could not get backup configuration: %s", formatAPIErrorMessage(err)),
+		)
+		return
+	}
+
+
 	// The concept of a plan doesn't apply to data sources.
 	// Using a nil plan means we won't try to re-sort the region list.
 	var newState CockroachCluster
-	loadClusterToTerraformState(cockroachCluster, &newState, nil)
+	loadClusterToTerraformState(cockroachCluster, remoteBackupConfig, &newState, nil)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 }

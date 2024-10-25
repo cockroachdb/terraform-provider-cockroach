@@ -28,6 +28,7 @@ data "cockroach_cluster" "cockroach" {
 ### Read-Only
 
 - `account_id` (String) The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.
+- `backup_config` (Attributes) (see [below for nested schema](#nestedatt--backup_config))
 - `cloud_provider` (String) Cloud provider used to host the cluster. Allowed values are:
   * GCP
   * AWS
@@ -45,6 +46,16 @@ data "cockroach_cluster" "cockroach" {
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.
 - `upgrade_status` (String) Describes the status of any in-progress CockroachDB upgrade or rollback.
+
+<a id="nestedatt--backup_config"></a>
+### Nested Schema for `backup_config`
+
+Read-Only:
+
+- `enabled` (Boolean) Indicates whether backups are enabled.
+- `frequency_minutes` (Number) The frequency of backups in minutes.
+- `retention_days` (Number) The number of days to retain backups for.
+
 
 <a id="nestedatt--dedicated"></a>
 ### Nested Schema for `dedicated`

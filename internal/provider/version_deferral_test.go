@@ -87,6 +87,8 @@ func TestIntegrationVersionDeferralResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(3)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, createdVersionDeferralInfo).
 		Return(createdVersionDeferralInfo, nil, nil)
 	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).

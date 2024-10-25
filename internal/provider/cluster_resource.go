@@ -30,6 +30,7 @@ import (
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -42,6 +43,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
@@ -252,6 +254,9 @@ func (r *clusterResource) Schema(
 			},
 			"state": schema.StringAttribute{
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Description: "Describes whether the cluster is being created, updated, deleted, etc.",
 			},
 			"creator_id": schema.StringAttribute{
@@ -281,6 +286,40 @@ func (r *clusterResource) Schema(
 				Computed:    true,
 				Optional:    true,
 				Description: "Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.",
+			},
+			"backup_config": schema.SingleNestedAttribute{
+				Computed: true,
+				Optional: true,
+				MarkdownDescription: "The backup settings for a cluster.\n Each cluster has backup settings that determine if backups are enabled, how frequently they are taken, and how long they are retained for. Use this attribute to manage those settings.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"enabled": schema.BoolAttribute{
+						Optional:    true,
+						Computed:    true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+						Description: "Indicates whether backups are enabled. If set to false, no backups will be created.",
+					},
+					"retention_days": schema.Int64Attribute{
+						Optional:   true,
+						Computed:   true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+						MarkdownDescription: "The number of days to retain backups for.  Valid values are [2, 7, 30, 90, 365]. Can only be set once, further changes require opening a support ticket. See [Updating backup retention](../guides/updating-backup-retention) for more information.",
+					},
+					"frequency_minutes": schema.Int64Attribute{
+						Optional:   true,
+						Computed:   true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Description: "The frequency of backups in minutes.  Valid values are [5, 10, 15, 30, 60, 240, 1440]",
+					},
+				},
 			},
 		},
 	}
@@ -483,13 +522,72 @@ func (r *clusterResource) Create(
 		return
 	}
 
+	// Persist the cluster in the state before we lookup the backup
+	// configuration so it will be there no matter what in case of failure.
+	// The backup configuration can be synced in a later apply if need be.
 	var newState CockroachCluster
-	loadClusterToTerraformState(clusterObj, &newState, &plan)
+	diags = loadClusterToTerraformState(clusterObj, nil, &newState, &plan)
+	resp.Diagnostics.Append(diags...)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Fetch the backup configuration either by sending an update or a get
+	// depending on what is in the plan.
+	var remoteBackupConfig *client.BackupConfiguration
+	if IsKnown(plan.BackupConfig) {
+		var planBackupConfig ClusterBackupConfig
+		diags := plan.BackupConfig.As(ctx, &planBackupConfig, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+		}
+
+		backupUpdateRequest := client.UpdateBackupConfigurationSpec{}
+
+		if IsKnown(planBackupConfig.Enabled) {
+			backupUpdateRequest.Enabled = ptr(planBackupConfig.Enabled.ValueBool())
+		}
+
+		if IsKnown(planBackupConfig.RetentionDays) {
+			backupUpdateRequest.RetentionDays = ptr(int32(planBackupConfig.RetentionDays.ValueInt64()))
+		}
+
+		if IsKnown(planBackupConfig.FrequencyMinutes) {
+			backupUpdateRequest.FrequencyMinutes = ptr(int32(planBackupConfig.FrequencyMinutes.ValueInt64()))
+		}
+
+		if  backupUpdateRequest != (client.UpdateBackupConfigurationSpec{}) {
+			traceAPICall("UpdateBackupConfiguration")
+			remoteBackupConfig, _, err = r.provider.service.UpdateBackupConfiguration(ctx, clusterObj.Id, &backupUpdateRequest)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error updating backup configuration",
+					fmt.Sprintf("Could not update backup configuration: %s", formatAPIErrorMessage(err)),
+				)
+				// Don't return early here so we can still persist the cluster in the state.
+			}
+		}
+	}
+	// If the above call didn't result in an update, fetch the existing backup
+	// configuration so we can populate the state.
+	if remoteBackupConfig == nil {
+		traceAPICall("GetBackupConfiguration")
+		remoteBackupConfig, _, err = r.provider.service.GetBackupConfiguration(ctx, clusterObj.Id)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error getting backup configuration",
+				fmt.Sprintf("Could not get backup configuration: %s", formatAPIErrorMessage(err)),
+			)
+			// Don't return early here so we can still persist the cluster in the state.
+		}
+	}
+
+	diags = loadClusterToTerraformState(clusterObj, remoteBackupConfig, &newState, &plan)
+	resp.Diagnostics.Append(diags...)
+	diags = resp.State.Set(ctx, newState)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *clusterResource) Read(
@@ -545,10 +643,21 @@ func (r *clusterResource) Read(
 		return
 	}
 
+	traceAPICall("GetBackupConfiguration")
+	remoteBackupConfig, _, err := r.provider.service.GetBackupConfiguration(ctx, clusterObj.Id)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error getting backup configuration",
+			fmt.Sprintf("Could not get backup configuration: %s", formatAPIErrorMessage(err)),
+		)
+		return
+	}
+
 	// We actually want to use the current state as the plan here, since we're
 	// trying to see if it changed.
 	var newState CockroachCluster
-	loadClusterToTerraformState(clusterObj, &newState, &state)
+	diags = loadClusterToTerraformState(clusterObj, remoteBackupConfig, &newState, &state)
+	resp.Diagnostics.Append(diags...)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -896,9 +1005,58 @@ func (r *clusterResource) Update(
 		return
 	}
 
+	// Handle any backup configuration updates
+	var remoteBackupConfig *client.BackupConfiguration
+
+	// If we no longer have a plan, carry over the previous values from the state
+	if !IsKnown(plan.BackupConfig) {
+		remoteBackupConfig, diags = providerBackupConfigToClientBackupConfig(ctx, state.BackupConfig)
+		resp.Diagnostics.Append(diags...)
+	} else {
+		var planBackupConfig ClusterBackupConfig
+		diags = plan.BackupConfig.As(ctx, &planBackupConfig, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+		}
+		var stateBackupConfig ClusterBackupConfig
+		diags = state.BackupConfig.As(ctx, &stateBackupConfig, basetypes.ObjectAsOptions{})
+		if diags.HasError() {
+			resp.Diagnostics.Append(diags...)
+		}
+
+		backupUpdateRequest := client.UpdateBackupConfigurationSpec{}
+
+		if IsKnown(planBackupConfig.Enabled) && !planBackupConfig.Enabled.Equal(stateBackupConfig.Enabled) {
+			backupUpdateRequest.Enabled = ptr(planBackupConfig.Enabled.ValueBool())
+		}
+
+		if IsKnown(planBackupConfig.RetentionDays) && !planBackupConfig.RetentionDays.Equal(stateBackupConfig.RetentionDays) {
+			backupUpdateRequest.RetentionDays = ptr(int32(planBackupConfig.RetentionDays.ValueInt64()))
+		}
+
+		if IsKnown(planBackupConfig.FrequencyMinutes) && !planBackupConfig.FrequencyMinutes.Equal(stateBackupConfig.FrequencyMinutes) {
+			backupUpdateRequest.FrequencyMinutes = ptr(int32(planBackupConfig.FrequencyMinutes.ValueInt64()))
+		}
+
+		if  backupUpdateRequest != (client.UpdateBackupConfigurationSpec{}) {
+			traceAPICall("UpdateBackupConfiguration")
+			remoteBackupConfig, _, err = r.provider.service.UpdateBackupConfiguration(ctx, clusterObj.Id, &backupUpdateRequest)
+			if err != nil {
+				resp.Diagnostics.AddError(
+					"Error updating backup configuration",
+					fmt.Sprintf("Could not update backup configuration: %s", formatAPIErrorMessage(err)),
+				)
+				// Don't return early here so we can still persist the cluster in the state.
+			}
+		} else {
+			remoteBackupConfig, diags = providerBackupConfigToClientBackupConfig(ctx, state.BackupConfig)
+			resp.Diagnostics.Append(diags...)
+		}
+	}
+
 	// Set state.
 	var newState CockroachCluster
-	loadClusterToTerraformState(clusterObj, &newState, &plan)
+	loadClusterToTerraformState(clusterObj, remoteBackupConfig, &newState, &plan)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -1035,8 +1193,8 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 // special formatting of certain attribute values (e.g. "preview" for `cockroach_version`).
 // When reading a datasource or importing a resource, `plan` will be nil.
 func loadClusterToTerraformState(
-	clusterObj *client.Cluster, state *CockroachCluster, plan *CockroachCluster,
-) {
+	clusterObj *client.Cluster, backupConfig *client.BackupConfiguration, state *CockroachCluster, plan *CockroachCluster,
+) diag.Diagnostics {
 	state.ID = types.StringValue(clusterObj.Id)
 	state.Name = types.StringValue(clusterObj.Name)
 	state.CloudProvider = types.StringValue(string(clusterObj.CloudProvider))
@@ -1107,6 +1265,64 @@ func loadClusterToTerraformState(
 			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
 		}
 	}
+
+	var diags diag.Diagnostics
+
+	// If backupConfig is nil, consider it unknown and populate it as such.
+	// This is useful because the api calls for fetching / updating backup
+	// configs are separate from managing the cluster so we can end up with
+	// partial success situations.
+	if backupConfig != nil {
+		state.BackupConfig, diags = clientBackupConfigToProviderBackupConfig(backupConfig)
+	} else {
+		state.BackupConfig, diags = unknownBackupConfig()
+	}
+
+	return diags
+}
+
+var backupConfigElementTypes = map[string]attr.Type{
+	"enabled":           types.BoolType,
+	"frequency_minutes": types.Int64Type,
+	"retention_days":    types.Int64Type,
+}
+
+func unknownBackupConfig(
+) (basetypes.ObjectValue, diag.Diagnostics) {
+	elements := map[string]attr.Value{
+		"enabled": types.BoolUnknown(),
+		"frequency_minutes": types.Int64Unknown(),
+		"retention_days": types.Int64Unknown(),
+	}
+	objectValue, diags := types.ObjectValue(backupConfigElementTypes, elements)
+	return objectValue, diags
+}
+
+func clientBackupConfigToProviderBackupConfig(
+	apiBackupConfig *client.BackupConfiguration,
+) (basetypes.ObjectValue, diag.Diagnostics) {
+	elements := map[string]attr.Value{
+		"enabled": types.BoolValue(apiBackupConfig.GetEnabled()),
+		"frequency_minutes": types.Int64Value(int64(apiBackupConfig.GetFrequencyMinutes())),
+		"retention_days": types.Int64Value(int64(apiBackupConfig.GetRetentionDays())),
+	}
+	objectValue, diags := types.ObjectValue(backupConfigElementTypes, elements)
+	return objectValue, diags
+}
+
+func providerBackupConfigToClientBackupConfig(ctx context.Context, providerBackupConfig basetypes.ObjectValue) (*client.BackupConfiguration, diag.Diagnostics) {
+	var planBackupConfig ClusterBackupConfig
+	diags := providerBackupConfig.As(ctx, &planBackupConfig, basetypes.ObjectAsOptions{})
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	backupUpdateRequest := &client.BackupConfiguration{
+		Enabled: planBackupConfig.Enabled.ValueBool(),
+		RetentionDays: int32(planBackupConfig.RetentionDays.ValueInt64()),
+		FrequencyMinutes: int32(planBackupConfig.FrequencyMinutes.ValueInt64()),
+	}
+	return backupUpdateRequest, diags
 }
 
 // Due to the cyclic dependency issues of CMEK, there may be additional

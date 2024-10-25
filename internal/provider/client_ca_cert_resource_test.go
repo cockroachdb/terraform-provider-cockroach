@@ -104,6 +104,8 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 		Return(cluster, nil, nil) // CLUSTER Create()
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
 		Return(cluster, httpOkResponse, nil) // CLUSTER Create()/waitReady()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterId).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
 		Return(cluster, httpOkResponse, nil) // CERT Create(): dedicated check

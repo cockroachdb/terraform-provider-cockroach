@@ -91,6 +91,8 @@ func TestIntegrationConnectionStringDataSource(t *testing.T) {
 		Return(cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
 		Return(cluster, httpOkResponse, nil).Times(2)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterId).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().GetConnectionString(gomock.Any(), clusterId, connectStringOptions).
 		Return(connectionStringResponse, httpOkResponse, nil).Times(3)
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterId)

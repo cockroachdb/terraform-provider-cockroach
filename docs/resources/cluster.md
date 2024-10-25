@@ -28,6 +28,11 @@ resource "cockroach_cluster" "advanced" {
     }
   ]
   delete_protection = true
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
 }
 
 resource "cockroach_cluster" "standard" {
@@ -46,6 +51,11 @@ resource "cockroach_cluster" "standard" {
     }
   ]
   delete_protection = false
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
 }
 
 resource "cockroach_cluster" "basic" {
@@ -76,6 +86,8 @@ resource "cockroach_cluster" "basic" {
 
 ### Optional
 
+- `backup_config` (Attributes) The backup settings for a cluster.
+ Each cluster has backup settings that determine if backups are enabled, how frequently they are taken, and how long they are retained for. Use this attribute to manage those settings. (see [below for nested schema](#nestedatt--backup_config))
 - `cockroach_version` (String) Major version of CockroachDB running on the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.
@@ -109,6 +121,16 @@ Read-Only:
 - `internal_dns` (String) Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.
 - `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
 - `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
+
+
+<a id="nestedatt--backup_config"></a>
+### Nested Schema for `backup_config`
+
+Optional:
+
+- `enabled` (Boolean) Indicates whether backups are enabled. If set to false, no backups will be created.
+- `frequency_minutes` (Number) The frequency of backups in minutes.  Valid values are [5, 10, 15, 30, 60, 240, 1440]
+- `retention_days` (Number) The number of days to retain backups for.  Valid values are [2, 7, 30, 90, 365]. Can only be set once, further changes require opening a support ticket. See [Updating backup retention](../guides/updating-backup-retention) for more information.
 
 
 <a id="nestedatt--dedicated"></a>

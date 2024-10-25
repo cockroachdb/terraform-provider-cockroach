@@ -65,6 +65,11 @@ resource "cockroach_cluster" "example" {
     upgrade_type = var.upgrade_type
   }
   regions = [for r in var.cloud_provider_regions : { name = r }]
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
 }
 
 resource "cockroach_sql_user" "example" {

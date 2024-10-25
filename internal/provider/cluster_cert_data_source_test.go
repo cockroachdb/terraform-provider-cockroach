@@ -79,6 +79,8 @@ func TestIntegrationClusterCertDataSource(t *testing.T) {
 		Return(cluster, nil, nil)
 	s.EXPECT().GetCluster(gomock.Any(), clusterId).
 		Return(cluster, httpOkResponse, nil).Times(5)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterId).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterId)
 
 	testClusterCertDataSource(t, clusterName, true)

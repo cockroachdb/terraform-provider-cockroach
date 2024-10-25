@@ -79,6 +79,8 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(4)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID).
 		Return(createdPrometheusClusterInfo, nil, nil)
 	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).

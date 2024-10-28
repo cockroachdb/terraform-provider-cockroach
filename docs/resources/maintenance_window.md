@@ -44,3 +44,12 @@ resource "cockroach_maintenance_window" "example" {
 - `id` (String) Cluster ID.
 - `offset_duration` (Number) Duration in seconds from the beginning of each Monday (UTC) after which the maintenance window starts.
 - `window_duration` (Number) Duration in seconds that the maintenance window will remain active for after it starts.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_maintenance_window.example 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

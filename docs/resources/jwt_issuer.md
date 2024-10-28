@@ -56,3 +56,15 @@ Required:
 
 - `cc_identity` (String) Specifies how to map the fetched token identity to an identity in CockroachDB Cloud. In case of a regular expression for token_identity, this must contain a \1 placeholder for the matched content. Note that you will need to escape the backslash in the string as in the example usage (\\\1).
 - `token_identity` (String) Specifies how to fetch external identity from the token claim. A regular expression must start with a forward slash. The regular expression must be in RE2 compatible syntax. For further details, please see https://github.com/google/re2/wiki/Syntax.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# JWT Issuer ID can be found by running a GET against the Cockroach Cloud API to
+# list all existing JWT issuers.
+# https://www.cockroachlabs.com/docs/api/cloud/v1#get-/api/v1/jwt-issuers
+# format: <jwt issuer id>
+terraform import cockroach_jwt_issuer.my_issuer 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

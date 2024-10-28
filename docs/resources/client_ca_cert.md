@@ -47,3 +47,12 @@ resource "cockroach_client_ca_cert" "prod" {
 ### Read-Only
 
 - `status` (String) Status of client CA certs on a cluster.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_client_ca_cert.prod 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

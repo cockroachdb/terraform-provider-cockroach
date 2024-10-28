@@ -172,3 +172,12 @@ Optional:
 - `provisioned_virtual_cpus` (Number) Maximum number of vCPUs that the cluster can use.
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_cluster.my_cluster 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

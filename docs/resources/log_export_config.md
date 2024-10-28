@@ -82,3 +82,12 @@ Optional:
 
 - `min_level` (String) The minimum log level to filter to this log group.
 - `redact` (Boolean) Governs whether this log group should aggregate redacted logs if unset.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_log_export_config.example 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

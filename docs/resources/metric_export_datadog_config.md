@@ -48,3 +48,12 @@ resource "cockroach_metric_export_datadog_config" "example" {
 
 - `status` (String) Encodes the possible states that a metric export configuration can be in as it is created, deployed, and disabled.
 - `user_message` (String) Elaborates on the metric export status and hints at how to fix issues that may have occurred during asynchronous operations.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_metric_export_datadog_config.example 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

@@ -33,3 +33,12 @@ resource "cockroach_metric_export_prometheus_config" "example" {
 
 - `status` (String) The current state of the metric export configuration.  Possible values are: [`NOT_DEPLOYED` `DISABLING` `ENABLING` `ENABLED` `ERROR`]
 - `targets` (Map of String) Represents prometheus scrape endpoint for each region. You can fetch endpoints either by executing `terraform state show {resource}` or by enabling terraform logs.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_metric_export_prometheus_config.example 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

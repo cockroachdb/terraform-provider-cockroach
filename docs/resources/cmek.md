@@ -13,8 +13,8 @@ Customer-managed encryption keys (CMEK) resource for a single cluster.
 ## Example Usage
 
 ```terraform
-resource "cockroach_cmek" "dedicated" {
-  id = cockroach_cluster.dedicated.id
+resource "cockroach_cmek" "advanced" {
+  id = cockroach_cluster.advanced.id
   regions = [{
     region : "us-central-1"
     key : {
@@ -89,3 +89,12 @@ Read-Only:
 - `internal_dns` (String) Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.
 - `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
 - `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_cmek.advanced 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

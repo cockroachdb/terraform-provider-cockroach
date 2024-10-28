@@ -35,3 +35,12 @@ resource "cockroach_folder" "a_team_dev" {
 ### Read-Only
 
 - `id` (String) The ID of this resource.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <folder id>
+terraform import cockroach_folder.my_folder 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

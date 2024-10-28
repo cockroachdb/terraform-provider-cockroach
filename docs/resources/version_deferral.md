@@ -36,3 +36,12 @@ resource "cockroach_version_deferral" "example" {
 
 - `deferral_policy` (String) The policy for managing automated minor version upgrades. Set to FIXED_DEFERRAL to defer upgrades by 60 days or NOT_DEFERRED to apply upgrades immediately.
 - `id` (String) Cluster ID.
+
+## Import
+
+Import is supported using the following syntax:
+
+```shell
+# format: <cluster id>
+terraform import cockroach_version_deferral.example 1f69fdd2-600a-4cfc-a9ba-16995df0d77d
+```

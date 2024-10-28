@@ -1,5 +1,5 @@
-resource "cockroach_cmek" "dedicated" {
-  id = cockroach_cluster.dedicated.id
+resource "cockroach_cmek" "advanced" {
+  id = cockroach_cluster.advanced.id
   regions = [{
     region : "us-central-1"
     key : {

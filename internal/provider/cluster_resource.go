@@ -482,16 +482,6 @@ func (r *clusterResource) Create(
 
 	if IsKnown(plan.ParentId) {
 		parentID := plan.ParentId.ValueString()
-		if parentID != "root" {
-			traceAPICall("GetFolder")
-			_, _, err := r.provider.service.GetFolder(ctx, parentID)
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Error getting the parent folder",
-					fmt.Sprintf("Could not get the parent folder: %s", formatAPIErrorMessage(err)))
-				return
-			}
-		}
 		clusterSpec.SetParentId(parentID)
 	}
 
@@ -956,16 +946,6 @@ func (r *clusterResource) Update(
 	// Parent Id
 	if IsKnown(plan.ParentId) {
 		parentID := plan.ParentId.ValueString()
-		if parentID != "root" {
-			traceAPICall("GetFolder")
-			_, _, err := r.provider.service.GetFolder(ctx, parentID)
-			if err != nil {
-				resp.Diagnostics.AddError(
-					"Error getting the parent folder",
-					fmt.Sprintf("Could not get the parent folder: %s", formatAPIErrorMessage(err)))
-				return
-			}
-		}
 		clusterReq.SetParentId(parentID)
 	}
 

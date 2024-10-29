@@ -184,16 +184,16 @@ var secondUpdatedBackupConfig = &client.BackupConfiguration{
 	FrequencyMinutes: 1440,
 }
 
-// TestAccBackupConfig is an acceptance test focused only on testing the
-// backup_config parameter. It will be skipped if TF_ACC isn't set.
+// TestAccClusterWithBackupConfig is an acceptance test focused only on testing
+// the backup_config parameter. It will be skipped if TF_ACC isn't set.
 func TestAccClusterWithBackupConfig(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
 	testClusterWithBackupConfig(t, clusterName, false /* useMock */)
 }
 
-// TestAccBackupConfig is an acceptance test focused only on testing the
-// backup_config parameter. It will be skipped if TF_ACC isn't set.
+// TestIntegrationClusterWithBackupConfig is an integration test focused only on
+// testing the backup_config parameter.
 func TestIntegrationClusterWithBackupConfig(t *testing.T) {
 	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
@@ -464,6 +464,198 @@ func checkBackupConfig(clusterResourceName string, expected *client.BackupConfig
 
 		if *resp != *expected {
 			return fmt.Errorf("expected backup configuration did not match actual. expected: %v, actual %v", expected, resp)
+		}
+
+		return nil
+	}
+}
+
+var notFoundResourceId = "00000000-0000-0000-0000-000000000002"
+
+// TestAccClusterWithParentID is an acceptance test focused only on testing the
+// parent_id parameter. It will be skipped if TF_ACC isn't set.
+func TestAccClusterWithParentID(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-parent-c-%s", tfTestPrefix, GenerateRandomString(2))
+	folderName := fmt.Sprintf("%s-parent-f-%s", tfTestPrefix, GenerateRandomString(2))
+	testClusterWithParentID(t, clusterName, folderName, false /* useMock */)
+}
+
+// TestIntegrationClusterWithParentID is an integration test focused only on
+// testing the parent_id parameter.
+func TestIntegrationClusterWithParentID(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               uuid.Nil.String(),
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Plan:             "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+		ParentId: ptr("root"),
+	}
+
+	folder := client.FolderResource{
+		Name: "folder123",
+		ResourceId: "00000000-0000-0000-0000-000000000001",
+		ParentId:  "root",
+		ResourceType: client.FOLDERRESOURCETYPETYPE_FOLDER,
+	}
+
+	updatedCluster := cluster
+	updatedCluster.ParentId = ptr(folder.ResourceId)
+
+	// Step: a cluster without a backup config block still has a default config
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).Times(3)
+
+	// Step: updating to explicit root is a no op
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).Times(3)
+
+	// Step: error case: values besides root and uuid are not allowed
+	// No API calls expected
+
+	// Step: error case: valid uuid but not found results in reasonable error
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil)
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(nil, httpFail,  fmt.Errorf("invalid argument: the parent must exist"))
+
+	// Step: move a cluster under a non-root folder
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil)
+	s.EXPECT().CreateFolder(gomock.Any(), gomock.Any()).Return(&folder, httpOk, nil)
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(&updatedCluster, httpOk, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&updatedCluster, httpOk, nil).Times(2)
+	s.EXPECT().ListFolders(gomock.Any(), gomock.Any()).Return(&client.ListFoldersResponse{
+		Folders: []client.FolderResource{folder},
+	}, httpOk, nil)
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil)
+
+	// Delete phase
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&updatedCluster, httpOk, nil)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+	s.EXPECT().DeleteFolder(gomock.Any(), folder.ResourceId)
+
+	testClusterWithParentID(t, clusterName, folder.Name, true /* useMock */)
+}
+
+func testClusterWithParentID(t *testing.T, clusterName, folderName string, useMock bool) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig:   func() {
+					traceMessageStep("a cluster without a parent_id is allowed and gets the default of root")
+				},
+				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{}),
+				Check:  checkParentID(serverlessResourceName, "root"),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("updating to explicit root is a no op")
+				},
+				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: ptr("root")}),
+				Check:  checkParentID(serverlessResourceName, "root"),
+			},
+			{
+				// Don't run error cases as the last step, or else it leave's the config in a bad state.
+				PreConfig:   func() {
+					traceMessageStep("error case: values besides root and uuid are not allowed")
+				},
+				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: ptr("123")}),
+				Check:  checkParentID(serverlessResourceName, "root"),
+				ExpectError: regexp.MustCompile(`Attribute parent_id value must be a UUID or the string "root", got:`),
+			},
+			{
+				// Don't run error cases as the last step, or else it leave's the config in a bad state.
+				PreConfig:   func() {
+					traceMessageStep("error case: valid uuid but not found results in reasonable error")
+				},
+				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: &notFoundResourceId}),
+				Check:  checkParentID(serverlessResourceName, "root"),
+				ExpectError: regexp.MustCompile(`invalid argument: the parent must exist`),
+			},
+			{
+				PreConfig:   func() {
+					traceMessageStep("move a cluster under a non-root folder")
+				},
+				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderName: &folderName}),
+				Check: resource.ComposeTestCheckFunc(
+					checkParentID(serverlessResourceName, folderName),
+					traceEndOfPlan(),
+				),
+			},
+		},
+	})
+}
+
+func checkParentID(clusterResourceName, parentFolderName string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		p := testAccProvider.(*provider)
+		p.service = NewService(cl)
+
+		clusterRs, ok := s.RootModule().Resources[clusterResourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", clusterResourceName)
+		}
+
+		clusterID := clusterRs.Primary.Attributes["id"]
+
+		traceAPICall("GetCluster")
+		cluster, _, err := p.service.GetCluster(context.TODO(), clusterID)
+		if err != nil {
+			return fmt.Errorf("unexpected error during cluster lookup: %w", err)
+		}
+		clusterParentID := *cluster.ParentId
+
+		if parentFolderName == "root" {
+			if  clusterParentID != "root" {
+				return fmt.Errorf("expect parentID to be root but was: %s", clusterParentID)
+			}
+			return nil
+		}
+
+		folderPath := fmt.Sprintf("/%s", parentFolderName)
+		traceAPICall("ListFolders")
+		foldersResp, _, err := p.service.ListFolders(context.TODO(), &client.ListFoldersOptions{
+			Path: &folderPath,
+		})
+		if err != nil {
+			return fmt.Errorf("unexpected error during folder lookup: %w", err)
+		}
+		if len(foldersResp.Folders) > 0 {
+			folder := foldersResp.Folders[0]
+			if folder.ResourceId != clusterParentID {
+				return fmt.Errorf("expect parentID to be %s but was: %s", folder.ResourceId, clusterParentID)
+			}
+		} else {
+			return fmt.Errorf("folder with path %s not found", folderPath)
 		}
 
 		return nil
@@ -1739,6 +1931,48 @@ func getTestClusterWithBackupConfig(clusterName string, config backupCreateConfi
 		}] %s
 	}
 	`, clusterName, backupConfigString)
+}
+
+type parentIDTestConfig struct {
+	folderID      *string
+	folderName    *string
+}
+
+func getTestClusterWithParentFolder(clusterName string, config parentIDTestConfig) string {
+
+	parentConfigString := ""
+	parentIDString := ""
+	if config.folderID != nil {
+		parentIDString = fmt.Sprintf(`
+	parent_id = "%s"
+`, *config.folderID)
+	} else if config.folderName != nil {
+		parentConfigString = fmt.Sprintf(`
+	resource "cockroach_folder" "parent" {
+		name = "%s"
+		parent_id = "root"
+	}
+`, *config.folderName)
+		parentIDString = `
+	parent_id = cockroach_folder.parent.id
+`
+	}
+
+	return fmt.Sprintf(`%s
+	resource "cockroach_cluster" "test" {
+		name           = "%s"
+		cloud_provider = "GCP"
+		plan = "STANDARD"
+		serverless = {
+			usage_limits = {
+				provisioned_virtual_cpus = 2
+			}
+		}
+		regions = [{
+			name = "us-central1"
+		}] %s
+	}
+	`, parentConfigString, clusterName, parentIDString)
 }
 
 func TestSortRegionsByPlan(t *testing.T) {

@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Changed
 
+- Remove unnecessary api call to Folders endpoint to manually validate
+  `cockroach_cluster.parent_id`.
+
 - Allow removal (deletion) of locked clusters.  The api now supports deletion
   of locked clusters so we remove the wait prior to following through with the
   deletion.

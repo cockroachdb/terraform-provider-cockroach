@@ -1074,11 +1074,6 @@ func (r *clusterResource) Delete(
 		return
 	}
 
-	waitForClusterLock(ctx, state, r.provider.service, &resp.Diagnostics)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	// Get cluster ID from state
 	if !IsKnown(state.ID) {
 		return

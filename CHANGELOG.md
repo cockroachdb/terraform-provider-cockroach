@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Changed
+
+- Allow removal (deletion) of locked clusters.  The api now supports deletion
+  of locked clusters so we remove the wait prior to following through with the
+  deletion.
+
 ### Added
 
 - Management of cluster backup settings is now supported using the

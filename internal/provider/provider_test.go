@@ -32,12 +32,11 @@ var testAccProvider tf_provider.Provider
 var cl *client.Client
 
 func init() {
-	apikey := os.Getenv(CockroachAPIKey)
-	cfg := client.NewConfiguration(apikey)
-	if server := os.Getenv(APIServerURLKey); server != "" {
-		cfg.ServerURL = server
-	}
-	cfg.UserAgent = UserAgent
+	apiKey := os.Getenv(CockroachAPIKey)
+	apiJWT := os.Getenv(CockroachAPIJWT)
+
+	cfg := getClientConfiguration(apiKey, apiJWT)
+
 	cl = client.NewClient(cfg)
 	testAccProvider = New("test")()
 }
@@ -51,8 +50,12 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 }
 
 func testAccPreCheck(t *testing.T) {
-	if os.Getenv(CockroachAPIKey) == "" {
-		t.Fatalf("%s must be set for acceptance testing", CockroachAPIKey)
+	if os.Getenv(CockroachAPIKey) == "" && os.Getenv(CockroachAPIJWT) == "" {
+		t.Fatalf(
+			"%s or %s must be set for acceptance testing",
+			CockroachAPIKey,
+			CockroachAPIJWT,
+		)
 	}
 }
 

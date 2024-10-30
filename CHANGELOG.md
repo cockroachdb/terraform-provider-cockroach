@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added support for authentication via JWT.
+
 - Setting and fetching of `cidr_range` is now available for GCP Advanced tier
   clusters.
 

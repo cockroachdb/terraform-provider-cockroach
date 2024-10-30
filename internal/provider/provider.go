@@ -54,6 +54,7 @@ type provider struct {
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
 	ApiKey types.String `tfsdk:"apikey"`
+	ApiJWT types.String `tfsdk:"apijwt"`
 }
 
 func (p *provider) Configure(
@@ -74,20 +75,23 @@ func (p *provider) Configure(
 		apiKey = config.ApiKey.ValueString()
 	}
 
-	if apiKey == "" {
+	var apiJWT string
+	if !IsKnown(config.ApiJWT) {
+		apiJWT = os.Getenv(CockroachAPIJWT)
+	} else {
+		apiJWT = config.ApiJWT.ValueString()
+	}
+
+	if apiKey == "" && apiJWT == "" {
 		// Error vs warning - empty value must stop execution
 		resp.Diagnostics.AddError(
-			"Unable to find apikey",
-			"apikey cannot be an empty string",
+			"Unable to find authentication token",
+			"at least one of apikey or apijwt must be provided",
 		)
 		return
 	}
 
-	cfg := client.NewConfiguration(apiKey)
-	if server := os.Getenv(APIServerURLKey); server != "" {
-		cfg.ServerURL = server
-	}
-	cfg.UserAgent = UserAgent
+	cfg := getClientConfiguration(apiKey, apiJWT)
 
 	logLevel := os.Getenv("TF_LOG")
 	if logLevel == "DEBUG" || logLevel == "TRACE" {
@@ -167,9 +171,22 @@ func (p *provider) Schema(
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"apikey": schema.StringAttribute{
-				MarkdownDescription: "apikey to access cockroach cloud",
-				Optional:            true,
-				Sensitive:           true,
+				MarkdownDescription: "The API key to access CockroachDB Cloud.\n" +
+					"If this field is provided, it is used and `apijwt` is ignored.",
+				Optional:  true,
+				Sensitive: true,
+			},
+			"apijwt": schema.StringAttribute{
+				MarkdownDescription: "The JWT from a JWT Issuer configured for the " +
+					"CockroachDB Cloud Organization.\n" +
+					"In this case, the vanity name of the organization is required " +
+					"and can be provided using the `COCKROACH_VANITY_NAME` environment variable. " +
+					"If the JWT is mapped to multiple identities, the identity to " +
+					"impersonate should be provided using the `COCKROACH_USERNAME` environment " +
+					"variable, and should contain either a user email address or a " +
+					"service account ID.",
+				Optional:  true,
+				Sensitive: true,
 			},
 		},
 	}
@@ -181,4 +198,28 @@ func New(version string) func() tf_provider.Provider {
 			version: version,
 		}
 	}
+}
+
+func getClientConfiguration(apiKey, apiJWT string) *client.Configuration {
+	// If the API key is provided, use it, else use the JWT for auth.
+	apiToken := apiKey
+	if apiToken == "" {
+		apiToken = apiJWT
+	}
+
+	var cfgOpts []client.ConfigurationOption
+	if vanityName := os.Getenv(CockroachVanityName); vanityName != "" {
+		cfgOpts = append(cfgOpts, client.WithVanityName(vanityName))
+	}
+	if username := os.Getenv(CockroachUsername); username != "" {
+		cfgOpts = append(cfgOpts, client.WithUsername(username))
+	}
+
+	cfg := client.NewConfiguration(apiToken, cfgOpts...)
+	if server := os.Getenv(APIServerURLKey); server != "" {
+		cfg.ServerURL = server
+	}
+	cfg.UserAgent = UserAgent
+
+	return cfg
 }

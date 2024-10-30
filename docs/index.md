@@ -20,8 +20,9 @@ provider "cockroach" {
   # Instructions for getting an API Key
   # https://www.cockroachlabs.com/docs/cockroachcloud/console-access-management.html#api-access
   #
-  # The Terraform provider requires an environment variable COCKROACH_API_KEY
+  # The Terraform provider requires either the COCKROACH_API_KEY or COCKROACH_API_JWT environment variable for performing authentication.
   # export COCKROACH_API_KEY="the API Key value here"
+  # export COCKROACH_API_JWT="the JWT value here"
 }
 ```
 
@@ -30,4 +31,7 @@ provider "cockroach" {
 
 ### Optional
 
-- `apikey` (String, Sensitive) apikey to access cockroach cloud
+- `apijwt` (String, Sensitive) The JWT from a JWT Issuer configured for the CockroachDB Cloud Organization.
+In this case, the vanity name of the organization is required and can be provided using the `COCKROACH_VANITY_NAME` environment variable. If the JWT is mapped to multiple identities, the identity to impersonate should be provided using the `COCKROACH_USERNAME` environment variable, and should contain either a user email address or a service account ID.
+- `apikey` (String, Sensitive) The API key to access CockroachDB Cloud.
+If this field is provided, it is used and `apijwt` is ignored.

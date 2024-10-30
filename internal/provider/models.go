@@ -23,9 +23,12 @@ import (
 )
 
 const (
-	CockroachAPIKey string = "COCKROACH_API_KEY"
-	APIServerURLKey string = "COCKROACH_SERVER"
-	UserAgent       string = "terraform-provider-cockroach"
+	CockroachAPIKey     string = "COCKROACH_API_KEY"
+	CockroachAPIJWT     string = "COCKROACH_API_JWT"
+	APIServerURLKey     string = "COCKROACH_SERVER"
+	UserAgent           string = "terraform-provider-cockroach"
+	CockroachVanityName string = "COCKROACH_VANITY_NAME"
+	CockroachUsername   string = "COCKROACH_USERNAME"
 )
 
 type Region struct {
@@ -63,8 +66,8 @@ type ClusterBackupConfig struct {
 }
 
 type UsageLimits struct {
-	RequestUnitLimit types.Int64 `tfsdk:"request_unit_limit"`
-	StorageMibLimit  types.Int64 `tfsdk:"storage_mib_limit"`
+	RequestUnitLimit       types.Int64 `tfsdk:"request_unit_limit"`
+	StorageMibLimit        types.Int64 `tfsdk:"storage_mib_limit"`
 	ProvisionedVirtualCpus types.Int64 `tfsdk:"provisioned_virtual_cpus"`
 }
 

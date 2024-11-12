@@ -21,6 +21,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Setting and fetching of `cidr_range` is now available for GCP Advanced tier
+  clusters.
+
 - Management of cluster backup settings is now supported using the
   `backup_config` attribute on the `cockroach_cluster` resource.  For more
   information, refer to

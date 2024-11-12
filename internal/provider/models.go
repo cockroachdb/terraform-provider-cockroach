@@ -44,6 +44,7 @@ type DedicatedClusterConfig struct {
 	MemoryGib                types.Float64 `tfsdk:"memory_gib"`
 	DiskIops                 types.Int64   `tfsdk:"disk_iops"`
 	PrivateNetworkVisibility types.Bool    `tfsdk:"private_network_visibility"`
+	CidrRange                types.String  `tfsdk:"cidr_range"`
 }
 
 type ServerlessClusterConfig struct {

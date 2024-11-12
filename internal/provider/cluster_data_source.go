@@ -122,6 +122,10 @@ func (d *clusterDataSource) Schema(
 						Computed:    true,
 						Description: "Indicates whether private IP addresses are assigned to nodes. Required for CMEK and other advanced networking features.",
 					},
+					"cidr_range": schema.StringAttribute{
+						Computed:    true,
+						Description: "The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.",
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{

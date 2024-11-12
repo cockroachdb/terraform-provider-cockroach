@@ -243,6 +243,14 @@ func (r *clusterResource) Schema(
 							boolplanmodifier.UseStateForUnknown(),
 						},
 					},
+					"cidr_range": schema.StringAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "The IPv4 range in CIDR format that will be used by the cluster. This is supported only on GCP, and must have a subnet mask no larger than /19. Defaults to \"172.28.0.0/14\". This cannot be changed after cluster creation.",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -472,6 +480,9 @@ func (r *clusterResource) Create(
 				visibilityPrivate := client.NETWORKVISIBILITYTYPE_PRIVATE
 				dedicated.NetworkVisibility = &visibilityPrivate
 			}
+			if cfg.CidrRange.ValueString() != "" {
+				dedicated.CidrRange = ptr(cfg.CidrRange.ValueString())
+			}
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
@@ -699,6 +710,12 @@ func (r *clusterResource) ModifyPlan(
 				"To prevent accidental deletion of data, changing a cluster's network "+
 					"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
 					"network visibility.")
+		}
+		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.CidrRange != state.DedicatedConfig.CidrRange {
+			resp.Diagnostics.AddError("Cannot update cidr range",
+				"To prevent accidental deletion of data, changing a cluster's cidr range "+
+					"isn't allowed. Please explicitly destroy this cluster before changing "+
+					"cidr range.")
 		}
 	}
 
@@ -1238,6 +1255,7 @@ func loadClusterToTerraformState(
 			MemoryGib:                types.Float64Value(float64(clusterObj.Config.Dedicated.MemoryGib)),
 			DiskIops:                 types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
 			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
+			CidrRange:                types.StringValue(clusterObj.CidrRange),
 		}
 	}
 

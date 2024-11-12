@@ -138,6 +138,7 @@ Optional:
 
 Optional:
 
+- `cidr_range` (String) The IPv4 range in CIDR format that will be used by the cluster. This is supported only on GCP, and must have a subnet mask no larger than /19. Defaults to "172.28.0.0/14". This cannot be changed after cluster creation.
 - `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
 - `machine_type` (String) Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4.
 - `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.

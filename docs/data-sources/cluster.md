@@ -62,6 +62,7 @@ Read-Only:
 
 Read-Only:
 
+- `cidr_range` (String) The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.
 - `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
 - `machine_type` (String) Machine type identifier within the given cloud provider, ex. m6.xlarge, n2-standard-4.
 - `memory_gib` (Number) Memory per node in GiB.

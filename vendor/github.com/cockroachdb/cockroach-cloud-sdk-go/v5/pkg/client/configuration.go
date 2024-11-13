@@ -35,20 +35,47 @@ type Configuration struct {
 	Debug         bool              `json:"debug,omitempty"`
 	ServerURL     string
 	HTTPClient    *http.Client
-	apiKey        string
+	apiToken      string
+}
+
+// ConfigurationOption is a function that sets some configuration options.
+type ConfigurationOption func(*Configuration)
+
+// WithVanityName sets the vanity name in the request header.
+func WithVanityName(vanityName string) ConfigurationOption {
+	return func(cfg *Configuration) {
+		cfg.AddDefaultHeader("Cc-Vanity-Name", vanityName)
+	}
+}
+
+// WithUsername sets the username in the request header.
+func WithUsername(username string) ConfigurationOption {
+	return func(cfg *Configuration) {
+		cfg.AddDefaultHeader("Cc-Username", username)
+	}
 }
 
 // NewConfiguration returns a new Configuration object.
-func NewConfiguration(apiKey string) *Configuration {
+// The apiToken is a secret that is used to authenticate with the API.
+// It is either the API Key from a Service Account or a JWT from a JWT Issuer
+// configured for the CockroachDB Cloud Organization.
+// In the case of JWT, the vanity name is required and can be provided using the
+// WithVanityName option.
+func NewConfiguration(apiToken string, opts ...ConfigurationOption) *Configuration {
 	cfg := &Configuration{
 		DefaultHeader: make(map[string]string),
-		UserAgent:     "ccloud-sdk-go/4.1.0",
+		UserAgent:     "ccloud-sdk-go/5.0.0",
 		Debug:         false,
 		ServerURL:     DefaultServerURL,
-		apiKey:        apiKey,
+		apiToken:      apiToken,
 	}
 
 	cfg.AddDefaultHeader("Cc-Version", ApiVersion)
+
+	for _, opt := range opts {
+		opt(cfg)
+	}
+
 	return cfg
 }
 

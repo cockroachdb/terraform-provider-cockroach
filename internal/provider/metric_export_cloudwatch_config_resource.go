@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"

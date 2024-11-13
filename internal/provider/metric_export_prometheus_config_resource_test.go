@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"

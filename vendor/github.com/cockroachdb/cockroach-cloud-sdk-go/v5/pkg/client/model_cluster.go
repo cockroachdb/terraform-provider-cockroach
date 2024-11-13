@@ -24,7 +24,9 @@ import (
 
 // Cluster struct for Cluster.
 type Cluster struct {
-	AccountId           *string                    `json:"account_id,omitempty"`
+	AccountId *string `json:"account_id,omitempty"`
+	// cidr_range is the IPv4 range in CIDR format that will be used by the cluster. It is only set on GCP Advanced tier clusters and is otherwise empty.
+	CidrRange           string                     `json:"cidr_range"`
 	CloudProvider       CloudProviderType          `json:"cloud_provider"`
 	CockroachVersion    string                     `json:"cockroach_version"`
 	Config              ClusterConfig              `json:"config"`
@@ -52,8 +54,9 @@ type Cluster struct {
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewCluster(cloudProvider CloudProviderType, cockroachVersion string, config ClusterConfig, creatorId string, id string, name string, operationStatus ClusterStatusType, plan PlanType, regions []Region, state ClusterStateType, upgradeStatus ClusterUpgradeStatusType) *Cluster {
+func NewCluster(cidrRange string, cloudProvider CloudProviderType, cockroachVersion string, config ClusterConfig, creatorId string, id string, name string, operationStatus ClusterStatusType, plan PlanType, regions []Region, state ClusterStateType, upgradeStatus ClusterUpgradeStatusType) *Cluster {
 	p := Cluster{}
+	p.CidrRange = cidrRange
 	p.CloudProvider = cloudProvider
 	p.CockroachVersion = cockroachVersion
 	p.Config = config
@@ -88,6 +91,21 @@ func (o *Cluster) GetAccountId() string {
 // SetAccountId gets a reference to the given string and assigns it to the AccountId field.
 func (o *Cluster) SetAccountId(v string) {
 	o.AccountId = &v
+}
+
+// GetCidrRange returns the CidrRange field value.
+func (o *Cluster) GetCidrRange() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.CidrRange
+}
+
+// SetCidrRange sets field value.
+func (o *Cluster) SetCidrRange(v string) {
+	o.CidrRange = v
 }
 
 // GetCloudProvider returns the CloudProvider field value.

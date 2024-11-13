@@ -22,7 +22,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v4/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"

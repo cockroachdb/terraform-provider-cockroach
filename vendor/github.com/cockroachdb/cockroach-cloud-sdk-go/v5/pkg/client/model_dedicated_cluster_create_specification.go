@@ -20,13 +20,15 @@ package client
 
 // DedicatedClusterCreateSpecification struct for DedicatedClusterCreateSpecification.
 type DedicatedClusterCreateSpecification struct {
+	// cidr_range is the IPv4 range in CIDR format that will be used by the cluster. This is supported only on GCP, and must have a subnet mask no larger than /19. Defaults to \"172.28.0.0/14\".
+	CidrRange *string `json:"cidr_range,omitempty"`
 	// The CockroachDB major version for the cluster. i.e. v24.1  The latest version is used if omitted. The version passed must be one of the currently supported versions.
 	CockroachVersion  *string                              `json:"cockroach_version,omitempty"`
 	Hardware          DedicatedHardwareCreateSpecification `json:"hardware"`
 	NetworkVisibility *NetworkVisibilityType               `json:"network_visibility,omitempty"`
 	// Region keys should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. Values represent the node count.
 	RegionNodes map[string]int32 `json:"region_nodes"`
-	// Preview: RestrictEgressTraffic if set, results in an egress traffic policy of default-deny at creation time.
+	// Preview: restrict_egress_traffic if set, results in an egress traffic policy of default-deny at creation time.
 	RestrictEgressTraffic *bool `json:"restrict_egress_traffic,omitempty"`
 }
 
@@ -47,6 +49,20 @@ func NewDedicatedClusterCreateSpecification(hardware DedicatedHardwareCreateSpec
 func NewDedicatedClusterCreateSpecificationWithDefaults() *DedicatedClusterCreateSpecification {
 	p := DedicatedClusterCreateSpecification{}
 	return &p
+}
+
+// GetCidrRange returns the CidrRange field value if set, zero value otherwise.
+func (o *DedicatedClusterCreateSpecification) GetCidrRange() string {
+	if o == nil || o.CidrRange == nil {
+		var ret string
+		return ret
+	}
+	return *o.CidrRange
+}
+
+// SetCidrRange gets a reference to the given string and assigns it to the CidrRange field.
+func (o *DedicatedClusterCreateSpecification) SetCidrRange(v string) {
+	o.CidrRange = &v
 }
 
 // GetCockroachVersion returns the CockroachVersion field value if set, zero value otherwise.

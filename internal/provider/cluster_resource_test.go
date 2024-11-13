@@ -306,6 +306,7 @@ func TestIntegrationClusterWithBackupConfig(t *testing.T) {
 	s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, &client.UpdateBackupConfigurationSpec{
 		Enabled: ptr(true),
 		FrequencyMinutes: ptr(int32(secondUpdatedBackupConfig.FrequencyMinutes)),
+		RetentionDays: ptr(int32(secondUpdatedBackupConfig.RetentionDays)),
 	}).Return(secondUpdatedBackupConfig, httpOk, nil)
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(secondUpdatedBackupConfig, httpOk, nil)
 
@@ -434,6 +435,7 @@ func testClusterWithBackupConfig(t *testing.T, clusterName string, useMock bool)
 					includeBackupConfig: true,
 					enabled:   ptr(true),
 					frequency: ptr(secondUpdatedBackupConfig.FrequencyMinutes),
+					retention: ptr(secondUpdatedBackupConfig.RetentionDays),
 				}),
 				Check:  resource.ComposeTestCheckFunc(
 					checkBackupConfig(serverlessResourceName, secondUpdatedBackupConfig),

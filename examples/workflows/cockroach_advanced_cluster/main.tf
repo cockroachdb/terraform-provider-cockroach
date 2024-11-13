@@ -46,7 +46,7 @@ variable "storage_gib" {
 variable "num_virtual_cpus" {
   type     = number
   nullable = false
-  default  = 2
+  default  = 4
 }
 
 variable "allow_list_name" {

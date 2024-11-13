@@ -1596,7 +1596,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		UpgradeStatus:    client.CLUSTERUPGRADESTATUSTYPE_UPGRADE_AVAILABLE,
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
-				NumVirtualCpus: 2,
+				NumVirtualCpus: 4,
 				StorageGib:     15,
 				MemoryGib:      8,
 			},
@@ -1628,7 +1628,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	scaledCluster := secondUpdateCluster
 	scaledCluster.Config.Dedicated = &client.DedicatedHardwareConfig{}
 	*scaledCluster.Config.Dedicated = *secondUpdateCluster.Config.Dedicated
-	scaledCluster.Config.Dedicated.NumVirtualCpus = 4
+	scaledCluster.Config.Dedicated.NumVirtualCpus = 8
 
 	// Creation
 
@@ -1738,8 +1738,11 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
 	scaleStep := resource.TestStep{
-		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil),
-		Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "4"),
+		PreConfig:   func() {
+			traceMessageStep("Scale the cluster")
+		},
+		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 8, nil),
+		Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "8"),
 	}
 
 	testDedicatedClusterResource(t, clusterName, true, scaleStep)
@@ -1755,7 +1758,10 @@ func testDedicatedClusterResource(
 
 	testSteps := []resource.TestStep{
 		{
-			Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false, 2, nil),
+			PreConfig:   func() {
+				traceMessageStep("create a cluster")
+			},
+			Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false, 4, nil),
 			Check: resource.ComposeTestCheckFunc(
 				testCheckCockroachClusterExists(resourceName),
 				resource.TestCheckResourceAttr(resourceName, "name", clusterName),
@@ -1769,13 +1775,19 @@ func testDedicatedClusterResource(
 			),
 		},
 		{
-			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true, 2, nil),
+			PreConfig:   func() {
+				traceMessageStep("update the version")
+			},
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true, 4, nil),
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
 				resource.TestCheckResourceAttr(dataSourceName, "cockroach_version", latestClusterMajorVersion),
 			),
 		},
 		{
+			PreConfig:   func() {
+				traceMessageStep("test import")
+			},
 			ResourceName: resourceName,
 			ImportState:  true,
 			// ImportStateVerify used to work with sdkv2 but after the update to
@@ -1794,17 +1806,26 @@ func testDedicatedClusterResource(
 			ImportStateVerify: false,
 		},
 		{
-			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 2, ptr(true)),
+			PreConfig:   func() {
+				traceMessageStep("enable delete protection")
+			},
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(true)),
 			Check:  resource.TestCheckResourceAttr(resourceName, "delete_protection", "true"),
 		},
 		{
 			// Delete step that fails since delete protection is enabled.
+			PreConfig:   func() {
+				traceMessageStep("check failure due to delete protection being enabled")
+			},
 			Config:      " ",
 			Destroy:     true,
 			ExpectError: regexp.MustCompile(".*Cannot destroy cluster with delete protection enabled*"),
 		},
 		{
-			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 2, ptr(false)),
+			PreConfig:   func() {
+				traceMessageStep("Unset delete protection")
+			},
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(false)),
 			Check:  resource.TestCheckResourceAttr(resourceName, "delete_protection", "false"),
 		},
 	}

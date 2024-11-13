@@ -307,7 +307,7 @@ func (c *Client) prepareRequest(
 	}
 
 	// Add header for authentication.
-	localVarRequest.Header.Add("Authorization", "Bearer "+c.cfg.apiKey)
+	localVarRequest.Header.Add("Authorization", "Bearer "+c.cfg.apiToken)
 
 	for header, value := range c.cfg.DefaultHeader {
 		localVarRequest.Header.Add(header, value)

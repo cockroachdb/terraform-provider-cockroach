@@ -1,0 +1,20 @@
+name: Manually Run Acceptance Tests
+on: workflow_dispatch
+jobs:
+  acceptance-test:
+    name: acceptance-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Tests
+        run: make testacc
+        env:
+          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}

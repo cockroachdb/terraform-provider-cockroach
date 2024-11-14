@@ -58,6 +58,7 @@ variable "allow_list_name" {
 variable "os" {
   type     = string
   nullable = true
+  default  = "MAC"
 }
 
 variable "database" {

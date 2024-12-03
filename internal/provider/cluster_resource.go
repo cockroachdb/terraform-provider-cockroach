@@ -23,7 +23,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
@@ -123,7 +122,7 @@ func (r *clusterResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Description: "Major version of CockroachDB running on the cluster.",
+				MarkdownDescription: "Major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL').",
 			},
 			"account_id": schema.StringAttribute{
 				Computed: true,
@@ -377,6 +376,27 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 	}
 }
 
+func derivePlanType(cluster *CockroachCluster) (client.PlanType, error) {
+	var planType client.PlanType
+	if IsKnown(cluster.Plan) {
+		planType = client.PlanType(cluster.Plan.ValueString())
+	} else if cluster.DedicatedConfig != nil {
+		planType = client.PLANTYPE_ADVANCED
+	} else if cluster.ServerlessConfig != nil {
+		if cluster.ServerlessConfig.UsageLimits != nil && IsKnown(cluster.ServerlessConfig.UsageLimits.ProvisionedVirtualCpus) {
+			planType = client.PLANTYPE_STANDARD
+		} else {
+			planType = client.PLANTYPE_BASIC
+		}
+	} else {
+		return "", fmt.Errorf("could not derive plan type, plan must contain either a ServerlessConfig or a DedicatedConfig")
+	}
+	if !planType.IsValid() {
+		return "", fmt.Errorf("invalid plan type %q", cluster.Plan.ValueString())
+	}
+	return planType, nil
+}
+
 func (r *clusterResource) Create(
 	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
 ) {
@@ -436,6 +456,20 @@ func (r *clusterResource) Create(
 				resp.Diagnostics.AddError("Invalid Upgrade Type", err.Error())
 			} else {
 				serverless.SetUpgradeType(*upgradeType)
+			}
+		}
+
+		if IsKnown(plan.CockroachVersion) {
+			planType, err := derivePlanType(&plan)
+			if err != nil {
+				resp.Diagnostics.AddError("Invalid Configuration", err.Error())
+				return
+			}
+
+			if planType == client.PLANTYPE_BASIC {
+				resp.Diagnostics.AddError("Invalid Attribute Combination", "cockroach_version is not supported for BASIC clusters.")
+			} else {
+				resp.Diagnostics.AddError("Unsupported Attribute", "cockroach_version is not supported during cluster creation for STANDARD clusters. STANDARD clusters are automatically created using the latest available version.")
 			}
 		}
 
@@ -788,66 +822,45 @@ func (r *clusterResource) Update(
 	// CRDB Upgrades/Downgrades
 	if IsKnown(plan.CockroachVersion) && plan.CockroachVersion != state.CockroachVersion {
 		planVersion := plan.CockroachVersion.ValueString()
-		stateVersion := state.CockroachVersion.ValueString()
-		traceAPICall("ListMajorClusterVersions")
-		apiResp, _, err := r.provider.service.ListMajorClusterVersions(ctx, &client.ListMajorClusterVersionsOptions{})
-		if err != nil {
-			resp.Diagnostics.AddError("Couldn't retrieve CockroachDB version list", formatAPIErrorMessage(err))
+
+		// Unfortunately the update cluster api endpoint doesn't allow updating
+		// the version and anything else in the same call. Since version may
+		// rely on upgrade_type and plan, if they are updated at the same time
+		// we need to fail out.
+		// We could explore doing the version upgrade after the other updates to
+		// avoid this 2 step apply requirement.
+
+		if client.PlanType(state.Plan.ValueString()) == client.PLANTYPE_BASIC {
+			if client.PlanType(plan.Plan.ValueString()) != client.PLANTYPE_BASIC {
+				resp.Diagnostics.AddError("Error updating cluster", "plan and version must not be changed during the same terraform plan.")
+			} else {
+				resp.Diagnostics.AddError("Error updating cluster", "cockroach_version is not supported for BASIC clusters, please update plan before setting cockroach_version.")
+			}
 			return
 		}
 
-		// Target version must be a valid major version
-		var versionValid bool
-		for _, v := range apiResp.Versions {
-			if v.Version == planVersion {
-				versionValid = true
-				break
-			}
-		}
-		if !versionValid {
-			validVersions := make([]string, len(apiResp.Versions))
-			for i, v := range apiResp.Versions {
-				validVersions[i] = v.Version
-			}
-			resp.Diagnostics.AddError("Invalid CockroachDB version",
-				fmt.Sprintf(
-					"'%s' is not a valid major CockroachDB version. Valid versions include [%s]",
-					planVersion,
-					strings.Join(validVersions, "|")))
-			return
-		}
-
-		// Next, if we are upgrading, it must be a valid upgrade from the
-		// current version, according to the ListMajorClusterVersions API.
-		if upgrading, err := isUpgrade(stateVersion, planVersion); upgrading {
-			var currentVersionInfo client.ClusterMajorVersion
-			for _, v := range apiResp.Versions {
-				if v.Version == stateVersion {
-					currentVersionInfo = v
-					break
-				}
-			}
-
-			var validUpgrade bool
-			for _, v := range currentVersionInfo.AllowedUpgrades {
-				if v == planVersion {
-					validUpgrade = true
-					break
-				}
-			}
-			if !validUpgrade {
-				resp.Diagnostics.AddError("Invalid CockroachDB version",
-					fmt.Sprintf(
-						"Cannot change major version to '%s'. Valid upgrade versions include [%s]",
-						planVersion,
-						strings.Join(currentVersionInfo.AllowedUpgrades, "|")))
+		if state.ServerlessConfig != nil {
+			stateUpgradeTypeString := state.ServerlessConfig.UpgradeType.ValueString()
+			planUpgradeTypeString := plan.ServerlessConfig.UpgradeType.ValueString()
+			if stateUpgradeTypeString != planUpgradeTypeString {
+				resp.Diagnostics.AddError("Error updating cluster", "upgrade_type and version must not be changed during the same terraform plan.")
 				return
 			}
-		} else if err != nil {
-			resp.Diagnostics.AddError("Invalid CockroachDB version", err.Error())
-			return
+
+			stateUpgradeTypePtr, err := client.NewUpgradeTypeTypeFromValue(stateUpgradeTypeString)
+			if err != nil {
+				resp.Diagnostics.AddError("Error updating cluster", err.Error())
+				return
+			}
+			stateUpgradeType := *stateUpgradeTypePtr
+			if stateUpgradeType != client.UPGRADETYPETYPE_MANUAL {
+				resp.Diagnostics.AddError("Error updating cluster", "upgrade_type must be set to MANUAL before setting cockroach_version.")
+				return
+			}
 		}
 
+		// We rely on the server to validate that the upgrade version is
+		// actually valid to update to.
 		traceAPICall("UpdateCluster")
 		clusterObj, _, err := r.provider.service.UpdateCluster(ctx, plan.ID.ValueString(), &client.UpdateClusterSpecification{
 			CockroachVersion: &planVersion,

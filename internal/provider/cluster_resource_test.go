@@ -67,18 +67,18 @@ func TestAccServerlessClusterResource(t *testing.T) {
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
-			onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 10_000_000_000, 102_400),
-			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024),
+			onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 10_000_000_000, 102_400, nil /* upgradeType */, nil /* cockroachVersion */),
+			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024, nil /* upgradeType */, nil /* cockroachVersion */),
 			onDemandSingleRegionClusterNoLimitsStep(clusterName, defaultPlanType),
-			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400),
-			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */),
+			onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400, nil /* upgradeType */, nil /* cockroachVersion */),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */, nil /* cockroachVersion */),
 			onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC"),
 			legacyServerlessClusterWithSpendLimitStep(clusterName, 10_00),
-			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */, nil /* cockroachVersion */),
 			// Upgrade to STANDARD.
-			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil),
+			provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil /* upgradeType */, nil /* cockroachVersion */),
 			// Downgrade to BASIC.
-			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */),
+			onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */, nil /* cockroachVersion */),
 		},
 	})
 }
@@ -103,46 +103,46 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create a provisioned cluster with the default value for upgrade_type
 			{
-				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil).Config,
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil /* upgradeType */, nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Explicitly updating the value to MANUAL performs the update
 			{
-				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_MANUAL), nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
 			},
 			// Removal of the optional value from the config makes no change
 			{
-				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil).Config,
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, nil /* upgradeType */, nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
 			},
 			// Change it back to automatic so we can downgrade the cluster to
 			// BASIC.  Currently the ccapi doesn't allow downgrading to BASIC
 			// unless upgrade_type is AUTOMATIC already.
 			{
-				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
+				Config: provisionedSingleRegionClusterStep(clusterName, "STANDARD", 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Downgrade to Basic, the upgrade_type remains AUTOMATIC
 			{
-				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */).Config,
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */, nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Setting the value to MANUAL is not allowed for Basic
 			{
-				Config:      onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_MANUAL)).Config,
+				Config:      onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_MANUAL), nil /* cockroachVersion */).Config,
 				ExpectError: regexp.MustCompile("plan type BASIC does not allow upgrade_type MANUAL"),
 				Check:       checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Setting completely invalid value for upgrade_type
 			{
-				Config:      onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UpgradeTypeType("hi"))).Config,
+				Config:      onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UpgradeTypeType("hi")), nil /* cockroachVersion */).Config,
 				ExpectError: regexp.MustCompile("Attribute serverless.upgrade_type value must be one of"),
 				Check:       checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Basic clusters can also accept a value of AUTOMATIC.
 			{
-				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Destroy the cluster so we can create it again in the next step
@@ -152,7 +152,7 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 			},
 			// Basic clusters can also be created with a value of AUTOMATIC
 			{
-				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC)).Config,
+				Config: onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */).Config,
 				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 		},
@@ -744,6 +744,13 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		}
 	}
 
+	standardClusterWithVersion := func(version string) client.Cluster {
+		cluster := singleRegionClusterWithLimits(client.PLANTYPE_STANDARD, 1_000_000, 1024)
+		cluster.Config.Serverless.UpgradeType = client.UPGRADETYPETYPE_MANUAL
+		cluster.CockroachVersion = version
+		return cluster
+	}
+
 	provisionedSingleRegionCluster := func(planType client.PlanType, provisionedVirtualCpus int64) client.Cluster {
 		return client.Cluster{
 			Id:               uuid.Nil.String(),
@@ -751,7 +758,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			CockroachVersion: latestClusterPatchVersion,
 			CloudProvider:    "GCP",
 			State:            "CREATED",
-			Plan:             "STANDARD",
+			Plan:             planType,
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -815,7 +822,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted to unlimited resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			validateCreate: func(req *client.CreateClusterRequest) error {
 				// Ensure that provider passes the plan type to Create.
@@ -826,7 +833,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */)
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, "BASIC", nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the plan type to Update.
@@ -845,7 +852,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted to no limit resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
@@ -856,11 +863,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless BASIC cluster converted from unlimited resources",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */)
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 		},
@@ -871,29 +878,29 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 		},
 		{
 			name: "single-region serverless BASIC cluster with updated resource limits",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, defaultPlanType, 1_000_000, 1024, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 10_000_000_000, 102_400),
 		},
 		{
 			name: "single-region serverless BASIC cluster upgraded to STANDARD",
 			createStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */)
+				return onDemandSingleRegionClusterWithUnlimitedStep(clusterName, defaultPlanType, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
-				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 10, nil)
+				return provisionedSingleRegionClusterStep(clusterName, "STANDARD", 10, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the new plan type to Update.
@@ -907,11 +914,11 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "single-region serverless STANDARD cluster downgraded to BASIC",
 			createStep: func() resource.TestStep {
-				return provisionedSingleRegionClusterStep(clusterName, defaultPlanType, 10, nil)
+				return provisionedSingleRegionClusterStep(clusterName, defaultPlanType, 10, nil  /* upgradeType */, nil /* cockroachVersion */)
 			},
 			initialCluster: provisionedSingleRegionCluster("STANDARD", 10),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 10_000_000_000, 102_400, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			validateUpdate: func(spec *client.UpdateClusterSpecification) error {
 				// Ensure that provider passes the new plan type to Update.
@@ -960,7 +967,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			initialCluster: singleRegionClusterWithLimits("BASIC", 40_000_000, 4096),
 			updateStep: func() resource.TestStep {
-				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 80_000_000, 8192)
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 80_000_000, 8192, nil /* upgradeType */, nil /* cockroachVersion */)
 			},
 			finalCluster: singleRegionClusterWithLimits("BASIC", 80_000_000, 8192),
 		},
@@ -974,6 +981,17 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				return onDemandSingleRegionClusterNoLimitsStep(clusterName, "BASIC")
 			},
 			finalCluster: singleRegionClusterWithUnlimited("BASIC"),
+		},
+		{
+			name: "upgrade cockroach_version for STANDARD cluster",
+			createStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, client.PLANTYPE_STANDARD, 1_000_000, 1024, ptr(client.UPGRADETYPETYPE_MANUAL), nil /* cockroachVersion */)
+			},
+			initialCluster: standardClusterWithVersion(minSupportedClusterPatchVersion),
+			updateStep: func() resource.TestStep {
+				return onDemandSingleRegionClusterWithLimitsStep(clusterName, client.PLANTYPE_STANDARD, 1_000_000, 1024, ptr(client.UPGRADETYPETYPE_MANUAL), ptr(latestClusterMajorVersion))
+			},
+			finalCluster: standardClusterWithVersion(latestClusterPatchVersion),
 		},
 		{
 			name: "attempt to update name",
@@ -1086,6 +1104,158 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "setting cockroach_version to empty string on basic cluster creation",
+			createStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile("cockroach_version is not supported for BASIC clusters"),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version on basic cluster creation",
+			createStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, ptr("23.1") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile("cockroach_version is not supported for BASIC clusters"),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to empty string on standard cluster creation",
+			createStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, nil /* upgradeType */, ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported during cluster creation for STANDARD`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version on standard cluster creation",
+			createStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, nil /* upgradeType */, ptr("23.1") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported during cluster creation for STANDARD`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to empty string on basic cluster update",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster("BASIC", 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported for BASIC clusters`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to on basic cluster update",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster(client.PLANTYPE_BASIC, 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, ptr("23.1") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported for BASIC clusters`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to empty string on basic cluster update to standard in same step",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster("BASIC", 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, nil /* upgradeType */, ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)plan and version must not be changed during the same terraform plan`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version on basic cluster update to standard in same step",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_BASIC, 6, nil /* upgradeType */, nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster(client.PLANTYPE_BASIC, 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, nil /* upgradeType */, ptr("23.1") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)plan and version must not be changed during the same terraform plan`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to empty string for standard cluster with automatic upgrade_type",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster(client.PLANTYPE_STANDARD, 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)upgrade_type must be set to MANUAL before setting cockroach_version`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version for standard cluster with automatic upgrade_type",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster(client.PLANTYPE_STANDARD, 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)upgrade_type must be set to MANUAL before setting cockroach_version`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to empty string for standard cluster while setting upgrade_type to MANUAL in same step",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster(client.PLANTYPE_STANDARD, 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_MANUAL), ptr("") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)upgrade_type and version must not be changed during the same terraform plan`),
+				}
+			},
+		},
+		{
+			name: "setting cockroach_version to for standard cluster while setting upgrade_type to MANUAL in same step",
+			createStep: func() resource.TestStep {
+				return provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_AUTOMATIC), nil /* cockroachVersion */)
+			},
+			initialCluster: provisionedSingleRegionCluster(client.PLANTYPE_STANDARD, 6),
+			updateStep: func() resource.TestStep {
+				config := provisionedSingleRegionClusterStep(clusterName, client.PLANTYPE_STANDARD, 6, ptr(client.UPGRADETYPETYPE_MANUAL), ptr("23.1") /* cockroachVersion */).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`(?s)upgrade_type and version must not be changed during the same terraform plan`),
+				}
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -1099,12 +1269,18 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			// Return the initial cluster until Update is called, after which point
 			// return the final cluster.
 			var updateCalled bool
+			var versionUpdateCalled bool
 			s.EXPECT().
 				GetCluster(gomock.Any(), c.initialCluster.Id).
 				DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
 					cluster := &c.initialCluster
 					if updateCalled {
 						cluster = &c.finalCluster
+					} else if versionUpdateCalled {
+						updatedVersionCluster := c.initialCluster
+						updatedVersionCluster.CockroachVersion = c.finalCluster.CockroachVersion
+						updatedVersionCluster.State = client.CLUSTERSTATETYPE_CREATED
+						return ptr(updatedVersionCluster), nil, nil
 					}
 					return cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil
 				}).AnyTimes()
@@ -1137,6 +1313,25 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				steps = append(steps, updateStep)
 
 				if updateStep.ExpectError == nil {
+
+					// Update version happens in a separate call prior to the main update
+					if c.initialCluster.CockroachVersion != c.finalCluster.CockroachVersion {
+						majorVersion := simplifyClusterVersion(c.finalCluster.CockroachVersion, false)
+						s.EXPECT().
+							UpdateCluster(gomock.Any(), c.initialCluster.Id, &client.UpdateClusterSpecification{
+								CockroachVersion: ptr(majorVersion),
+							}).
+							DoAndReturn(func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+								versionUpdateCalled = true
+								// This isn't what is actually returned but the
+								// existing code only relies on the ID being in
+								// the returned cluster. The version update is
+								// expected to come back in the following
+								// GetCluster calls
+								return ptr(client.Cluster{Id: c.initialCluster.Id}), nil, nil
+							})
+					}
+
 					s.EXPECT().
 						UpdateCluster(gomock.Any(), gomock.Any(), gomock.Any()).
 						DoAndReturn(func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
@@ -1219,12 +1414,46 @@ func onDemandSingleRegionClusterWithLimitsStep(
 	planType client.PlanType,
 	requestUnitLimit int64,
 	storageMibLimit int64,
+	upgradeType *client.UpgradeTypeType,
+	cockroachVersion *string,
 ) resource.TestStep {
 	var plan string
 	if planType == "" {
 		planType = client.PLANTYPE_BASIC
 	} else {
 		plan = fmt.Sprintf("plan = \"%s\"", planType)
+	}
+
+	testCheckFuncs := []resource.TestCheckFunc{
+		makeDefaultServerlessResourceChecks(clusterName, planType),
+		resource.TestCheckResourceAttr(serverlessResourceName, "regions.#", "1"),
+		resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(requestUnitLimit))),
+		resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageMibLimit))),
+		resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
+		resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "1"),
+		resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(requestUnitLimit))),
+		resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageMibLimit))),
+		resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
+	}
+
+	var upgradeTypeConfig string
+	if upgradeType != nil {
+		upgradeTypeConfig = fmt.Sprintf("upgrade_type = \"%s\"", *upgradeType)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.upgrade_type", string(*upgradeType)),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.upgrade_type", string(*upgradeType)),
+		)
+	}
+
+	var versionConfig string
+	if cockroachVersion != nil {
+		versionConfig = fmt.Sprintf("cockroach_version = %q", *cockroachVersion)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "cockroach_version", *cockroachVersion),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "cockroach_version", *cockroachVersion),
+		)
 	}
 
 	return resource.TestStep{
@@ -1239,27 +1468,20 @@ func onDemandSingleRegionClusterWithLimitsStep(
 						request_unit_limit = %d
 						storage_mib_limit = %d
 					}
+					%s
 				}
 				regions = [{
 					name = "us-central1"
 				}]
+				%s
 			}
 
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, plan, requestUnitLimit, storageMibLimit),
-		Check: resource.ComposeTestCheckFunc(
-			makeDefaultServerlessResourceChecks(clusterName, planType),
-			resource.TestCheckResourceAttr(serverlessResourceName, "regions.#", "1"),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(requestUnitLimit))),
-			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageMibLimit))),
-			resource.TestCheckNoResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "regions.#", "1"),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.request_unit_limit", strconv.Itoa(int(requestUnitLimit))),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "serverless.usage_limits.storage_mib_limit", strconv.Itoa(int(storageMibLimit))),
-			resource.TestCheckNoResourceAttr(serverlessDataSourceName, "serverless.usage_limits.provisioned_virtual_cpus"),
-		),
+			`, clusterName, plan, requestUnitLimit, storageMibLimit, upgradeTypeConfig, versionConfig),
+		Check: resource.ComposeTestCheckFunc(testCheckFuncs...),
+
 	}
 }
 
@@ -1267,6 +1489,7 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 	clusterName string,
 	planType client.PlanType,
 	upgradeType *client.UpgradeTypeType,
+	cockroachVersion *string,
 ) resource.TestStep {
 	var plan string
 	if planType == "" {
@@ -1297,6 +1520,16 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 		)
 	}
 
+	var versionConfig string
+	if cockroachVersion != nil {
+		versionConfig = fmt.Sprintf("cockroach_version = %q", *cockroachVersion)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "cockroach_version", *cockroachVersion),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "cockroach_version", *cockroachVersion),
+		)
+	}
+
 	return resource.TestStep{
 		// Serverless cluster with unlimited on-demand resources.
 		Config: fmt.Sprintf(`
@@ -1311,12 +1544,13 @@ func onDemandSingleRegionClusterWithUnlimitedStep(
 				regions = [{
 					name = "us-central1"
 				}]
+				%s
 			}
 
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, plan, upgradeTypeConfig),
+			`, clusterName, plan, upgradeTypeConfig, versionConfig),
 		Check: resource.ComposeTestCheckFunc(testCheckFuncs...),
 	}
 }
@@ -1326,6 +1560,7 @@ func provisionedSingleRegionClusterStep(
 	planType client.PlanType,
 	provisionedVirtualCpus int,
 	upgradeType *client.UpgradeTypeType,
+	cockroachVersion *string,
 ) resource.TestStep {
 	provisionedVirtualCpusStr := strconv.Itoa(provisionedVirtualCpus)
 
@@ -1356,6 +1591,16 @@ func provisionedSingleRegionClusterStep(
 		)
 	}
 
+	var versionConfig string
+	if cockroachVersion != nil {
+		versionConfig = fmt.Sprintf("cockroach_version = %q", *cockroachVersion)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "cockroach_version", *cockroachVersion),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "cockroach_version", *cockroachVersion),
+		)
+	}
+
 	return resource.TestStep{
 		// Serverless cluster with provisioned resources.
 		Config: fmt.Sprintf(`
@@ -1372,12 +1617,13 @@ func provisionedSingleRegionClusterStep(
 				regions = [{
 					name = "us-central1"
 				}]
+				%s
 			}
 
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, plan, provisionedVirtualCpus, upgradeTypeConfig),
+			`, clusterName, plan, provisionedVirtualCpus, upgradeTypeConfig, versionConfig),
 		Check: resource.ComposeTestCheckFunc(testCheckFuncs...),
 	}
 }
@@ -1643,21 +1889,6 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Return(&initialCluster, httpOk, nil).Times(7)
 
 	// Upgrade
-
-	s.EXPECT().ListMajorClusterVersions(gomock.Any(), gomock.Any()).Return(&client.ListMajorClusterVersionsResponse{
-		Versions: []client.ClusterMajorVersion{
-			{
-				Version: minSupportedClusterMajorVersion,
-				AllowedUpgrades: []string{
-					latestClusterMajorVersion,
-				},
-			},
-			{
-				Version:         latestClusterMajorVersion,
-				AllowedUpgrades: []string{},
-			},
-		},
-	}, nil, nil)
 
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
 		CockroachVersion: ptr(latestClusterMajorVersion),
@@ -2137,3 +2368,92 @@ func TestIsDowngrade(t *testing.T) {
 	require.NoError(t, err)
 	require.False(t, upgrade)
 }
+func TestDerivePlanType(t *testing.T) {
+	tests := []struct {
+		name     string
+		cluster  CockroachCluster
+		expected client.PlanType
+		err      error
+	}{
+		{
+			name: "Explicit Plan: Advanced",
+			cluster: CockroachCluster{
+				Plan: types.StringValue("ADVANCED"),
+			},
+			expected: client.PLANTYPE_ADVANCED,
+			err: nil,
+		},
+		{
+			name: "Explicit Plan: Standard",
+			cluster: CockroachCluster{
+				Plan: types.StringValue("STANDARD"),
+			},
+			expected: client.PLANTYPE_STANDARD,
+			err:  nil,
+		},
+		{
+			name: "Explicit Plan: BASIC",
+			cluster: CockroachCluster{
+				Plan: types.StringValue("BASIC"),
+			},
+			expected: client.PLANTYPE_BASIC,
+			err:  nil,
+		},
+		{
+			name: "Explicit Plan: Invalid",
+			cluster: CockroachCluster{
+				Plan: types.StringValue("asdf"),
+			},
+			expected: "",
+			err: fmt.Errorf(`invalid plan type "asdf"`),
+		},
+		{
+			name: "Dedicated Config",
+			cluster: CockroachCluster{
+				DedicatedConfig: &DedicatedClusterConfig{},
+			},
+			expected: client.PLANTYPE_ADVANCED,
+			err: nil,
+		},
+		{
+			name: "Serverless Config with Provisioned Resources",
+			cluster: CockroachCluster{
+				ServerlessConfig: &ServerlessClusterConfig{
+					UsageLimits: &UsageLimits{
+						ProvisionedVirtualCpus: types.Int64Value(4),
+					},
+				},
+			},
+			expected: client.PLANTYPE_STANDARD,
+			err:  nil,
+		},
+		{
+			name: "Serverless Config without Provisioned Resources",
+			cluster: CockroachCluster{
+				ServerlessConfig: &ServerlessClusterConfig{
+					UsageLimits: &UsageLimits{},
+				},
+			},
+			expected: client.PLANTYPE_BASIC,
+			err:  nil,
+		},
+		{
+			name:     "Underivable Plan",
+			cluster:  CockroachCluster{},
+			expected: "",
+			err:  fmt.Errorf("could not derive plan type, plan must contain either a ServerlessConfig or a DedicatedConfig"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			planType, err := derivePlanType(&tt.cluster)
+			if tt.err != nil {
+				require.Equal(t, tt.err, err)
+			} else {
+				require.Equal(t, tt.expected, planType)
+			}
+		})
+	}
+}
+

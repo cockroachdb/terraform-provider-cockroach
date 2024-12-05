@@ -1273,6 +1273,37 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "attempt to update an advanced cluster to a standard cluster in place",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil),
+				}
+			},
+			initialCluster: client.Cluster{
+				Id: uuid.Nil.String(),
+				Name: clusterName,
+				CloudProvider: "GCP",
+				CockroachVersion: latestClusterMajorVersion,
+				Config: client.ClusterConfig{
+					Dedicated: &client.DedicatedHardwareConfig{
+						NumVirtualCpus: 4,
+						StorageGib: 15,
+					},
+				},
+				Plan: client.PLANTYPE_ADVANCED,
+				State: client.CLUSTERSTATETYPE_CREATED,
+				CidrRange: "172.28.0.0/16",
+				Regions: []client.Region{ { Name: "us-central1", NodeCount: 1 } },
+			},
+			updateStep: func() resource.TestStep {
+				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr(latestClusterMajorVersion)}).Config
+				return resource.TestStep{
+					Config: config,
+					ExpectError: regexp.MustCompile(`Cannot update cluster plan type`),
+				}
+			},
+		},
 	}
 
 	for _, c := range cases {

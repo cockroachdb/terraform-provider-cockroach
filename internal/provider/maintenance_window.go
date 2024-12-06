@@ -55,7 +55,7 @@ func (r *maintenanceWindowResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Maintenance window configuration for a cluster.",
+		MarkdownDescription: "Maintenance window configuration for a cluster. Maintenance Windows are supported for Advanced clusters only.",
 		Attributes:          maintenanceWindowAttributes,
 	}
 }
@@ -190,7 +190,7 @@ func (r *maintenanceWindowResource) setMaintenanceWindow(
 	if err != nil {
 		diags.AddError(
 			"Error setting maintenance window",
-			fmt.Sprintf("Could not set maintenance window: %v", formatAPIErrorMessage(err)),
+			formatAPIErrorMessage(err),
 		)
 		return
 	}
@@ -218,7 +218,7 @@ func (r *maintenanceWindowResource) Delete(
 		} else {
 			resp.Diagnostics.AddError(
 				"Error deleting maintenance window",
-				fmt.Sprintf("Could not delete maintenance window: %v", formatAPIErrorMessage(err)),
+				formatAPIErrorMessage(err),
 			)
 		}
 		return

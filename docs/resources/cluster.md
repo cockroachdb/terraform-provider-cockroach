@@ -139,7 +139,7 @@ Optional:
 Optional:
 
 - `cidr_range` (String) The IPv4 range in CIDR format that will be used by the cluster. This is supported only on GCP, and must have a subnet mask no larger than /19. Defaults to "172.28.0.0/14". This cannot be changed after cluster creation.
-- `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
+- `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Omitting this attribute will result in the cloud provider-specific default.
 - `machine_type` (String) Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4.
 - `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
 - `private_network_visibility` (Boolean) Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.

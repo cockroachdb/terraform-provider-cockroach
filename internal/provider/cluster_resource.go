@@ -27,6 +27,7 @@ import (
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -218,7 +219,13 @@ func (r *clusterResource) Schema(
 					"disk_iops": schema.Int64Attribute{
 						Optional:    true,
 						Computed:    true,
-						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.",
+						Validators:  []validator.Int64{
+							// If supplied this value must be non-zero. 0 is a
+							// valid api value indicating the default being
+							// returned but it causes a provider inconsistency.
+							int64validator.AtLeast(1),
+						},
+						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Omitting this attribute will result in the cloud provider-specific default.",
 					},
 					"memory_gib": schema.Float64Attribute{
 						Computed:    true,

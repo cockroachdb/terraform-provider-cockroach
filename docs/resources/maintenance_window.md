@@ -3,12 +3,12 @@
 page_title: "cockroach_maintenance_window Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Maintenance window configuration for a cluster.
+  Maintenance window configuration for a cluster. Maintenance Windows are supported for Advanced clusters only.
 ---
 
 # cockroach_maintenance_window (Resource)
 
-Maintenance window configuration for a cluster.
+Maintenance window configuration for a cluster. Maintenance Windows are supported for Advanced clusters only.
 
 ## Example Usage
 

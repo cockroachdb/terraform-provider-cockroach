@@ -20,12 +20,12 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
-	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
@@ -41,7 +41,8 @@ func TestAccMaintenanceWindowResource(t *testing.T) {
 // destroy a cluster, but uses a mocked API service.
 func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 	clusterName := fmt.Sprintf("%s-mwin-%s", tfTestPrefix, GenerateRandomString(4))
-	clusterID := uuid.Nil.String()
+	standardClusterID := "00000000-0000-0000-0000-000000000001"
+	advancedClusterID := "00000000-0000-0000-0000-000000000002"
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -52,8 +53,30 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		return s
 	})()
 
-	clusterInfo := &client.Cluster{
-		Id:               clusterID,
+	standardCluster := &client.Cluster{
+		Id:               standardClusterID,
+		Name:             clusterName,
+		CockroachVersion: "v22.2.0",
+		Plan:             "STANDARD",
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+				Primary: ptr(true),
+			},
+		},
+	}
+
+	advancedCluster := &client.Cluster{
+		Id:               advancedClusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
 		Plan:             "ADVANCED",
@@ -83,34 +106,51 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		WindowDuration: "110011s",
 	}
 
-	// Create
+	// Create Standard Cluster
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
-		Return(clusterInfo, nil, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Return(standardCluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), standardClusterID).
+		Return(standardCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), standardClusterID).
+		Return(initialBackupConfig, httpOk, nil).Times(2)
+	s.EXPECT().SetMaintenanceWindow(gomock.Any(), standardClusterID, createdMaintenanceWindowInfo).
+		Return(nil, nil, fmt.Errorf("maintenance windows are supported for advanced clusters only"))
+
+	// Delete Standard Cluster
+	s.EXPECT().GetCluster(gomock.Any(), standardClusterID).
+		Return(standardCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+	s.EXPECT().DeleteCluster(gomock.Any(), standardClusterID)
+
+	// Create Advanced Cluster
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(advancedCluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), advancedClusterID).
+		Return(advancedCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
 		Times(3)
-	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
-		Return(initialBackupConfig, httpOk, nil).AnyTimes()
-	s.EXPECT().SetMaintenanceWindow(gomock.Any(), clusterID, createdMaintenanceWindowInfo).
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), advancedClusterID).
+		Return(initialBackupConfig, httpOk, nil).Times(3)
+	s.EXPECT().SetMaintenanceWindow(gomock.Any(), advancedClusterID, createdMaintenanceWindowInfo).
 		Return(createdMaintenanceWindowInfo, nil, nil)
-	s.EXPECT().GetMaintenanceWindow(gomock.Any(), clusterID).
+	s.EXPECT().GetMaintenanceWindow(gomock.Any(), advancedClusterID).
 		Return(createdMaintenanceWindowInfo, nil, nil)
 
 	// Update
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(clusterInfo, nil, nil).
+	s.EXPECT().GetCluster(gomock.Any(), advancedClusterID).
+		Return(advancedCluster, nil, nil).
 		Times(3)
-	s.EXPECT().GetMaintenanceWindow(gomock.Any(), clusterID).
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), advancedClusterID).
+		Return(initialBackupConfig, httpOk, nil)
+	s.EXPECT().GetMaintenanceWindow(gomock.Any(), advancedClusterID).
 		Return(createdMaintenanceWindowInfo, nil, nil)
-	s.EXPECT().SetMaintenanceWindow(gomock.Any(), clusterID, updatedMaintenanceWindowInfo).
+	s.EXPECT().SetMaintenanceWindow(gomock.Any(), advancedClusterID, updatedMaintenanceWindowInfo).
 		Return(updatedMaintenanceWindowInfo, nil, nil)
-	s.EXPECT().GetMaintenanceWindow(gomock.Any(), clusterID).
+	s.EXPECT().GetMaintenanceWindow(gomock.Any(), advancedClusterID).
 		Return(updatedMaintenanceWindowInfo, nil, nil).
 		Times(2)
 
 	// Delete
-	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
-	s.EXPECT().DeleteMaintenanceWindow(gomock.Any(), clusterID)
+	s.EXPECT().DeleteCluster(gomock.Any(), advancedClusterID)
+	s.EXPECT().DeleteMaintenanceWindow(gomock.Any(), advancedClusterID)
 
 	testMaintenanceWindowResource(t, clusterName, true)
 }
@@ -126,6 +166,20 @@ func testMaintenanceWindowResource(t *testing.T, clusterName string, useMock boo
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			{
+				Config: getTestMaintenanceWindowResourceCreateConfigWithStandardCluster(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists(clusterResourceName),
+					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration", "1010"),
+					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration", "101010"),
+				),
+				ExpectError: regexp.MustCompile("maintenance windows are supported for advanced clusters only"),
+			},
+			// Tear down the serverless cluster
+			{
+				Config: " ",
+				Destroy: true,
+			},
 			{
 				Config: getTestMaintenanceWindowResourceCreateConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
@@ -149,6 +203,30 @@ func testMaintenanceWindowResource(t *testing.T, clusterName string, useMock boo
 			},
 		},
 	})
+}
+
+func getTestMaintenanceWindowResourceCreateConfigWithStandardCluster(name string) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+	name           = "%s"
+	cloud_provider = "GCP"
+	plan = "STANDARD"
+	serverless = {
+		usage_limits = {
+			provisioned_virtual_cpus = 2
+		}
+	}
+	regions = [{
+		name = "us-central1"
+	}]
+}
+
+resource "cockroach_maintenance_window" "teststandard" {
+  id              = cockroach_cluster.test.id
+  offset_duration = 1010
+  window_duration = 101010
+}
+`, name)
 }
 
 func getTestMaintenanceWindowResourceCreateConfig(name string) string {

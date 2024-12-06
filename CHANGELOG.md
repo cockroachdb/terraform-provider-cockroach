@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Disallow 0 from being passed for disk_iops and update the docs to indicate
+  that omitting the attribute is the correct way to get the default behavior.
+
 - Validate that `node_count` is not passed in with serverless cluster regions.
   Also, clear up in the documentation that this is not allowed.
 

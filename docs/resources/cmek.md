@@ -81,7 +81,7 @@ Required:
 
 Optional:
 
-- `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
+- `node_count` (Number) Number of nodes in the region. Valid for Advanced clusters only.
 - `primary` (Boolean) Set to true to mark this region as the primary for a serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.
 
 Read-Only:

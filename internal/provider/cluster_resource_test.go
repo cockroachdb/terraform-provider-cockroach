@@ -827,6 +827,30 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		ignoreImportPaths []string
 	}{
 		{
+			name: "STANDARD clusters must not have a node_count",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: fmt.Sprintf(`
+						resource "cockroach_cluster" "test" {
+							name           = "%s"
+							cloud_provider = "GCP"
+							serverless = {}
+							regions = [
+								{
+									name = "us-central1"
+								},
+								{
+									name = "us-central1"
+									node_count = 1
+								},
+							]
+						}
+					`, clusterName),
+					ExpectError: regexp.MustCompile("node_count is supported for ADVANCED clusters only"),
+				}
+			},
+		},
+		{
 			name: "single-region serverless BASIC cluster converted to unlimited resources",
 			createStep: func() resource.TestStep {
 				return onDemandSingleRegionClusterWithLimitsStep(clusterName, "BASIC", 1_000_000, 1024)

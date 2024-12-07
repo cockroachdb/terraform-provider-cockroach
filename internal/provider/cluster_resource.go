@@ -90,7 +90,7 @@ var regionSchema = schema.NestedAttributeObject{
 			PlanModifiers: []planmodifier.Int64{
 				int64planmodifier.UseStateForUnknown(),
 			},
-			Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",
+			Description: "Number of nodes in the region. Valid for Advanced clusters only.",
 		},
 		"primary": schema.BoolAttribute{
 			Optional:    true,
@@ -373,6 +373,38 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("serverless").AtName("usage_limits").AtName("storage_mib_limit"),
 			path.MatchRoot("serverless").AtName("usage_limits").AtName("provisioned_virtual_cpus"),
 		),
+	}
+}
+
+func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+
+	// ValidateConfig seems to be called multiple times, once before any values
+	// are known.  When all values are unknown we can't convert to our cluster
+	// model because we use some custom fields such as Regions.  Wait until
+	// things are defined before converting the config to our model.
+	var regions types.List
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("regions"), &regions)...)
+	if regions.IsUnknown() {
+		return
+	}
+
+	var cluster CockroachCluster
+	resp.Diagnostics.Append(req.Config.Get(ctx, &cluster)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	plan, err := derivePlanType(&cluster)
+	if err != nil {
+		resp.Diagnostics.AddError("Invalid Configuration", err.Error())
+		return
+	}
+	if plan != client.PLANTYPE_ADVANCED {
+		for i, region := range cluster.Regions {
+			if IsKnown(region.NodeCount) {
+				resp.Diagnostics.AddAttributeError(path.Root("regions").AtListIndex(i), "Invalid Attribute", "node_count is supported for ADVANCED clusters only.")
+			}
+		}
 	}
 }
 

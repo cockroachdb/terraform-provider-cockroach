@@ -26,10 +26,10 @@ variable "storage_gib" {
   default  = 15
 }
 
-variable "machine_type" {
-  type     = string
+variable "vcpu_count" {
+  type     = number
   nullable = false
-  default  = "n2-standard-2"
+  default  = 4
 }
 
 variable "iam_role_id" {
@@ -77,8 +77,8 @@ resource "cockroach_cluster" "example" {
   name           = var.cluster_name
   cloud_provider = "GCP"
   dedicated = {
-    storage_gib  = var.storage_gib
-    machine_type = var.machine_type
+    storage_gib      = var.storage_gib
+    num_virtual_cpus = var.vcpu_count
   }
   regions = [{
     name       = var.gcp_region,

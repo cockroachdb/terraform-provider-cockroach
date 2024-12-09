@@ -234,7 +234,7 @@ func (r *clusterResource) Schema(
 					"machine_type": schema.StringAttribute{
 						Optional:    true,
 						Computed:    true,
-						Description: "Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4.",
+						MarkdownDescription: "Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4. This attribute requires a feature flag to be enabled. It is recommended to leave this empty and use `num_virtual_cpus` to control the machine type.",
 					},
 					"num_virtual_cpus": schema.Int64Attribute{
 						Optional:    true,

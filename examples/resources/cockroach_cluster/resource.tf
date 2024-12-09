@@ -3,8 +3,8 @@ resource "cockroach_cluster" "advanced" {
   cloud_provider = "GCP"
   plan           = "ADVANCED"
   dedicated = {
-    storage_gib  = 15
-    machine_type = "n2-standard-4"
+    storage_gib      = 15
+    num_virtual_cpus = 4
   }
   regions = [
     {

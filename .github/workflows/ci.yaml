@@ -46,6 +46,11 @@ jobs:
         with:
           go-version: 1.22
 
+      # We don't pin the version of terraform to ensure the tests run against
+      # the latest CLI version.
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Tests
         run: make test
 
@@ -71,6 +76,13 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      # Terraform fmt is run on the docs directory, don't bother pinning this
+      # version.  This will install the latest version. If there is a difference
+      # in format between the latest version and the local version, the
+      # developer should update.
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Build docs
         run: make generate

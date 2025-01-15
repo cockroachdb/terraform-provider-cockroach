@@ -19,6 +19,11 @@ jobs:
         with:
           go-version: 1.22
 
+      # We don't pin the version of terraform to ensure the tests run against
+      # the latest CLI version.
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Tests
         run: make testacc
         env:

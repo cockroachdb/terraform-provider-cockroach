@@ -104,6 +104,9 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 		Sql:      false,
 		Ui:       false,
 	}
+	newEntryWithEmptyStringName := newEntry
+	newEntryWithEmptyStringName.Name = ptr("")
+
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -182,83 +185,87 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 
 			cluster := c.finalCluster
 			entry := c.entry
+			entryWithNilName := entry
+			entryWithNilName.Name = nil
+			entryWithEmptyStringName := entry
+			entryWithEmptyStringName.Name = ptr("")
 
-			// Create
+			// Step: Initial creation, entry with nil name
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&cluster, nil, nil)
+			
+			// Calls to GetBackupConfiguration and GetCluster are called many
+			// times throughout the test. The requests and responses don't
+			// change so these are set to return AnyTimes() to simplify the
+			// remainder of the tests.
 			s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
 				Return(initialBackupConfig, httpOk, nil).AnyTimes()
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-			s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
-			// Called by testAllowlistEntryExists
+				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).AnyTimes()
+			s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entryWithNilName).Return(&entryWithEmptyStringName, nil, nil)
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
-				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil)
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entryWithEmptyStringName}}, nil, nil).Times(2)
 
-			// Update 1
+			// Step: Update to empty string name should keep the name as empty string
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entryWithEmptyStringName}}, nil, nil).Times(3)
+
+			// Step: Update to empty string name again to show no churn
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entryWithEmptyStringName}}, nil, nil).Times(3)
+
+			// Step: Set an actual value for name
 			// The OpenAPI generator does something weird when part of an object lives in the URL
 			// and the rest in the request body, and it winds up as a partial object.
+			entryForUpdate := &client.AllowlistEntry1{
+				Name: entry.Name,
+				Sql:  entry.Sql,
+				Ui:   entry.Ui,
+			}
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entryWithEmptyStringName}}, nil, nil)
+			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, entryForUpdate).
+				Return(&entry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).Times(2)
+
+			// Step: Update other fields
 			newEntryForUpdate := &client.AllowlistEntry1{
 				Name: newEntry.Name,
 				Sql:  newEntry.Sql,
 				Ui:   newEntry.Ui,
 			}
-			// GetCluster and ListAllowListEntries called for each allow list entry
-			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(2)
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
-				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).Times(2)
-			// One allowlist was updated
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil)
 			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntryForUpdate).
 				Return(&newEntry, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-			// Called by testAllowlistEntryExists
-			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil)
-
-			// Update 2 - nil name (this should not make an update)
-			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil)
-			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
 				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).Times(2)
 
-			// Update 3 - add name back but make it empty string (this should an update)
-			newEntry2Update := &client.AllowlistEntry1{
+			// Step: Remove name as a managed attribute
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).Times(3)
+
+			// Step: Add name back as empty string
+			newEntryWithEmptyNameForUpdate := &client.AllowlistEntry1{
 				Name: ptr(""),
 				Sql:  newEntry.Sql,
 				Ui:   newEntry.Ui,
 			}
-			newEntry2 := newEntry
-			newEntry2.Name = ptr("")
-
-			// Two pairs of these, one for each allowlist
-			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(2)
-			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil).Times(2)
-			// One allowlist was updated
-			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntry2Update).
-				Return(&newEntry2, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-			// Called by testAllowlistEntryExists
-			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry2}}, nil, nil)
-
-			// Update 4 - Update to empty string again (no churn)
-			// Two pairs of these, one for each allowlist
-			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).Times(2)
-			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
-				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry2}}, nil, nil).Times(3)
-
-			// Delete
-			s.EXPECT().GetCluster(gomock.Any(), clusterID).
-				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
-				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry2}}, nil, nil).
-				Times(2)
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntry}}, nil, nil)
+			s.EXPECT().UpdateAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask, newEntryWithEmptyNameForUpdate).
+				Return(&newEntryWithEmptyStringName, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).
+				Return(&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntryWithEmptyStringName}}, nil, nil).Times(2)
+
+			// Step: Update to empty string name again to show no churn
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntryWithEmptyStringName}}, nil, nil).Times(3)
+
+			// Deletion
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, newEntryWithEmptyStringName}}, nil, nil)
 			s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
 			s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
@@ -282,10 +289,14 @@ func testAllowlistEntryResource(
 	var clusterResourceName string
 	var allowlistEntryResourceConfigFn func(string, *client.AllowlistEntry) string
 	var uiVal string
-	entryWithNilName := newEntry
+	entryWithNilName := entry
 	entryWithNilName.Name = nil
-	entryWithEmptyStringName := newEntry
+	entryWithEmptyStringName := entry
 	entryWithEmptyStringName.Name = ptr("")
+	newEntryWithNilName := newEntry
+	newEntryWithNilName.Name = nil
+	newEntryWithEmptyStringName := newEntry
+	newEntryWithEmptyStringName.Name = ptr("")
 
 	if isServerless {
 		clusterResourceName = serverlessClusterResourceName
@@ -301,7 +312,54 @@ func testAllowlistEntryResource(
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			// Start with a Nil named entry to show that state correctly writes
+			// the default response value of the entry which is empty string
 			{
+				PreConfig: func() {
+					traceMessageStep("Initial creation, entry with nil name")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithNilName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", uiVal),
+					resource.TestCheckResourceAttr(resourceName, "sql", "true"),
+				),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("Update to empty string name should keep the name as empty string")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithEmptyStringName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", uiVal),
+					resource.TestCheckResourceAttr(resourceName, "sql", "true"),
+				),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("Update to empty string name again to show no churn")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithEmptyStringName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", uiVal),
+					resource.TestCheckResourceAttr(resourceName, "sql", "true"),
+				),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("Set an actual value for name")
+				},
 				Config: allowlistEntryResourceConfigFn(clusterName, &entry),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
@@ -313,6 +371,9 @@ func testAllowlistEntryResource(
 				),
 			},
 			{
+				PreConfig: func() {
+					traceMessageStep("Update other fields")
+				},
 				Config: allowlistEntryResourceConfigFn(clusterName, &newEntry),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
@@ -323,9 +384,14 @@ func testAllowlistEntryResource(
 					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
 				),
 			},
-			// Update that removes name from the resource
+			// Update that removes name from the resource, Since a name is
+			// already set on the server, that name will be maintained because
+			// we've removed management of this value from terraform.
 			{
-				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithNilName),
+				PreConfig: func() {
+					traceMessageStep("Remove name as a managed attribute")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &newEntryWithNilName),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
 					// Expect that the server name is not affected if the name is not explicitly set
@@ -336,25 +402,13 @@ func testAllowlistEntryResource(
 					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
 				),
 			},
-			// Update to empty string name
 			{
-				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithEmptyStringName),
+				PreConfig: func() {
+					traceMessageStep("Add name back as empty string")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &newEntryWithEmptyStringName),
 				Check: resource.ComposeTestCheckFunc(
 					testAllowlistEntryExists(resourceName, clusterResourceName),
-					// Expect that the server name is not affected if the name is not explicitly set
-					resource.TestCheckResourceAttr(resourceName, "name", ""),
-					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
-					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
-					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
-					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
-				),
-			},
-			// Update to empty string name again to show no churn
-			{
-				Config: allowlistEntryResourceConfigFn(clusterName, &entryWithEmptyStringName),
-				Check: resource.ComposeTestCheckFunc(
-					testAllowlistEntryExists(resourceName, clusterResourceName),
-					// Expect that the server name is not affected if the name is not explicitly set
 					resource.TestCheckResourceAttr(resourceName, "name", ""),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
 					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
@@ -363,9 +417,27 @@ func testAllowlistEntryResource(
 				),
 			},
 			{
+				PreConfig: func() {
+					traceMessageStep("Update to empty string name again to show no churn")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &newEntryWithEmptyStringName),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", ""),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", "false"),
+					resource.TestCheckResourceAttr(resourceName, "sql", "false"),
+				),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("Deletion")
+				},
 				ResourceName:      resourceName,
 				ImportState:       true,
 				ImportStateVerify: true,
+				Check: traceEndOfPlan(),
 			},
 		},
 	})

@@ -34,7 +34,7 @@ import (
 
 // clusterID:ip/mask
 const (
-	allowListIDFmt      = "%s:%s/%d"
+	allowlistIDFmt      = "%s:%s/%d"
 	allowlistEntryRegex = `(([0-9]{1,3}\.){3}[0-9]{1,3})\/([0-9]|[1-2][0-9]|3[0-2])`
 	// Allowlist entries are lightweight, so we can use a large limit.
 	allowlistEntryPaginationLimit = 500
@@ -42,11 +42,11 @@ const (
 
 var allowlistIDRegex = regexp.MustCompile(fmt.Sprintf("^(%s):%s$", uuidRegexString, allowlistEntryRegex))
 
-type allowListResource struct {
+type allowlistResource struct {
 	provider *provider
 }
 
-func (r *allowListResource) Schema(
+func (r *allowlistResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
@@ -83,7 +83,7 @@ func (r *allowListResource) Schema(
 			"name": schema.StringAttribute{
 				Computed:    true,
 				Optional:    true,
-				Description: "Name of this allowlist entry. If not set explicitly, this value does not sync with the server.",
+				Description: "Name of this allowlist entry. If left unset, it will inherit a server-side default.",
 			},
 			"id": schema.StringAttribute{
 				Computed: true,
@@ -96,7 +96,7 @@ func (r *allowListResource) Schema(
 	}
 }
 
-func (r *allowListResource) Configure(
+func (r *allowlistResource) Configure(
 	_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse,
 ) {
 	if req.ProviderData == nil {
@@ -109,13 +109,13 @@ func (r *allowListResource) Configure(
 	}
 }
 
-func (r *allowListResource) Metadata(
+func (r *allowlistResource) Metadata(
 	_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse,
 ) {
 	resp.TypeName = req.ProviderTypeName + "_allow_list"
 }
 
-func (r *allowListResource) Create(
+func (r *allowlistResource) Create(
 	ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse,
 ) {
 	if r.provider == nil || !r.provider.configured {
@@ -123,33 +123,22 @@ func (r *allowListResource) Create(
 		return
 	}
 
-	var entry AllowlistEntry
-	diags := req.Plan.Get(ctx, &entry)
+	var plan AllowlistEntry
+	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
-	// Create a unique ID (required by terraform framework) by combining
-	// the cluster ID and full CIDR address.
-	entry.ID = types.StringValue(fmt.Sprintf(
-		allowListIDFmt, entry.ClusterId.ValueString(),
-		entry.CidrIp.ValueString(), entry.CidrMask.ValueInt64()))
-
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var allowList = client.AllowlistEntry{
-		CidrIp:   entry.CidrIp.ValueString(),
-		CidrMask: int32(entry.CidrMask.ValueInt64()),
-		Ui:       entry.Ui.ValueBool(),
-		Sql:      entry.Sql.ValueBool(),
-	}
-
-	if IsKnown(entry.Name) {
-		name := entry.Name.ValueString()
-		allowList.Name = &name
-	}
+	clusterID := plan.ClusterId.ValueString()
 
 	traceAPICall("AddAllowlistEntry")
-	_, _, err := r.provider.service.AddAllowlistEntry(ctx, entry.ClusterId.ValueString(), &allowList)
+	allowlist, _, err := r.provider.service.AddAllowlistEntry(ctx, clusterID, &client.AllowlistEntry{
+		CidrIp:   plan.CidrIp.ValueString(),
+		CidrMask: int32(plan.CidrMask.ValueInt64()),
+		Ui:       plan.Ui.ValueBool(),
+		Sql:      plan.Sql.ValueBool(),
+	})
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error adding allowed IP range",
@@ -158,14 +147,38 @@ func (r *allowListResource) Create(
 		return
 	}
 
-	diags = resp.State.Set(ctx, entry)
+	var state AllowlistEntry
+	loadAllowlistEntryToTerraformState(clusterID, allowlist, &state)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 }
 
-func (r *allowListResource) Read(
+func generateAllowlistID(clusterID, cidrIP string, cidrMask int32) string {
+	return fmt.Sprintf(allowlistIDFmt, clusterID, cidrIP, cidrMask)
+}
+
+func loadAllowlistEntryToTerraformState(clusterID string, entry *client.AllowlistEntry, state *AllowlistEntry) {
+	// Create a unique ID (required by terraform framework) by combining
+	// the cluster ID and full CIDR address.
+	state.ID = types.StringValue(generateAllowlistID(clusterID, entry.GetCidrIp(), entry.GetCidrMask()))
+	state.ClusterId = types.StringValue(clusterID)
+	state.CidrIp = types.StringValue(entry.GetCidrIp())
+	state.CidrMask = types.Int64Value(int64(entry.GetCidrMask()))
+	state.Ui = types.BoolValue(entry.GetUi())
+	state.Sql = types.BoolValue(entry.GetSql())
+	// Name is incorrectly specified in the API as a pointer and will never be
+	// nil but we'll handle it here anyways.
+	if entry.Name == nil {
+		state.Name = types.StringValue("")
+	} else {
+		state.Name = types.StringValue(entry.GetName())
+	}
+}
+
+func (r *allowlistResource) Read(
 	ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse,
 ) {
 	if r.provider == nil || !r.provider.configured {
@@ -181,6 +194,8 @@ func (r *allowListResource) Read(
 		return
 	}
 
+	clusterID := state.ClusterId.ValueString()
+
 	// Since the state may have come from an import, we need to retrieve
 	// the actual entry list and make sure this one is in there.
 	var page string
@@ -188,7 +203,7 @@ func (r *allowListResource) Read(
 	for {
 		traceAPICall("ListAllowlistEntries")
 		apiResp, httpResp, err := r.provider.service.ListAllowlistEntries(
-			ctx, state.ClusterId.ValueString(), &client.ListAllowlistEntriesOptions{
+			ctx, clusterID, &client.ListAllowlistEntriesOptions{
 				PaginationPage:  &page,
 				PaginationLimit: &limit,
 			},
@@ -214,17 +229,11 @@ func (r *allowListResource) Read(
 			return
 		}
 
-		for _, entry := range apiResp.GetAllowlist() {
-			if entry.GetCidrIp() == state.CidrIp.ValueString() &&
-				int64(entry.GetCidrMask()) == state.CidrMask.ValueInt64() {
-				// Update flags in case they've changed externally.
-				state.Sql = types.BoolValue(entry.GetSql())
-				state.Ui = types.BoolValue(entry.GetUi())
-				if entry.Name == nil {
-					state.Name = types.StringNull()
-				} else {
-					state.Name = types.StringValue(entry.GetName())
-				}
+		// Find the allowlist entry this resource represents.
+		for _, respEntry := range apiResp.GetAllowlist() {
+			respEntryID := generateAllowlistID(clusterID, respEntry.GetCidrIp(), respEntry.GetCidrMask())
+			if respEntryID == state.ID.ValueString() {
+				loadAllowlistEntryToTerraformState(clusterID, &respEntry, &state)
 				diags = resp.State.Set(ctx, &state)
 				resp.Diagnostics.Append(diags...)
 				return
@@ -246,7 +255,7 @@ func (r *allowListResource) Read(
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *allowListResource) Update(
+func (r *allowlistResource) Update(
 	ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse,
 ) {
 	// Get plan values
@@ -265,21 +274,21 @@ func (r *allowListResource) Update(
 		return
 	}
 
-	clusterId := plan.ClusterId.ValueString()
-	entryCIDRIp := plan.CidrIp.ValueString()
+	clusterID := plan.ClusterId.ValueString()
+	entryCIDRIP := plan.CidrIp.ValueString()
 	entryCIDRMask := int32(plan.CidrMask.ValueInt64())
 
-	updatedAllowList := client.AllowlistEntry1{
+	update := &client.AllowlistEntry1{
 		Ui:  plan.Ui.ValueBool(),
 		Sql: plan.Sql.ValueBool(),
 	}
 	if IsKnown(plan.Name) {
-		updatedAllowList.Name = ptr(plan.Name.ValueString())
+		update.Name = ptr(plan.Name.ValueString())
 	}
 
 	traceAPICall("UpdateAllowlistEntry")
-	_, _, err := r.provider.service.UpdateAllowlistEntry(
-		ctx, clusterId, entryCIDRIp, entryCIDRMask, &updatedAllowList)
+	updatedEntry, _, err := r.provider.service.UpdateAllowlistEntry(
+		ctx, clusterID, entryCIDRIP, entryCIDRMask, update)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating network allowlist",
@@ -288,14 +297,15 @@ func (r *allowListResource) Update(
 		return
 	}
 
-	diags = resp.State.Set(ctx, plan)
+	loadAllowlistEntryToTerraformState(clusterID, updatedEntry, &state)
+	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 }
 
-func (r *allowListResource) Delete(
+func (r *allowlistResource) Delete(
 	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
 ) {
 	var state AllowlistEntry
@@ -324,7 +334,7 @@ func (r *allowListResource) Delete(
 	resp.State.RemoveResource(ctx)
 }
 
-func (r *allowListResource) ImportState(
+func (r *allowlistResource) ImportState(
 	ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse,
 ) {
 	// Since an allowlist entry is uniquely identified by three fields: the cluster ID,
@@ -340,6 +350,9 @@ func (r *allowListResource) ImportState(
 	}
 	// We can swallow this error because it's already been regex-validated.
 	mask, _ = strconv.Atoi(matches[4])
+	
+	// This is a partial state object but includes all the fields which are used
+	// in the subsequent READ operation to fill out the rest of the state.
 	entry := AllowlistEntry{
 		ClusterId: types.StringValue(matches[1]),
 		CidrIp:    types.StringValue(matches[2]),
@@ -350,5 +363,5 @@ func (r *allowListResource) ImportState(
 }
 
 func NewAllowlistResource() resource.Resource {
-	return &allowListResource{}
+	return &allowlistResource{}
 }

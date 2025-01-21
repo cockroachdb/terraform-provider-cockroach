@@ -80,6 +80,11 @@ variable "cidr_prefix_length" {
   default  = 0
 }
 
+variable "support_physical_cluster_replication" {
+  type     = bool
+  nullable = true
+}
+
 terraform {
   required_providers {
     cockroach = {
@@ -98,7 +103,8 @@ resource "cockroach_cluster" "example" {
   dedicated = {
     storage_gib      = var.storage_gib
     num_virtual_cpus = var.num_virtual_cpus
-    cidr_range       = "172.28.0.0/14"
+    #    cidr_range       = "172.28.0.0/14"
+    support_physical_cluster_replication = var.support_physical_cluster_replication
   }
   regions = [
     for r in var.cloud_provider_regions : {

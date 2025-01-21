@@ -126,6 +126,10 @@ func (d *clusterDataSource) Schema(
 						Computed:    true,
 						Description: "The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.",
 					},
+					"support_physical_cluster_replication": schema.BoolAttribute{
+						Computed:    true,
+						Description: "Indicates whether to create a cluster using an architecture that supports physical cluster replication.",
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -191,11 +195,11 @@ func (d *clusterDataSource) Schema(
 						Description: "Indicates whether backups are enabled.",
 					},
 					"retention_days": schema.Int64Attribute{
-						Computed:   true,
+						Computed:            true,
 						MarkdownDescription: "The number of days to retain backups for.",
 					},
 					"frequency_minutes": schema.Int64Attribute{
-						Computed:   true,
+						Computed:    true,
 						Description: "The frequency of backups in minutes.",
 					},
 				},
@@ -280,7 +284,6 @@ func (d *clusterDataSource) Read(
 		)
 		return
 	}
-
 
 	// The concept of a plan doesn't apply to data sources.
 	// Using a nil plan means we won't try to re-sort the region list.

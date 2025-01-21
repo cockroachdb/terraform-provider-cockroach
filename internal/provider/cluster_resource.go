@@ -217,9 +217,9 @@ func (r *clusterResource) Schema(
 						Description: "Storage amount per node in GiB.",
 					},
 					"disk_iops": schema.Int64Attribute{
-						Optional:    true,
-						Computed:    true,
-						Validators:  []validator.Int64{
+						Optional: true,
+						Computed: true,
+						Validators: []validator.Int64{
 							// If supplied this value must be non-zero. 0 is a
 							// valid api value indicating the default being
 							// returned but it causes a provider inconsistency.
@@ -232,8 +232,8 @@ func (r *clusterResource) Schema(
 						Description: "Memory per node in GiB.",
 					},
 					"machine_type": schema.StringAttribute{
-						Optional:    true,
-						Computed:    true,
+						Optional:            true,
+						Computed:            true,
 						MarkdownDescription: "Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4. This attribute requires a feature flag to be enabled. It is recommended to leave this empty and use `num_virtual_cpus` to control the machine type.",
 					},
 					"num_virtual_cpus": schema.Int64Attribute{
@@ -257,6 +257,14 @@ func (r *clusterResource) Schema(
 							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
+					"support_physical_cluster_replication": schema.BoolAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "Specifies whether a cluster should be started using an architecture that supports physical cluster replication.",
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -267,7 +275,7 @@ func (r *clusterResource) Schema(
 				NestedObject: regionSchema,
 			},
 			"state": schema.StringAttribute{
-				Computed:    true,
+				Computed: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
@@ -302,32 +310,32 @@ func (r *clusterResource) Schema(
 				Description: "Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.",
 			},
 			"backup_config": schema.SingleNestedAttribute{
-				Computed: true,
-				Optional: true,
+				Computed:            true,
+				Optional:            true,
 				MarkdownDescription: "The backup settings for a cluster.\n Each cluster has backup settings that determine if backups are enabled, how frequently they are taken, and how long they are retained for. Use this attribute to manage those settings.",
 				PlanModifiers: []planmodifier.Object{
 					objectplanmodifier.UseStateForUnknown(),
 				},
 				Attributes: map[string]schema.Attribute{
 					"enabled": schema.BoolAttribute{
-						Optional:    true,
-						Computed:    true,
+						Optional: true,
+						Computed: true,
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},
 						Description: "Indicates whether backups are enabled. If set to false, no backups will be created.",
 					},
 					"retention_days": schema.Int64Attribute{
-						Optional:   true,
-						Computed:   true,
+						Optional: true,
+						Computed: true,
 						PlanModifiers: []planmodifier.Int64{
 							int64planmodifier.UseStateForUnknown(),
 						},
 						MarkdownDescription: "The number of days to retain backups for.  Valid values are [2, 7, 30, 90, 365]. Can only be set once, further changes require opening a support ticket. See [Updating backup retention](../guides/updating-backup-retention) for more information.",
 					},
 					"frequency_minutes": schema.Int64Attribute{
-						Optional:   true,
-						Computed:   true,
+						Optional: true,
+						Computed: true,
 						PlanModifiers: []planmodifier.Int64{
 							int64planmodifier.UseStateForUnknown(),
 						},
@@ -556,6 +564,9 @@ func (r *clusterResource) Create(
 			if cfg.CidrRange.ValueString() != "" {
 				dedicated.CidrRange = ptr(cfg.CidrRange.ValueString())
 			}
+			if cfg.SupportPhysicalClusterReplication.ValueBool() {
+				dedicated.SupportPhysicalClusterReplication = ptr(cfg.SupportPhysicalClusterReplication.ValueBool())
+			}
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
@@ -632,7 +643,7 @@ func (r *clusterResource) Create(
 			backupUpdateRequest.FrequencyMinutes = ptr(int32(planBackupConfig.FrequencyMinutes.ValueInt64()))
 		}
 
-		if  backupUpdateRequest != (client.UpdateBackupConfigurationSpec{}) {
+		if backupUpdateRequest != (client.UpdateBackupConfigurationSpec{}) {
 			traceAPICall("UpdateBackupConfiguration")
 			remoteBackupConfig, _, err = r.provider.service.UpdateBackupConfiguration(ctx, clusterObj.Id, &backupUpdateRequest)
 			if err != nil {
@@ -789,6 +800,12 @@ func (r *clusterResource) ModifyPlan(
 				"To prevent accidental deletion of data, changing a cluster's cidr range "+
 					"isn't allowed. Please explicitly destroy this cluster before changing "+
 					"cidr range.")
+		}
+		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.SupportPhysicalClusterReplication != state.DedicatedConfig.SupportPhysicalClusterReplication {
+			resp.Diagnostics.AddError("Cannot update support_physical_cluster_replication",
+				"To prevent accidental deletion of data, changing a cluster's "+
+					"support_physical_cluster_replication field isn't allowed. "+
+					"Please explicitly destroy this cluster before changing this field.")
 		}
 	}
 
@@ -1087,7 +1104,7 @@ func (r *clusterResource) Update(
 			backupUpdateRequest.FrequencyMinutes = ptr(int32(planBackupConfig.FrequencyMinutes.ValueInt64()))
 		}
 
-		if  backupUpdateRequest != (client.UpdateBackupConfigurationSpec{}) {
+		if backupUpdateRequest != (client.UpdateBackupConfigurationSpec{}) {
 			traceAPICall("UpdateBackupConfiguration")
 			remoteBackupConfig, _, err = r.provider.service.UpdateBackupConfiguration(ctx, clusterObj.Id, &backupUpdateRequest)
 			if err != nil {
@@ -1309,6 +1326,10 @@ func loadClusterToTerraformState(
 			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
 			CidrRange:                types.StringValue(clusterObj.CidrRange),
 		}
+
+		if plan != nil && plan.DedicatedConfig != nil && IsKnown(plan.DedicatedConfig.SupportPhysicalClusterReplication) {
+			state.DedicatedConfig.SupportPhysicalClusterReplication = plan.DedicatedConfig.SupportPhysicalClusterReplication
+		}
 	}
 
 	var diags diag.Diagnostics
@@ -1332,12 +1353,11 @@ var backupConfigElementTypes = map[string]attr.Type{
 	"retention_days":    types.Int64Type,
 }
 
-func unknownBackupConfig(
-) (basetypes.ObjectValue, diag.Diagnostics) {
+func unknownBackupConfig() (basetypes.ObjectValue, diag.Diagnostics) {
 	elements := map[string]attr.Value{
-		"enabled": types.BoolUnknown(),
+		"enabled":           types.BoolUnknown(),
 		"frequency_minutes": types.Int64Unknown(),
-		"retention_days": types.Int64Unknown(),
+		"retention_days":    types.Int64Unknown(),
 	}
 	objectValue, diags := types.ObjectValue(backupConfigElementTypes, elements)
 	return objectValue, diags
@@ -1347,9 +1367,9 @@ func clientBackupConfigToProviderBackupConfig(
 	apiBackupConfig *client.BackupConfiguration,
 ) (basetypes.ObjectValue, diag.Diagnostics) {
 	elements := map[string]attr.Value{
-		"enabled": types.BoolValue(apiBackupConfig.GetEnabled()),
+		"enabled":           types.BoolValue(apiBackupConfig.GetEnabled()),
 		"frequency_minutes": types.Int64Value(int64(apiBackupConfig.GetFrequencyMinutes())),
-		"retention_days": types.Int64Value(int64(apiBackupConfig.GetRetentionDays())),
+		"retention_days":    types.Int64Value(int64(apiBackupConfig.GetRetentionDays())),
 	}
 	objectValue, diags := types.ObjectValue(backupConfigElementTypes, elements)
 	return objectValue, diags
@@ -1363,8 +1383,8 @@ func providerBackupConfigToClientBackupConfig(ctx context.Context, providerBacku
 	}
 
 	backupUpdateRequest := &client.BackupConfiguration{
-		Enabled: planBackupConfig.Enabled.ValueBool(),
-		RetentionDays: int32(planBackupConfig.RetentionDays.ValueInt64()),
+		Enabled:          planBackupConfig.Enabled.ValueBool(),
+		RetentionDays:    int32(planBackupConfig.RetentionDays.ValueInt64()),
 		FrequencyMinutes: int32(planBackupConfig.FrequencyMinutes.ValueInt64()),
 	}
 	return backupUpdateRequest, diags

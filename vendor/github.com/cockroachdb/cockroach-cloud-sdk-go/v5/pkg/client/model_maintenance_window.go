@@ -18,7 +18,7 @@
 
 package client
 
-// MaintenanceWindow MaintenanceWindowSpec specifies a weekly recurring maintenance window for a cluster..
+// MaintenanceWindow MaintenanceWindowSpec specifies a weekly recurring maintenance window for an ADVANCED cluster..
 type MaintenanceWindow struct {
 	// OffsetDuration is the duration from the start of a week (Monday 00:00 UTC) that this maintenance window will start after.  Must be less than 1 week.
 	OffsetDuration string `json:"offset_duration"`

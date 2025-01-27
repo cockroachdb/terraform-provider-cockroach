@@ -164,22 +164,6 @@ func (mr *MockServiceMockRecorder) CreateApiKey(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateApiKey", reflect.TypeOf((*MockService)(nil).CreateApiKey), arg0, arg1)
 }
 
-// CreateApiOidcConfig mocks base method.
-func (m *MockService) CreateApiOidcConfig(arg0 context.Context, arg1 *client.CreateApiOidcConfigRequest) (*client.ApiOidcConfig, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateApiOidcConfig", arg0, arg1)
-	ret0, _ := ret[0].(*client.ApiOidcConfig)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// CreateApiOidcConfig indicates an expected call of CreateApiOidcConfig.
-func (mr *MockServiceMockRecorder) CreateApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateApiOidcConfig", reflect.TypeOf((*MockService)(nil).CreateApiOidcConfig), arg0, arg1)
-}
-
 // CreateCluster mocks base method.
 func (m *MockService) CreateCluster(arg0 context.Context, arg1 *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -260,6 +244,22 @@ func (mr *MockServiceMockRecorder) CreatePrivateEndpointServices(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePrivateEndpointServices", reflect.TypeOf((*MockService)(nil).CreatePrivateEndpointServices), arg0, arg1)
 }
 
+// CreateReplicationStream mocks base method.
+func (m *MockService) CreateReplicationStream(arg0 context.Context, arg1 *client.CreateReplicationStreamRequest) (*client.ReplicationStream, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateReplicationStream", arg0, arg1)
+	ret0, _ := ret[0].(*client.ReplicationStream)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateReplicationStream indicates an expected call of CreateReplicationStream.
+func (mr *MockServiceMockRecorder) CreateReplicationStream(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateReplicationStream", reflect.TypeOf((*MockService)(nil).CreateReplicationStream), arg0, arg1)
+}
+
 // CreateSQLUser mocks base method.
 func (m *MockService) CreateSQLUser(arg0 context.Context, arg1 string, arg2 *client.CreateSQLUserRequest) (*client.SQLUser, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -338,22 +338,6 @@ func (m *MockService) DeleteApiKey(arg0 context.Context, arg1 string) (*client.A
 func (mr *MockServiceMockRecorder) DeleteApiKey(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteApiKey", reflect.TypeOf((*MockService)(nil).DeleteApiKey), arg0, arg1)
-}
-
-// DeleteApiOidcConfig mocks base method.
-func (m *MockService) DeleteApiOidcConfig(arg0 context.Context, arg1 string) (*client.ApiOidcConfig, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteApiOidcConfig", arg0, arg1)
-	ret0, _ := ret[0].(*client.ApiOidcConfig)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// DeleteApiOidcConfig indicates an expected call of DeleteApiOidcConfig.
-func (mr *MockServiceMockRecorder) DeleteApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteApiOidcConfig", reflect.TypeOf((*MockService)(nil).DeleteApiOidcConfig), arg0, arg1)
 }
 
 // DeleteClientCACert mocks base method.
@@ -768,22 +752,6 @@ func (mr *MockServiceMockRecorder) GetApiKey(arg0, arg1 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApiKey", reflect.TypeOf((*MockService)(nil).GetApiKey), arg0, arg1)
 }
 
-// GetApiOidcConfig mocks base method.
-func (m *MockService) GetApiOidcConfig(arg0 context.Context, arg1 string) (*client.ApiOidcConfig, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetApiOidcConfig", arg0, arg1)
-	ret0, _ := ret[0].(*client.ApiOidcConfig)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetApiOidcConfig indicates an expected call of GetApiOidcConfig.
-func (mr *MockServiceMockRecorder) GetApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApiOidcConfig", reflect.TypeOf((*MockService)(nil).GetApiOidcConfig), arg0, arg1)
-}
-
 // GetBackupConfiguration mocks base method.
 func (m *MockService) GetBackupConfiguration(arg0 context.Context, arg1 string) (*client.BackupConfiguration, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1136,6 +1104,22 @@ func (mr *MockServiceMockRecorder) GetPrometheusMetricExportInfo(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrometheusMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetPrometheusMetricExportInfo), arg0, arg1)
 }
 
+// GetReplicationStream mocks base method.
+func (m *MockService) GetReplicationStream(arg0 context.Context, arg1 string) (*client.ReplicationStream, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReplicationStream", arg0, arg1)
+	ret0, _ := ret[0].(*client.ReplicationStream)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetReplicationStream indicates an expected call of GetReplicationStream.
+func (mr *MockServiceMockRecorder) GetReplicationStream(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReplicationStream", reflect.TypeOf((*MockService)(nil).GetReplicationStream), arg0, arg1)
+}
+
 // GetResourceType mocks base method.
 func (m *MockService) GetResourceType(arg0 context.Context, arg1 string, arg2 *client.GetResourceTypeOptions) (*client.ScimResourceType, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1326,22 +1310,6 @@ func (m *MockService) ListApiKeys(arg0 context.Context, arg1 *client.ListApiKeys
 func (mr *MockServiceMockRecorder) ListApiKeys(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListApiKeys", reflect.TypeOf((*MockService)(nil).ListApiKeys), arg0, arg1)
-}
-
-// ListApiOidcConfig mocks base method.
-func (m *MockService) ListApiOidcConfig(arg0 context.Context, arg1 *client.ListApiOidcConfigOptions) (*client.ListApiOidcConfigResponse, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListApiOidcConfig", arg0, arg1)
-	ret0, _ := ret[0].(*client.ListApiOidcConfigResponse)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// ListApiOidcConfig indicates an expected call of ListApiOidcConfig.
-func (mr *MockServiceMockRecorder) ListApiOidcConfig(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListApiOidcConfig", reflect.TypeOf((*MockService)(nil).ListApiOidcConfig), arg0, arg1)
 }
 
 // ListAuditLogs mocks base method.
@@ -1855,22 +1823,6 @@ func (mr *MockServiceMockRecorder) UpdateApiKey(arg0, arg1, arg2 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApiKey", reflect.TypeOf((*MockService)(nil).UpdateApiKey), arg0, arg1, arg2)
 }
 
-// UpdateApiOidcConfig mocks base method.
-func (m *MockService) UpdateApiOidcConfig(arg0 context.Context, arg1 string, arg2 *client.ApiOidcConfig1) (*client.ApiOidcConfig, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateApiOidcConfig", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ApiOidcConfig)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// UpdateApiOidcConfig indicates an expected call of UpdateApiOidcConfig.
-func (mr *MockServiceMockRecorder) UpdateApiOidcConfig(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateApiOidcConfig", reflect.TypeOf((*MockService)(nil).UpdateApiOidcConfig), arg0, arg1, arg2)
-}
-
 // UpdateBackupConfiguration mocks base method.
 func (m *MockService) UpdateBackupConfiguration(arg0 context.Context, arg1 string, arg2 *client.UpdateBackupConfigurationSpec) (*client.BackupConfiguration, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1997,6 +1949,22 @@ func (m *MockService) UpdateJWTIssuer(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) UpdateJWTIssuer(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateJWTIssuer", reflect.TypeOf((*MockService)(nil).UpdateJWTIssuer), arg0, arg1, arg2)
+}
+
+// UpdateReplicationStream mocks base method.
+func (m *MockService) UpdateReplicationStream(arg0 context.Context, arg1 string, arg2 *client.UpdateReplicationStreamSpec) (*client.ReplicationStream, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateReplicationStream", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ReplicationStream)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateReplicationStream indicates an expected call of UpdateReplicationStream.
+func (mr *MockServiceMockRecorder) UpdateReplicationStream(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReplicationStream", reflect.TypeOf((*MockService)(nil).UpdateReplicationStream), arg0, arg1, arg2)
 }
 
 // UpdateSQLUserPassword mocks base method.

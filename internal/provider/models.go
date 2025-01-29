@@ -355,6 +355,13 @@ type APIKey struct {
 	Secret           types.String `tfsdk:"secret"`
 }
 
+type ReplicationStream struct {
+	ID              types.String `tfsdk:"id"`
+	SourceClusterID types.String `tfsdk:"source_cluster_id"`
+	TargetClusterID types.String `tfsdk:"target_cluster_id"`
+	Status          types.String `tfsdk:"status"`
+}
+
 func (e *APIErrorMessage) String() string {
 	return fmt.Sprintf("%v-%v", e.Code, e.Message)
 }

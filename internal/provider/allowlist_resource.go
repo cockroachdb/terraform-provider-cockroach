@@ -132,13 +132,20 @@ func (r *allowlistResource) Create(
 
 	clusterID := plan.ClusterId.ValueString()
 
-	traceAPICall("AddAllowlistEntry")
-	allowlist, _, err := r.provider.service.AddAllowlistEntry(ctx, clusterID, &client.AllowlistEntry{
+	entry := &client.AllowlistEntry{
 		CidrIp:   plan.CidrIp.ValueString(),
 		CidrMask: int32(plan.CidrMask.ValueInt64()),
 		Ui:       plan.Ui.ValueBool(),
 		Sql:      plan.Sql.ValueBool(),
-	})
+	}
+
+	if IsKnown(plan.Name) {
+		name := plan.Name.ValueString()
+		entry.Name = &name
+	}	
+
+	traceAPICall("AddAllowlistEntry")
+	allowlist, _, err := r.provider.service.AddAllowlistEntry(ctx, clusterID, entry)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error adding allowed IP range",
@@ -350,7 +357,7 @@ func (r *allowlistResource) ImportState(
 	}
 	// We can swallow this error because it's already been regex-validated.
 	mask, _ = strconv.Atoi(matches[4])
-	
+
 	// This is a partial state object but includes all the fields which are used
 	// in the subsequent READ operation to fill out the rest of the state.
 	entry := AllowlistEntry{

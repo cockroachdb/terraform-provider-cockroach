@@ -190,10 +190,9 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			entryWithEmptyStringName := entry
 			entryWithEmptyStringName.Name = ptr("")
 
-			// Step: Initial creation, entry with nil name
+			// Step: Initial creation, entry with non-nil name
 			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 				Return(&cluster, nil, nil)
-			
 			// Calls to GetBackupConfiguration and GetCluster are called many
 			// times throughout the test. The requests and responses don't
 			// change so these are set to return AnyTimes() to simplify the
@@ -202,6 +201,16 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 				Return(initialBackupConfig, httpOk, nil).AnyTimes()
 			s.EXPECT().GetCluster(gomock.Any(), clusterID).
 				Return(&cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).AnyTimes()
+			s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entry).Return(&entry, nil, nil)
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil).Times(2)
+
+			// Step: Delete entry with non-nil name to start fresh
+			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
+				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entry}}, nil, nil)
+			s.EXPECT().DeleteAllowlistEntry(gomock.Any(), clusterID, entry.CidrIp, entry.CidrMask)
+
+			// Step: Initial creation, entry with nil name
 			s.EXPECT().AddAllowlistEntry(gomock.Any(), clusterID, &entryWithNilName).Return(&entryWithEmptyStringName, nil, nil)
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
 				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entryWithEmptyStringName}}, nil, nil).Times(2)
@@ -214,7 +223,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 			s.EXPECT().ListAllowlistEntries(gomock.Any(), clusterID, gomock.Any()).Return(
 				&client.ListAllowlistEntriesResponse{Allowlist: []client.AllowlistEntry{otherEntry, entryWithEmptyStringName}}, nil, nil).Times(3)
 
-			// Step: Set an actual value for name
+			// Step: Update with an actual value for name
 			// The OpenAPI generator does something weird when part of an object lives in the URL
 			// and the rest in the request body, and it winds up as a partial object.
 			entryForUpdate := &client.AllowlistEntry1{
@@ -312,6 +321,26 @@ func testAllowlistEntryResource(
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					traceMessageStep("Initial creation, entry with non-nil name")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, &entry),
+				Check: resource.ComposeTestCheckFunc(
+					testAllowlistEntryExists(resourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", *entry.Name),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_ip"),
+					resource.TestCheckResourceAttrSet(resourceName, "cidr_mask"),
+					resource.TestCheckResourceAttr(resourceName, "ui", uiVal),
+					resource.TestCheckResourceAttr(resourceName, "sql", "true"),
+				),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("Delete entry with non-nil name to start fresh")
+				},
+				Config: allowlistEntryResourceConfigFn(clusterName, nil),
+			},
 			// Start with a Nil named entry to show that state correctly writes
 			// the default response value of the entry which is empty string
 			{
@@ -358,7 +387,7 @@ func testAllowlistEntryResource(
 			},
 			{
 				PreConfig: func() {
-					traceMessageStep("Set an actual value for name")
+					traceMessageStep("Update with an actual value for name")
 				},
 				Config: allowlistEntryResourceConfigFn(clusterName, &entry),
 				Check: resource.ComposeTestCheckFunc(
@@ -482,12 +511,8 @@ func testAllowlistEntryExists(resourceName, clusterResourceName string) resource
 func getTestAllowlistEntryResourceConfigForDedicated(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
-	nameAttribute := ""
-	if entry.Name != nil {
-		nameAttribute = fmt.Sprintf("name = \"%s\"\n", *entry.Name)
-	}
 
-	return fmt.Sprintf(`
+	clusterConfig := fmt.Sprintf(`
 resource "cockroach_cluster" "dedicated" {
     name           = "%s"
     cloud_provider = "GCP"
@@ -500,6 +525,20 @@ resource "cockroach_cluster" "dedicated" {
         node_count: 1
     }]
 }
+`, clusterName)
+
+	if entry == nil {
+		return clusterConfig
+	}
+
+	nameAttribute := ""
+	if entry.Name != nil {
+		nameAttribute = fmt.Sprintf("name = \"%s\"\n", *entry.Name)
+	}
+
+	return fmt.Sprintf(`
+%s
+
 resource "cockroach_allow_list" "network_list" {
     %s
     cidr_ip = "%s"
@@ -508,18 +547,13 @@ resource "cockroach_allow_list" "network_list" {
     ui = %v
     cluster_id = cockroach_cluster.dedicated.id
 }
-`, clusterName, nameAttribute, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
+`, clusterConfig, nameAttribute, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }
 
 func getTestAllowlistEntryResourceConfigForServerless(
 	clusterName string, entry *client.AllowlistEntry,
 ) string {
-	nameAttribute := ""
-	if entry.Name != nil {
-		nameAttribute = fmt.Sprintf("name = \"%s\"\n", *entry.Name)
-	}
-
-	return fmt.Sprintf(`
+	clusterConfig := fmt.Sprintf(`
 resource "cockroach_cluster" "serverless" {
     name           = "%s"
     cloud_provider = "GCP"
@@ -528,6 +562,19 @@ resource "cockroach_cluster" "serverless" {
         name = "us-central1"
     }]
 }
+`, clusterName)
+
+	if entry == nil {
+		return clusterConfig
+	}
+	nameAttribute := ""
+	if entry.Name != nil {
+		nameAttribute = fmt.Sprintf("name = \"%s\"\n", *entry.Name)
+	}
+
+	return fmt.Sprintf(`
+%s
+
 resource "cockroach_allow_list" "network_list" {
     %s
     cidr_ip = "%s"
@@ -536,5 +583,5 @@ resource "cockroach_allow_list" "network_list" {
     ui = %v
     cluster_id = cockroach_cluster.serverless.id
 }
-`, clusterName, nameAttribute, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
+`, clusterConfig, nameAttribute, entry.CidrIp, entry.CidrMask, entry.Sql, entry.Ui)
 }

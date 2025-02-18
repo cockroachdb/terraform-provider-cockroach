@@ -258,6 +258,8 @@ type Service interface {
 	CreateReplicationStream(ctx _context.Context, createReplicationStreamRequest *CreateReplicationStreamRequest) (*ReplicationStream, *_nethttp.Response, error)
 	// Get a replication stream
 	GetReplicationStream(ctx _context.Context, id string) (*ReplicationStream, *_nethttp.Response, error)
+	// List replication streams
+	ListReplicationStreams(ctx _context.Context, options *ListReplicationStreamsOptions) (*ReplicationStreamList, *_nethttp.Response, error)
 	// Update a replication stream
 	UpdateReplicationStream(ctx _context.Context, id string, updateReplicationStreamSpec *UpdateReplicationStreamSpec) (*ReplicationStream, *_nethttp.Response, error)
 
@@ -10434,6 +10436,186 @@ func (a *ServiceImpl) GetReplicationStream(
 	}
 
 	var localVarReturnValue ReplicationStream
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// ListReplicationStreamsOptions contains optional parameters for ListReplicationStreams.
+type ListReplicationStreamsOptions struct {
+	// source_cluster_id, if set, will cause only replication streams with this cluster as the source to be returned.
+	SourceClusterId *string
+
+	// target_cluster_id, if set, will cause only replication streams with this cluster as the target to be returned.
+	TargetClusterId *string
+
+	// cluster_id, if set, will cause replication streams with this cluster as the source or the target to be returned.
+	ClusterId *string
+
+	// show_completed specifies whether or not replication streams in the completed state are shown.
+	ShowCompleted *bool
+
+	PaginationPage *string
+
+	PaginationLimit *int32
+
+	PaginationAsOfTime *time.Time
+
+	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
+	PaginationSortOrder *string
+}
+
+// ListReplicationStreams executes the request.
+func (a *ServiceImpl) ListReplicationStreams(
+	ctx _context.Context, options *ListReplicationStreamsOptions,
+) (*ReplicationStreamList, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/replication-streams"
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	if options.SourceClusterId != nil {
+		localVarQueryParams.Add("source_cluster_id", parameterToString(*options.SourceClusterId, ""))
+	}
+	if options.TargetClusterId != nil {
+		localVarQueryParams.Add("target_cluster_id", parameterToString(*options.TargetClusterId, ""))
+	}
+	if options.ClusterId != nil {
+		localVarQueryParams.Add("cluster_id", parameterToString(*options.ClusterId, ""))
+	}
+	if options.ShowCompleted != nil {
+		localVarQueryParams.Add("show_completed", parameterToString(*options.ShowCompleted, ""))
+	}
+	if options.PaginationPage != nil {
+		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
+	}
+	if options.PaginationLimit != nil {
+		localVarQueryParams.Add("pagination.limit", parameterToString(*options.PaginationLimit, ""))
+	}
+	if options.PaginationAsOfTime != nil {
+		localVarQueryParams.Add("pagination.as_of_time", parameterToString(*options.PaginationAsOfTime, ""))
+	}
+	if options.PaginationSortOrder != nil {
+		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue ReplicationStreamList
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{

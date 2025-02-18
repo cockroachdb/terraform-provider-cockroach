@@ -30,8 +30,6 @@ type DedicatedClusterCreateSpecification struct {
 	RegionNodes map[string]int32 `json:"region_nodes"`
 	// Preview: restrict_egress_traffic if set, results in an egress traffic policy of default-deny at creation time.
 	RestrictEgressTraffic *bool `json:"restrict_egress_traffic,omitempty"`
-	// Preview: support_physical_cluster_replication specifies whether a cluster should be started using an architecture that supports physical cluster replication.
-	SupportPhysicalClusterReplication *bool `json:"support_physical_cluster_replication,omitempty"`
 }
 
 // NewDedicatedClusterCreateSpecification instantiates a new DedicatedClusterCreateSpecification object.
@@ -137,18 +135,4 @@ func (o *DedicatedClusterCreateSpecification) GetRestrictEgressTraffic() bool {
 // SetRestrictEgressTraffic gets a reference to the given bool and assigns it to the RestrictEgressTraffic field.
 func (o *DedicatedClusterCreateSpecification) SetRestrictEgressTraffic(v bool) {
 	o.RestrictEgressTraffic = &v
-}
-
-// GetSupportPhysicalClusterReplication returns the SupportPhysicalClusterReplication field value if set, zero value otherwise.
-func (o *DedicatedClusterCreateSpecification) GetSupportPhysicalClusterReplication() bool {
-	if o == nil || o.SupportPhysicalClusterReplication == nil {
-		var ret bool
-		return ret
-	}
-	return *o.SupportPhysicalClusterReplication
-}
-
-// SetSupportPhysicalClusterReplication gets a reference to the given bool and assigns it to the SupportPhysicalClusterReplication field.
-func (o *DedicatedClusterCreateSpecification) SetSupportPhysicalClusterReplication(v bool) {
-	o.SupportPhysicalClusterReplication = &v
 }

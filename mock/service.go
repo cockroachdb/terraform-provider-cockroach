@@ -1552,6 +1552,22 @@ func (mr *MockServiceMockRecorder) ListPrivateEndpointTrustedOwners(arg0, arg1 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointTrustedOwners", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointTrustedOwners), arg0, arg1)
 }
 
+// ListReplicationStreams mocks base method.
+func (m *MockService) ListReplicationStreams(arg0 context.Context, arg1 *client.ListReplicationStreamsOptions) (*client.ReplicationStreamList, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListReplicationStreams", arg0, arg1)
+	ret0, _ := ret[0].(*client.ReplicationStreamList)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListReplicationStreams indicates an expected call of ListReplicationStreams.
+func (mr *MockServiceMockRecorder) ListReplicationStreams(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListReplicationStreams", reflect.TypeOf((*MockService)(nil).ListReplicationStreams), arg0, arg1)
+}
+
 // ListRoleGrants mocks base method.
 func (m *MockService) ListRoleGrants(arg0 context.Context, arg1 *client.ListRoleGrantsOptions) (*client.ListRoleGrantsResponse, *http.Response, error) {
 	m.ctrl.T.Helper()

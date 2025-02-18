@@ -43,10 +43,10 @@ const (
 	// The patch versions are just for mocks. They don't need to be the actual
 	// latest available patch versions; they just need to resolve to the correct
 	// major versions.
-	minSupportedClusterMajorVersion = "v23.2"
-	minSupportedClusterPatchVersion = "v23.2.0"
-	latestClusterMajorVersion       = "v24.1"
-	latestClusterPatchVersion       = "v24.1.0"
+	minSupportedClusterMajorVersion = "v24.1"
+	minSupportedClusterPatchVersion = "v24.1.0"
+	latestClusterMajorVersion       = "v24.3"
+	latestClusterPatchVersion       = "v24.3.0"
 
 	serverlessResourceName   = "cockroach_cluster.test"
 	serverlessDataSourceName = "data.cockroach_cluster.test"
@@ -109,10 +109,10 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 			// Explicitly updating the value to MANUAL performs the update
 			{
 				Config: serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{
-					vcpus: ptr(6),
+					vcpus:       ptr(6),
 					upgradeType: ptr(client.UPGRADETYPETYPE_MANUAL),
 				}).Config,
-				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_MANUAL),
 			},
 			// Removal of the optional value from the config makes no change
 			{
@@ -124,10 +124,10 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 			// unless upgrade_type is AUTOMATIC already.
 			{
 				Config: serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{
-					vcpus: ptr(6),
+					vcpus:       ptr(6),
 					upgradeType: ptr(client.UPGRADETYPETYPE_AUTOMATIC),
 				}).Config,
-				Check:  checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
+				Check: checkUpgradeTypeResources(client.UPGRADETYPETYPE_AUTOMATIC),
 			},
 			// Downgrade to Basic, the upgrade_type remains AUTOMATIC
 			{
@@ -167,26 +167,26 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 
 // Shared Test objects
 var initialBackupConfig = &client.BackupConfiguration{
-	Enabled: true,
+	Enabled:          true,
 	FrequencyMinutes: 60,
-	RetentionDays: 30,
+	RetentionDays:    30,
 }
 
 var initialBackupConfigDisabled = &client.BackupConfiguration{
-	Enabled: false,
+	Enabled:          false,
 	FrequencyMinutes: initialBackupConfig.FrequencyMinutes,
-	RetentionDays: initialBackupConfig.RetentionDays,
+	RetentionDays:    initialBackupConfig.RetentionDays,
 }
 
 var updatedBackupConfig = &client.BackupConfiguration{
-	Enabled: true,
-	RetentionDays: 7,
+	Enabled:          true,
+	RetentionDays:    7,
 	FrequencyMinutes: 5,
 }
 
 var secondUpdatedBackupConfig = &client.BackupConfiguration{
-	Enabled: updatedBackupConfig.Enabled,
-	RetentionDays: updatedBackupConfig.RetentionDays,
+	Enabled:          updatedBackupConfig.Enabled,
+	RetentionDays:    updatedBackupConfig.RetentionDays,
 	FrequencyMinutes: 1440,
 }
 
@@ -286,7 +286,7 @@ func TestIntegrationClusterWithBackupConfig(t *testing.T) {
 
 	// Step: update frequency and retention
 	expectUpdateSequence(&client.UpdateBackupConfigurationSpec{
-		RetentionDays: ptr(updatedBackupConfig.RetentionDays),
+		RetentionDays:    ptr(updatedBackupConfig.RetentionDays),
 		FrequencyMinutes: ptr(updatedBackupConfig.FrequencyMinutes),
 	}, initialBackupConfig, updatedBackupConfig)
 
@@ -310,9 +310,9 @@ func TestIntegrationClusterWithBackupConfig(t *testing.T) {
 	// Step: test setting backup config values during the create
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
 	s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, &client.UpdateBackupConfigurationSpec{
-		Enabled: ptr(true),
+		Enabled:          ptr(true),
 		FrequencyMinutes: ptr(int32(secondUpdatedBackupConfig.FrequencyMinutes)),
-		RetentionDays: ptr(int32(secondUpdatedBackupConfig.RetentionDays)),
+		RetentionDays:    ptr(int32(secondUpdatedBackupConfig.RetentionDays)),
 	}).Return(secondUpdatedBackupConfig, httpOk, nil)
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(secondUpdatedBackupConfig, httpOk, nil)
 
@@ -330,120 +330,120 @@ func testClusterWithBackupConfig(t *testing.T, clusterName string, useMock bool)
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("a cluster without a backup config block still has a default config")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: false,
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, initialBackupConfig),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("a backup config with an empty block")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, initialBackupConfig),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("a backup config with just the enabled field")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled: ptr(true),
+					enabled:             ptr(true),
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, initialBackupConfig),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("disabling backups without specifying any other fields")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled: ptr(false),
+					enabled:             ptr(false),
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfigDisabled),
+				Check: checkBackupConfig(serverlessResourceName, initialBackupConfigDisabled),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("reenable passing in the default values")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled:   ptr(true),
-					retention: ptr(initialBackupConfig.RetentionDays),
-					frequency: ptr(initialBackupConfig.FrequencyMinutes),
+					enabled:             ptr(true),
+					retention:           ptr(initialBackupConfig.RetentionDays),
+					frequency:           ptr(initialBackupConfig.FrequencyMinutes),
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, initialBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, initialBackupConfig),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("update frequency and retention")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled:   ptr(true),
-					retention: ptr(updatedBackupConfig.RetentionDays),
-					frequency: ptr(updatedBackupConfig.FrequencyMinutes),
+					enabled:             ptr(true),
+					retention:           ptr(updatedBackupConfig.RetentionDays),
+					frequency:           ptr(updatedBackupConfig.FrequencyMinutes),
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, updatedBackupConfig),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("error case: invalid retention_days")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled:   ptr(true),
-					retention: ptr(int32(12345)),
+					enabled:             ptr(true),
+					retention:           ptr(int32(12345)),
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, updatedBackupConfig),
 				// Setting single line mode because error is broken across lines.
 				ExpectError: regexp.MustCompile(`(?s)retention_days.*must.*be.*one.*of`),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("error case: invalid frequency_minutes")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled:   ptr(true),
-					frequency: ptr(int32(12345)),
+					enabled:             ptr(true),
+					frequency:           ptr(int32(12345)),
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, updatedBackupConfig),
 				// Setting single line mode because error is broken across lines.
 				ExpectError: regexp.MustCompile(`(?s)frequency_minutes.*must.*be.*one.*of`),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("remove the backup configuration block, cluster still has the last one that was set")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: false,
 				}),
-				Check:  checkBackupConfig(serverlessResourceName, updatedBackupConfig),
+				Check: checkBackupConfig(serverlessResourceName, updatedBackupConfig),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("destroy cluster in prep for next step")
 				},
-				Config:      " ",
-				Destroy:     true,
+				Config:  " ",
+				Destroy: true,
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("test setting backup config values during the create")
 				},
 				Config: getTestClusterWithBackupConfig(clusterName, backupCreateConfig{
 					includeBackupConfig: true,
-					enabled:   ptr(true),
-					frequency: ptr(secondUpdatedBackupConfig.FrequencyMinutes),
-					retention: ptr(secondUpdatedBackupConfig.RetentionDays),
+					enabled:             ptr(true),
+					frequency:           ptr(secondUpdatedBackupConfig.FrequencyMinutes),
+					retention:           ptr(secondUpdatedBackupConfig.RetentionDays),
 				}),
-				Check:  resource.ComposeTestCheckFunc(
+				Check: resource.ComposeTestCheckFunc(
 					checkBackupConfig(serverlessResourceName, secondUpdatedBackupConfig),
 					traceEndOfPlan(),
 				),
@@ -529,9 +529,9 @@ func TestIntegrationClusterWithParentID(t *testing.T) {
 	}
 
 	folder := client.FolderResource{
-		Name: "folder123",
-		ResourceId: "00000000-0000-0000-0000-000000000001",
-		ParentId:  "root",
+		Name:         "folder123",
+		ResourceId:   "00000000-0000-0000-0000-000000000001",
+		ParentId:     "root",
 		ResourceType: client.FOLDERRESOURCETYPETYPE_FOLDER,
 	}
 
@@ -551,7 +551,7 @@ func TestIntegrationClusterWithParentID(t *testing.T) {
 
 	// Step: error case: valid uuid but not found results in reasonable error
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil)
-	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(nil, httpFail,  fmt.Errorf("invalid argument: the parent must exist"))
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(nil, httpFail, fmt.Errorf("invalid argument: the parent must exist"))
 
 	// Step: move a cluster under a non-root folder
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil)
@@ -578,14 +578,14 @@ func testClusterWithParentID(t *testing.T, clusterName, folderName string, useMo
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("a cluster without a parent_id is allowed and gets the default of root")
 				},
 				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{}),
 				Check:  checkParentID(serverlessResourceName, "root"),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("updating to explicit root is a no op")
 				},
 				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: ptr("root")}),
@@ -593,24 +593,24 @@ func testClusterWithParentID(t *testing.T, clusterName, folderName string, useMo
 			},
 			{
 				// Don't run error cases as the last step, or else it leave's the config in a bad state.
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("error case: values besides root and uuid are not allowed")
 				},
-				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: ptr("123")}),
-				Check:  checkParentID(serverlessResourceName, "root"),
+				Config:      getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: ptr("123")}),
+				Check:       checkParentID(serverlessResourceName, "root"),
 				ExpectError: regexp.MustCompile(`Attribute parent_id value must be a UUID or the string "root", got:`),
 			},
 			{
 				// Don't run error cases as the last step, or else it leave's the config in a bad state.
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("error case: valid uuid but not found results in reasonable error")
 				},
-				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: &notFoundResourceId}),
-				Check:  checkParentID(serverlessResourceName, "root"),
+				Config:      getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderID: &notFoundResourceId}),
+				Check:       checkParentID(serverlessResourceName, "root"),
 				ExpectError: regexp.MustCompile(`invalid argument: the parent must exist`),
 			},
 			{
-				PreConfig:   func() {
+				PreConfig: func() {
 					traceMessageStep("move a cluster under a non-root folder")
 				},
 				Config: getTestClusterWithParentFolder(clusterName, parentIDTestConfig{folderName: &folderName}),
@@ -643,7 +643,7 @@ func checkParentID(clusterResourceName, parentFolderName string) resource.TestCh
 		clusterParentID := *cluster.ParentId
 
 		if parentFolderName == "root" {
-			if  clusterParentID != "root" {
+			if clusterParentID != "root" {
 				return fmt.Errorf("expect parentID to be root but was: %s", clusterParentID)
 			}
 			return nil
@@ -781,7 +781,6 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		cluster.CockroachVersion = version
 		return cluster
 	}
-
 
 	provisionedMultiRegionCluster := func(provisionedVirtualCpus int64, primaryIndex int) client.Cluster {
 		cluster := client.Cluster{
@@ -1150,7 +1149,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			createStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{vcpus: ptr(6), version: ptr("")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile("cockroach_version is not supported for BASIC clusters"),
 				}
 			},
@@ -1160,7 +1159,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			createStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{vcpus: ptr(6), version: ptr("23.1")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile("cockroach_version is not supported for BASIC clusters"),
 				}
 			},
@@ -1170,7 +1169,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			createStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr("")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported during cluster creation for STANDARD`),
 				}
 			},
@@ -1180,7 +1179,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			createStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr("23.1")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported during cluster creation for STANDARD`),
 				}
 			},
@@ -1194,7 +1193,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{vcpus: ptr(6), version: ptr("")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported for BASIC clusters`),
 				}
 			},
@@ -1208,7 +1207,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{vcpus: ptr(6), version: ptr("23.1")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)cockroach_version is not supported for BASIC clusters`),
 				}
 			},
@@ -1222,7 +1221,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr("")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)plan and version must not be changed during the same terraform plan`),
 				}
 			},
@@ -1236,7 +1235,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr("23.1")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)plan and version must not be changed during the same terraform plan`),
 				}
 			},
@@ -1250,7 +1249,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), upgradeType: ptr(client.UPGRADETYPETYPE_AUTOMATIC), version: ptr("")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)upgrade_type must be set to MANUAL before setting cockroach_version`),
 				}
 			},
@@ -1264,7 +1263,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), upgradeType: ptr(client.UPGRADETYPETYPE_AUTOMATIC), version: ptr("23.1")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)upgrade_type must be set to MANUAL before setting cockroach_version`),
 				}
 			},
@@ -1278,7 +1277,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), upgradeType: ptr(client.UPGRADETYPETYPE_MANUAL), version: ptr("")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)upgrade_type and version must not be changed during the same terraform plan`),
 				}
 			},
@@ -1292,7 +1291,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), upgradeType: ptr(client.UPGRADETYPETYPE_MANUAL), version: ptr("23.1")}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`(?s)upgrade_type and version must not be changed during the same terraform plan`),
 				}
 			},
@@ -1305,25 +1304,25 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				}
 			},
 			initialCluster: client.Cluster{
-				Id: uuid.Nil.String(),
-				Name: clusterName,
-				CloudProvider: "GCP",
+				Id:               uuid.Nil.String(),
+				Name:             clusterName,
+				CloudProvider:    "GCP",
 				CockroachVersion: latestClusterMajorVersion,
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
 						NumVirtualCpus: 4,
-						StorageGib: 15,
+						StorageGib:     15,
 					},
 				},
-				Plan: client.PLANTYPE_ADVANCED,
-				State: client.CLUSTERSTATETYPE_CREATED,
+				Plan:      client.PLANTYPE_ADVANCED,
+				State:     client.CLUSTERSTATETYPE_CREATED,
 				CidrRange: "172.28.0.0/16",
-				Regions: []client.Region{ { Name: "us-central1", NodeCount: 1 } },
+				Regions:   []client.Region{{Name: "us-central1", NodeCount: 1}},
 			},
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr(latestClusterMajorVersion)}).Config
 				return resource.TestStep{
-					Config: config,
+					Config:      config,
 					ExpectError: regexp.MustCompile(`Cannot update cluster plan type`),
 				}
 			},
@@ -1452,7 +1451,7 @@ func onDemandSingleRegionClusterWithLimitsStep(
 ) resource.TestStep {
 	return serverlessClusterStep(clusterName, planType, slsConfig{
 		requestUnitLimit: ptr(requestUnitLimit),
-		storageMibLimit: ptr(storageMibLimit),
+		storageMibLimit:  ptr(storageMibLimit),
 	})
 }
 
@@ -1472,11 +1471,11 @@ func provisionedSingleRegionClusterStep(
 }
 
 type slsConfig struct {
-	vcpus *int
+	vcpus            *int
 	requestUnitLimit *int64
-	storageMibLimit *int64
-	upgradeType *client.UpgradeTypeType
-	version *string
+	storageMibLimit  *int64
+	upgradeType      *client.UpgradeTypeType
+	version          *string
 }
 
 func serverlessClusterStep(
@@ -1947,7 +1946,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
 	scaleStep := resource.TestStep{
-		PreConfig:   func() {
+		PreConfig: func() {
 			traceMessageStep("Scale the cluster")
 		},
 		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 8, nil),
@@ -1967,7 +1966,7 @@ func testDedicatedClusterResource(
 
 	testSteps := []resource.TestStep{
 		{
-			PreConfig:   func() {
+			PreConfig: func() {
 				traceMessageStep("create a cluster")
 			},
 			Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false, 4, nil),
@@ -1986,7 +1985,7 @@ func testDedicatedClusterResource(
 			),
 		},
 		{
-			PreConfig:   func() {
+			PreConfig: func() {
 				traceMessageStep("update the version")
 			},
 			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true, 4, nil),
@@ -1996,7 +1995,7 @@ func testDedicatedClusterResource(
 			),
 		},
 		{
-			PreConfig:   func() {
+			PreConfig: func() {
 				traceMessageStep("test import")
 			},
 			ResourceName: resourceName,
@@ -2017,7 +2016,7 @@ func testDedicatedClusterResource(
 			ImportStateVerify: false,
 		},
 		{
-			PreConfig:   func() {
+			PreConfig: func() {
 				traceMessageStep("enable delete protection")
 			},
 			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(true)),
@@ -2025,7 +2024,7 @@ func testDedicatedClusterResource(
 		},
 		{
 			// Delete step that fails since delete protection is enabled.
-			PreConfig:   func() {
+			PreConfig: func() {
 				traceMessageStep("check failure due to delete protection being enabled")
 			},
 			Config:      " ",
@@ -2033,7 +2032,7 @@ func testDedicatedClusterResource(
 			ExpectError: regexp.MustCompile(".*Cannot destroy cluster with delete protection enabled*"),
 		},
 		{
-			PreConfig:   func() {
+			PreConfig: func() {
 				traceMessageStep("Unset delete protection")
 			},
 			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(false)),
@@ -2146,7 +2145,7 @@ func getTestClusterWithBackupConfig(clusterName string, config backupCreateConfi
 `, *config.retention)
 		}
 
-		backupConfigString  = fmt.Sprintf(`
+		backupConfigString = fmt.Sprintf(`
   backup_config = {%s}
 `, backupConfigOptions)
 	}
@@ -2169,8 +2168,8 @@ func getTestClusterWithBackupConfig(clusterName string, config backupCreateConfi
 }
 
 type parentIDTestConfig struct {
-	folderID      *string
-	folderName    *string
+	folderID   *string
+	folderName *string
 }
 
 func getTestClusterWithParentFolder(clusterName string, config parentIDTestConfig) string {
@@ -2358,7 +2357,7 @@ func TestDerivePlanType(t *testing.T) {
 				Plan: types.StringValue("ADVANCED"),
 			},
 			expected: client.PLANTYPE_ADVANCED,
-			err: nil,
+			err:      nil,
 		},
 		{
 			name: "Explicit Plan: Standard",
@@ -2366,7 +2365,7 @@ func TestDerivePlanType(t *testing.T) {
 				Plan: types.StringValue("STANDARD"),
 			},
 			expected: client.PLANTYPE_STANDARD,
-			err:  nil,
+			err:      nil,
 		},
 		{
 			name: "Explicit Plan: BASIC",
@@ -2374,7 +2373,7 @@ func TestDerivePlanType(t *testing.T) {
 				Plan: types.StringValue("BASIC"),
 			},
 			expected: client.PLANTYPE_BASIC,
-			err:  nil,
+			err:      nil,
 		},
 		{
 			name: "Explicit Plan: Invalid",
@@ -2382,7 +2381,7 @@ func TestDerivePlanType(t *testing.T) {
 				Plan: types.StringValue("asdf"),
 			},
 			expected: "",
-			err: fmt.Errorf(`invalid plan type "asdf"`),
+			err:      fmt.Errorf(`invalid plan type "asdf"`),
 		},
 		{
 			name: "Dedicated Config",
@@ -2390,7 +2389,7 @@ func TestDerivePlanType(t *testing.T) {
 				DedicatedConfig: &DedicatedClusterConfig{},
 			},
 			expected: client.PLANTYPE_ADVANCED,
-			err: nil,
+			err:      nil,
 		},
 		{
 			name: "Serverless Config with Provisioned Resources",
@@ -2402,7 +2401,7 @@ func TestDerivePlanType(t *testing.T) {
 				},
 			},
 			expected: client.PLANTYPE_STANDARD,
-			err:  nil,
+			err:      nil,
 		},
 		{
 			name: "Serverless Config without Provisioned Resources",
@@ -2412,13 +2411,13 @@ func TestDerivePlanType(t *testing.T) {
 				},
 			},
 			expected: client.PLANTYPE_BASIC,
-			err:  nil,
+			err:      nil,
 		},
 		{
 			name:     "Underivable Plan",
 			cluster:  CockroachCluster{},
 			expected: "",
-			err:  fmt.Errorf("could not derive plan type, plan must contain either a ServerlessConfig or a DedicatedConfig"),
+			err:      fmt.Errorf("could not derive plan type, plan must contain either a ServerlessConfig or a DedicatedConfig"),
 		},
 	}
 
@@ -2433,4 +2432,3 @@ func TestDerivePlanType(t *testing.T) {
 		})
 	}
 }
-

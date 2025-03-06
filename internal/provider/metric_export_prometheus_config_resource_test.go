@@ -56,7 +56,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		Regions: []client.Region{
 			{
 				Name:      "us-east1",
-				NodeCount: 1,
+				NodeCount: 3,
 			},
 		},
 	}
@@ -64,6 +64,11 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 	enabledStatus := client.METRICEXPORTSTATUSTYPE_ENABLED
 
 	createdPrometheusClusterInfo := &client.PrometheusMetricExportInfo{
+		ClusterId: clusterID,
+		Status:    &enabledStatus,
+	}
+
+	updatedPrometheusClusterInfo := &client.PrometheusMetricExportInfo{
 		ClusterId: clusterID,
 		Status:    &enabledStatus,
 	}
@@ -80,7 +85,21 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		Return(createdPrometheusClusterInfo, nil, nil)
 	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
 		Return(createdPrometheusClusterInfo, nil, nil).
-		Times(4)
+		Times(3)
+
+	// Update
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(cluster, nil, nil).
+		Times(3)
+	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
+		Return(createdPrometheusClusterInfo, nil, nil)
+	// It should not invoke EnablePrometheusMetricExport as request contains clusterID
+	// which will not get changed.
+	s.EXPECT().EnablePrometheusMetricExport(gomock.Any(), clusterID).
+		Return(updatedPrometheusClusterInfo, nil, nil).Times(0)
+	s.EXPECT().GetPrometheusMetricExportInfo(gomock.Any(), clusterID).
+		Return(updatedPrometheusClusterInfo, nil, nil).
+		Times(3)
 
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
@@ -102,6 +121,13 @@ func testMetricExportPrometheusConfigResource(t *testing.T, clusterName string, 
 		Steps: []resource.TestStep{
 			{
 				Config: getTestMetricExportPrometheusConfigResourceCreateConfig(clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					testMetricExportPrometheusConfigExists(metricExportPrometheusConfigResourceName, clusterResourceName),
+					resource.TestCheckResourceAttr(metricExportPrometheusConfigResourceName, "status", "ENABLED"),
+				),
+			},
+			{
+				Config: getTestMetricExportPrometheusConfigResourceUpdateConfig(clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					testMetricExportPrometheusConfigExists(metricExportPrometheusConfigResourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(metricExportPrometheusConfigResourceName, "status", "ENABLED"),
@@ -175,7 +201,28 @@ resource "cockroach_cluster" "test" {
   }
   regions = [{
     name = "us-east1"
-    node_count: 1
+    node_count: 3
+  }]
+}
+
+resource "cockroach_metric_export_prometheus_config" "test" {
+	id      = cockroach_cluster.test.id
+  }
+`, name)
+}
+
+func getTestMetricExportPrometheusConfigResourceUpdateConfig(name string) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  dedicated = {
+    storage_gib = 35
+  	num_virtual_cpus = 4
+  }
+  regions = [{
+    name = "us-east1"
+    node_count: 3
   }]
 }
 

@@ -38,6 +38,7 @@ data "cockroach_cluster" "cockroach" {
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
 - `id` (String) The ID of this resource.
+- `labels` (Map of String) Map of key-value pairs used to organize and categorize resources.
 - `name` (String) Name of the cluster.
 - `operation_status` (String) Describes the current long-running operation, if any.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.

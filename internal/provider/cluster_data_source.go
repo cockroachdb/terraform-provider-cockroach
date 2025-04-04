@@ -24,6 +24,7 @@ import (
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 type clusterDataSource struct {
@@ -191,14 +192,19 @@ func (d *clusterDataSource) Schema(
 						Description: "Indicates whether backups are enabled.",
 					},
 					"retention_days": schema.Int64Attribute{
-						Computed:   true,
+						Computed:            true,
 						MarkdownDescription: "The number of days to retain backups for.",
 					},
 					"frequency_minutes": schema.Int64Attribute{
-						Computed:   true,
+						Computed:    true,
 						Description: "The frequency of backups in minutes.",
 					},
 				},
+			},
+			"labels": schema.MapAttribute{
+				Computed:    true,
+				ElementType: types.StringType,
+				Description: "Map of key-value pairs used to organize and categorize resources.",
 			},
 		},
 	}
@@ -281,11 +287,10 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
-
 	// The concept of a plan doesn't apply to data sources.
 	// Using a nil plan means we won't try to re-sort the region list.
 	var newState CockroachCluster
-	loadClusterToTerraformState(cockroachCluster, remoteBackupConfig, &newState, nil)
+	loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 }

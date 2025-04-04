@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -46,7 +47,11 @@ func HookGlobal[T any](ptr *T, val T) func() {
 
 // CheckSchemaAttributesMatch is a test utility that can be used to make sure a resource's schema stays in sync with
 // its datasource counterpart. It compares attribute names and topology, but not properties.
-func CheckSchemaAttributesMatch(t *testing.T, rAttributes map[string]resource_schema.Attribute, dAttributes map[string]datasource_schema.Attribute) {
+func CheckSchemaAttributesMatch(
+	t *testing.T,
+	rAttributes map[string]resource_schema.Attribute,
+	dAttributes map[string]datasource_schema.Attribute,
+) {
 	for name, rAttr := range rAttributes {
 		dAttr, ok := dAttributes[name]
 		require.True(t, ok)
@@ -205,3 +210,19 @@ func traceEndOfPlan() resource.TestCheckFunc {
 		return nil
 	}
 }
+
+func testCheckLabels(resourceName string, labels map[string]string) resource.TestCheckFunc {
+	if len(labels) == 0 {
+		return resource.TestCheckResourceAttr(resourceName, "labels.%", "0")
+	}
+
+	var checks []resource.TestCheckFunc
+	for k, v := range labels {
+		attrPath := fmt.Sprintf("labels.%s", k)
+		checks = append(checks, resource.TestCheckResourceAttr(resourceName, attrPath, v))
+	}
+	return resource.ComposeTestCheckFunc(checks...)
+
+}
+
+var labelsValidator = []validator.Map{validators.Labels()}

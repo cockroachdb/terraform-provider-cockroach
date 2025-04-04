@@ -39,6 +39,7 @@ data "cockroach_cluster" "cockroach" {
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
 - `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
 - `id` (String) The ID of this resource.
+- `labels` (Map of String) Map of key-value pairs used to organize and categorize resources.
 - `name` (String) Name of the cluster.
 - `operation_status` (String) Describes the current long-running operation, if any.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.

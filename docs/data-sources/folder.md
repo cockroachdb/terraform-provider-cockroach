@@ -36,5 +36,6 @@ data "cockroach_folder" "prod" {
 
 ### Read-Only
 
+- `labels` (Map of String) Map of key-value pairs used to organize and categorize resources.
 - `name` (String) Name of the folder.
 - `parent_id` (String) The ID of the folders's parent folder. 'root' is used for a folder at the root level.

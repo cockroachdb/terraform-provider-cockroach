@@ -45,11 +45,19 @@ provider "cockroach" {
 resource "cockroach_folder" "example_folder_parent" {
   name      = var.folder_parent_name
   parent_id = "root"
+  labels = {
+    environment   = "production",
+    "cost-center" = "eng-1234"
+  }
 }
 
 resource "cockroach_folder" "example_folder_child" {
   name      = var.folder_child_name
   parent_id = cockroach_folder.example_folder_parent.id
+  labels = {
+    campaign   = "987654",
+    managed_by = "jane_doe"
+  }
 }
 
 resource "cockroach_user_role_grant" "folder_admin_grant" {

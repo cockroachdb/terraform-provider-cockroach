@@ -33,6 +33,10 @@ resource "cockroach_cluster" "advanced" {
     frequency_minutes = 60
     retention_days    = 30
   }
+  labels = {
+    environment   = "production",
+    "cost-center" = "mkt-1234"
+  }
 }
 
 resource "cockroach_cluster" "standard" {
@@ -56,6 +60,10 @@ resource "cockroach_cluster" "standard" {
     frequency_minutes = 60
     retention_days    = 30
   }
+  labels = {
+    environment   = "production",
+    "cost-center" = "hr-1234"
+  }
 }
 
 resource "cockroach_cluster" "basic" {
@@ -69,6 +77,10 @@ resource "cockroach_cluster" "basic" {
     }
   ]
   delete_protection = false
+  labels = {
+    environment   = "staging",
+    "cost-center" = "mkt-1234"
+  }
 }
 ```
 
@@ -91,6 +103,7 @@ resource "cockroach_cluster" "basic" {
 - `cockroach_version` (String) The major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL'). (e.g. v25.0)
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.
+- `labels` (Map of String) Map of key-value pairs used to organize and categorize resources. If unset, labels will not be managed by Terraform. If set, labels defined in Terraform will overwrite any labels configured outside this platform.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))

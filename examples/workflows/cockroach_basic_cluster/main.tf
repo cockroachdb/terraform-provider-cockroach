@@ -48,6 +48,10 @@ resource "cockroach_cluster" "example" {
   plan           = "BASIC"
   serverless     = {}
   regions        = [for r in var.cloud_provider_regions : { name = r }]
+  labels = {
+    environment   = "staging",
+    "cost-center" = "mkt-1234"
+  }
 }
 
 resource "cockroach_sql_user" "example" {

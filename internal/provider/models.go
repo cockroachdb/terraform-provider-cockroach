@@ -105,6 +105,7 @@ type CockroachCluster struct {
 	ParentId         types.String             `tfsdk:"parent_id"`
 	DeleteProtection types.Bool               `tfsdk:"delete_protection"`
 	BackupConfig     types.Object             `tfsdk:"backup_config"`
+	Labels           types.Map                `tfsdk:"labels"`
 }
 
 type AllowlistEntry struct {
@@ -317,6 +318,7 @@ type Folder struct {
 	ID       types.String `tfsdk:"id"`
 	Name     types.String `tfsdk:"name"`
 	ParentId types.String `tfsdk:"parent_id"`
+	Labels   types.Map    `tfsdk:"labels"`
 }
 
 type FolderDataSourceModel struct {
@@ -324,6 +326,7 @@ type FolderDataSourceModel struct {
 	Path     types.String `tfsdk:"path"`
 	Name     types.String `tfsdk:"name"`
 	ParentId types.String `tfsdk:"parent_id"`
+	Labels   types.Map    `tfsdk:"labels"`
 }
 
 type JWTIssuer struct {

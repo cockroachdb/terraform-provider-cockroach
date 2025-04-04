@@ -111,6 +111,10 @@ resource "cockroach_cluster" "example" {
     frequency_minutes = 60
     retention_days    = 30
   }
+  labels = {
+    environment   = "production",
+    "cost-center" = "mkt-1234"
+  }
 }
 
 data "cockroach_cluster_cert" "example" {

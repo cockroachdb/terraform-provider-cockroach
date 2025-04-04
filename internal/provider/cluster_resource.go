@@ -26,6 +26,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
@@ -339,6 +340,13 @@ func (r *clusterResource) Schema(
 					},
 				},
 			},
+			"labels": schema.MapAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+				Description: "Map of key-value pairs used to organize and categorize resources. If unset, labels will not be managed by Terraform. If set, labels defined in Terraform will overwrite any labels configured outside this platform.",
+				Validators:  labelsValidator,
+			},
 		},
 	}
 }
@@ -387,7 +395,9 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 	}
 }
 
-func (r *clusterResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+func (r *clusterResource) ValidateConfig(
+	ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse,
+) {
 
 	// ValidateConfig seems to be called multiple times, once before any values
 	// are known.  When all values are unknown we can't convert to our cluster
@@ -573,6 +583,17 @@ func (r *clusterResource) Create(
 		clusterSpec.SetParentId(parentID)
 	}
 
+	if IsKnown(plan.Labels) {
+		labels, err := utils.ToStringMap(plan.Labels)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing cluster labels",
+				fmt.Sprintf("Could not convert cluster labels: %v", err),
+			)
+		}
+		clusterSpec.SetLabels(labels)
+	}
+
 	deleteProtection := client.DELETEPROTECTIONSTATETYPE_DISABLED
 	if plan.DeleteProtection.ValueBool() {
 		deleteProtection = client.DELETEPROTECTIONSTATETYPE_ENABLED
@@ -604,7 +625,7 @@ func (r *clusterResource) Create(
 	// configuration so it will be there no matter what in case of failure.
 	// The backup configuration can be synced in a later apply if need be.
 	var newState CockroachCluster
-	diags = loadClusterToTerraformState(clusterObj, nil, &newState, &plan)
+	diags = loadClusterToTerraformState(ctx, clusterObj, nil, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
@@ -662,7 +683,7 @@ func (r *clusterResource) Create(
 		}
 	}
 
-	diags = loadClusterToTerraformState(clusterObj, remoteBackupConfig, &newState, &plan)
+	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
@@ -734,7 +755,7 @@ func (r *clusterResource) Read(
 	// We actually want to use the current state as the plan here, since we're
 	// trying to see if it changed.
 	var newState CockroachCluster
-	diags = loadClusterToTerraformState(clusterObj, remoteBackupConfig, &newState, &state)
+	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &state)
 	resp.Diagnostics.Append(diags...)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
@@ -1038,6 +1059,17 @@ func (r *clusterResource) Update(
 		clusterReq.SetPlan(client.PlanType(plan.Plan.ValueString()))
 	}
 
+	if IsKnown(plan.Labels) {
+		labels, err := utils.ToStringMap(plan.Labels)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing cluster labels",
+				fmt.Sprintf("Could not convert cluster labels: %v", err),
+			)
+		}
+		clusterReq.SetLabels(labels)
+	}
+
 	traceAPICall("UpdateCluster")
 	clusterObj, _, err := r.provider.service.UpdateCluster(ctx, state.ID.ValueString(), clusterReq)
 	if err != nil {
@@ -1109,7 +1141,9 @@ func (r *clusterResource) Update(
 
 	// Set state.
 	var newState CockroachCluster
-	loadClusterToTerraformState(clusterObj, remoteBackupConfig, &newState, &plan)
+	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &plan)
+	resp.Diagnostics.Append(diags...)
+
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -1241,7 +1275,11 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 // special formatting of certain attribute values (e.g. "preview" for `cockroach_version`).
 // When reading a datasource or importing a resource, `plan` will be nil.
 func loadClusterToTerraformState(
-	clusterObj *client.Cluster, backupConfig *client.BackupConfiguration, state *CockroachCluster, plan *CockroachCluster,
+	ctx context.Context,
+	clusterObj *client.Cluster,
+	backupConfig *client.BackupConfiguration,
+	state *CockroachCluster,
+	plan *CockroachCluster,
 ) diag.Diagnostics {
 	state.ID = types.StringValue(clusterObj.Id)
 	state.Name = types.StringValue(clusterObj.Name)
@@ -1270,6 +1308,16 @@ func loadClusterToTerraformState(
 	} else {
 		state.ParentId = types.StringValue(*clusterObj.ParentId)
 	}
+
+	var allDiags diag.Diagnostics
+
+	clusterLabels := make(map[string]string)
+	if clusterObj.Labels != nil {
+		clusterLabels = clusterObj.Labels
+	}
+	labels, diags := types.MapValueFrom(ctx, types.StringType, clusterLabels)
+	state.Labels = labels
+	allDiags.Append(diags...)
 
 	if clusterObj.DeleteProtection != nil &&
 		*clusterObj.DeleteProtection == client.DELETEPROTECTIONSTATETYPE_ENABLED {
@@ -1316,19 +1364,21 @@ func loadClusterToTerraformState(
 		}
 	}
 
-	var diags diag.Diagnostics
-
 	// If backupConfig is nil, consider it unknown and populate it as such.
 	// This is useful because the api calls for fetching / updating backup
 	// configs are separate from managing the cluster so we can end up with
 	// partial success situations.
 	if backupConfig != nil {
-		state.BackupConfig, diags = clientBackupConfigToProviderBackupConfig(backupConfig)
+		stateBackupConfig, diags := clientBackupConfigToProviderBackupConfig(backupConfig)
+		state.BackupConfig = stateBackupConfig
+		allDiags.Append(diags...)
 	} else {
-		state.BackupConfig, diags = unknownBackupConfig()
+		stateBackupConfig, diags := unknownBackupConfig()
+		state.BackupConfig = stateBackupConfig
+		allDiags.Append(diags...)
 	}
 
-	return diags
+	return allDiags
 }
 
 var backupConfigElementTypes = map[string]attr.Type{
@@ -1359,7 +1409,9 @@ func clientBackupConfigToProviderBackupConfig(
 	return objectValue, diags
 }
 
-func providerBackupConfigToClientBackupConfig(ctx context.Context, providerBackupConfig basetypes.ObjectValue) (*client.BackupConfiguration, diag.Diagnostics) {
+func providerBackupConfigToClientBackupConfig(
+	ctx context.Context, providerBackupConfig basetypes.ObjectValue,
+) (*client.BackupConfiguration, diag.Diagnostics) {
 	var planBackupConfig ClusterBackupConfig
 	diags := providerBackupConfig.As(ctx, &planBackupConfig, basetypes.ObjectAsOptions{})
 	if diags.HasError() {

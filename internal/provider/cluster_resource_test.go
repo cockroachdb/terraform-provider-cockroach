@@ -28,6 +28,7 @@ import (
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -452,7 +453,9 @@ func testClusterWithBackupConfig(t *testing.T, clusterName string, useMock bool)
 	})
 }
 
-func checkBackupConfig(clusterResourceName string, expected *client.BackupConfiguration) resource.TestCheckFunc {
+func checkBackupConfig(
+	clusterResourceName string, expected *client.BackupConfiguration,
+) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p := testAccProvider.(*provider)
 		p.service = NewService(cl)
@@ -1437,17 +1440,13 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 	}
 }
 func onDemandSingleRegionClusterNoLimitsStep(
-	clusterName string,
-	planType client.PlanType,
+	clusterName string, planType client.PlanType,
 ) resource.TestStep {
 	return serverlessClusterStep(clusterName, planType, slsConfig{})
 }
 
 func onDemandSingleRegionClusterWithLimitsStep(
-	clusterName string,
-	planType client.PlanType,
-	requestUnitLimit int64,
-	storageMibLimit int64,
+	clusterName string, planType client.PlanType, requestUnitLimit int64, storageMibLimit int64,
 ) resource.TestStep {
 	return serverlessClusterStep(clusterName, planType, slsConfig{
 		requestUnitLimit: ptr(requestUnitLimit),
@@ -1456,16 +1455,13 @@ func onDemandSingleRegionClusterWithLimitsStep(
 }
 
 func onDemandSingleRegionClusterWithUnlimitedStep(
-	clusterName string,
-	planType client.PlanType,
+	clusterName string, planType client.PlanType,
 ) resource.TestStep {
 	return serverlessClusterStep(clusterName, planType, slsConfig{})
 }
 
 func provisionedSingleRegionClusterStep(
-	clusterName string,
-	planType client.PlanType,
-	provisionedVirtualCpus int,
+	clusterName string, planType client.PlanType, provisionedVirtualCpus int,
 ) resource.TestStep {
 	return serverlessClusterStep(clusterName, planType, slsConfig{vcpus: ptr(provisionedVirtualCpus)})
 }
@@ -1479,9 +1475,7 @@ type slsConfig struct {
 }
 
 func serverlessClusterStep(
-	clusterName string,
-	planType client.PlanType,
-	config slsConfig,
+	clusterName string, planType client.PlanType, config slsConfig,
 ) resource.TestStep {
 	testCheckFuncs := []resource.TestCheckFunc{
 		resource.TestCheckResourceAttr(serverlessResourceName, "delete_protection", "false"),
@@ -1618,8 +1612,7 @@ func serverlessClusterStep(
 }
 
 func provisionedMultiRegionClusterWithLimitStep(
-	clusterName string,
-	planType client.PlanType,
+	clusterName string, planType client.PlanType,
 ) resource.TestStep {
 	var plan string
 	if planType != "" {
@@ -1685,8 +1678,7 @@ func provisionedMultiRegionClusterWithLimitStep(
 // provisionedMultiRegionClusterUpdatedStep updates some of the fields in
 // provisionedMultiRegionClusterWithLimitStep.
 func provisionedMultiRegionClusterUpdatedStep(
-	clusterName string,
-	planType client.PlanType,
+	clusterName string, planType client.PlanType,
 ) resource.TestStep {
 	var plan string
 	if planType != "" {
@@ -1750,8 +1742,7 @@ func provisionedMultiRegionClusterUpdatedStep(
 }
 
 func legacyServerlessClusterWithSpendLimitStep(
-	clusterName string,
-	spendLimit int64,
+	clusterName string, spendLimit int64,
 ) resource.TestStep {
 	return resource.TestStep{
 		// Serverless cluster with spend limit.
@@ -1787,7 +1778,9 @@ func legacyServerlessClusterWithSpendLimitStep(
 	}
 }
 
-func makeDefaultServerlessResourceChecks(clusterName string, planType client.PlanType) resource.TestCheckFunc {
+func makeDefaultServerlessResourceChecks(
+	clusterName string, planType client.PlanType,
+) resource.TestCheckFunc {
 	return resource.ComposeTestCheckFunc(
 		resource.TestCheckResourceAttr(serverlessResourceName, "name", clusterName),
 		resource.TestCheckResourceAttrSet(serverlessResourceName, "cloud_provider"),
@@ -2452,4 +2445,306 @@ func TestDerivePlanType(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestAccClusterWithLabels is an acceptance test focused only on testing
+// the labels parameter. It will be skipped if TF_ACC isn't set.
+func TestAccClusterWithLabels(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	folderName := fmt.Sprintf("%s-parent-f-%s", tfTestPrefix, GenerateRandomString(2))
+	labels := map[string]string{
+		"environment": "test",
+		"cost_center": "12345",
+		"status":      "active",
+	}
+	newLabels := map[string]string{
+		"environment": "test",
+		"cost_center": "23456",
+		"status":      "inactive",
+	}
+	invalidLabels := map[string]string{
+		"234environment": "prod",
+		"status":         "<>!",
+	}
+	labelsAboveLimit := make(map[string]string)
+	for i := 0; i < validators.ResourceLabelLimit+1; i++ {
+		labelsAboveLimit[fmt.Sprintf("key%d", i)] = "value"
+	}
+	testClusterWithLabels(t, folderName, clusterName, labelsAboveLimit, invalidLabels, labels, newLabels, false /* useMock */)
+}
+
+// TestIntegrationClusterWithLabels is an integration test focused only on
+// testing the labels parameter.
+func TestIntegrationClusterWithLabels(t *testing.T) {
+	clusterID := uuid.Nil.String()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	labels := map[string]string{
+		"environment": "test",
+		"cost_center": "12345",
+		"status":      "active",
+	}
+	newLabels := map[string]string{
+		"environment": "test",
+		"cost_center": "23456",
+		"status":      "inactive",
+	}
+	invalidLabels := map[string]string{
+		"234environment": "prod",
+		"status":         "<>!",
+	}
+	labelsAboveLimit := make(map[string]string)
+	for i := 0; i < validators.ResourceLabelLimit+1; i++ {
+		labelsAboveLimit[fmt.Sprintf("key%d", i)] = "value"
+	}
+
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Plan:             "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+		Labels: labels,
+	}
+
+	folder := client.FolderResource{
+		Name:         "folder987",
+		ResourceId:   "00000000-0000-0000-0000-000000000001",
+		ParentId:     "root",
+		ResourceType: client.FOLDERRESOURCETYPETYPE_FOLDER,
+	}
+
+	var regions []string
+	for _, region := range cluster.Regions {
+		regions = append(regions, region.Name)
+	}
+	primaryRegion := ""
+
+	// Create folder. Cluster will get moved to this folder at the end of the test.
+	s.EXPECT().CreateFolder(gomock.Any(), gomock.Any()).Return(&folder, httpOk, nil)
+
+	// Create cluster with labels.
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+
+	// Clear cluster labels.
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil).Times(2)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).Times(3)
+
+	clusterWithNoLabels := cluster
+	clusterWithNoLabels.Labels = map[string]string{}
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithNoLabels, httpOk, nil)
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		Plan:   &cluster.Plan,
+		Labels: &map[string]string{},
+		Serverless: &client.ServerlessClusterUpdateSpecification{
+			PrimaryRegion: &primaryRegion,
+			Regions:       &regions,
+			UsageLimits:   cluster.Config.Serverless.UsageLimits,
+		},
+	}).Return(&clusterWithNoLabels, httpOk, nil)
+
+	// Add labels back to cluster.
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil).Times(2)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithNoLabels, httpOk, nil).Times(2)
+
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil)
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		Plan:   &cluster.Plan,
+		Labels: &labels,
+		Serverless: &client.ServerlessClusterUpdateSpecification{
+			PrimaryRegion: &primaryRegion,
+			Regions:       &regions,
+			UsageLimits:   cluster.Config.Serverless.UsageLimits,
+		},
+	}).Return(&cluster, httpOk, nil)
+
+	// Not passing in labels leaves labels unchanged.
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil).Times(2)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).Times(2)
+
+	// Update cluster labels.
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil).Times(2)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).Times(2)
+
+	clusterWithUpdatedLabels := cluster
+	clusterWithUpdatedLabels.Labels = newLabels
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithUpdatedLabels, httpOk, nil)
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		Plan:   &cluster.Plan,
+		Labels: &newLabels,
+		Serverless: &client.ServerlessClusterUpdateSpecification{
+			PrimaryRegion: &primaryRegion,
+			Regions:       &regions,
+			UsageLimits:   cluster.Config.Serverless.UsageLimits,
+		},
+	}).Return(&clusterWithUpdatedLabels, httpOk, nil)
+
+	// Move cluster and leave labels unchanged.
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil).Times(2)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithUpdatedLabels, httpOk, nil).Times(2)
+
+	clusterWithParent := clusterWithUpdatedLabels
+	clusterWithParent.ParentId = &folder.ResourceId
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithParent, httpOk, nil)
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		Plan:   &cluster.Plan,
+		Labels: &newLabels,
+		Serverless: &client.ServerlessClusterUpdateSpecification{
+			PrimaryRegion: &primaryRegion,
+			Regions:       &regions,
+			UsageLimits:   cluster.Config.Serverless.UsageLimits,
+		},
+		ParentId: &folder.ResourceId,
+	}).Return(&clusterWithParent, httpOk, nil)
+
+	// Delete.
+	s.EXPECT().GetFolder(gomock.Any(), folder.ResourceId).Return(&folder, httpOk, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithParent, httpOk, nil)
+
+	s.EXPECT().DeleteFolder(gomock.Any(), folder.ResourceId).
+		Return(httpOk, nil)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).
+		Return(nil, httpOk, nil)
+
+	testClusterWithLabels(t, folder.Name, clusterName, labelsAboveLimit, invalidLabels, labels, newLabels, true /* useMock */)
+}
+
+func testClusterWithLabels(
+	t *testing.T,
+	folderName, clusterName string,
+	labelsAboveLimit, invalidLabels, labels, newLabels map[string]string,
+	useMock bool,
+) {
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					traceMessageStep("create cluster with too many labels")
+				},
+				Config:      getTestClusterWithLabels(folderName, clusterName, &labelsAboveLimit, false /*moveToFolder*/),
+				ExpectError: regexp.MustCompile("must contain at most 50 key-value pairs"),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("create cluster with invalid labels")
+				},
+				Config:      getTestClusterWithLabels(folderName, clusterName, &invalidLabels, false /*moveToFolder*/),
+				ExpectError: regexp.MustCompile("must have keys and values with a maximum of 63 characters,"),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("create cluster with labels")
+				},
+				Config: getTestClusterWithLabels(folderName, clusterName, &labels, false /*moveToFolder*/),
+				Check:  testCheckLabels(serverlessResourceName, labels),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("clear cluster labels")
+				},
+				Config: getTestClusterWithLabels(folderName, clusterName, &map[string]string{}, false /*moveToFolder*/),
+				Check:  testCheckLabels(serverlessResourceName, nil),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("add labels back to cluster")
+				},
+				Config: getTestClusterWithLabels(folderName, clusterName, &labels, false /*moveToFolder*/),
+				Check:  testCheckLabels(serverlessResourceName, labels),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("not passing labels leaves labels unchanged")
+				},
+				Config: getTestClusterWithLabels(folderName, clusterName, nil, false /*moveToFolder*/),
+				Check:  testCheckLabels(serverlessResourceName, labels),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("update cluster labels")
+				},
+				Config: getTestClusterWithLabels(folderName, clusterName, &newLabels, false /*moveToFolder*/),
+				Check:  testCheckLabels(serverlessResourceName, newLabels),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("move cluster and leave labels unchanged")
+				},
+				Config: getTestClusterWithLabels(folderName, clusterName, &newLabels, true /*moveToFolder*/),
+				Check:  testCheckLabels(serverlessResourceName, newLabels),
+			},
+		},
+	})
+}
+
+func getTestClusterWithLabels(
+	folderName, clusterName string, labels *map[string]string, moveToFolder bool,
+) string {
+	labelsString := ""
+	if labels != nil {
+		var labelStrings []string
+		for k, v := range *labels {
+			labelStrings = append(labelStrings, fmt.Sprintf("\"%s\" = \"%s\"", k, v))
+		}
+		labelsString = fmt.Sprintf(`
+		labels = {
+			%s
+		}
+		`, strings.Join(labelStrings, "\n\t\t\t"))
+	}
+
+	parentString := ""
+	if moveToFolder {
+		parentString = "parent_id = cockroach_folder.test_folder.id"
+	}
+
+	return fmt.Sprintf(`
+	resource "cockroach_folder" "test_folder" {
+		name = "%s"
+		parent_id = "root"
+	}
+
+	resource "cockroach_cluster" "test" {
+		name           = "%s"
+		cloud_provider = "GCP"
+		plan = "STANDARD"
+		serverless = {
+			usage_limits = {
+				provisioned_virtual_cpus = 2
+			}
+		}
+		regions = [{
+			name = "us-central1"
+		}] %s%s
+	}
+	`, folderName, clusterName, labelsString, parentString)
 }

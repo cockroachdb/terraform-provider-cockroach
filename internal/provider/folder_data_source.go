@@ -63,6 +63,11 @@ func (d *folderDataSource) Schema(
 				Computed:            true,
 				MarkdownDescription: "The ID of the folders's parent folder. 'root' is used for a folder at the root level.",
 			},
+			"labels": schema.MapAttribute{
+				Computed:            true,
+				ElementType:         types.StringType,
+				MarkdownDescription: "Map of key-value pairs used to organize and categorize resources.",
+			},
 		},
 	}
 }
@@ -157,6 +162,13 @@ func (d *folderDataSource) Read(
 	folderDataSource.ParentId = types.StringValue(folder.ParentId)
 	if folderDataSource.Path.IsNull() {
 		folderDataSource.Path = types.StringValue(buildFolderPathString(folder))
+	}
+
+	if folder.Labels == nil {
+		folderDataSource.Labels = types.MapNull(types.StringType)
+	} else {
+		folderDataSource.Labels, diags = types.MapValueFrom(ctx, types.StringType, folder.Labels)
+		resp.Diagnostics.Append(diags...)
 	}
 
 	diags = resp.State.Set(ctx, folderDataSource)

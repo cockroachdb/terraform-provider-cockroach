@@ -6,7 +6,9 @@ import (
 	"net/http"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -47,6 +49,13 @@ func (r *folderResource) Schema(
 					validators.FolderParentID(),
 				},
 			},
+			"labels": schema.MapAttribute{
+				Computed:    true,
+				Optional:    true,
+				ElementType: types.StringType,
+				Description: "Map of key-value pairs used to organize and categorize resources. If unset, labels will not be managed by Terraform. If set, labels defined in Terraform will overwrite any labels configured outside this platform.",
+				Validators:  labelsValidator,
+			},
 		},
 	}
 }
@@ -86,11 +95,25 @@ func (r *folderResource) Create(
 	}
 
 	parentID := plan.ParentId.ValueString()
-	traceAPICall("CreateFolder")
-	folderObj, _, err := r.provider.service.CreateFolder(ctx, &client.CreateFolderRequest{
+
+	createFolderReq := &client.CreateFolderRequest{
 		Name:     plan.Name.ValueString(),
 		ParentId: &parentID,
-	})
+	}
+
+	if IsKnown(plan.Labels) {
+		labels, err := utils.ToStringMap(plan.Labels)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing folder labels",
+				fmt.Sprintf("Could not convert folder labels: %v", err),
+			)
+		}
+		createFolderReq.SetLabels(labels)
+	}
+
+	traceAPICall("CreateFolder")
+	folderObj, _, err := r.provider.service.CreateFolder(ctx, createFolderReq)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error creating folder",
@@ -100,7 +123,9 @@ func (r *folderResource) Create(
 	}
 
 	var state Folder
-	loadFolderToTerraformState(folderObj, &state)
+	diags = loadFolderToTerraformState(ctx, folderObj, &state)
+	resp.Diagnostics.Append(diags...)
+
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -154,7 +179,8 @@ func (r *folderResource) Read(
 		return
 	}
 
-	loadFolderToTerraformState(folderObj, &state)
+	diags = loadFolderToTerraformState(ctx, folderObj, &state)
+	resp.Diagnostics.Append(diags...)
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -186,14 +212,25 @@ func (r *folderResource) Update(
 		newName      = plan.Name.ValueString()
 		destParentID = plan.ParentId.ValueString()
 	)
+
+	updateFolderSpec := &client.UpdateFolderSpecification{
+		Name:     &newName,
+		ParentId: &destParentID,
+	}
+
+	if IsKnown(plan.Labels) {
+		labels, err := utils.ToStringMap(plan.Labels)
+		if err != nil {
+			resp.Diagnostics.AddError(
+				"Error processing folder labels",
+				fmt.Sprintf("Could not convert folder labels: %v", err),
+			)
+		}
+		updateFolderSpec.SetLabels(labels)
+	}
+
 	traceAPICall("UpdateFolder")
-	folderObj, _, err := r.provider.service.UpdateFolder(
-		ctx,
-		plan.ID.ValueString(),
-		&client.UpdateFolderSpecification{
-			Name:     &newName,
-			ParentId: &destParentID,
-		})
+	folderObj, _, err := r.provider.service.UpdateFolder(ctx, plan.ID.ValueString(), updateFolderSpec)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error updating folder",
@@ -202,7 +239,8 @@ func (r *folderResource) Update(
 		return
 	}
 
-	loadFolderToTerraformState(folderObj, &state)
+	diags = loadFolderToTerraformState(ctx, folderObj, &state)
+	resp.Diagnostics.Append(diags...)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -250,8 +288,18 @@ func (r *folderResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func loadFolderToTerraformState(folderObj *client.FolderResource, state *Folder) {
+func loadFolderToTerraformState(
+	ctx context.Context, folderObj *client.FolderResource, state *Folder,
+) diag.Diagnostics {
 	state.ID = types.StringValue(folderObj.ResourceId)
 	state.ParentId = types.StringValue(folderObj.ParentId)
 	state.Name = types.StringValue(folderObj.Name)
+
+	folderLabels := make(map[string]string)
+	if folderObj.Labels != nil {
+		folderLabels = folderObj.Labels
+	}
+	labels, diags := types.MapValueFrom(ctx, types.StringType, folderLabels)
+	state.Labels = labels
+	return diags
 }

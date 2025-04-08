@@ -107,3 +107,7 @@ output "example_cluster_op_key_v1_secret" {
   description = "The api key for example_cluster_op_key_v1_secret"
   sensitive   = true
 }
+
+output "cluster_version" {
+  value = cockroach_cluster.example.full_version
+}

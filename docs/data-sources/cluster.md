@@ -33,10 +33,11 @@ data "cockroach_cluster" "cockroach" {
   * GCP
   * AWS
   * AZURE
-- `cockroach_version` (String) Full version of CockroachDB running on the cluster.
+- `cockroach_version` (String) The major version of CockroachDB running on the cluster. (e.g. v25.0)
 - `creator_id` (String) ID of the user who created the cluster.
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
+- `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
 - `id` (String) The ID of this resource.
 - `name` (String) Name of the cluster.
 - `operation_status` (String) Describes the current long-running operation, if any.

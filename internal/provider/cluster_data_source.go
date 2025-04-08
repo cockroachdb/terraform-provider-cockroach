@@ -45,7 +45,11 @@ func (d *clusterDataSource) Schema(
 			},
 			"cockroach_version": schema.StringAttribute{
 				Computed:    true,
-				Description: "Full version of CockroachDB running on the cluster.",
+				Description: "The major version of CockroachDB running on the cluster. (e.g. v25.0)",
+			},
+			"full_version": schema.StringAttribute{
+				Computed: true,
+				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"plan": schema.StringAttribute{
 				Computed:    true,

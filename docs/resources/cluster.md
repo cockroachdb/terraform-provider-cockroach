@@ -88,7 +88,7 @@ resource "cockroach_cluster" "basic" {
 
 - `backup_config` (Attributes) The backup settings for a cluster.
  Each cluster has backup settings that determine if backups are enabled, how frequently they are taken, and how long they are retained for. Use this attribute to manage those settings. (see [below for nested schema](#nestedatt--backup_config))
-- `cockroach_version` (String) Major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL').
+- `cockroach_version` (String) The major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL'). (e.g. v25.0)
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
@@ -99,6 +99,7 @@ resource "cockroach_cluster" "basic" {
 
 - `account_id` (String) The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.
 - `creator_id` (String) ID of the user who created the cluster.
+- `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
 - `id` (String) The ID of this resource.
 - `operation_status` (String) Describes the current long-running operation, if any.
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.

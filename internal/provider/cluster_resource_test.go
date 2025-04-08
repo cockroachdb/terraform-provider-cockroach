@@ -1553,11 +1553,24 @@ func serverlessClusterStep(
 
 	var versionConfig string
 	if config.version != nil {
-		versionConfig = fmt.Sprintf("cockroach_version = %q", *config.version)
+
+		version := *config.version
+		startsWithVersionRE := regexp.MustCompile(fmt.Sprintf("^%s", version))
+		versionConfig = fmt.Sprintf("cockroach_version = %q", version)
 		testCheckFuncs = append(
 			testCheckFuncs,
-			resource.TestCheckResourceAttr(serverlessResourceName, "cockroach_version", *config.version),
-			resource.TestCheckResourceAttr(serverlessDataSourceName, "cockroach_version", *config.version),
+			resource.TestCheckResourceAttr(serverlessResourceName, "cockroach_version", version),
+			resource.TestCheckResourceAttr(serverlessDataSourceName, "cockroach_version", version),
+
+			// If we check for a specific version, also check that full_version
+			// starts with that version
+			resource.TestMatchResourceAttr(serverlessResourceName, "full_version", startsWithVersionRE),
+			resource.TestMatchResourceAttr(serverlessDataSourceName, "full_version", startsWithVersionRE),
+		)
+	} else {
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttrSet(serverlessResourceName, "full_version"),
 		)
 	}
 
@@ -1964,6 +1977,10 @@ func testDedicatedClusterResource(
 		dataSourceName = "data.cockroach_cluster.test"
 	)
 
+	// We can't easily check the exact patch version here because the patch
+	// version for real clusters changes too often.
+	startsWithMinSupportedMajorVersionRE := regexp.MustCompile(fmt.Sprintf("^%s", minSupportedClusterMajorVersion))
+	startsWithLatestMajorVersionRE := regexp.MustCompile(fmt.Sprintf("^%s", latestClusterMajorVersion))
 	testSteps := []resource.TestStep{
 		{
 			PreConfig: func() {
@@ -1977,11 +1994,13 @@ func testDedicatedClusterResource(
 				resource.TestCheckResourceAttrSet(resourceName, "cockroach_version"),
 				resource.TestCheckResourceAttr(resourceName, "plan", "ADVANCED"),
 				resource.TestCheckResourceAttr(resourceName, "dedicated.cidr_range", "172.28.0.0/16"),
+				resource.TestMatchResourceAttr(resourceName, "full_version", startsWithMinSupportedMajorVersionRE),
 				resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
 				resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
 				resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
 				resource.TestCheckResourceAttr(dataSourceName, "plan", "ADVANCED"),
 				resource.TestCheckResourceAttr(dataSourceName, "dedicated.cidr_range", "172.28.0.0/16"),
+				resource.TestMatchResourceAttr(dataSourceName, "full_version", startsWithMinSupportedMajorVersionRE),
 			),
 		},
 		{
@@ -1992,6 +2011,8 @@ func testDedicatedClusterResource(
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
 				resource.TestCheckResourceAttr(dataSourceName, "cockroach_version", latestClusterMajorVersion),
+				resource.TestMatchResourceAttr(resourceName, "full_version", startsWithLatestMajorVersionRE),
+				resource.TestMatchResourceAttr(dataSourceName, "full_version", startsWithLatestMajorVersionRE),
 			),
 		},
 		{

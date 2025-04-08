@@ -168,3 +168,7 @@ output "cert" {
 output "connection_string" {
   value = data.cockroach_connection_string.example.connection_string
 }
+
+output "cluster_version" {
+  value = data.cockroach_cluster.example.full_version
+}

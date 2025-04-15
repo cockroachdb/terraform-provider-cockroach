@@ -123,7 +123,11 @@ func (r *clusterResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				MarkdownDescription: "Major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL').",
+				MarkdownDescription: "The major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL'). (e.g. v25.0)",
+			},
+			"full_version": schema.StringAttribute{
+				Computed: true,
+				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"account_id": schema.StringAttribute{
 				Computed: true,
@@ -1244,6 +1248,7 @@ func loadClusterToTerraformState(
 	state.CloudProvider = types.StringValue(string(clusterObj.CloudProvider))
 	planSpecifiesPreviewString := plan != nil && plan.CockroachVersion.ValueString() == clusterVersionPreview
 	state.CockroachVersion = types.StringValue(simplifyClusterVersion(clusterObj.CockroachVersion, planSpecifiesPreviewString))
+	state.FullVersion = types.StringValue(clusterObj.CockroachVersion)
 	state.Plan = types.StringValue(string(clusterObj.Plan))
 	if clusterObj.AccountId == nil {
 		state.AccountId = types.StringNull()

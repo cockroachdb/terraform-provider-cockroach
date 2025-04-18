@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 )
@@ -191,11 +191,11 @@ func (d *clusterDataSource) Schema(
 						Description: "Indicates whether backups are enabled.",
 					},
 					"retention_days": schema.Int64Attribute{
-						Computed:   true,
+						Computed:            true,
 						MarkdownDescription: "The number of days to retain backups for.",
 					},
 					"frequency_minutes": schema.Int64Attribute{
-						Computed:   true,
+						Computed:    true,
 						Description: "The frequency of backups in minutes.",
 					},
 				},
@@ -280,7 +280,6 @@ func (d *clusterDataSource) Read(
 		)
 		return
 	}
-
 
 	// The concept of a plan doesn't apply to data sources.
 	// Using a nil plan means we won't try to re-sort the region list.

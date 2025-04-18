@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -69,7 +69,7 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name:    "us-central1",
 				Primary: ptr(true),
 			},
 		},
@@ -177,7 +177,7 @@ func testMaintenanceWindowResource(t *testing.T, clusterName string, useMock boo
 			},
 			// Tear down the serverless cluster
 			{
-				Config: " ",
+				Config:  " ",
 				Destroy: true,
 			},
 			{

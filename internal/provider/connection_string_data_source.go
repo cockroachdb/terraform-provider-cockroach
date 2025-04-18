@@ -22,7 +22,7 @@ import (
 	"net/url"
 	"runtime"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"

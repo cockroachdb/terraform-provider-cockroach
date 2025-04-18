@@ -60,9 +60,9 @@ github.com/cloudflare/circl/math/mlsbset
 github.com/cloudflare/circl/sign
 github.com/cloudflare/circl/sign/ed25519
 github.com/cloudflare/circl/sign/ed448
-# github.com/cockroachdb/cockroach-cloud-sdk-go/v5 v5.1.1
+# github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.0.0
 ## explicit; go 1.17
-github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client
+github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client
 # github.com/davecgh/go-spew v1.1.1
 ## explicit
 github.com/davecgh/go-spew/spew

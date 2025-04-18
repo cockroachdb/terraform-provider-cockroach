@@ -10,7 +10,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -191,7 +191,7 @@ func traceAPICall(endpoint string) {
 func traceSupportMessageRaw(message string) {
 	val, exists := os.LookupEnv("TRACE_API_CALLS")
 	if exists && val == "1" {
-			fmt.Print(message)
+		fmt.Print(message)
 	}
 }
 

@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"strconv"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v5/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
@@ -142,7 +142,7 @@ func (r *allowlistResource) Create(
 	if IsKnown(plan.Name) {
 		name := plan.Name.ValueString()
 		entry.Name = &name
-	}	
+	}
 
 	traceAPICall("AddAllowlistEntry")
 	allowlist, _, err := r.provider.service.AddAllowlistEntry(ctx, clusterID, entry)

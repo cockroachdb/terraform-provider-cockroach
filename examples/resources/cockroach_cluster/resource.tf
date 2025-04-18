@@ -18,6 +18,10 @@ resource "cockroach_cluster" "advanced" {
     frequency_minutes = 60
     retention_days    = 30
   }
+  labels = {
+    environment   = "production",
+    "cost-center" = "mkt-1234"
+  }
 }
 
 resource "cockroach_cluster" "standard" {
@@ -41,6 +45,10 @@ resource "cockroach_cluster" "standard" {
     frequency_minutes = 60
     retention_days    = 30
   }
+  labels = {
+    environment   = "production",
+    "cost-center" = "hr-1234"
+  }
 }
 
 resource "cockroach_cluster" "basic" {
@@ -54,4 +62,8 @@ resource "cockroach_cluster" "basic" {
     }
   ]
   delete_protection = false
+  labels = {
+    environment   = "staging",
+    "cost-center" = "mkt-1234"
+  }
 }

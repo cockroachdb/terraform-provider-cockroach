@@ -16,11 +16,19 @@ CockroachDB Cloud folder.
 resource "cockroach_folder" "a_team" {
   name      = "a-team"
   parent_id = "root"
+  labels = {
+    environment   = "staging",
+    "cost-center" = "mkt-1234"
+  }
 }
 
 resource "cockroach_folder" "a_team_dev" {
   name      = "dev"
   parent_id = cockroach_folder.a_team.id
+  labels = {
+    environment   = "production",
+    "cost-center" = "mkt-5678"
+  }
 }
 ```
 
@@ -31,6 +39,10 @@ resource "cockroach_folder" "a_team_dev" {
 
 - `name` (String) Name of the folder.
 - `parent_id` (String) ID of the parent folder. Use 'root' for the root level (no parent folder).
+
+### Optional
+
+- `labels` (Map of String) Map of key-value pairs used to organize and categorize resources. If unset, labels will not be managed by Terraform. If set, labels defined in Terraform will overwrite any labels configured outside this platform.
 
 ### Read-Only
 

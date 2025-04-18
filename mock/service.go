@@ -293,10 +293,10 @@ func (mr *MockServiceMockRecorder) CreateServiceAccount(arg0, arg1 interface{}) 
 }
 
 // CreateUser mocks base method.
-func (m *MockService) CreateUser(arg0 context.Context, arg1 *client.CreateUserRequest) (*client.ScimUser, *http.Response, error) {
+func (m *MockService) CreateUser(arg0 context.Context, arg1 *client.CreateUserRequest) (*client.CreateUserResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateUser", arg0, arg1)
-	ret0, _ := ret[0].(*client.ScimUser)
+	ret0, _ := ret[0].(*client.CreateUserResponse)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -1552,22 +1552,6 @@ func (mr *MockServiceMockRecorder) ListPrivateEndpointTrustedOwners(arg0, arg1 i
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointTrustedOwners", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointTrustedOwners), arg0, arg1)
 }
 
-// ListReplicationStreams mocks base method.
-func (m *MockService) ListReplicationStreams(arg0 context.Context, arg1 *client.ListReplicationStreamsOptions) (*client.ReplicationStreamList, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListReplicationStreams", arg0, arg1)
-	ret0, _ := ret[0].(*client.ReplicationStreamList)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// ListReplicationStreams indicates an expected call of ListReplicationStreams.
-func (mr *MockServiceMockRecorder) ListReplicationStreams(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListReplicationStreams", reflect.TypeOf((*MockService)(nil).ListReplicationStreams), arg0, arg1)
-}
-
 // ListRoleGrants mocks base method.
 func (m *MockService) ListRoleGrants(arg0 context.Context, arg1 *client.ListRoleGrantsOptions) (*client.ListRoleGrantsResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -2029,4 +2013,68 @@ func (m *MockService) UpdateUser(arg0 context.Context, arg1 string, arg2 *client
 func (mr *MockServiceMockRecorder) UpdateUser(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockService)(nil).UpdateUser), arg0, arg1, arg2)
+}
+
+// GetClusterDisruptionInfo mocks base method.
+func (m *MockService) GetClusterDisruptionInfo(arg0 context.Context, arg1 string) (*client.ClusterDisruptionInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterDisruptionInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.ClusterDisruptionInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetClusterDisruptionInfo indicates an expected call of GetClusterDisruptionInfo.
+func (mr *MockServiceMockRecorder) GetClusterDisruptionInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterDisruptionInfo", reflect.TypeOf((*MockService)(nil).GetClusterDisruptionInfo), arg0, arg1)
+}
+
+// UpdateClusterDisruption mocks base method.
+func (m *MockService) UpdateClusterDisruption(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudUpdateClusterDisruptionRequest) (*client.ClusterDisruptionInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateClusterDisruption", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ClusterDisruptionInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateClusterDisruption indicates an expected call of UpdateClusterDisruption.
+func (mr *MockServiceMockRecorder) UpdateClusterDisruption(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterDisruption", reflect.TypeOf((*MockService)(nil).UpdateClusterDisruption), arg0, arg1, arg2)
+}
+
+// ListReplicationStreams mocks base method.
+func (m *MockService) ListReplicationStreams(arg0 context.Context, arg1 *client.ListReplicationStreamsOptions) (*client.ReplicationStreamList, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListReplicationStreams", arg0, arg1)
+	ret0, _ := ret[0].(*client.ReplicationStreamList)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListReplicationStreams indicates an expected call of ListReplicationStreams.
+func (mr *MockServiceMockRecorder) ListReplicationStreams(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListReplicationStreams", reflect.TypeOf((*MockService)(nil).ListReplicationStreams), arg0, arg1)
+}
+
+// PatchUser mocks base method.
+func (m *MockService) PatchUser(arg0 context.Context, arg1 string, arg2 *client.PatchUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// PatchUser indicates an expected call of PatchUser.
+func (mr *MockServiceMockRecorder) PatchUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchUser", reflect.TypeOf((*MockService)(nil).PatchUser), arg0, arg1, arg2)
 }

@@ -5,7 +5,7 @@ go 1.22.0
 toolchain go1.22.8
 
 require (
-	github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.0.0
+	github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.1.0
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/hashicorp/go-retryablehttp v0.7.4

@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.12.0] - 2025-04-30
+## [1.12.0] - 2025-04-25
 
 ### Added
 
@@ -14,6 +14,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `full_version` attribute to the cluster data source and resource for
   fetching the full version string. (e.g. v25.1.0)
+
+- Added AWS external ID support for both CloudWatch metric export and log export configurations.
+
+### Fixed
+
+- Fixed an issue where fields, in metric/log export, incorrectly marked as
+computed led to miscalculation of diffs when fields were commented out or
+removed from the terraform config
 
 ## [1.11.2] - 2025-02-07
 

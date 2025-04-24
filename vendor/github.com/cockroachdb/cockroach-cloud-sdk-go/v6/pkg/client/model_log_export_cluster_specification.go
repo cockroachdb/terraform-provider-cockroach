@@ -22,6 +22,8 @@ package client
 type LogExportClusterSpecification struct {
 	// auth_principal is either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging.
 	AuthPrincipal *string `json:"auth_principal,omitempty"`
+	// aws_external_id, if set, is included when assuming the IAM role. Supported for Advanced clusters on AWS only.
+	AwsExternalId *string `json:"aws_external_id,omitempty"`
 	// The primary or the secondary connected sources client authentication key. This is used to export logs to Azure Log Analytics.
 	AzureSharedKey *string `json:"azure_shared_key,omitempty"`
 	// groups is a collection of log group configurations to customize which CRDB channels get aggregated into different groups at the target sink. Unconfigured channels will be sent to the default locations via the settings above.
@@ -58,6 +60,20 @@ func (o *LogExportClusterSpecification) GetAuthPrincipal() string {
 // SetAuthPrincipal gets a reference to the given string and assigns it to the AuthPrincipal field.
 func (o *LogExportClusterSpecification) SetAuthPrincipal(v string) {
 	o.AuthPrincipal = &v
+}
+
+// GetAwsExternalId returns the AwsExternalId field value if set, zero value otherwise.
+func (o *LogExportClusterSpecification) GetAwsExternalId() string {
+	if o == nil || o.AwsExternalId == nil {
+		var ret string
+		return ret
+	}
+	return *o.AwsExternalId
+}
+
+// SetAwsExternalId gets a reference to the given string and assigns it to the AwsExternalId field.
+func (o *LogExportClusterSpecification) SetAwsExternalId(v string) {
+	o.AwsExternalId = &v
 }
 
 // GetAzureSharedKey returns the AzureSharedKey field value if set, zero value otherwise.

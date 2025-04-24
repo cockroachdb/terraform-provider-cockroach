@@ -83,23 +83,25 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 	enabledStatus := client.METRICEXPORTSTATUSTYPE_ENABLED
 	arn := "test-role-arn"
 	logGroupName := "example"
-	emptyString := ""
 	updatedRegion := "us-east-1"
 
 	createdCloudWatchClusterInfo := &client.CloudWatchMetricExportInfo{
 		ClusterId:    clusterID,
 		RoleArn:      arn,
 		LogGroupName: &logGroupName,
-		TargetRegion: &emptyString,
+		TargetRegion: nil,
 		Status:       &enabledStatus,
+		ExternalId:   nil,
 	}
 
+	updatedExternalID := "test-external-id"
 	updatedCloudWatchClusterInfo := &client.CloudWatchMetricExportInfo{
 		ClusterId:    clusterID,
 		RoleArn:      arn,
 		LogGroupName: &logGroupName,
 		TargetRegion: &updatedRegion,
 		Status:       &enabledStatus,
+		ExternalId:   &updatedExternalID,
 	}
 
 	// Create
@@ -114,6 +116,7 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 		&client.EnableCloudWatchMetricExportRequest{
 			RoleArn:      arn,
 			LogGroupName: &logGroupName,
+			ExternalId:   nil,
 		}).
 		Return(createdCloudWatchClusterInfo, nil, nil)
 	s.EXPECT().GetCloudWatchMetricExportInfo(gomock.Any(), clusterID).
@@ -131,6 +134,7 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 			RoleArn:      arn,
 			LogGroupName: &logGroupName,
 			TargetRegion: &updatedRegion,
+			ExternalId:   &updatedExternalID,
 		}).
 		Return(updatedCloudWatchClusterInfo, nil, nil)
 	s.EXPECT().GetCloudWatchMetricExportInfo(gomock.Any(), clusterID).
@@ -161,7 +165,8 @@ func testMetricExportCloudWatchConfigResource(t *testing.T, clusterName string, 
 					testMetricExportCloudWatchConfigExists(metricExportCloudWatchConfigResourceName, clusterResourceName),
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "role_arn", "test-role-arn"),
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "log_group_name", "example"),
-					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "target_region", ""),
+					resource.TestCheckNoResourceAttr(metricExportCloudWatchConfigResourceName, "target_region"),
+					resource.TestCheckNoResourceAttr(metricExportCloudWatchConfigResourceName, "external_id"),
 				),
 			},
 			{
@@ -171,6 +176,7 @@ func testMetricExportCloudWatchConfigResource(t *testing.T, clusterName string, 
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "role_arn", "test-role-arn"),
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "log_group_name", "example"),
 					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "target_region", "us-east-1"),
+					resource.TestCheckResourceAttr(metricExportCloudWatchConfigResourceName, "external_id", "test-external-id"),
 				),
 			},
 			{
@@ -219,20 +225,20 @@ resource "cockroach_cluster" "test" {
   name           = "%s"
   cloud_provider = "AWS"
   dedicated = {
-    storage_gib = 35
-  	num_virtual_cpus = 4
+    storage_gib      = 35
+    num_virtual_cpus = 4
   }
   regions = [{
     name = "us-east-1"
-    node_count: 3
+    node_count : 3
   }]
 }
 
 resource "cockroach_metric_export_cloudwatch_config" "test" {
-	id      = cockroach_cluster.test.id
-	role_arn       = "test-role-arn"
-	log_group_name = "example"
-  }
+  id             = cockroach_cluster.test.id
+  role_arn       = "test-role-arn"
+  log_group_name = "example"
+}
 `, name)
 }
 
@@ -242,20 +248,21 @@ resource "cockroach_cluster" "test" {
   name           = "%s"
   cloud_provider = "AWS"
   dedicated = {
-    storage_gib = 35
-  	num_virtual_cpus = 4
+    storage_gib      = 35
+    num_virtual_cpus = 4
   }
   regions = [{
     name = "us-east-1"
-    node_count: 3
+    node_count : 3
   }]
 }
 
 resource "cockroach_metric_export_cloudwatch_config" "test" {
-	id      = cockroach_cluster.test.id
-	role_arn       = "test-role-arn"
-	log_group_name = "example"
-	target_region  = "us-east-1"
-  }
+  id             = cockroach_cluster.test.id
+  role_arn       = "test-role-arn"
+  log_group_name = "example"
+  target_region  = "us-east-1"
+  external_id    = "test-external-id"
+}
 `, name)
 }

@@ -127,7 +127,7 @@ func (r *clusterResource) Schema(
 				MarkdownDescription: "The major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL'). (e.g. v25.0)",
 			},
 			"full_version": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
 				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"account_id": schema.StringAttribute{
@@ -1310,12 +1310,7 @@ func loadClusterToTerraformState(
 	}
 
 	var allDiags diag.Diagnostics
-
-	clusterLabels := make(map[string]string)
-	if clusterObj.Labels != nil {
-		clusterLabels = clusterObj.Labels
-	}
-	labels, diags := types.MapValueFrom(ctx, types.StringType, clusterLabels)
+	labels, diags := types.MapValueFrom(ctx, types.StringType, clusterObj.Labels)
 	state.Labels = labels
 	allDiags.Append(diags...)
 

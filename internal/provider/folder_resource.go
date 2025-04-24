@@ -295,11 +295,7 @@ func loadFolderToTerraformState(
 	state.ParentId = types.StringValue(folderObj.ParentId)
 	state.Name = types.StringValue(folderObj.Name)
 
-	folderLabels := make(map[string]string)
-	if folderObj.Labels != nil {
-		folderLabels = folderObj.Labels
-	}
-	labels, diags := types.MapValueFrom(ctx, types.StringType, folderLabels)
+	labels, diags := types.MapValueFrom(ctx, types.StringType, folderObj.Labels)
 	state.Labels = labels
 	return diags
 }

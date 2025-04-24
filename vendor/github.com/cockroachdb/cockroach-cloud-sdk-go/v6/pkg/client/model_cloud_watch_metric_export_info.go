@@ -21,6 +21,8 @@ package client
 // CloudWatchMetricExportInfo struct for CloudWatchMetricExportInfo.
 type CloudWatchMetricExportInfo struct {
 	ClusterId string `json:"cluster_id"`
+	// external_id, if set, is included when assuming the IAM role. Supported for Advanced clusters only.
+	ExternalId *string `json:"external_id,omitempty"`
 	// log_group_name is the customized log group name.
 	LogGroupName *string `json:"log_group_name,omitempty"`
 	// role_arn is the IAM role used to upload metric segments to the target AWS account.
@@ -63,6 +65,20 @@ func (o *CloudWatchMetricExportInfo) GetClusterId() string {
 // SetClusterId sets field value.
 func (o *CloudWatchMetricExportInfo) SetClusterId(v string) {
 	o.ClusterId = v
+}
+
+// GetExternalId returns the ExternalId field value if set, zero value otherwise.
+func (o *CloudWatchMetricExportInfo) GetExternalId() string {
+	if o == nil || o.ExternalId == nil {
+		var ret string
+		return ret
+	}
+	return *o.ExternalId
+}
+
+// SetExternalId gets a reference to the given string and assigns it to the ExternalId field.
+func (o *CloudWatchMetricExportInfo) SetExternalId(v string) {
+	o.ExternalId = &v
 }
 
 // GetLogGroupName returns the LogGroupName field value if set, zero value otherwise.

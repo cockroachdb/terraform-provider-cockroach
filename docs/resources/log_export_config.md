@@ -21,12 +21,17 @@ variable "auth_principal" {
   type = string
 }
 
+variable "aws_external_id" {
+  type = string
+}
+
 resource "cockroach_log_export_config" "example" {
-  id             = var.cluster_id
-  auth_principal = var.auth_principal
-  log_name       = "example"
-  type           = "GCP_CLOUD_LOGGING"
-  redact         = true
+  id              = var.cluster_id
+  auth_principal  = var.auth_principal
+  log_name        = "example"
+  type            = "GCP_CLOUD_LOGGING"
+  redact          = true
+  aws_external_id = var.aws_external_id
   groups = [
     {
       log_name : "sql",
@@ -58,6 +63,7 @@ resource "cockroach_log_export_config" "example" {
 
 ### Optional
 
+- `aws_external_id` (String) The external ID to use when assuming the AWS role.
 - `groups` (Attributes List) (see [below for nested schema](#nestedatt--groups))
 - `omitted_channels` (List of String) Controls what CRDB channels do not get exported.
 - `redact` (Boolean) Controls whether logs are redacted before forwarding to customer sinks.

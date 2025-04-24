@@ -60,7 +60,6 @@ var logExportAttributes = map[string]schema.Attribute{
 	"region": schema.StringAttribute{
 		Optional:            true,
 		MarkdownDescription: "Controls whether all logs are sent to a specific region in the customer sink.",
-		Computed:            true,
 	},
 	"groups": schema.ListNestedAttribute{
 		Optional: true,
@@ -109,6 +108,10 @@ var logExportAttributes = map[string]schema.Attribute{
 		Optional:    true,
 		ElementType: types.StringType,
 		Description: "Controls what CRDB channels do not get exported.",
+	},
+	"aws_external_id": schema.StringAttribute{
+		Optional:    true,
+		Description: "The external ID to use when assuming the AWS role.",
 	},
 }
 
@@ -311,16 +314,19 @@ func loadLogExportIntoTerraformState(
 		apiRedact = types.BoolValue(spec.GetRedact())
 	}
 
-	var apiRegion types.String
-	if spec.Region == nil {
-		apiRegion = types.StringNull()
-	} else {
-		apiRegion = types.StringValue(spec.GetRegion())
+	apiRegion := types.StringNull()
+	if spec.Region != nil && *spec.Region != "" {
+		apiRegion = types.StringValue(*spec.Region)
 	}
 
 	var omittedChannels []types.String
 	for _, ochannel := range spec.GetOmittedChannels() {
 		omittedChannels = append(omittedChannels, types.StringValue(ochannel))
+	}
+
+	awsExternalID := types.StringNull()
+	if spec.AwsExternalId != nil && *spec.AwsExternalId != "" {
+		awsExternalID = types.StringValue(*spec.AwsExternalId)
 	}
 
 	state.ID = types.StringValue(apiLogExportObj.GetClusterId())
@@ -335,6 +341,7 @@ func loadLogExportIntoTerraformState(
 	state.CreatedAt = types.StringValue(apiLogExportObj.GetCreatedAt().String())
 	state.UpdatedAt = types.StringValue(apiLogExportObj.GetUpdatedAt().String())
 	state.OmittedChannels = &omittedChannels
+	state.AWSExternalID = awsExternalID
 }
 
 func (r *logExportConfigResource) Read(
@@ -519,6 +526,9 @@ func loadPlanIntoEnableLogExportRequest(
 			omittedChannels = append(omittedChannels, ochannel.ValueString())
 		}
 		req.SetOmittedChannels(omittedChannels)
+	}
+	if IsKnown(plan.AWSExternalID) {
+		req.SetAwsExternalId(plan.AWSExternalID.ValueString())
 	}
 
 	configType, err := client.NewLogExportTypeFromValue(plan.Type.ValueString())

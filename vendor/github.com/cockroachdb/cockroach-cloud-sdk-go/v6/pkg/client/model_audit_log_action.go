@@ -106,6 +106,7 @@ const (
 	AUDITLOGACTION_UPDATE_JWT_ISSUER                       AuditLogAction = "AUDIT_LOG_ACTION_UPDATE_JWT_ISSUER"
 	AUDITLOGACTION_CREATE_LICENSE                          AuditLogAction = "AUDIT_LOG_ACTION_CREATE_LICENSE"
 	AUDITLOGACTION_UPDATE_ORGANIZATION_NAME                AuditLogAction = "AUDIT_LOG_ACTION_UPDATE_ORGANIZATION_NAME"
+	AUDITLOGACTION_CREATE_LICENSES                         AuditLogAction = "AUDIT_LOG_ACTION_CREATE_LICENSES"
 )
 
 // All allowed values of AuditLogAction enum.
@@ -189,6 +190,7 @@ var AllowedAuditLogActionEnumValues = []AuditLogAction{
 	"AUDIT_LOG_ACTION_UPDATE_JWT_ISSUER",
 	"AUDIT_LOG_ACTION_CREATE_LICENSE",
 	"AUDIT_LOG_ACTION_UPDATE_ORGANIZATION_NAME",
+	"AUDIT_LOG_ACTION_CREATE_LICENSES",
 }
 
 // NewAuditLogActionFromValue returns a pointer to a valid AuditLogAction

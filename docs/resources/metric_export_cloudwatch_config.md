@@ -31,7 +31,12 @@ variable "aws_region" {
   type = string
 }
 
+variable "external_id" {
+  type = string
+}
+
 resource "cockroach_metric_export_cloudwatch_config" "example" {
+  external_id    = var.external_id
   id             = var.cluster_id
   role_arn       = var.role_arn
   log_group_name = var.log_group_name
@@ -49,6 +54,7 @@ resource "cockroach_metric_export_cloudwatch_config" "example" {
 
 ### Optional
 
+- `external_id` (String) The external ID to use when assuming the IAM role for CloudWatch metric export.
 - `log_group_name` (String) The customized AWS CloudWatch log group name.
 - `target_region` (String) The specific AWS region that the metrics will be exported to.
 

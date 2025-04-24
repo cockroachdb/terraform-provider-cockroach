@@ -248,6 +248,7 @@ type ClusterLogExport struct {
 	CreatedAt       types.String      `tfsdk:"created_at"`
 	UpdatedAt       types.String      `tfsdk:"updated_at"`
 	OmittedChannels *[]types.String   `tfsdk:"omitted_channels"`
+	AWSExternalID   types.String      `tfsdk:"aws_external_id"`
 }
 
 type ClusterCloudWatchMetricExportConfig struct {
@@ -255,6 +256,7 @@ type ClusterCloudWatchMetricExportConfig struct {
 	TargetRegion types.String `tfsdk:"target_region"`
 	LogGroupName types.String `tfsdk:"log_group_name"`
 	RoleArn      types.String `tfsdk:"role_arn"`
+	ExternalID   types.String `tfsdk:"external_id"`
 	UserMessage  types.String `tfsdk:"user_message"`
 	Status       types.String `tfsdk:"status"`
 }

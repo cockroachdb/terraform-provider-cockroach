@@ -48,12 +48,10 @@ var metricExportCloudWathConfigAttributes = map[string]schema.Attribute{
 	"target_region": schema.StringAttribute{
 		Optional:            true,
 		MarkdownDescription: "The specific AWS region that the metrics will be exported to.",
-		Computed:            true,
 	},
 	"log_group_name": schema.StringAttribute{
 		Optional:            true,
 		MarkdownDescription: "The customized AWS CloudWatch log group name.",
-		Computed:            true,
 	},
 	"status": schema.StringAttribute{
 		Computed:    true,
@@ -62,6 +60,10 @@ var metricExportCloudWathConfigAttributes = map[string]schema.Attribute{
 	"user_message": schema.StringAttribute{
 		Computed:    true,
 		Description: "Elaborates on the metric export status and hints at how to fix issues that may have occurred during asynchronous operations.",
+	},
+	"external_id": schema.StringAttribute{
+		Optional:            true,
+		MarkdownDescription: "The external ID to use when assuming the IAM role for CloudWatch metric export.",
 	},
 }
 
@@ -148,6 +150,9 @@ func (r *metricExportCloudWatchConfigResource) Create(
 	if IsKnown(plan.LogGroupName) {
 		apiRequest.SetLogGroupName(plan.LogGroupName.ValueString())
 	}
+	if IsKnown(plan.ExternalID) {
+		apiRequest.SetExternalId(plan.ExternalID.ValueString())
+	}
 
 	apiObj := &client.CloudWatchMetricExportInfo{}
 	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
@@ -218,16 +223,19 @@ func loadCloudWatchMetricExportIntoTerraformState(
 	state.ID = types.StringValue(apiObj.GetClusterId())
 	state.RoleArn = types.StringValue(apiObj.GetRoleArn())
 
-	if apiObj.TargetRegion == nil {
-		state.TargetRegion = types.StringNull()
-	} else {
+	state.TargetRegion = types.StringNull()
+	if apiObj.TargetRegion != nil && *apiObj.TargetRegion != "" {
 		state.TargetRegion = types.StringValue(apiObj.GetTargetRegion())
 	}
 
-	if apiObj.LogGroupName == nil {
-		state.LogGroupName = types.StringNull()
-	} else {
+	state.LogGroupName = types.StringNull()
+	if apiObj.LogGroupName != nil && *apiObj.LogGroupName != "" {
 		state.LogGroupName = types.StringValue(apiObj.GetLogGroupName())
+	}
+
+	state.ExternalID = types.StringNull()
+	if apiObj.ExternalId != nil && *apiObj.ExternalId != "" {
+		state.ExternalID = types.StringValue(apiObj.GetExternalId())
 	}
 
 	state.Status = types.StringValue(string(apiObj.GetStatus()))
@@ -367,6 +375,9 @@ func (r *metricExportCloudWatchConfigResource) Update(
 	}
 	if IsKnown(plan.LogGroupName) {
 		apiRequest.SetLogGroupName(plan.LogGroupName.ValueString())
+	}
+	if IsKnown(plan.ExternalID) {
+		apiRequest.SetExternalId(plan.ExternalID.ValueString())
 	}
 
 	clusterID := plan.ID.ValueString()

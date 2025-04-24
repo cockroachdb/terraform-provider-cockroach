@@ -21,6 +21,8 @@ package client
 // EnableLogExportRequest struct for EnableLogExportRequest.
 type EnableLogExportRequest struct {
 	AuthPrincipal string `json:"auth_principal"`
+	// aws_external_id to include when assuming the IAM role specified by role_arn. Optional. A specific value may be required by the role's trust policy. Only supported for Advanced clusters on AWS. If provided for a Standard cluster, the request is rejected.
+	AwsExternalId *string `json:"aws_external_id,omitempty"`
 	// The primary or the secondary connected sources client authentication key. This is used to export logs to Azure Log Analytics.
 	AzureSharedKey *string `json:"azure_shared_key,omitempty"`
 	// groups is a collection of log group configurations that allows the customer to define collections of CRDB log channels that are aggregated separately at the target sink.
@@ -69,6 +71,20 @@ func (o *EnableLogExportRequest) GetAuthPrincipal() string {
 // SetAuthPrincipal sets field value.
 func (o *EnableLogExportRequest) SetAuthPrincipal(v string) {
 	o.AuthPrincipal = v
+}
+
+// GetAwsExternalId returns the AwsExternalId field value if set, zero value otherwise.
+func (o *EnableLogExportRequest) GetAwsExternalId() string {
+	if o == nil || o.AwsExternalId == nil {
+		var ret string
+		return ret
+	}
+	return *o.AwsExternalId
+}
+
+// SetAwsExternalId gets a reference to the given string and assigns it to the AwsExternalId field.
+func (o *EnableLogExportRequest) SetAwsExternalId(v string) {
+	o.AwsExternalId = &v
 }
 
 // GetAzureSharedKey returns the AzureSharedKey field value if set, zero value otherwise.

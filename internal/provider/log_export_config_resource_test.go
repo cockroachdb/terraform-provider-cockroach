@@ -111,6 +111,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 		{LogName: "devops", Channels: []string{"OPS", "HEALTH", "STORAGE"}, MinLevel: minLevel, Redact: &falseBool},
 	}
 	updatedOChannels := []string{"SQL_SCHEMA"}
+	updatedExternalID := "test-external-id"
 	updatedLogExportClusterInfo := &client.LogExportClusterInfo{
 		ClusterId: &clusterID,
 		Spec: &client.LogExportClusterSpecification{
@@ -121,6 +122,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 			Type:            configType,
 			Region:          &region,
 			OmittedChannels: &updatedOChannels,
+			AwsExternalId:   &updatedExternalID,
 		},
 		Status: enabledStatus,
 	}
@@ -163,6 +165,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 			Groups:          &updatedGroups,
 			Region:          &region,
 			OmittedChannels: &updatedOChannels,
+			AwsExternalId:   &updatedExternalID,
 		}).
 		Return(updatedLogExportClusterInfo, nil, nil)
 	s.EXPECT().GetLogExportInfo(gomock.Any(), clusterID).
@@ -194,6 +197,7 @@ func testLogExportConfigResource(t *testing.T, clusterName string, useMock bool)
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "redact", "true"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.#", "1"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.channels.#", "2"),
+					resource.TestCheckNoResourceAttr(logExportConfigResourceName, "aws_external_id"),
 				),
 			},
 			{
@@ -203,6 +207,7 @@ func testLogExportConfigResource(t *testing.T, clusterName string, useMock bool)
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "redact", "false"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.#", "2"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.channels.#", "1"),
+					resource.TestCheckResourceAttr(logExportConfigResourceName, "aws_external_id", "test-external-id"),
 				),
 			},
 			{
@@ -249,12 +254,12 @@ resource "cockroach_cluster" "test" {
   name           = "%s"
   cloud_provider = "AWS"
   dedicated = {
-    storage_gib = 35
-  	num_virtual_cpus = 4
+    storage_gib      = 35
+    num_virtual_cpus = 4
   }
   regions = [{
     name = "us-east-1"
-    node_count: 3
+    node_count : 3
   }]
 }
 
@@ -264,13 +269,13 @@ resource "cockroach_log_export_config" "test" {
   log_name       = "test"
   type           = "AWS_CLOUDWATCH"
   redact         = true
-  region 		 = "us-east-1"
+  region         = "us-east-1"
   groups = [
     {
-      log_name = "sql",
-      channels = ["SQL_SCHEMA", "SQL_EXEC"],
+      log_name  = "sql",
+      channels  = ["SQL_SCHEMA", "SQL_EXEC"],
       min_level = "WARNING",
-	  redact = true
+      redact    = true
     }
   ]
   omitted_channels = ["SQL_PERF"]
@@ -284,34 +289,35 @@ resource "cockroach_cluster" "test" {
   name           = "%s"
   cloud_provider = "AWS"
   dedicated = {
-    storage_gib = 35
-  	num_virtual_cpus = 4
+    storage_gib      = 35
+    num_virtual_cpus = 4
   }
   regions = [{
     name = "us-east-1"
-    node_count: 3
+    node_count : 3
   }]
 }
 
 resource "cockroach_log_export_config" "test" {
-  id             = cockroach_cluster.test.id
-  auth_principal = "iam-role-arn"
-  log_name       = "test"
-  type           = "AWS_CLOUDWATCH"
-  redact         = false
-  region 		 = "us-east-1"
+  id              = cockroach_cluster.test.id
+  auth_principal  = "iam-role-arn"
+  log_name        = "test"
+  type            = "AWS_CLOUDWATCH"
+  redact          = false
+  region          = "us-east-1"
+  aws_external_id = "test-external-id"
   groups = [
     {
-      log_name = "sql",
-      channels = ["SQL_EXEC"],
+      log_name  = "sql",
+      channels  = ["SQL_EXEC"],
       min_level = "WARNING",
-	  redact: true
+      redact : true
     },
     {
-      log_name = "devops",
-      channels = ["OPS", "HEALTH", "STORAGE"],
+      log_name  = "devops",
+      channels  = ["OPS", "HEALTH", "STORAGE"],
       min_level = "WARNING",
-	  redact = false
+      redact    = false
     }
   ]
   omitted_channels = ["SQL_SCHEMA"]

@@ -20,6 +20,8 @@ package client
 
 // EnableCloudWatchMetricExportRequest struct for EnableCloudWatchMetricExportRequest.
 type EnableCloudWatchMetricExportRequest struct {
+	// external_id to include when assuming the IAM role specified by role_arn. Optional. A specific value may be required by the role's trust policy. Only supported for Advanced clusters. If provided for a Standard cluster, the request is rejected.
+	ExternalId *string `json:"external_id,omitempty"`
 	// log_group_name is the customized log group name.
 	LogGroupName *string `json:"log_group_name,omitempty"`
 	// role_arn is the IAM role used to upload metric segments to the target AWS account.
@@ -44,6 +46,20 @@ func NewEnableCloudWatchMetricExportRequest(roleArn string) *EnableCloudWatchMet
 func NewEnableCloudWatchMetricExportRequestWithDefaults() *EnableCloudWatchMetricExportRequest {
 	p := EnableCloudWatchMetricExportRequest{}
 	return &p
+}
+
+// GetExternalId returns the ExternalId field value if set, zero value otherwise.
+func (o *EnableCloudWatchMetricExportRequest) GetExternalId() string {
+	if o == nil || o.ExternalId == nil {
+		var ret string
+		return ret
+	}
+	return *o.ExternalId
+}
+
+// SetExternalId gets a reference to the given string and assigns it to the ExternalId field.
+func (o *EnableCloudWatchMetricExportRequest) SetExternalId(v string) {
+	o.ExternalId = &v
 }
 
 // GetLogGroupName returns the LogGroupName field value if set, zero value otherwise.

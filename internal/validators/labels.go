@@ -55,7 +55,7 @@ var _ validator.Map = labelsValidator{}
 type labelsValidator struct{}
 
 func (validator labelsValidator) Description(_ context.Context) string {
-	return fmt.Sprintf("must contain at most %d key-value pairs, with each key and each value allowed up to 63 characters (lowercase letters, numbers, hyphens, or underscores)", ResourceLabelLimit)
+	return fmt.Sprintf("Labels must contain at most %d key-value pairs. Each label consists of a key that starts with a lowercase letter and an optional value. Both keys and values must be no more than 63 characters long and may only contain lowercase letters, numbers, hyphens (-), or underscores (_).", ResourceLabelLimit)
 }
 
 func (validator labelsValidator) MarkdownDescription(ctx context.Context) string {
@@ -91,7 +91,7 @@ func (validator labelsValidator) ValidateMap(
 	if !isValidLabels(labels) {
 		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
 			request.Path,
-			"must have keys and values with a maximum of 63 characters, using only lowercase letters, numbers, hyphens (-), or underscores (_)",
+			"consist of pairs of keys and optional values. Keys must start with a lowercase letter. Both keys and values must be no more than 63 characters long and may only contain lowercase letters, numbers, hyphens (-), or underscores (_)",
 			value.String(),
 		))
 	}

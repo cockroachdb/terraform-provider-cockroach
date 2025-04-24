@@ -2658,7 +2658,7 @@ func testClusterWithLabels(
 					traceMessageStep("create cluster with invalid labels")
 				},
 				Config:      getTestClusterWithLabels(folderName, clusterName, &invalidLabels, false /*moveToFolder*/),
-				ExpectError: regexp.MustCompile("must have keys and values with a maximum of 63 characters,"),
+				ExpectError: regexp.MustCompile("consist of pairs of keys and optional values"),
 			},
 			{
 				PreConfig: func() {

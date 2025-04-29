@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -497,4 +498,219 @@ resource "cockroach_user_role_grant" "a_duplicate_grant" {
 	}
 }
 	`
+}
+
+// TestAccRoleGrantResourceWithNewUser ensures that we properly handle role
+// grant resources when their associated service account is deleted externally.
+// It will be skipped if TF_ACC isn't set.
+func TestAccRoleGrantResourceWithNewUser(t *testing.T) {
+	testRoleGrantResourceWithNewUser(t, false /*useMock*/)
+}
+
+// TestIntegrationRoleGrantResourceWithNewUser ensures that we properly handle role
+// grant resources when their associated service account is deleted externally.
+func TestIntegrationRoleGrantResourceWithNewUser(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	userID := uuid.Must(uuid.NewUUID()).String()
+	serviceAccount := client.ServiceAccount{
+		Id:          userID,
+		Name:        "Test cluster SA",
+		Description: "A service account used for managing access to the test cluster",
+	}
+
+	userIDNew := uuid.Must(uuid.NewUUID()).String()
+	serviceAccountNew := client.ServiceAccount{
+		Id:          userIDNew,
+		Name:        "Test cluster SA",
+		Description: "A service account used for managing access to the test cluster",
+	}
+
+	orgMemberRole := client.BuiltInRole{
+		Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
+		Resource: client.Resource{
+			Id:   nil,
+			Type: client.RESOURCETYPETYPE_ORGANIZATION,
+		},
+	}
+
+	orgBillingCoordinatorRole := client.BuiltInRole{
+		Name: client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR,
+		Resource: client.Resource{
+			Id:   nil,
+			Type: client.RESOURCETYPETYPE_ORGANIZATION,
+		},
+	}
+
+	PreCreateGetResponse := client.GetAllRolesForUserResponse{
+		Roles: &[]client.BuiltInRole{
+			orgMemberRole,
+		},
+	}
+
+	PostCreateGetResponse := client.GetAllRolesForUserResponse{
+		Roles: &[]client.BuiltInRole{
+			orgMemberRole,
+			orgBillingCoordinatorRole,
+		},
+	}
+
+	PreCreateGetResponseNew := PreCreateGetResponse
+	PostCreateGetResponseNew := PostCreateGetResponse
+
+	// First test step - service account creation.
+	s.EXPECT().CreateServiceAccount(gomock.Any(), gomock.Any()).
+		Return(&serviceAccount, nil, nil)
+
+	// First test step - addition of org billing coordinator role.
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PreCreateGetResponse, nil, nil)
+
+	s.EXPECT().AddUserToRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_ORGANIZATION), "", string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR)).
+		Return(nil, nil, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostCreateGetResponse, nil, nil)
+
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostCreateGetResponse, nil, nil)
+
+	// Second test step - detect externally deleted service account.
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
+		Return(nil, &http.Response{Status: http.StatusText(http.StatusNotFound), StatusCode: http.StatusNotFound}, errors.New("not found"))
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userID).
+		Return(&PostCreateGetResponse, nil, nil).Times(3)
+
+	// Third test step - clean up resources that reference the externally deleted resource.
+	s.EXPECT().RemoveUserFromRole(gomock.Any(), userID, string(client.RESOURCETYPETYPE_ORGANIZATION), "", string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR)).
+		Return(nil, nil, nil)
+
+	// Third test step - recreate the resource that was deleted outside of Terraform.
+	s.EXPECT().CreateServiceAccount(gomock.Any(), gomock.Any()).
+		Return(&serviceAccountNew, nil, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userIDNew).
+		Return(&PreCreateGetResponseNew, nil, nil)
+
+	// Third test step - assign the role intended for the newly created resource.
+	s.EXPECT().AddUserToRole(gomock.Any(), userIDNew, string(client.RESOURCETYPETYPE_ORGANIZATION), "", string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR)).
+		Return(nil, nil, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userIDNew).
+		Return(&PostCreateGetResponseNew, nil, nil)
+
+	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccountNew.Id).
+		Return(&serviceAccountNew, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
+
+	s.EXPECT().GetAllRolesForUser(gomock.Any(), userIDNew).
+		Return(&PostCreateGetResponseNew, nil, nil)
+
+	// Destroy resources.
+	s.EXPECT().RemoveUserFromRole(gomock.Any(), userIDNew, string(client.RESOURCETYPETYPE_ORGANIZATION), "", string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR)).
+		Return(nil, nil, nil)
+
+	s.EXPECT().DeleteServiceAccount(gomock.Any(), serviceAccountNew.Id).
+		Return(nil, nil, nil)
+
+	testRoleGrantResourceWithNewUser(t, true /*useMock*/)
+}
+
+func testRoleGrantResourceWithNewUser(t *testing.T, useMock bool) {
+	var (
+		orgGrantResourceName = "cockroach_user_role_grant.org_grant"
+	)
+
+	checkOrgRole := testRoleGrantExists(orgGrantResourceName, string(client.ORGANIZATIONUSERROLETYPE_BILLING_COORDINATOR), string(client.RESOURCETYPETYPE_ORGANIZATION))
+
+	var serviceAccountIDToDelete string
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: getTestRoleGrantResourceWithNewUserConfig(),
+				Check:  resource.ComposeTestCheckFunc(checkOrgRole, getServiceAccountID(&serviceAccountIDToDelete)),
+			},
+			// In the acceptance test, this step simulates the external deletion
+			// of the service account created in the previous step. (In the
+			// integration test, we mock a request that returns a `not found`
+			// error instead.) Afterward, the state is refreshed, allowing
+			// Terraform to detect drift and update the plan accordingly.
+			{
+				PreConfig: func() {
+					if useMock {
+						return
+					}
+					deleteServiceAccountExternally(t, serviceAccountIDToDelete)
+				},
+				RefreshState:       true,
+				ExpectNonEmptyPlan: true,
+			},
+			// This step reapplies the exact same configuration. Because drift was
+			// detected in the previous step, Terraform will create a new service
+			// account.
+			{
+				Config: getTestRoleGrantResourceWithNewUserConfig(),
+				Check:  resource.ComposeTestCheckFunc(checkOrgRole),
+			},
+		},
+	})
+}
+
+func getTestRoleGrantResourceWithNewUserConfig() string {
+	return `
+resource "cockroach_service_account" "test_sa" {
+  name        = "Test cluster SA"
+  description = "A service account used for managing access to the test cluster"
+}
+
+resource "cockroach_user_role_grant" "org_grant" {
+	user_id = cockroach_service_account.test_sa.id
+	role = {
+		role_name = "BILLING_COORDINATOR",
+		resource_type = "ORGANIZATION",
+		resource_id = ""
+	}
+}
+`
+}
+
+func getServiceAccountID(serviceAccountID *string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		serviceAccountResourceName := "cockroach_service_account.test_sa"
+		resources := s.RootModule().Resources
+		resource, ok := resources[serviceAccountResourceName]
+		if !ok {
+			return fmt.Errorf("not found: %s", serviceAccountResourceName)
+		}
+
+		userID := resource.Primary.Attributes["id"]
+		*serviceAccountID = userID
+		return nil
+	}
+}
+
+func deleteServiceAccountExternally(t *testing.T, serviceAccountID string) {
+	if serviceAccountID == "" {
+		t.Fatalf("expected service account ID to be set")
+	}
+	p := testAccProvider.(*provider)
+	p.service = NewService(cl)
+	_, httpResp, err := p.service.DeleteServiceAccount(context.Background(), serviceAccountID)
+	require.NoError(t, err)
+	require.Equal(t, httpResp.StatusCode, http.StatusOK)
 }

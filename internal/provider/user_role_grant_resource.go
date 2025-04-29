@@ -19,6 +19,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"strings"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
@@ -42,6 +44,9 @@ func (r *userRoleGrantResource) Schema(
 			"user_id": schema.StringAttribute{
 				Required:    true,
 				Description: "ID of the user to grant these roles to.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"role": schema.SingleNestedAttribute{
 				Required: true,

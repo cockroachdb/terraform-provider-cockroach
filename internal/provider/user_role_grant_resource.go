@@ -26,6 +26,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -42,6 +44,14 @@ func (r *userRoleGrantResource) Schema(
 			"user_id": schema.StringAttribute{
 				Required:    true,
 				Description: "ID of the user to grant these roles to.",
+				// RequiresReplace ensures that the user role grant resource is replaced
+				// when the user_id changes. This can happen when the service account
+				// associated with the user_id is managed by Terraform and gets deleted
+				// externally, prompting Terraform to create a new service account on
+				// apply.
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
 			"role": schema.SingleNestedAttribute{
 				Required: true,

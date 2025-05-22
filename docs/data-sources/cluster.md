@@ -82,6 +82,7 @@ Read-Only:
 - `name` (String) Region code used by the cluster's cloud provider.
 - `node_count` (Number) Number of nodes in the region. Will always be 0 for serverless clusters.
 - `primary` (Boolean) Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.
+- `private_endpoint_dns` (String) Private Endpoint DNS name of the cluster which is used to connect to the cluster with GCP Private Service Connect.
 - `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
 - `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
 

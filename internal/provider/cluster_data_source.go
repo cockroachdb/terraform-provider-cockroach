@@ -49,7 +49,7 @@ func (d *clusterDataSource) Schema(
 				Description: "The major version of CockroachDB running on the cluster. (e.g. v25.0)",
 			},
 			"full_version": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
 				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"plan": schema.StringAttribute{
@@ -153,6 +153,11 @@ func (d *clusterDataSource) Schema(
 							Computed:    true,
 							Description: "Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.",
 						},
+						"private_endpoint_dns": schema.StringAttribute{
+							Computed:    true,
+							Description: "Private Endpoint DNS name of the cluster which is used to connect to the cluster with GCP Private Service Connect.",
+						},
+
 						"node_count": schema.Int64Attribute{
 							Computed:    true,
 							Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",

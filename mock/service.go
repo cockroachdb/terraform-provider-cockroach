@@ -228,6 +228,22 @@ func (mr *MockServiceMockRecorder) CreateGroup(arg0, arg1 interface{}) *gomock.C
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateGroup", reflect.TypeOf((*MockService)(nil).CreateGroup), arg0, arg1)
 }
 
+// CreatePhysicalReplicationStream mocks base method.
+func (m *MockService) CreatePhysicalReplicationStream(arg0 context.Context, arg1 *client.CreatePhysicalReplicationStreamRequest) (*client.PhysicalReplicationStream, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreatePhysicalReplicationStream", arg0, arg1)
+	ret0, _ := ret[0].(*client.PhysicalReplicationStream)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreatePhysicalReplicationStream indicates an expected call of CreatePhysicalReplicationStream.
+func (mr *MockServiceMockRecorder) CreatePhysicalReplicationStream(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePhysicalReplicationStream", reflect.TypeOf((*MockService)(nil).CreatePhysicalReplicationStream), arg0, arg1)
+}
+
 // CreatePrivateEndpointServices mocks base method.
 func (m *MockService) CreatePrivateEndpointServices(arg0 context.Context, arg1 string) (*client.PrivateEndpointServices, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -832,6 +848,22 @@ func (mr *MockServiceMockRecorder) GetCluster(arg0, arg1 interface{}) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCluster", reflect.TypeOf((*MockService)(nil).GetCluster), arg0, arg1)
 }
 
+// GetClusterDisruptionInfo mocks base method.
+func (m *MockService) GetClusterDisruptionInfo(arg0 context.Context, arg1 string) (*client.ClusterDisruptionInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetClusterDisruptionInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.ClusterDisruptionInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetClusterDisruptionInfo indicates an expected call of GetClusterDisruptionInfo.
+func (mr *MockServiceMockRecorder) GetClusterDisruptionInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterDisruptionInfo", reflect.TypeOf((*MockService)(nil).GetClusterDisruptionInfo), arg0, arg1)
+}
+
 // GetClusterVersionDeferral mocks base method.
 func (m *MockService) GetClusterVersionDeferral(arg0 context.Context, arg1 string) (*client.ClusterVersionDeferral, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1070,6 +1102,22 @@ func (m *MockService) GetPersonUsersByEmail(arg0 context.Context, arg1 *string) 
 func (mr *MockServiceMockRecorder) GetPersonUsersByEmail(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPersonUsersByEmail", reflect.TypeOf((*MockService)(nil).GetPersonUsersByEmail), arg0, arg1)
+}
+
+// GetPhysicalReplicationStream mocks base method.
+func (m *MockService) GetPhysicalReplicationStream(arg0 context.Context, arg1 string) (*client.PhysicalReplicationStream, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPhysicalReplicationStream", arg0, arg1)
+	ret0, _ := ret[0].(*client.PhysicalReplicationStream)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetPhysicalReplicationStream indicates an expected call of GetPhysicalReplicationStream.
+func (mr *MockServiceMockRecorder) GetPhysicalReplicationStream(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPhysicalReplicationStream", reflect.TypeOf((*MockService)(nil).GetPhysicalReplicationStream), arg0, arg1)
 }
 
 // GetPrivateEndpointTrustedOwner mocks base method.
@@ -1504,6 +1552,22 @@ func (mr *MockServiceMockRecorder) ListMajorClusterVersions(arg0, arg1 interface
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListMajorClusterVersions", reflect.TypeOf((*MockService)(nil).ListMajorClusterVersions), arg0, arg1)
 }
 
+// ListPhysicalReplicationStreams mocks base method.
+func (m *MockService) ListPhysicalReplicationStreams(arg0 context.Context, arg1 *client.ListPhysicalReplicationStreamsOptions) (*client.PhysicalReplicationStreamList, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListPhysicalReplicationStreams", arg0, arg1)
+	ret0, _ := ret[0].(*client.PhysicalReplicationStreamList)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListPhysicalReplicationStreams indicates an expected call of ListPhysicalReplicationStreams.
+func (mr *MockServiceMockRecorder) ListPhysicalReplicationStreams(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPhysicalReplicationStreams", reflect.TypeOf((*MockService)(nil).ListPhysicalReplicationStreams), arg0, arg1)
+}
+
 // ListPrivateEndpointConnections mocks base method.
 func (m *MockService) ListPrivateEndpointConnections(arg0 context.Context, arg1 string) (*client.PrivateEndpointConnections, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1614,6 +1678,38 @@ func (m *MockService) ListServiceAccounts(arg0 context.Context, arg1 *client.Lis
 func (mr *MockServiceMockRecorder) ListServiceAccounts(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListServiceAccounts", reflect.TypeOf((*MockService)(nil).ListServiceAccounts), arg0, arg1)
+}
+
+// PatchGroup mocks base method.
+func (m *MockService) PatchGroup(arg0 context.Context, arg1 string, arg2 *client.PatchGroupRequest) (*client.ScimGroup, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchGroup", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimGroup)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// PatchGroup indicates an expected call of PatchGroup.
+func (mr *MockServiceMockRecorder) PatchGroup(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchGroup", reflect.TypeOf((*MockService)(nil).PatchGroup), arg0, arg1, arg2)
+}
+
+// PatchUser mocks base method.
+func (m *MockService) PatchUser(arg0 context.Context, arg1 string, arg2 *client.PatchUserRequest) (*client.ScimUser, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "PatchUser", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ScimUser)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// PatchUser indicates an expected call of PatchUser.
+func (mr *MockServiceMockRecorder) PatchUser(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchUser", reflect.TypeOf((*MockService)(nil).PatchUser), arg0, arg1, arg2)
 }
 
 // RemovePrivateEndpointTrustedOwner mocks base method.
@@ -1919,6 +2015,22 @@ func (mr *MockServiceMockRecorder) UpdateCluster(arg0, arg1, arg2 interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateCluster", reflect.TypeOf((*MockService)(nil).UpdateCluster), arg0, arg1, arg2)
 }
 
+// UpdateClusterDisruption mocks base method.
+func (m *MockService) UpdateClusterDisruption(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudUpdateClusterDisruptionRequest) (*client.ClusterDisruptionInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateClusterDisruption", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ClusterDisruptionInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateClusterDisruption indicates an expected call of UpdateClusterDisruption.
+func (mr *MockServiceMockRecorder) UpdateClusterDisruption(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterDisruption", reflect.TypeOf((*MockService)(nil).UpdateClusterDisruption), arg0, arg1, arg2)
+}
+
 // UpdateFolder mocks base method.
 func (m *MockService) UpdateFolder(arg0 context.Context, arg1 string, arg2 *client.UpdateFolderSpecification) (*client.FolderResource, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1965,6 +2077,22 @@ func (m *MockService) UpdateJWTIssuer(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) UpdateJWTIssuer(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateJWTIssuer", reflect.TypeOf((*MockService)(nil).UpdateJWTIssuer), arg0, arg1, arg2)
+}
+
+// UpdatePhysicalReplicationStream mocks base method.
+func (m *MockService) UpdatePhysicalReplicationStream(arg0 context.Context, arg1 string, arg2 *client.UpdatePhysicalReplicationStreamSpec) (*client.PhysicalReplicationStream, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdatePhysicalReplicationStream", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.PhysicalReplicationStream)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdatePhysicalReplicationStream indicates an expected call of UpdatePhysicalReplicationStream.
+func (mr *MockServiceMockRecorder) UpdatePhysicalReplicationStream(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePhysicalReplicationStream", reflect.TypeOf((*MockService)(nil).UpdatePhysicalReplicationStream), arg0, arg1, arg2)
 }
 
 // UpdateReplicationStream mocks base method.
@@ -2029,53 +2157,4 @@ func (m *MockService) UpdateUser(arg0 context.Context, arg1 string, arg2 *client
 func (mr *MockServiceMockRecorder) UpdateUser(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUser", reflect.TypeOf((*MockService)(nil).UpdateUser), arg0, arg1, arg2)
-}
-
-
-// GetClusterDisruptionInfo mocks base method.
-func (m *MockService) GetClusterDisruptionInfo(arg0 context.Context, arg1 string) (*client.ClusterDisruptionInfo, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetClusterDisruptionInfo", arg0, arg1)
-	ret0, _ := ret[0].(*client.ClusterDisruptionInfo)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetClusterDisruptionInfo indicates an expected call of GetClusterDisruptionInfo.
-func (mr *MockServiceMockRecorder) GetClusterDisruptionInfo(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetClusterDisruptionInfo", reflect.TypeOf((*MockService)(nil).GetClusterDisruptionInfo), arg0, arg1)
-}
-
-// UpdateClusterDisruption mocks base method.
-func (m *MockService) UpdateClusterDisruption(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudUpdateClusterDisruptionRequest) (*client.ClusterDisruptionInfo, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateClusterDisruption", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ClusterDisruptionInfo)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// UpdateClusterDisruption indicates an expected call of UpdateClusterDisruption.
-func (mr *MockServiceMockRecorder) UpdateClusterDisruption(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterDisruption", reflect.TypeOf((*MockService)(nil).UpdateClusterDisruption), arg0, arg1, arg2)
-}
-
-// PatchUser mocks base method.
-func (m *MockService) PatchUser(arg0 context.Context, arg1 string, arg2 *client.PatchUserRequest) (*client.ScimUser, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "PatchUser", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ScimUser)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// PatchUser indicates an expected call of PatchUser.
-func (mr *MockServiceMockRecorder) PatchUser(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "PatchUser", reflect.TypeOf((*MockService)(nil).PatchUser), arg0, arg1, arg2)
 }

@@ -18,34 +18,34 @@
 
 package client
 
-// PatchUserRequest struct for PatchUserRequest.
-type PatchUserRequest struct {
+// PatchGroupRequest struct for PatchGroupRequest.
+type PatchGroupRequest struct {
 	Operations []ScimOperations `json:"Operations"`
 	// A list of one or more URIs identifying SCIM schemas that define the structure of the attributes in the request. The only supported schema at this time is \"urn:ietf:params:scim:api:messages:2.0:PatchOp\".
 	Schemas []string `json:"schemas"`
 }
 
-// NewPatchUserRequest instantiates a new PatchUserRequest object.
+// NewPatchGroupRequest instantiates a new PatchGroupRequest object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewPatchUserRequest(operations []ScimOperations, schemas []string) *PatchUserRequest {
-	p := PatchUserRequest{}
+func NewPatchGroupRequest(operations []ScimOperations, schemas []string) *PatchGroupRequest {
+	p := PatchGroupRequest{}
 	p.Operations = operations
 	p.Schemas = schemas
 	return &p
 }
 
-// NewPatchUserRequestWithDefaults instantiates a new PatchUserRequest object.
+// NewPatchGroupRequestWithDefaults instantiates a new PatchGroupRequest object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewPatchUserRequestWithDefaults() *PatchUserRequest {
-	p := PatchUserRequest{}
+func NewPatchGroupRequestWithDefaults() *PatchGroupRequest {
+	p := PatchGroupRequest{}
 	return &p
 }
 
 // GetOperations returns the Operations field value.
-func (o *PatchUserRequest) GetOperations() []ScimOperations {
+func (o *PatchGroupRequest) GetOperations() []ScimOperations {
 	if o == nil {
 		var ret []ScimOperations
 		return ret
@@ -55,12 +55,12 @@ func (o *PatchUserRequest) GetOperations() []ScimOperations {
 }
 
 // SetOperations sets field value.
-func (o *PatchUserRequest) SetOperations(v []ScimOperations) {
+func (o *PatchGroupRequest) SetOperations(v []ScimOperations) {
 	o.Operations = v
 }
 
 // GetSchemas returns the Schemas field value.
-func (o *PatchUserRequest) GetSchemas() []string {
+func (o *PatchGroupRequest) GetSchemas() []string {
 	if o == nil {
 		var ret []string
 		return ret
@@ -70,6 +70,6 @@ func (o *PatchUserRequest) GetSchemas() []string {
 }
 
 // SetSchemas sets field value.
-func (o *PatchUserRequest) SetSchemas(v []string) {
+func (o *PatchGroupRequest) SetSchemas(v []string) {
 	o.Schemas = v
 }

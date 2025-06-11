@@ -44,10 +44,10 @@ const (
 	// The patch versions are just for mocks. They don't need to be the actual
 	// latest available patch versions; they just need to resolve to the correct
 	// major versions.
-	minSupportedClusterMajorVersion = "v24.1"
-	minSupportedClusterPatchVersion = "v24.1.0"
-	latestClusterMajorVersion       = "v24.3"
-	latestClusterPatchVersion       = "v24.3.0"
+	minSupportedClusterMajorVersion = "v25.1"
+	minSupportedClusterPatchVersion = "v25.1.0"
+	latestClusterMajorVersion       = "v25.3"
+	latestClusterPatchVersion       = "v25.3.0"
 
 	serverlessResourceName   = "cockroach_cluster.test"
 	serverlessDataSourceName = "data.cockroach_cluster.test"

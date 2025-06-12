@@ -1802,6 +1802,7 @@ func TestAccDedicatedClusterResource(t *testing.T) {
 }
 
 func TestIntegrationDedicatedClusterResource(t *testing.T) {
+	fmt.Println("JASKDJFAKSDF")
 	clusterName := fmt.Sprintf("%s-dedicated-%s", tfTestPrefix, GenerateRandomString(3))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {

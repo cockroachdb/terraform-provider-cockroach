@@ -77,6 +77,9 @@ var regionSchema = schema.NestedAttributeObject{
 		"sql_dns": schema.StringAttribute{
 			Computed:    true,
 			Description: "DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.",
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"ui_dns": schema.StringAttribute{
 			Computed:    true,
@@ -85,6 +88,9 @@ var regionSchema = schema.NestedAttributeObject{
 		"internal_dns": schema.StringAttribute{
 			Computed:    true,
 			Description: "Internal DNS name of the cluster within the cloud provider's network. Used to connect to the cluster with PrivateLink or VPC peering.",
+			PlanModifiers: []planmodifier.String{
+				stringplanmodifier.UseStateForUnknown(),
+			},
 		},
 		"node_count": schema.Int64Attribute{
 			Optional: true,

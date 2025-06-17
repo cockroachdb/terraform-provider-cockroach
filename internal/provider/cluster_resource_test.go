@@ -46,8 +46,8 @@ const (
 	// major versions.
 	minSupportedClusterMajorVersion = "v25.1"
 	minSupportedClusterPatchVersion = "v25.1.0"
-	latestClusterMajorVersion       = "v25.3"
-	latestClusterPatchVersion       = "v25.3.0"
+	latestClusterMajorVersion       = "v25.2"
+	latestClusterPatchVersion       = "v25.2.0"
 
 	serverlessResourceName   = "cockroach_cluster.test"
 	serverlessDataSourceName = "data.cockroach_cluster.test"

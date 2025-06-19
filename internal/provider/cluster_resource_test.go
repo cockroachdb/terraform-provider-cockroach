@@ -1945,7 +1945,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		})
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(&scaledCluster, httpOk, nil).AnyTimes()
+		Return(&scaledCluster, httpOk, nil).Times(5)
 
 	// Deletion
 

@@ -157,7 +157,6 @@ func (d *clusterDataSource) Schema(
 							Computed:    true,
 							Description: "Private Endpoint DNS name of the cluster which is used to connect to the cluster with GCP Private Service Connect.",
 						},
-
 						"node_count": schema.Int64Attribute{
 							Computed:    true,
 							Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",

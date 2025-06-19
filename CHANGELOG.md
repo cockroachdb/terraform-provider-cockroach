@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Added `private_endpoint_dns` as read only region in `cockroach_cluster` resource.
+- Added `private_endpoint_dns` as a read only attribute in `cockroach_cluster` resource.
 
 ## [1.12.2] - 2025-06-17
 

@@ -130,6 +130,7 @@ func (p *provider) Metadata(
 func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewClusterResource,
+		NewPhysicalReplicationStreamResource,
 		NewSQLUserResource,
 		NewAllowlistResource,
 		NewPrivateEndpointServicesResource,

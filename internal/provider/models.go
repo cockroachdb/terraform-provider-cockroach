@@ -84,6 +84,10 @@ type APIErrorMessage struct {
 	HttpCode int
 }
 
+func (e *APIErrorMessage) String() string {
+	return fmt.Sprintf("%v-%v", e.Code, e.Message)
+}
+
 // CockroachCluster is used by the cluster resource
 // and the cluster data source. Changes to this model
 // should be supported by both.
@@ -361,6 +365,16 @@ type APIKey struct {
 	Secret           types.String `tfsdk:"secret"`
 }
 
-func (e *APIErrorMessage) String() string {
-	return fmt.Sprintf("%v-%v", e.Code, e.Message)
+type PhysicalReplicationStream struct {
+	PrimaryClusterId      types.String `tfsdk:"primary_cluster_id"`
+	StandbyClusterId      types.String `tfsdk:"standby_cluster_id"`
+	ID                    types.String `tfsdk:"id"`
+	CreatedAt             types.String `tfsdk:"created_at"`
+	ReplicatedTime        types.String `tfsdk:"replicated_time"`
+	ReplicationLagSeconds types.Int64  `tfsdk:"replication_lag_seconds"`
+	RetainedTime          types.String `tfsdk:"retained_time"`
+	Status                types.String `tfsdk:"status"`
+	FailoverAt            types.String `tfsdk:"failover_at"`
+	FailoverImmediately   types.Bool   `tfsdk:"failover_immediately"`
+	ActivatedAt           types.String `tfsdk:"activated_at"`
 }

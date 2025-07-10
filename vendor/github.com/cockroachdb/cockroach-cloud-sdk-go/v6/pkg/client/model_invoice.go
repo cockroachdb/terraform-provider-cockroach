@@ -37,7 +37,8 @@ type Invoice struct {
 	// period_end is the end of the billing period (exclusive).
 	PeriodEnd time.Time `json:"period_end"`
 	// period_start is the start of the billing period (inclusive).
-	PeriodStart time.Time `json:"period_start"`
+	PeriodStart time.Time          `json:"period_start"`
+	Status      *InvoiceStatusType `json:"status,omitempty"`
 	// totals is a list of the total amounts per currency.
 	Totals []CurrencyAmount `json:"totals"`
 }
@@ -166,6 +167,20 @@ func (o *Invoice) GetPeriodStart() time.Time {
 // SetPeriodStart sets field value.
 func (o *Invoice) SetPeriodStart(v time.Time) {
 	o.PeriodStart = v
+}
+
+// GetStatus returns the Status field value if set, zero value otherwise.
+func (o *Invoice) GetStatus() InvoiceStatusType {
+	if o == nil || o.Status == nil {
+		var ret InvoiceStatusType
+		return ret
+	}
+	return *o.Status
+}
+
+// SetStatus gets a reference to the given InvoiceStatusType and assigns it to the Status field.
+func (o *Invoice) SetStatus(v InvoiceStatusType) {
+	o.Status = &v
 }
 
 // GetTotals returns the Totals field value.

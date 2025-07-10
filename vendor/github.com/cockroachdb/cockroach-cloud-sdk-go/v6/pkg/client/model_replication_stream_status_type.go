@@ -31,6 +31,7 @@ const (
 	REPLICATIONSTREAMSTATUSTYPE_REPLICATING  ReplicationStreamStatusType = "REPLICATING"
 	REPLICATIONSTREAMSTATUSTYPE_FAILING_OVER ReplicationStreamStatusType = "FAILING_OVER"
 	REPLICATIONSTREAMSTATUSTYPE_COMPLETED    ReplicationStreamStatusType = "COMPLETED"
+	REPLICATIONSTREAMSTATUSTYPE_CANCELED     ReplicationStreamStatusType = "CANCELED"
 )
 
 // All allowed values of ReplicationStreamStatusType enum.
@@ -39,6 +40,7 @@ var AllowedReplicationStreamStatusTypeEnumValues = []ReplicationStreamStatusType
 	"REPLICATING",
 	"FAILING_OVER",
 	"COMPLETED",
+	"CANCELED",
 }
 
 // NewReplicationStreamStatusTypeFromValue returns a pointer to a valid ReplicationStreamStatusType

@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -228,9 +229,9 @@ func waitForPrometheusMetricExportStableFunc(
 			if prometheusMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, prometheusMetricExportInfo.GetUserMessage())
 			}
-			return retry.NonRetryableError(fmt.Errorf(errMsg))
+			return retry.NonRetryableError(errors.New(errMsg))
 		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
-			return retry.RetryableError(fmt.Errorf("the Prometheus metric export is not ready yet"))
+			return retry.RetryableError(errors.New("the Prometheus metric export is not ready yet"))
 		default:
 			return nil
 		}

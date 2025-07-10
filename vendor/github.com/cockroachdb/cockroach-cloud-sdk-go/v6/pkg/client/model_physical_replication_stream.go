@@ -26,6 +26,8 @@ import (
 type PhysicalReplicationStream struct {
 	// activated_at is the crdb system time at which failover is finalized. This may differ from the time for which failover was requested. This field will be present when a replication stream is in the COMPLETED state.
 	ActivatedAt *time.Time `json:"activated_at,omitempty"`
+	// canceled_at is the timestamp at which the replication stream was canceled.
+	CanceledAt *time.Time `json:"canceled_at,omitempty"`
 	// created_at is the timestamp at which the replication stream was created.
 	CreatedAt time.Time `json:"created_at"`
 	// failover_at is the time for which failover is requested. If the user sets the status to 'FAILING_OVER' but omits failover_at, the failover time will default to the latest consistent replicated time. Otherwise, the user can pick a time up to one hour in the future to schedule a failover, or a time in the past to restore the cluster to a recent state. This field will be present if the user has requested failover at a future time.
@@ -79,6 +81,20 @@ func (o *PhysicalReplicationStream) GetActivatedAt() time.Time {
 // SetActivatedAt gets a reference to the given time.Time and assigns it to the ActivatedAt field.
 func (o *PhysicalReplicationStream) SetActivatedAt(v time.Time) {
 	o.ActivatedAt = &v
+}
+
+// GetCanceledAt returns the CanceledAt field value if set, zero value otherwise.
+func (o *PhysicalReplicationStream) GetCanceledAt() time.Time {
+	if o == nil || o.CanceledAt == nil {
+		var ret time.Time
+		return ret
+	}
+	return *o.CanceledAt
+}
+
+// SetCanceledAt gets a reference to the given time.Time and assigns it to the CanceledAt field.
+func (o *PhysicalReplicationStream) SetCanceledAt(v time.Time) {
+	o.CanceledAt = &v
 }
 
 // GetCreatedAt returns the CreatedAt field value.

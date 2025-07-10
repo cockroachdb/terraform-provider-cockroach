@@ -29,7 +29,8 @@ type DedicatedClusterCreateSpecification struct {
 	// Region keys should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. Values represent the node count.
 	RegionNodes map[string]int32 `json:"region_nodes"`
 	// Preview: restrict_egress_traffic if set, results in an egress traffic policy of default-deny at creation time.
-	RestrictEgressTraffic *bool `json:"restrict_egress_traffic,omitempty"`
+	RestrictEgressTraffic             *bool `json:"restrict_egress_traffic,omitempty"`
+	SupportPhysicalClusterReplication *bool `json:"support_physical_cluster_replication,omitempty"`
 }
 
 // NewDedicatedClusterCreateSpecification instantiates a new DedicatedClusterCreateSpecification object.
@@ -135,4 +136,18 @@ func (o *DedicatedClusterCreateSpecification) GetRestrictEgressTraffic() bool {
 // SetRestrictEgressTraffic gets a reference to the given bool and assigns it to the RestrictEgressTraffic field.
 func (o *DedicatedClusterCreateSpecification) SetRestrictEgressTraffic(v bool) {
 	o.RestrictEgressTraffic = &v
+}
+
+// GetSupportPhysicalClusterReplication returns the SupportPhysicalClusterReplication field value if set, zero value otherwise.
+func (o *DedicatedClusterCreateSpecification) GetSupportPhysicalClusterReplication() bool {
+	if o == nil || o.SupportPhysicalClusterReplication == nil {
+		var ret bool
+		return ret
+	}
+	return *o.SupportPhysicalClusterReplication
+}
+
+// SetSupportPhysicalClusterReplication gets a reference to the given bool and assigns it to the SupportPhysicalClusterReplication field.
+func (o *DedicatedClusterCreateSpecification) SetSupportPhysicalClusterReplication(v bool) {
+	o.SupportPhysicalClusterReplication = &v
 }

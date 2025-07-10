@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -268,9 +269,9 @@ func waitForCloudWatchMetricExportReadyFunc(
 			if cloudWatchMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, cloudWatchMetricExportInfo.GetUserMessage())
 			}
-			return retry.NonRetryableError(fmt.Errorf(errMsg))
+			return retry.NonRetryableError(errors.New(errMsg))
 		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
-			return retry.RetryableError(fmt.Errorf("the CloudWatch metric export is not ready yet"))
+			return retry.RetryableError(errors.New("the CloudWatch metric export is not ready yet"))
 		default:
 			return nil
 		}

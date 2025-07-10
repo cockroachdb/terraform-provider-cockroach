@@ -260,22 +260,6 @@ func (mr *MockServiceMockRecorder) CreatePrivateEndpointServices(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePrivateEndpointServices", reflect.TypeOf((*MockService)(nil).CreatePrivateEndpointServices), arg0, arg1)
 }
 
-// CreateReplicationStream mocks base method.
-func (m *MockService) CreateReplicationStream(arg0 context.Context, arg1 *client.CreateReplicationStreamRequest) (*client.ReplicationStream, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "CreateReplicationStream", arg0, arg1)
-	ret0, _ := ret[0].(*client.ReplicationStream)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// CreateReplicationStream indicates an expected call of CreateReplicationStream.
-func (mr *MockServiceMockRecorder) CreateReplicationStream(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateReplicationStream", reflect.TypeOf((*MockService)(nil).CreateReplicationStream), arg0, arg1)
-}
-
 // CreateSQLUser mocks base method.
 func (m *MockService) CreateSQLUser(arg0 context.Context, arg1 string, arg2 *client.CreateSQLUserRequest) (*client.SQLUser, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1152,22 +1136,6 @@ func (mr *MockServiceMockRecorder) GetPrometheusMetricExportInfo(arg0, arg1 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPrometheusMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetPrometheusMetricExportInfo), arg0, arg1)
 }
 
-// GetReplicationStream mocks base method.
-func (m *MockService) GetReplicationStream(arg0 context.Context, arg1 string) (*client.ReplicationStream, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetReplicationStream", arg0, arg1)
-	ret0, _ := ret[0].(*client.ReplicationStream)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// GetReplicationStream indicates an expected call of GetReplicationStream.
-func (mr *MockServiceMockRecorder) GetReplicationStream(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReplicationStream", reflect.TypeOf((*MockService)(nil).GetReplicationStream), arg0, arg1)
-}
-
 // GetResourceType mocks base method.
 func (m *MockService) GetResourceType(arg0 context.Context, arg1 string, arg2 *client.GetResourceTypeOptions) (*client.ScimResourceType, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1614,22 +1582,6 @@ func (m *MockService) ListPrivateEndpointTrustedOwners(arg0 context.Context, arg
 func (mr *MockServiceMockRecorder) ListPrivateEndpointTrustedOwners(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointTrustedOwners", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointTrustedOwners), arg0, arg1)
-}
-
-// ListReplicationStreams mocks base method.
-func (m *MockService) ListReplicationStreams(arg0 context.Context, arg1 *client.ListReplicationStreamsOptions) (*client.ReplicationStreamList, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListReplicationStreams", arg0, arg1)
-	ret0, _ := ret[0].(*client.ReplicationStreamList)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// ListReplicationStreams indicates an expected call of ListReplicationStreams.
-func (mr *MockServiceMockRecorder) ListReplicationStreams(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListReplicationStreams", reflect.TypeOf((*MockService)(nil).ListReplicationStreams), arg0, arg1)
 }
 
 // ListRoleGrants mocks base method.
@@ -2093,22 +2045,6 @@ func (m *MockService) UpdatePhysicalReplicationStream(arg0 context.Context, arg1
 func (mr *MockServiceMockRecorder) UpdatePhysicalReplicationStream(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdatePhysicalReplicationStream", reflect.TypeOf((*MockService)(nil).UpdatePhysicalReplicationStream), arg0, arg1, arg2)
-}
-
-// UpdateReplicationStream mocks base method.
-func (m *MockService) UpdateReplicationStream(arg0 context.Context, arg1 string, arg2 *client.UpdateReplicationStreamSpec) (*client.ReplicationStream, *http.Response, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateReplicationStream", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.ReplicationStream)
-	ret1, _ := ret[1].(*http.Response)
-	ret2, _ := ret[2].(error)
-	return ret0, ret1, ret2
-}
-
-// UpdateReplicationStream indicates an expected call of UpdateReplicationStream.
-func (mr *MockServiceMockRecorder) UpdateReplicationStream(arg0, arg1, arg2 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateReplicationStream", reflect.TypeOf((*MockService)(nil).UpdateReplicationStream), arg0, arg1, arg2)
 }
 
 // UpdateSQLUserPassword mocks base method.

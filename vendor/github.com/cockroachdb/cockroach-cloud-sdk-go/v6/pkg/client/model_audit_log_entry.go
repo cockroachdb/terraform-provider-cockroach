@@ -37,7 +37,7 @@ type AuditLogEntry struct {
 	Id       *string           `json:"id,omitempty"`
 	Metadata *AuditLogMetadata `json:"metadata,omitempty"`
 	// Payload is a representation of the essential details relating to this log entry.
-	Payload *map[string]interface{} `json:"payload,omitempty"`
+	Payload *string `json:"payload,omitempty"`
 	// ServiceAccountName is the name of the service account that triggered this log entry. If it was not a service account, it will be empty.
 	ServiceAccountName *string `json:"service_account_name,omitempty"`
 	// SessionId is an ID that can be used to correlate this log entry with others that are emitted as part of the same user session, typically for users interacting through the UI. It should be treated as an opaque string with no guaranteed structure.
@@ -157,16 +157,16 @@ func (o *AuditLogEntry) SetMetadata(v AuditLogMetadata) {
 }
 
 // GetPayload returns the Payload field value if set, zero value otherwise.
-func (o *AuditLogEntry) GetPayload() map[string]interface{} {
+func (o *AuditLogEntry) GetPayload() string {
 	if o == nil || o.Payload == nil {
-		var ret map[string]interface{}
+		var ret string
 		return ret
 	}
 	return *o.Payload
 }
 
-// SetPayload gets a reference to the given map[string]interface{} and assigns it to the Payload field.
-func (o *AuditLogEntry) SetPayload(v map[string]interface{}) {
+// SetPayload gets a reference to the given string and assigns it to the Payload field.
+func (o *AuditLogEntry) SetPayload(v string) {
 	o.Payload = &v
 }
 

@@ -25,6 +25,8 @@ import (
 // Cluster struct for Cluster.
 type Cluster struct {
 	AccountId *string `json:"account_id,omitempty"`
+	// The client ID of the Azure cluster identity associated with this cluster. This field is only populated for clusters deployed on Azure and is used to support customer-managed encryption keys (CMEK).
+	AzureClusterIdentityClientId *string `json:"azure_cluster_identity_client_id,omitempty"`
 	// cidr_range is the IPv4 range in CIDR format that will be used by the cluster. It is only set on GCP Advanced tier clusters and is otherwise empty.
 	CidrRange           string                     `json:"cidr_range"`
 	CloudProvider       CloudProviderType          `json:"cloud_provider"`
@@ -94,6 +96,20 @@ func (o *Cluster) GetAccountId() string {
 // SetAccountId gets a reference to the given string and assigns it to the AccountId field.
 func (o *Cluster) SetAccountId(v string) {
 	o.AccountId = &v
+}
+
+// GetAzureClusterIdentityClientId returns the AzureClusterIdentityClientId field value if set, zero value otherwise.
+func (o *Cluster) GetAzureClusterIdentityClientId() string {
+	if o == nil || o.AzureClusterIdentityClientId == nil {
+		var ret string
+		return ret
+	}
+	return *o.AzureClusterIdentityClientId
+}
+
+// SetAzureClusterIdentityClientId gets a reference to the given string and assigns it to the AzureClusterIdentityClientId field.
+func (o *Cluster) SetAzureClusterIdentityClientId(v string) {
+	o.AzureClusterIdentityClientId = &v
 }
 
 // GetCidrRange returns the CidrRange field value.

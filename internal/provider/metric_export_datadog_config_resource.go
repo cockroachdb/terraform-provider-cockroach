@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -238,9 +239,9 @@ func waitForDatdogMetricExportReadyFunc(
 			if datadogMetricExportInfo.GetUserMessage() != "" {
 				errMsg = fmt.Sprintf("%s: %s", errMsg, datadogMetricExportInfo.GetUserMessage())
 			}
-			return retry.NonRetryableError(fmt.Errorf(errMsg))
+			return retry.NonRetryableError(errors.New(errMsg))
 		case client.METRICEXPORTSTATUSTYPE_ENABLING, client.METRICEXPORTSTATUSTYPE_DISABLING:
-			return retry.RetryableError(fmt.Errorf("the Datadog metric export is not ready yet"))
+			return retry.RetryableError(errors.New("the Datadog metric export is not ready yet"))
 		default:
 			return nil
 		}

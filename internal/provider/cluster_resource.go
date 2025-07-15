@@ -268,6 +268,16 @@ func (r *clusterResource) Schema(
 							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
+					"support_physical_cluster_replication": schema.BoolAttribute{
+						Optional: true,
+						// This is false since our SDK does not currently provide
+						// any indicator of whether a cluster supports PCR or not.
+						Computed:            false,
+						MarkdownDescription: "This field specifies whether a cluster should be started using an architecture that supports physical cluster replication. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/cockroachcloud/physical-cluster-replication.html",
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
 				},
 			},
 			"regions": schema.ListNestedAttribute{
@@ -576,6 +586,7 @@ func (r *clusterResource) Create(
 			if cfg.CidrRange.ValueString() != "" {
 				dedicated.CidrRange = ptr(cfg.CidrRange.ValueString())
 			}
+			dedicated.SupportPhysicalClusterReplication = ptr(cfg.SupportPhysicalClusterReplication.ValueBool())
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
@@ -820,6 +831,11 @@ func (r *clusterResource) ModifyPlan(
 				"To prevent accidental deletion of data, changing a cluster's cidr range "+
 					"isn't allowed. Please explicitly destroy this cluster before changing "+
 					"cidr range.")
+		}
+		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.SupportPhysicalClusterReplication != state.DedicatedConfig.SupportPhysicalClusterReplication {
+			resp.Diagnostics.AddError(
+				"Cannot update whether a cluster supports physical cluster replication",
+				"Changing the support_physical_cluster_replication field of a cluster is not allowed. Please explicitly destroy this cluster before changing this value.")
 		}
 	}
 
@@ -1362,6 +1378,16 @@ func loadClusterToTerraformState(
 			DiskIops:                 types.Int64Value(int64(clusterObj.Config.Dedicated.DiskIops)),
 			PrivateNetworkVisibility: types.BoolValue(clusterObj.GetNetworkVisibility() == client.NETWORKVISIBILITYTYPE_PRIVATE),
 			CidrRange:                types.StringValue(clusterObj.CidrRange),
+		}
+		// As noted in the comment of this function, plan may be nil if we
+		// are reading a datasource or importing a resource. In these cases,
+		// since there is currently no indication from the SDK whether a
+		// cluster supports PCR or not, we leave the field blank.
+		if plan != nil && plan.DedicatedConfig != nil {
+			// Otherwise, if we have explicitly specified this flag in the
+			// plan, then we add it to the state. If it was null, we keep it
+			// as null.
+			state.DedicatedConfig.SupportPhysicalClusterReplication = plan.DedicatedConfig.SupportPhysicalClusterReplication
 		}
 	}
 

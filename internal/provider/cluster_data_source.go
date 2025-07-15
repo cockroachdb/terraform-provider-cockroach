@@ -49,7 +49,7 @@ func (d *clusterDataSource) Schema(
 				Description: "The major version of CockroachDB running on the cluster. (e.g. v25.0)",
 			},
 			"full_version": schema.StringAttribute{
-				Computed: true,
+				Computed:            true,
 				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"plan": schema.StringAttribute{
@@ -130,6 +130,10 @@ func (d *clusterDataSource) Schema(
 					"cidr_range": schema.StringAttribute{
 						Computed:    true,
 						Description: "The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.",
+					},
+					"support_physical_cluster_replication": schema.BoolAttribute{
+						Computed:            true,
+						MarkdownDescription: "Specifies whether a cluster was created using an architecture that supports physical cluster replication",
 					},
 				},
 			},

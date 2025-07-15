@@ -178,6 +178,7 @@ resource "cockroach_cluster" "primary" {
         storage_gib = 15
         num_virtual_cpus = 4
         cidr_range = "172.28.0.0/19"
+        support_physical_cluster_replication = true
     }
     regions = [{
         name = "us-central1"
@@ -192,6 +193,7 @@ resource "cockroach_cluster" "standby" {
         storage_gib = 15
         num_virtual_cpus = 4
         cidr_range = "172.29.0.0/19"
+        support_physical_cluster_replication = true
     }
     regions = [{
         name = "us-east1"
@@ -215,6 +217,7 @@ resource "cockroach_cluster" "primary" {
         storage_gib = 15
         num_virtual_cpus = 4
         cidr_range = "172.28.0.0/19"
+        support_physical_cluster_replication = true
     }
     regions = [{
         name = "us-central1"
@@ -229,6 +232,7 @@ resource "cockroach_cluster" "standby" {
         storage_gib = 15
         num_virtual_cpus = 4
         cidr_range = "172.29.0.0/19"
+        support_physical_cluster_replication = true
     }
     regions = [{
         name = "us-east1"

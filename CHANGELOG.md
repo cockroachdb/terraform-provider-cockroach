@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added cockroach_restore resource for starting restore jobs from a managed backup.
 - Added cockroach_backups data source for listing backups on a specific cluster.
 - Added cockroach_restores data source for listing restores on a specific cluster.
 

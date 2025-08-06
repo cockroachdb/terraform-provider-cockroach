@@ -394,7 +394,7 @@ type Backups struct {
 	Backups   []Backup     `tfsdk:"backups"`
 }
 
-type Restore struct {
+type RestoreSummary struct {
 	ID                types.String  `tfsdk:"id"`
 	BackupID          types.String  `tfsdk:"backup_id"`
 	Status            types.String  `tfsdk:"status"`
@@ -404,10 +404,38 @@ type Restore struct {
 }
 
 type Restores struct {
-	ClusterID types.String `tfsdk:"cluster_id"`
-	StartTime types.String `tfsdk:"start_time"`
-	EndTime   types.String `tfsdk:"end_time"`
-	SortOrder types.String `tfsdk:"sort_order"`
-	Limit     types.Int32  `tfsdk:"limit"`
-	Restores  []Restore    `tfsdk:"restores"`
+	ClusterID types.String     `tfsdk:"cluster_id"`
+	StartTime types.String     `tfsdk:"start_time"`
+	EndTime   types.String     `tfsdk:"end_time"`
+	SortOrder types.String     `tfsdk:"sort_order"`
+	Limit     types.Int32      `tfsdk:"limit"`
+	Restores  []RestoreSummary `tfsdk:"restores"`
+}
+
+type RestoreItem struct {
+	Database types.String `tfsdk:"database"`
+	Schema   types.String `tfsdk:"schema"`
+	Tables   types.List   `tfsdk:"tables"`
+}
+
+type RestoreOpts struct {
+	NewDBName              types.String `tfsdk:"new_db_name"`
+	IntoDB                 types.String `tfsdk:"into_db"`
+	SkipLocalitiesCheck    types.Bool   `tfsdk:"skip_localities_check"`
+	SkipMissingForeignKeys types.Bool   `tfsdk:"skip_missing_foreign_keys"`
+	SkipMissingSequences   types.Bool   `tfsdk:"skip_missing_sequences"`
+	SchemaOnly             types.Bool   `tfsdk:"schema_only"`
+}
+
+type Restore struct {
+	ID                   types.String  `tfsdk:"id"`
+	DestinationClusterID types.String  `tfsdk:"destination_cluster_id"`
+	Type                 types.String  `tfsdk:"type"`
+	BackupID             types.String  `tfsdk:"backup_id"`
+	SourceClusterID      types.String  `tfsdk:"source_cluster_id"`
+	Objects              []RestoreItem `tfsdk:"objects"`
+	RestoreOpts          *RestoreOpts  `tfsdk:"restore_opts"`
+	Status               types.String  `tfsdk:"status"`
+	CreatedAt            types.String  `tfsdk:"created_at"`
+	CompletionPercent    types.Float32 `tfsdk:"completion_percent"`
 }

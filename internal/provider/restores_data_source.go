@@ -146,7 +146,7 @@ func (d *restoresDataSource) Read(
 	}
 
 	for _, restore := range restoresResp.Restores {
-		restores.Restores = append(restores.Restores, Restore{
+		restores.Restores = append(restores.Restores, RestoreSummary{
 			ID:                types.StringValue(restore.Id),
 			BackupID:          types.StringValue(restore.BackupId),
 			Status:            types.StringValue(string(restore.Status)),

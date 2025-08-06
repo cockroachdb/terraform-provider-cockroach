@@ -379,3 +379,31 @@ type PhysicalReplicationStream struct {
 	FailoverImmediately   types.Bool   `tfsdk:"failover_immediately"`
 	ActivatedAt           types.String `tfsdk:"activated_at"`
 }
+
+type RestoreItem struct {
+	Database types.String `tfsdk:"database"`
+	Schema   types.String `tfsdk:"schema"`
+	Tables   types.List   `tfsdk:"tables"`
+}
+
+type RestoreOpts struct {
+	NewDBName              types.String `tfsdk:"new_db_name"`
+	IntoDB                 types.String `tfsdk:"into_db"`
+	SkipLocalitiesCheck    types.Bool   `tfsdk:"skip_localities_check"`
+	SkipMissingForeignKeys types.Bool   `tfsdk:"skip_missing_foreign_keys"`
+	SkipMissingSequences   types.Bool   `tfsdk:"skip_missing_sequences"`
+	SchemaOnly             types.Bool   `tfsdk:"schema_only"`
+}
+
+type Restore struct {
+	ID                   types.String  `tfsdk:"id"`
+	DestinationClusterID types.String  `tfsdk:"destination_cluster_id"`
+	Type                 types.String  `tfsdk:"type"`
+	BackupID             types.String  `tfsdk:"backup_id"`
+	SourceClusterID      types.String  `tfsdk:"source_cluster_id"`
+	Objects              []RestoreItem `tfsdk:"objects"`
+	RestoreOpts          *RestoreOpts  `tfsdk:"restore_opts"`
+	Status               types.String  `tfsdk:"status"`
+	CreatedAt            types.String  `tfsdk:"created_at"`
+	CompletionPercent    types.Float32 `tfsdk:"completion_percent"`
+}

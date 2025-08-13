@@ -22,39 +22,37 @@ import (
 	"fmt"
 )
 
-// CMEKKeyType the model 'CMEKKeyType'.
-type CMEKKeyType string
+// RestoreStatusType the model 'RestoreStatusType'.
+type RestoreStatusType string
 
-// List of CMEKKeyType.
+// List of RestoreStatus.Type.
 const (
-	CMEKKEYTYPE_AWS_KMS         CMEKKeyType = "AWS_KMS"
-	CMEKKEYTYPE_GCP_CLOUD_KMS   CMEKKeyType = "GCP_CLOUD_KMS"
-	CMEKKEYTYPE_NULL_KMS        CMEKKeyType = "NULL_KMS"
-	CMEKKEYTYPE_AZURE_KEY_VAULT CMEKKeyType = "AZURE_KEY_VAULT"
+	RESTORESTATUSTYPE_PENDING RestoreStatusType = "PENDING"
+	RESTORESTATUSTYPE_SUCCESS RestoreStatusType = "SUCCESS"
+	RESTORESTATUSTYPE_FAILED  RestoreStatusType = "FAILED"
 )
 
-// All allowed values of CMEKKeyType enum.
-var AllowedCMEKKeyTypeEnumValues = []CMEKKeyType{
-	"AWS_KMS",
-	"GCP_CLOUD_KMS",
-	"NULL_KMS",
-	"AZURE_KEY_VAULT",
+// All allowed values of RestoreStatusType enum.
+var AllowedRestoreStatusTypeEnumValues = []RestoreStatusType{
+	"PENDING",
+	"SUCCESS",
+	"FAILED",
 }
 
-// NewCMEKKeyTypeFromValue returns a pointer to a valid CMEKKeyType
+// NewRestoreStatusTypeFromValue returns a pointer to a valid RestoreStatusType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewCMEKKeyTypeFromValue(v string) (*CMEKKeyType, error) {
-	ev := CMEKKeyType(v)
+func NewRestoreStatusTypeFromValue(v string) (*RestoreStatusType, error) {
+	ev := RestoreStatusType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for CMEKKeyType: valid values are %v", v, AllowedCMEKKeyTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for RestoreStatusType: valid values are %v", v, AllowedRestoreStatusTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v CMEKKeyType) IsValid() bool {
-	for _, existing := range AllowedCMEKKeyTypeEnumValues {
+func (v RestoreStatusType) IsValid() bool {
+	for _, existing := range AllowedRestoreStatusTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -62,7 +60,7 @@ func (v CMEKKeyType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to CMEKKeyType value.
-func (v CMEKKeyType) Ptr() *CMEKKeyType {
+// Ptr returns reference to RestoreStatus.Type value.
+func (v RestoreStatusType) Ptr() *RestoreStatusType {
 	return &v
 }

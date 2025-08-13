@@ -20,11 +20,13 @@ package client
 
 // GetUsersRequest struct for GetUsersRequest.
 type GetUsersRequest struct {
-	Attributes         *string `json:"attributes,omitempty"`
+	Attributes *string `json:"attributes,omitempty"`
+	// The maximum number of resources to return. If omitted, defaults to 20. If set to 0, the response will contain no resources but will include metadata such as `totalResults`, complying with [RFC 7644, Section 3.4.2.4: Pagination](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.4).
 	Count              *int32  `json:"count,omitempty"`
 	ExcludedAttributes *string `json:"excludedAttributes,omitempty"`
 	Filter             *string `json:"filter,omitempty"`
-	StartIndex         *int32  `json:"startIndex,omitempty"`
+	// The 1-based index of the first resource to return in the response. If omitted or less than 1, defaults to 1. This behavior complies with [RFC 7644, Section 3.4.2.4: Pagination](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.4).
+	StartIndex *int32 `json:"startIndex,omitempty"`
 }
 
 // NewGetUsersRequest instantiates a new GetUsersRequest object.

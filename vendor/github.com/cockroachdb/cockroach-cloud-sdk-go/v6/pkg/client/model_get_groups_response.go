@@ -23,6 +23,7 @@ type GetGroupsResponse struct {
 	Resources    *[]ScimGroup `json:"Resources,omitempty"`
 	ItemsPerPage *int32       `json:"itemsPerPage,omitempty"`
 	Schemas      []string     `json:"schemas"`
+	StartIndex   *int32       `json:"startIndex,omitempty"`
 	TotalResults int32        `json:"totalResults"`
 }
 
@@ -86,6 +87,20 @@ func (o *GetGroupsResponse) GetSchemas() []string {
 // SetSchemas sets field value.
 func (o *GetGroupsResponse) SetSchemas(v []string) {
 	o.Schemas = v
+}
+
+// GetStartIndex returns the StartIndex field value if set, zero value otherwise.
+func (o *GetGroupsResponse) GetStartIndex() int32 {
+	if o == nil || o.StartIndex == nil {
+		var ret int32
+		return ret
+	}
+	return *o.StartIndex
+}
+
+// SetStartIndex gets a reference to the given int32 and assigns it to the StartIndex field.
+func (o *GetGroupsResponse) SetStartIndex(v int32) {
+	o.StartIndex = &v
 }
 
 // GetTotalResults returns the TotalResults field value.

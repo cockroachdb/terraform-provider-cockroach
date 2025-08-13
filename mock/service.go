@@ -196,6 +196,22 @@ func (mr *MockServiceMockRecorder) CreateDatabase(arg0, arg1, arg2 interface{}) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateDatabase", reflect.TypeOf((*MockService)(nil).CreateDatabase), arg0, arg1, arg2)
 }
 
+// CreateEgressPrivateEndpoint mocks base method.
+func (m *MockService) CreateEgressPrivateEndpoint(arg0 context.Context, arg1 string, arg2 *client.CreateEgressPrivateEndpointRequest) (*client.EgressPrivateEndpoint, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateEgressPrivateEndpoint", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.EgressPrivateEndpoint)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateEgressPrivateEndpoint indicates an expected call of CreateEgressPrivateEndpoint.
+func (mr *MockServiceMockRecorder) CreateEgressPrivateEndpoint(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateEgressPrivateEndpoint", reflect.TypeOf((*MockService)(nil).CreateEgressPrivateEndpoint), arg0, arg1, arg2)
+}
+
 // CreateFolder mocks base method.
 func (m *MockService) CreateFolder(arg0 context.Context, arg1 *client.CreateFolderRequest) (*client.FolderResource, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -258,6 +274,22 @@ func (m *MockService) CreatePrivateEndpointServices(arg0 context.Context, arg1 s
 func (mr *MockServiceMockRecorder) CreatePrivateEndpointServices(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreatePrivateEndpointServices", reflect.TypeOf((*MockService)(nil).CreatePrivateEndpointServices), arg0, arg1)
+}
+
+// CreateRestore mocks base method.
+func (m *MockService) CreateRestore(arg0 context.Context, arg1 string, arg2 *client.CockroachCloudCreateRestoreRequest) (*client.Restore, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateRestore", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.Restore)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateRestore indicates an expected call of CreateRestore.
+func (mr *MockServiceMockRecorder) CreateRestore(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateRestore", reflect.TypeOf((*MockService)(nil).CreateRestore), arg0, arg1, arg2)
 }
 
 // CreateSQLUser mocks base method.
@@ -418,6 +450,21 @@ func (m *MockService) DeleteDatadogMetricExport(arg0 context.Context, arg1 strin
 func (mr *MockServiceMockRecorder) DeleteDatadogMetricExport(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteDatadogMetricExport", reflect.TypeOf((*MockService)(nil).DeleteDatadogMetricExport), arg0, arg1)
+}
+
+// DeleteEgressPrivateEndpoint mocks base method.
+func (m *MockService) DeleteEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteEgressPrivateEndpoint", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// DeleteEgressPrivateEndpoint indicates an expected call of DeleteEgressPrivateEndpoint.
+func (mr *MockServiceMockRecorder) DeleteEgressPrivateEndpoint(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEgressPrivateEndpoint", reflect.TypeOf((*MockService)(nil).DeleteEgressPrivateEndpoint), arg0, arg1, arg2)
 }
 
 // DeleteEgressRule mocks base method.
@@ -1168,6 +1215,22 @@ func (mr *MockServiceMockRecorder) GetResourceTypes(arg0, arg1 interface{}) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceTypes", reflect.TypeOf((*MockService)(nil).GetResourceTypes), arg0, arg1)
 }
 
+// GetRestore mocks base method.
+func (m *MockService) GetRestore(arg0 context.Context, arg1, arg2 string) (*client.Restore, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRestore", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.Restore)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetRestore indicates an expected call of GetRestore.
+func (mr *MockServiceMockRecorder) GetRestore(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRestore", reflect.TypeOf((*MockService)(nil).GetRestore), arg0, arg1, arg2)
+}
+
 // GetSchema mocks base method.
 func (m *MockService) GetSchema(arg0 context.Context, arg1 string, arg2 *client.GetSchemaOptions) (*client.ScimSchema, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1376,6 +1439,22 @@ func (mr *MockServiceMockRecorder) ListAwsEndpointConnections(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListAwsEndpointConnections", reflect.TypeOf((*MockService)(nil).ListAwsEndpointConnections), arg0, arg1)
 }
 
+// ListBackups mocks base method.
+func (m *MockService) ListBackups(arg0 context.Context, arg1 string, arg2 *client.ListBackupsOptions) (*client.ListBackupsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListBackups", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ListBackupsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListBackups indicates an expected call of ListBackups.
+func (mr *MockServiceMockRecorder) ListBackups(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBackups", reflect.TypeOf((*MockService)(nil).ListBackups), arg0, arg1, arg2)
+}
+
 // ListClusterNodes mocks base method.
 func (m *MockService) ListClusterNodes(arg0 context.Context, arg1 string, arg2 *client.ListClusterNodesOptions) (*client.ListClusterNodesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -1422,6 +1501,22 @@ func (m *MockService) ListDatabases(arg0 context.Context, arg1 string, arg2 *cli
 func (mr *MockServiceMockRecorder) ListDatabases(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListDatabases", reflect.TypeOf((*MockService)(nil).ListDatabases), arg0, arg1, arg2)
+}
+
+// ListEgressPrivateEndpoints mocks base method.
+func (m *MockService) ListEgressPrivateEndpoints(arg0 context.Context, arg1 string, arg2 *client.ListEgressPrivateEndpointsOptions) (*client.ListEgressPrivateEndpointsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListEgressPrivateEndpoints", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ListEgressPrivateEndpointsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListEgressPrivateEndpoints indicates an expected call of ListEgressPrivateEndpoints.
+func (mr *MockServiceMockRecorder) ListEgressPrivateEndpoints(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEgressPrivateEndpoints", reflect.TypeOf((*MockService)(nil).ListEgressPrivateEndpoints), arg0, arg1, arg2)
 }
 
 // ListEgressRules mocks base method.
@@ -1582,6 +1677,22 @@ func (m *MockService) ListPrivateEndpointTrustedOwners(arg0 context.Context, arg
 func (mr *MockServiceMockRecorder) ListPrivateEndpointTrustedOwners(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListPrivateEndpointTrustedOwners", reflect.TypeOf((*MockService)(nil).ListPrivateEndpointTrustedOwners), arg0, arg1)
+}
+
+// ListRestores mocks base method.
+func (m *MockService) ListRestores(arg0 context.Context, arg1 string, arg2 *client.ListRestoresOptions) (*client.ListRestoresResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListRestores", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ListRestoresResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListRestores indicates an expected call of ListRestores.
+func (mr *MockServiceMockRecorder) ListRestores(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListRestores", reflect.TypeOf((*MockService)(nil).ListRestores), arg0, arg1, arg2)
 }
 
 // ListRoleGrants mocks base method.
@@ -1981,6 +2092,21 @@ func (m *MockService) UpdateClusterDisruption(arg0 context.Context, arg1 string,
 func (mr *MockServiceMockRecorder) UpdateClusterDisruption(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterDisruption", reflect.TypeOf((*MockService)(nil).UpdateClusterDisruption), arg0, arg1, arg2)
+}
+
+// UpdateEgressPrivateEndpointDomainNames mocks base method.
+func (m *MockService) UpdateEgressPrivateEndpointDomainNames(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateEgressPrivateEndpointDomainNamesRequest) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEgressPrivateEndpointDomainNames", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateEgressPrivateEndpointDomainNames indicates an expected call of UpdateEgressPrivateEndpointDomainNames.
+func (mr *MockServiceMockRecorder) UpdateEgressPrivateEndpointDomainNames(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEgressPrivateEndpointDomainNames", reflect.TypeOf((*MockService)(nil).UpdateEgressPrivateEndpointDomainNames), arg0, arg1, arg2, arg3)
 }
 
 // UpdateFolder mocks base method.

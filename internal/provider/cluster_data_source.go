@@ -131,9 +131,9 @@ func (d *clusterDataSource) Schema(
 						Computed:    true,
 						Description: "The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.",
 					},
-					"support_physical_cluster_replication": schema.BoolAttribute{
+					"supports_cluster_virtualization": schema.BoolAttribute{
 						Computed:            true,
-						MarkdownDescription: "Specifies whether a cluster was created using an architecture that supports physical cluster replication",
+						MarkdownDescription: "Specifies whether an Advanced cluster is started with a virtual cluster architecture.",
 					},
 				},
 			},

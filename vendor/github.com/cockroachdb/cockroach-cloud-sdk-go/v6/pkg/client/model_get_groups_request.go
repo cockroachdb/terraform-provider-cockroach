@@ -20,9 +20,13 @@ package client
 
 // GetGroupsRequest struct for GetGroupsRequest.
 type GetGroupsRequest struct {
-	Attributes         *string `json:"attributes,omitempty"`
+	Attributes *string `json:"attributes,omitempty"`
+	// The maximum number of resources to return. If omitted, defaults to 20. If set to 0, the response will contain no resources but will include metadata such as `totalResults`, complying with [RFC 7644, Section 3.4.2.4: Pagination](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.4).
+	Count              *int32  `json:"count,omitempty"`
 	ExcludedAttributes *string `json:"excludedAttributes,omitempty"`
 	Filter             *string `json:"filter,omitempty"`
+	// The 1-based index of the first resource to return in the response. If omitted or less than 1, defaults to 1. This behavior complies with [RFC 7644, Section 3.4.2.4: Pagination](https://datatracker.ietf.org/doc/html/rfc7644#section-3.4.2.4).
+	StartIndex *int32 `json:"startIndex,omitempty"`
 }
 
 // NewGetGroupsRequest instantiates a new GetGroupsRequest object.
@@ -46,6 +50,20 @@ func (o *GetGroupsRequest) GetAttributes() string {
 // SetAttributes gets a reference to the given string and assigns it to the Attributes field.
 func (o *GetGroupsRequest) SetAttributes(v string) {
 	o.Attributes = &v
+}
+
+// GetCount returns the Count field value if set, zero value otherwise.
+func (o *GetGroupsRequest) GetCount() int32 {
+	if o == nil || o.Count == nil {
+		var ret int32
+		return ret
+	}
+	return *o.Count
+}
+
+// SetCount gets a reference to the given int32 and assigns it to the Count field.
+func (o *GetGroupsRequest) SetCount(v int32) {
+	o.Count = &v
 }
 
 // GetExcludedAttributes returns the ExcludedAttributes field value if set, zero value otherwise.
@@ -74,4 +92,18 @@ func (o *GetGroupsRequest) GetFilter() string {
 // SetFilter gets a reference to the given string and assigns it to the Filter field.
 func (o *GetGroupsRequest) SetFilter(v string) {
 	o.Filter = &v
+}
+
+// GetStartIndex returns the StartIndex field value if set, zero value otherwise.
+func (o *GetGroupsRequest) GetStartIndex() int32 {
+	if o == nil || o.StartIndex == nil {
+		var ret int32
+		return ret
+	}
+	return *o.StartIndex
+}
+
+// SetStartIndex gets a reference to the given int32 and assigns it to the StartIndex field.
+func (o *GetGroupsRequest) SetStartIndex(v int32) {
+	o.StartIndex = &v
 }

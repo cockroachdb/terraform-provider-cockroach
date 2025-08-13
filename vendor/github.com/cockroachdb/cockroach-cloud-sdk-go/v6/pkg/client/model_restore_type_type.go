@@ -22,39 +22,37 @@ import (
 	"fmt"
 )
 
-// CMEKKeyType the model 'CMEKKeyType'.
-type CMEKKeyType string
+// RestoreTypeType the model 'RestoreTypeType'.
+type RestoreTypeType string
 
-// List of CMEKKeyType.
+// List of RestoreType.Type.
 const (
-	CMEKKEYTYPE_AWS_KMS         CMEKKeyType = "AWS_KMS"
-	CMEKKEYTYPE_GCP_CLOUD_KMS   CMEKKeyType = "GCP_CLOUD_KMS"
-	CMEKKEYTYPE_NULL_KMS        CMEKKeyType = "NULL_KMS"
-	CMEKKEYTYPE_AZURE_KEY_VAULT CMEKKeyType = "AZURE_KEY_VAULT"
+	RESTORETYPETYPE_CLUSTER  RestoreTypeType = "CLUSTER"
+	RESTORETYPETYPE_DATABASE RestoreTypeType = "DATABASE"
+	RESTORETYPETYPE_TABLE    RestoreTypeType = "TABLE"
 )
 
-// All allowed values of CMEKKeyType enum.
-var AllowedCMEKKeyTypeEnumValues = []CMEKKeyType{
-	"AWS_KMS",
-	"GCP_CLOUD_KMS",
-	"NULL_KMS",
-	"AZURE_KEY_VAULT",
+// All allowed values of RestoreTypeType enum.
+var AllowedRestoreTypeTypeEnumValues = []RestoreTypeType{
+	"CLUSTER",
+	"DATABASE",
+	"TABLE",
 }
 
-// NewCMEKKeyTypeFromValue returns a pointer to a valid CMEKKeyType
+// NewRestoreTypeTypeFromValue returns a pointer to a valid RestoreTypeType
 // for the value passed as argument, or an error if the value passed is not allowed by the enum.
-func NewCMEKKeyTypeFromValue(v string) (*CMEKKeyType, error) {
-	ev := CMEKKeyType(v)
+func NewRestoreTypeTypeFromValue(v string) (*RestoreTypeType, error) {
+	ev := RestoreTypeType(v)
 	if ev.IsValid() {
 		return &ev, nil
 	} else {
-		return nil, fmt.Errorf("invalid value '%v' for CMEKKeyType: valid values are %v", v, AllowedCMEKKeyTypeEnumValues)
+		return nil, fmt.Errorf("invalid value '%v' for RestoreTypeType: valid values are %v", v, AllowedRestoreTypeTypeEnumValues)
 	}
 }
 
 // IsValid return true if the value is valid for the enum, false otherwise.
-func (v CMEKKeyType) IsValid() bool {
-	for _, existing := range AllowedCMEKKeyTypeEnumValues {
+func (v RestoreTypeType) IsValid() bool {
+	for _, existing := range AllowedRestoreTypeTypeEnumValues {
 		if existing == v {
 			return true
 		}
@@ -62,7 +60,7 @@ func (v CMEKKeyType) IsValid() bool {
 	return false
 }
 
-// Ptr returns reference to CMEKKeyType value.
-func (v CMEKKeyType) Ptr() *CMEKKeyType {
+// Ptr returns reference to RestoreType.Type value.
+func (v RestoreTypeType) Ptr() *RestoreTypeType {
 	return &v
 }

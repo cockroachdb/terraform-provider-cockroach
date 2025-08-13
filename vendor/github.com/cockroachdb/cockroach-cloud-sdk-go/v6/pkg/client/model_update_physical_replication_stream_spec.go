@@ -24,7 +24,7 @@ import (
 
 // UpdatePhysicalReplicationStreamSpec struct for UpdatePhysicalReplicationStreamSpec.
 type UpdatePhysicalReplicationStreamSpec struct {
-	// failover_at is the crdb system time at which failover occurs. If the user sets the status to 'FAILING_OVER' but omits failover_at, the failover time will default to the latest consistent replicated time. Otherwise, the user can pick a time up to one hour in the future to schedule a failover, or a time in the past to restore the cluster to a recent state. If the time is in the past, the API will make a best-effort attempt to validate that the time is not earlier than the retained time. In this case, if the retained time is updated in between validation and failover execution and the failover time becomes invalid, the stream will failover to the retained time.
+	// failover_at is the crdb system time at which failover occurs. If the user sets the status to 'FAILING_OVER' but omits failover_at, the failover time will default to the latest consistent replicated time. Otherwise, the user can pick a time up to one hour in the future to schedule a failover, or a time in the past to restore the cluster to a recent state. If the time is in the past, the API will make a best-effort attempt to validate that the time is not earlier than the retained time. In this case, if the retained time is updated in between validation and failover execution and the failover time becomes invalid, the stream will failover to the retained time. failover_at is not required when updating the status to 'CANCELED'.
 	FailoverAt *time.Time                   `json:"failover_at,omitempty"`
 	Status     *ReplicationStreamStatusType `json:"status,omitempty"`
 }

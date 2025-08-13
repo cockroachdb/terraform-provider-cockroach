@@ -24,6 +24,7 @@ import (
 
 // Cluster struct for Cluster.
 type Cluster struct {
+	// account_id is a cloud provider account ID representing the CockroachDB cluster. This ID can be used for setting up trust relationships with cloud resources. For GCP clusters, this value is a project name that can be used to construct principal service account names for authentication.
 	AccountId *string `json:"account_id,omitempty"`
 	// The client ID of the Azure cluster identity associated with this cluster. This field is only populated for clusters deployed on Azure and is used to support customer-managed encryption keys (CMEK).
 	AzureClusterIdentityClientId *string `json:"azure_cluster_identity_client_id,omitempty"`

@@ -158,7 +158,7 @@ Optional:
 - `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
 - `private_network_visibility` (Boolean) Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.
 - `storage_gib` (Number) Storage amount per node in GiB.
-- `support_physical_cluster_replication` (Boolean) This field specifies whether a cluster should be started using an architecture that supports physical cluster replication. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/cockroachcloud/physical-cluster-replication.html
+- `supports_cluster_virtualization` (Boolean) supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview
 
 Read-Only:
 

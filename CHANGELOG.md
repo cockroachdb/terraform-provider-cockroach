@@ -11,9 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added support for creating and performing failover on physical
   replication streams.
-- Added the support_physical_cluster_replication flag to the Cluster
-  resource to allow creating clusters that support physical cluster
-  replication streams.
+- Added the supports_cluster_virtualization flag to the Cluster resource
+  to allow creating clusters that support cluster virtualization and
+  physical cluster replication streams.
 
 ## [1.12.2] - 2025-06-17
 

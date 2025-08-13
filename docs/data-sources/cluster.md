@@ -71,7 +71,7 @@ Read-Only:
 - `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
 - `private_network_visibility` (Boolean) Indicates whether private IP addresses are assigned to nodes. Required for CMEK and other advanced networking features.
 - `storage_gib` (Number) Storage amount per node in GiB.
-- `support_physical_cluster_replication` (Boolean) Specifies whether a cluster was created using an architecture that supports physical cluster replication
+- `supports_cluster_virtualization` (Boolean) Specifies whether an Advanced cluster is started with a virtual cluster architecture.
 
 
 <a id="nestedatt--regions"></a>

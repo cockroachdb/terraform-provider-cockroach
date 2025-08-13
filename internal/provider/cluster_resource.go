@@ -268,12 +268,12 @@ func (r *clusterResource) Schema(
 							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
-					"support_physical_cluster_replication": schema.BoolAttribute{
+					"supports_cluster_virtualization": schema.BoolAttribute{
 						Optional: true,
 						// This is false since our SDK does not currently provide
 						// any indicator of whether a cluster supports PCR or not.
 						Computed:            false,
-						MarkdownDescription: "This field specifies whether a cluster should be started using an architecture that supports physical cluster replication. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/cockroachcloud/physical-cluster-replication.html",
+						MarkdownDescription: "supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},
@@ -586,7 +586,7 @@ func (r *clusterResource) Create(
 			if cfg.CidrRange.ValueString() != "" {
 				dedicated.CidrRange = ptr(cfg.CidrRange.ValueString())
 			}
-			dedicated.SupportPhysicalClusterReplication = ptr(cfg.SupportPhysicalClusterReplication.ValueBool())
+			dedicated.SupportsClusterVirtualization = ptr(cfg.SupportsClusterVirtualization.ValueBool())
 		}
 		clusterSpec.SetDedicated(dedicated)
 	}
@@ -832,10 +832,10 @@ func (r *clusterResource) ModifyPlan(
 					"isn't allowed. Please explicitly destroy this cluster before changing "+
 					"cidr range.")
 		}
-		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.SupportPhysicalClusterReplication != state.DedicatedConfig.SupportPhysicalClusterReplication {
+		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.SupportsClusterVirtualization != state.DedicatedConfig.SupportsClusterVirtualization {
 			resp.Diagnostics.AddError(
-				"Cannot update whether a cluster supports physical cluster replication",
-				"Changing the support_physical_cluster_replication field of a cluster is not allowed. Please explicitly destroy this cluster before changing this value.")
+				"Cannot update whether a cluster supports cluster virtualization",
+				"Changing the supports_cluster_virtualization field of a cluster is not allowed. Please explicitly destroy this cluster before changing this value.")
 		}
 	}
 
@@ -1387,7 +1387,7 @@ func loadClusterToTerraformState(
 			// Otherwise, if we have explicitly specified this flag in the
 			// plan, then we add it to the state. If it was null, we keep it
 			// as null.
-			state.DedicatedConfig.SupportPhysicalClusterReplication = plan.DedicatedConfig.SupportPhysicalClusterReplication
+			state.DedicatedConfig.SupportsClusterVirtualization = plan.DedicatedConfig.SupportsClusterVirtualization
 		}
 	}
 

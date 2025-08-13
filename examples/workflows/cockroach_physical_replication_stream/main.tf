@@ -71,9 +71,10 @@ resource "cockroach_cluster" "pcr_example_1" {
   cloud_provider = var.cloud_provider
   plan           = "ADVANCED"
   dedicated = {
-    storage_gib      = var.storage_gib
-    num_virtual_cpus = var.num_virtual_cpus
-    cidr_range       = var.cidr_range_1
+    storage_gib                     = var.storage_gib
+    num_virtual_cpus                = var.num_virtual_cpus
+    cidr_range                      = var.cidr_range_1
+    supports_cluster_virtualization = true
   }
   regions = [
     for r in var.cloud_provider_regions_1 : {
@@ -88,9 +89,10 @@ resource "cockroach_cluster" "pcr_example_2" {
   cloud_provider = var.cloud_provider
   plan           = "ADVANCED"
   dedicated = {
-    storage_gib      = var.storage_gib
-    num_virtual_cpus = var.num_virtual_cpus
-    cidr_range       = var.cidr_range_2
+    storage_gib                     = var.storage_gib
+    num_virtual_cpus                = var.num_virtual_cpus
+    cidr_range                      = var.cidr_range_2
+    supports_cluster_virtualization = true
   }
   regions = [
     for r in var.cloud_provider_regions_2 : {

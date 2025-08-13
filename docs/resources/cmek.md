@@ -61,6 +61,7 @@ Required:
   * AWS_KMS
   * GCP_CLOUD_KMS
   * NULL_KMS
+  * AZURE_KEY_VAULT
 - `uri` (String) Provider-specific URI pointing to the encryption key.
 
 Read-Only:

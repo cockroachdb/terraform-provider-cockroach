@@ -1988,7 +1988,7 @@ func testDedicatedClusterResource(
 				resource.TestCheckResourceAttr(resourceName, "plan", "ADVANCED"),
 				resource.TestCheckResourceAttr(resourceName, "dedicated.cidr_range", "172.28.0.0/16"),
 				resource.TestMatchResourceAttr(resourceName, "full_version", startsWithMinSupportedMajorVersionRE),
-				resource.TestCheckResourceAttr(resourceName, "dedicated.support_physical_cluster_replication", "true"),
+				resource.TestCheckResourceAttr(resourceName, "dedicated.supports_cluster_virtualization", "true"),
 				resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
 				resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
 				resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
@@ -2106,7 +2106,7 @@ resource "cockroach_cluster" "test" {
 	  storage_gib = 15
 	  num_virtual_cpus = %d
 	  cidr_range = "172.28.0.0/16"
-	  support_physical_cluster_replication = true
+	  supports_cluster_virtualization = true
     }
 	regions = [{
 		name: "us-central1"

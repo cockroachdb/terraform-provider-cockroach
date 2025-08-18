@@ -163,6 +163,7 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 		NewFolderDataSource,
 		NewOrganizationDataSource,
 		NewPersonUserDataSource,
+		NewBackupsDataSource,
 	}
 }
 

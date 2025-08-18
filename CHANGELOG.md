@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added cockroach_backups data source for listing backups on a specific cluster.
+
 ### Fixed
 - Ensure all cluster regions are ready when waiting or private endpoint
   services.

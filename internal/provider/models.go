@@ -379,3 +379,17 @@ type PhysicalReplicationStream struct {
 	FailoverImmediately   types.Bool   `tfsdk:"failover_immediately"`
 	ActivatedAt           types.String `tfsdk:"activated_at"`
 }
+
+type Backup struct {
+	ID       types.String `tfsdk:"id"`
+	AsOfTime types.String `tfsdk:"as_of_time"`
+}
+
+type Backups struct {
+	ClusterID types.String `tfsdk:"cluster_id"`
+	StartTime types.String `tfsdk:"start_time"`
+	EndTime   types.String `tfsdk:"end_time"`
+	SortOrder types.String `tfsdk:"sort_order"`
+	Limit     types.Int32  `tfsdk:"limit"`
+	Backups   []Backup     `tfsdk:"backups"`
+}

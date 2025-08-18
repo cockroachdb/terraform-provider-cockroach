@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added cockroach_backups data source for listing backups on a specific cluster.
+
 ### Fixed
+
 - Fixed an issue where enabling log export configs did not account for lock errors.
 
 ## [1.13.1]

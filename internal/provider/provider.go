@@ -164,6 +164,7 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 		NewOrganizationDataSource,
 		NewPersonUserDataSource,
 		NewBackupsDataSource,
+		NewRestoresDataSource,
 	}
 }
 

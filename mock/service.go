@@ -943,6 +943,22 @@ func (mr *MockServiceMockRecorder) GetDatadogMetricExportInfo(arg0, arg1 interfa
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetDatadogMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetDatadogMetricExportInfo), arg0, arg1)
 }
 
+// GetEgressPrivateEndpoint mocks base method.
+func (m *MockService) GetEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string) (*client.GetEgressPrivateEndpointResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetEgressPrivateEndpoint", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.GetEgressPrivateEndpointResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetEgressPrivateEndpoint indicates an expected call of GetEgressPrivateEndpoint.
+func (mr *MockServiceMockRecorder) GetEgressPrivateEndpoint(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEgressPrivateEndpoint", reflect.TypeOf((*MockService)(nil).GetEgressPrivateEndpoint), arg0, arg1, arg2)
+}
+
 // GetEgressRule mocks base method.
 func (m *MockService) GetEgressRule(arg0 context.Context, arg1, arg2 string) (*client.GetEgressRuleResponse, *http.Response, error) {
 	m.ctrl.T.Helper()

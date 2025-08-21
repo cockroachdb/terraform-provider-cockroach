@@ -153,6 +153,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewServiceAccountResource,
 		NewAPIKeyResource,
 		NewRestoreResource,
+		NewEgressPrivateEndpointResource,
 	}
 }
 

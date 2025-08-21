@@ -379,3 +379,14 @@ type PhysicalReplicationStream struct {
 	FailoverImmediately   types.Bool   `tfsdk:"failover_immediately"`
 	ActivatedAt           types.String `tfsdk:"activated_at"`
 }
+
+type EgressPrivateEndpoint struct {
+	ID                      types.String `tfsdk:"id"`
+	ClusterID               types.String `tfsdk:"cluster_id"`
+	EndpointConnectionID    types.String `tfsdk:"endpoint_connection_id"`
+	Region                  types.String `tfsdk:"region"`
+	TargetServiceIdentifier types.String `tfsdk:"target_service_identifier"`
+	TargetServiceType       types.String `tfsdk:"target_service_type"`
+	EndpointAddress         types.String `tfsdk:"endpoint_address"`
+	State                   types.String `tfsdk:"state"`
+}

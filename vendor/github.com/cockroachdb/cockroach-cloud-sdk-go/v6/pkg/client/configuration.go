@@ -64,7 +64,7 @@ func WithUsername(username string) ConfigurationOption {
 func NewConfiguration(apiToken string, opts ...ConfigurationOption) *Configuration {
 	cfg := &Configuration{
 		DefaultHeader: make(map[string]string),
-		UserAgent:     "ccloud-sdk-go/6.0.0",
+		UserAgent:     "ccloud-sdk-go/6.5.0",
 		Debug:         false,
 		ServerURL:     DefaultServerURL,
 		apiToken:      apiToken,

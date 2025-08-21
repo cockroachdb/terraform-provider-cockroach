@@ -440,3 +440,14 @@ type Restore struct {
 	CreatedAt            types.String  `tfsdk:"created_at"`
 	CompletionPercent    types.Float32 `tfsdk:"completion_percent"`
 }
+
+type EgressPrivateEndpoint struct {
+	ID                      types.String `tfsdk:"id"`
+	ClusterID               types.String `tfsdk:"cluster_id"`
+	EndpointConnectionID    types.String `tfsdk:"endpoint_connection_id"`
+	Region                  types.String `tfsdk:"region"`
+	TargetServiceIdentifier types.String `tfsdk:"target_service_identifier"`
+	TargetServiceType       types.String `tfsdk:"target_service_type"`
+	EndpointAddress         types.String `tfsdk:"endpoint_address"`
+	State                   types.String `tfsdk:"state"`
+}

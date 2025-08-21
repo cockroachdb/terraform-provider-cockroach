@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added `private_endpoint_dns` as a read-only attribute in the `cockroach_cluster` resource.
 
+- Added support for creating egress private endpoints via the
+  `cockroach_egress_private_endpoint` resource.
+
 ### Fixed
 - Prevent errors when `status` field in cockroach_cluster resource drifts due to
   external changes.
@@ -227,7 +230,7 @@ removed from the terraform config
 
 ## Added
 
-- The [cockroach_api_key](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/api_key) 
+- The [cockroach_api_key](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/api_key)
   resource was added.
 
 - The [cockroach_service_account](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/resources/service_account)
@@ -321,7 +324,7 @@ removed from the terraform config
 
 ### Added
 
-- New folder resource and the new `parent_id` for clusters support users managing nested resources. 
+- New folder resource and the new `parent_id` for clusters support users managing nested resources.
 Folders is in [limited access](https://www.cockroachlabs.com/docs/v23.1/cockroachdb-feature-availability).
 
 ## [1.0.0] - 2023-08-10

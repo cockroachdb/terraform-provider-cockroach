@@ -61,21 +61,21 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
-		Plan:             "ADVANCED",
+		Plan:             "STANDARD",
 		CloudProvider:    "AWS",
 		State:            "CREATED",
 		Config: client.ClusterConfig{
-			Dedicated: &client.DedicatedHardwareConfig{
-				MachineType:    "m5.xlarge",
-				NumVirtualCpus: 4,
-				StorageGib:     35,
-				MemoryGib:      8,
+			Serverless: &client.ServerlessClusterConfig{
+				RoutingId:   uuid.Nil.String(),
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
 			},
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-east-1",
-				NodeCount: 3,
+				Name: "us-east-1",
 			},
 		},
 	}
@@ -224,13 +224,14 @@ func getTestMetricExportCloudWatchConfigResourceCreateConfig(name string) string
 resource "cockroach_cluster" "test" {
   name           = "%s"
   cloud_provider = "AWS"
-  dedicated = {
-    storage_gib      = 35
-    num_virtual_cpus = 4
+  serverless = {
+    usage_limits = {
+      provisioned_virtual_cpus = 2
+    }
+    upgrade_type = "AUTOMATIC"
   }
   regions = [{
     name = "us-east-1"
-    node_count : 3
   }]
 }
 
@@ -247,13 +248,14 @@ func getTestMetricExportCloudWatchConfigResourceUpdateConfig(name string) string
 resource "cockroach_cluster" "test" {
   name           = "%s"
   cloud_provider = "AWS"
-  dedicated = {
-    storage_gib      = 35
-    num_virtual_cpus = 4
+  serverless = {
+    usage_limits = {
+      provisioned_virtual_cpus = 2
+    }
+    upgrade_type = "AUTOMATIC"
   }
   regions = [{
     name = "us-east-1"
-    node_count : 3
   }]
 }
 

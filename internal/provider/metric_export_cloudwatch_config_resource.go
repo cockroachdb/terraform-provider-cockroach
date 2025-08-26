@@ -22,7 +22,6 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -128,10 +127,10 @@ func (r *metricExportCloudWatchConfigResource) Create(
 		return
 	}
 
-	if cluster.Config.Serverless != nil {
+	if cluster.Plan == client.PLANTYPE_BASIC {
 		resp.Diagnostics.AddError(
-			"Incompatible cluster type",
-			"CloudWatch metric export services are only available for dedicated clusters",
+			"Incompatible plan type",
+			"CloudWatch metric export services are not available on the Basic plan",
 		)
 		return
 	}
@@ -157,8 +156,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 
 	apiObj := &client.CloudWatchMetricExportInfo{}
 	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
-		ctx, clusterUpdateTimeout, r.provider.service,
-		clusterID, cluster, apiRequest, apiObj,
+		ctx, r.provider.service, clusterID, cluster, apiRequest, apiObj,
 	))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -185,7 +183,6 @@ func (r *metricExportCloudWatchConfigResource) Create(
 
 func retryEnableCloudWatchMetricExport(
 	ctx context.Context,
-	timeout time.Duration,
 	cl client.Service,
 	clusterID string,
 	cluster *client.Cluster,
@@ -385,8 +382,7 @@ func (r *metricExportCloudWatchConfigResource) Update(
 	cluster := &client.Cluster{}
 	apiObj := &client.CloudWatchMetricExportInfo{}
 	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
-		ctx, clusterUpdateTimeout, r.provider.service,
-		clusterID, cluster, apiRequest, apiObj,
+		ctx, r.provider.service, clusterID, cluster, apiRequest, apiObj,
 	))
 	if err != nil {
 		resp.Diagnostics.AddError(

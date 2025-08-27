@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
@@ -253,7 +254,9 @@ func retryEnableLogExport(
 		traceAPICall("EnableLogExport")
 		apiResp, httpResp, err := cl.EnableLogExport(ctx, clusterID, logExportRequest)
 		if err != nil {
-			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
+			apiErrMsg := formatAPIErrorMessage(err)
+			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
+				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
 				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
@@ -265,7 +268,7 @@ func retryEnableLogExport(
 			}
 
 			return retry.NonRetryableError(
-				fmt.Errorf("could not enable log export: %v", formatAPIErrorMessage(err)),
+				fmt.Errorf("could not enable log export: %v", apiErrMsg),
 			)
 		}
 		*apiLogExportObj = *apiResp

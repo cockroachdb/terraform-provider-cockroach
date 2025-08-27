@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -130,9 +131,14 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	// Create
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
 		Return(cluster, nil, nil)
+
+	// Trigger a lock error from attempting to enable log export config to test retry logic.
+	// This increases the number of GetCluster calls by 1 due to the retry.
+	s.EXPECT().EnableLogExport(gomock.Any(), clusterID, gomock.Any()).
+		Return(nil, &http.Response{Status: http.StatusText(http.StatusBadRequest)}, errors.New("couldn't lock cluster"))
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(cluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
+		Times(4)
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,

@@ -7,7 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added cockroach_restore resource for starting restore jobs from a managed backup.
+
 ### Fixed
+
 - Fixed an issue where enabling log export configs did not account for lock errors.
 - Exporting Cloudwatch metrics on a serverless Cluster no longer generates an error.
 - Exporting Cloudwatch metrics while on the Basic plan now generates an error.

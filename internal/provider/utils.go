@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"runtime"
 	"testing"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
@@ -226,3 +227,72 @@ func testCheckLabels(resourceName string, labels map[string]string) resource.Tes
 }
 
 var labelsValidator = []validator.Map{validators.Labels()}
+
+// parseFlexibleTime parses time strings in either RFC3339 format or YYYY-MM-DD format.
+// For YYYY-MM-DD format, it assumes the time is 00:00:00 UTC.
+func parseFlexibleTime(timeStr string) (time.Time, error) {
+	// First try RFC3339 format.
+	if t, err := time.Parse(time.RFC3339, timeStr); err == nil {
+		return t, nil
+	}
+
+	// If RFC3339 fails, try YYYY-MM-DD format.
+	if t, err := time.Parse(time.DateOnly, timeStr); err == nil {
+		// Convert to UTC and set time to 00:00:00
+		return time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, time.UTC), nil
+	}
+
+	return time.Time{}, errors.New("time string must be in RFC3339 or YYYY-MM-DD format")
+}
+
+func testGetStandardCluster(clusterID string, clusterName string) *client.Cluster {
+	return &client.Cluster{
+		Id:            clusterID,
+		Name:          clusterName,
+		CloudProvider: "GCP",
+		State:         "CREATED",
+		Plan:          "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				UpgradeType: "AUTOMATIC",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+	}
+}
+
+func testGetStandardClusterConfig(clusterName string, frequentBackup bool) string {
+	var backupConfig string
+	if frequentBackup {
+		backupConfig = `
+	backup_config = {
+		enabled           = true
+		frequency_minutes = 5
+		retention_days    = 30
+	}`
+	}
+
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test_cluster" {
+	name           = "%s"
+	cloud_provider = "GCP"
+	plan           = "STANDARD"
+	serverless = {
+		usage_limits = {
+			provisioned_virtual_cpus = 2
+		}
+		upgrade_type = "AUTOMATIC"
+	}
+	regions = [{
+		name: "us-central1"
+	}]
+	%s
+}`, clusterName, backupConfig)
+}

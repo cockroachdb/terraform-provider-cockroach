@@ -91,6 +91,9 @@ var regionSchema = schema.NestedAttributeObject{
 			PlanModifiers: []planmodifier.String{
 				stringplanmodifier.UseStateForUnknown(),
 			},
+		}, "private_endpoint_dns": schema.StringAttribute{
+			Computed:    true,
+			Description: "Private endpoint DNS name of the cluster which is used to connect to the cluster with GCP Private Service Connect.",
 		},
 		"node_count": schema.Int64Attribute{
 			Optional: true,
@@ -1470,12 +1473,13 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 	for _, x := range *apiRegions {
 		if isDatasourceOrImport || planRegions[x.Name] {
 			rg := Region{
-				Name:        types.StringValue(x.Name),
-				SqlDns:      types.StringValue(x.SqlDns),
-				UiDns:       types.StringValue(x.UiDns),
-				InternalDns: types.StringValue(x.InternalDns),
-				NodeCount:   types.Int64Value(int64(x.NodeCount)),
-				Primary:     types.BoolValue(x.GetPrimary()),
+				Name:               types.StringValue(x.Name),
+				SqlDns:             types.StringValue(x.SqlDns),
+				UiDns:              types.StringValue(x.UiDns),
+				InternalDns:        types.StringValue(x.InternalDns),
+				PrivateEndpointDns: types.StringValue(x.PrivateEndpointDns),
+				NodeCount:          types.Int64Value(int64(x.NodeCount)),
+				Primary:            types.BoolValue(x.GetPrimary()),
 			}
 			regions = append(regions, rg)
 		}

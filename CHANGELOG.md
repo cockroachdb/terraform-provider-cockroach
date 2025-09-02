@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added cockroach_backups data source for listing backups on a specific cluster.
 - Added cockroach_restores data source for listing restores on a specific cluster.
+- Added `private_endpoint_dns` as a read-only attribute in the `cockroach_cluster` resource.
 
 ### Fixed
 - Ensure all cluster regions are ready when waiting or private endpoint

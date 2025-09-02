@@ -8,6 +8,15 @@
 
 For information on developing `terraform-provider-cockroach` see [DEVELOPMENT.md](DEVELOPMENT.md).
 
+## Reporting Bugs and Requesting Features
+
+We do not use GitHub Issues for tracking bugs or feature requests.
+If you encounter a problem or have a request, please submit it through our support portal:
+
+https://support.cockroachlabs.com/hc/en-us
+
+This ensures that reports are properly triaged and addressed by our team.
+
 ## Get Started
 
 ### _Warning_: Use of *private endpoints* requires >=v1.7.6

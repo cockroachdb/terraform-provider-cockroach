@@ -288,10 +288,7 @@ func (r *clusterResource) Schema(
 				NestedObject: regionSchema,
 			},
 			"state": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:    true,
 				Description: "Describes whether the cluster is being created, updated, deleted, etc.",
 			},
 			"creator_id": schema.StringAttribute{

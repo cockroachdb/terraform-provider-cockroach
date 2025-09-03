@@ -1831,8 +1831,9 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-central1",
-				NodeCount: 1,
+				Name:               "us-central1",
+				NodeCount:          1,
+				PrivateEndpointDns: "test-private-endpoint-dns.gcp-us-central1.crdb.io",
 			},
 		},
 		CidrRange: "172.28.0.0/16",
@@ -1989,12 +1990,14 @@ func testDedicatedClusterResource(
 				resource.TestCheckResourceAttr(resourceName, "dedicated.cidr_range", "172.28.0.0/16"),
 				resource.TestMatchResourceAttr(resourceName, "full_version", startsWithMinSupportedMajorVersionRE),
 				resource.TestCheckResourceAttr(resourceName, "dedicated.supports_cluster_virtualization", "true"),
+				resource.TestCheckResourceAttr(resourceName, "regions.0.private_endpoint_dns", "test-private-endpoint-dns.gcp-us-central1.crdb.io"),
 				resource.TestCheckResourceAttr(dataSourceName, "name", clusterName),
 				resource.TestCheckResourceAttrSet(dataSourceName, "cloud_provider"),
 				resource.TestCheckResourceAttrSet(dataSourceName, "cockroach_version"),
 				resource.TestCheckResourceAttr(dataSourceName, "plan", "ADVANCED"),
 				resource.TestCheckResourceAttr(dataSourceName, "dedicated.cidr_range", "172.28.0.0/16"),
 				resource.TestMatchResourceAttr(dataSourceName, "full_version", startsWithMinSupportedMajorVersionRE),
+				resource.TestCheckResourceAttr(dataSourceName, "regions.0.private_endpoint_dns", "test-private-endpoint-dns.gcp-us-central1.crdb.io"),
 			),
 		},
 		{

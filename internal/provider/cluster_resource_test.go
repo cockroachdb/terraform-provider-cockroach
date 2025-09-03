@@ -2750,3 +2750,128 @@ func getTestClusterWithLabels(
 	}
 	`, folderName, clusterName, labelsString, parentString)
 }
+
+// TestIntegrationClusterExternalStateChange tests that the cluster resource
+// gracefully handles external state changes without throwing errors.
+func TestIntegrationClusterExternalStateChange(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	clusterName := fmt.Sprintf("%s-status-change-%s", tfTestPrefix, GenerateRandomString(4))
+	clusterID := uuid.Nil.String()
+
+	// Create initial cluster with CREATED status.
+	initialCluster := &client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Plan:             client.PLANTYPE_STANDARD,
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+	}
+
+	// Create cluster with changed status (simulating external change).
+	lockedCluster := *initialCluster
+	lockedCluster.State = client.CLUSTERSTATETYPE_LOCKED
+
+	// Update the cluster's region in the second test step. This simulates a Terraform
+	// update that triggers a read on the resource, where a computed field has drifted
+	// from the Terraform state. The test ensures no error is thrown in this scenario.
+	updatedCluster := *initialCluster
+	updatedCluster.Regions = []client.Region{
+		{
+			Name: "us-east1",
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(initialCluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+
+	// First few calls return CREATED state, then return LOCKED state to simulate external change.
+	// Eventually, the cluster is back to CREATED state.
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(initialCluster, httpOk, nil).Times(2)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&lockedCluster, httpOk, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(initialCluster, httpOk, nil).Times(2)
+
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).Return(&updatedCluster, httpOk, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&updatedCluster, httpOk, nil).AnyTimes()
+
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, nil, nil)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					traceMessageStep("create cluster with us-central1 region")
+				},
+				Config: fmt.Sprintf(`
+					resource "cockroach_cluster" "test" {
+						name           = "%s"
+						cloud_provider = "GCP"
+						plan           = "STANDARD"
+						serverless = {
+							usage_limits = {
+								provisioned_virtual_cpus = 2
+							}
+						}
+						regions = [{
+							name = "us-central1"
+						}]
+					}
+				`, clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "name", clusterName),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.name", "us-central1"),
+				),
+			},
+			{
+				PreConfig: func() {
+					traceMessageStep("update region to trigger read that detects external cluster status drift")
+				},
+				Config: fmt.Sprintf(`
+					resource "cockroach_cluster" "test" {
+						name           = "%s"
+						cloud_provider = "GCP"
+						plan           = "STANDARD"
+						serverless = {
+							usage_limits = {
+								provisioned_virtual_cpus = 2
+							}
+						}
+						regions = [{
+							name = "us-east1"
+						}]
+					}
+				`, clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "name", clusterName),
+					// Verify the region was successfully updated.
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.name", "us-east1"),
+				),
+			},
+		},
+	})
+}

@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added support for creating egress private endpoints domain names via
+  the `cockroach_egress_private_endpoint_domain_names` resource.
+
 ## [1.15.1] - 2025-10-01
 
 ### Fixed

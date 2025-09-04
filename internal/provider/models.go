@@ -475,3 +475,9 @@ type EgressPrivateEndpoint struct {
 	EndpointAddress         types.String `tfsdk:"endpoint_address"`
 	State                   types.String `tfsdk:"state"`
 }
+
+type EgressPrivateEndpointDomainNames struct {
+	EndpointID  types.String `tfsdk:"endpoint_id"`
+	ClusterID   types.String `tfsdk:"cluster_id"`
+	DomainNames types.List   `tfsdk:"domain_names"`
+}

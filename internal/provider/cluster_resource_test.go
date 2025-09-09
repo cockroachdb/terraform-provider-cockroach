@@ -1069,7 +1069,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
 				return resource.TestStep{
-					Config:      getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil),
+					Config:      getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil, false),
 					ExpectError: regexp.MustCompile("Cannot update cluster plan type"),
 				}
 			},
@@ -1121,7 +1121,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		{
 			name: "use serverless primary region on dedicated cluster",
 			createStep: func() resource.TestStep {
-				config := getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil)
+				config := getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil, false)
 				config = strings.Replace(config, "node_count: 1", "primary: true", -1)
 				return resource.TestStep{
 					Config:      config,
@@ -1303,7 +1303,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			name: "attempt to update an advanced cluster to a standard cluster in place",
 			createStep: func() resource.TestStep {
 				return resource.TestStep{
-					Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil),
+					Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil, false),
 				}
 			},
 			initialCluster: client.Cluster{
@@ -1831,8 +1831,9 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-central1",
-				NodeCount: 1,
+				Name:               "us-central1",
+				NodeCount:          1,
+				PrivateEndpointDns: "test-private-endpoint-dns.gcp-us-central1.crdb-test.io",
 			},
 		},
 		CidrRange: "172.28.0.0/16",
@@ -1869,6 +1870,20 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(&initialCluster, httpOk, nil).Times(7)
+
+	// Private endpoint services
+
+	privateEndpointServices := client.PrivateEndpointServices{
+		Services: []client.PrivateEndpointService{
+			{RegionName: "us-central1", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+		},
+	}
+	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
+		Return(&privateEndpointServices, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&initialCluster, httpOk, nil)
+	s.EXPECT().ListPrivateEndpointServices(gomock.Any(), clusterID).
+		Return(&privateEndpointServices, nil, nil).AnyTimes()
 
 	// Upgrade
 
@@ -1955,7 +1970,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		PreConfig: func() {
 			traceMessageStep("Scale the cluster")
 		},
-		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 8, nil),
+		Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 8, nil, true),
 		Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "8"),
 	}
 
@@ -1979,7 +1994,7 @@ func testDedicatedClusterResource(
 			PreConfig: func() {
 				traceMessageStep("create a cluster")
 			},
-			Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false, 4, nil),
+			Config: getTestDedicatedClusterResourceConfig(clusterName, minSupportedClusterMajorVersion, false, 4, nil, true),
 			Check: resource.ComposeTestCheckFunc(
 				testCheckCockroachClusterExists(resourceName),
 				resource.TestCheckResourceAttr(resourceName, "name", clusterName),
@@ -1995,18 +2010,27 @@ func testDedicatedClusterResource(
 				resource.TestCheckResourceAttr(dataSourceName, "plan", "ADVANCED"),
 				resource.TestCheckResourceAttr(dataSourceName, "dedicated.cidr_range", "172.28.0.0/16"),
 				resource.TestMatchResourceAttr(dataSourceName, "full_version", startsWithMinSupportedMajorVersionRE),
+				resource.TestCheckResourceAttrSet(dataSourceName, "regions.0.private_endpoint_dns"),
 			),
 		},
 		{
 			PreConfig: func() {
 				traceMessageStep("update the version")
 			},
-			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true, 4, nil),
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, true, 4, nil, true),
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr(resourceName, "cockroach_version", latestClusterMajorVersion),
 				resource.TestCheckResourceAttr(dataSourceName, "cockroach_version", latestClusterMajorVersion),
 				resource.TestMatchResourceAttr(resourceName, "full_version", startsWithLatestMajorVersionRE),
 				resource.TestMatchResourceAttr(dataSourceName, "full_version", startsWithLatestMajorVersionRE),
+
+				// We check for private_endpoint_dns here because it's not available during initial cluster
+				// creation. The private_endpoint_dns field is only populated after a PrivateEndpointService
+				// resource is created.
+				// Note: The data source check is done in the previous test step since the data source
+				// has a dependency on cockroach_private_endpoint_services.test, so the read operation
+				// won't happen until after the PrivateEndpointService resource is created.
+				resource.TestCheckResourceAttrSet(resourceName, "regions.0.private_endpoint_dns"),
 			),
 		},
 		{
@@ -2034,7 +2058,7 @@ func testDedicatedClusterResource(
 			PreConfig: func() {
 				traceMessageStep("enable delete protection")
 			},
-			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(true)),
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(true), true),
 			Check:  resource.TestCheckResourceAttr(resourceName, "delete_protection", "true"),
 		},
 		{
@@ -2050,7 +2074,7 @@ func testDedicatedClusterResource(
 			PreConfig: func() {
 				traceMessageStep("Unset delete protection")
 			},
-			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(false)),
+			Config: getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, ptr(false), true),
 			Check:  resource.TestCheckResourceAttr(resourceName, "delete_protection", "false"),
 		},
 	}
@@ -2090,11 +2114,21 @@ func testCheckCockroachClusterExists(resourceName string) resource.TestCheckFunc
 }
 
 func getTestDedicatedClusterResourceConfig(
-	name, version string, finalize bool, vcpus int, deleteProtectionEnabled *bool,
+	name, version string, finalize bool, vcpus int, deleteProtectionEnabled *bool, privateEndpointServicesEnabled bool,
 ) string {
 	var deleteProtectionConfig string
 	if deleteProtectionEnabled != nil {
 		deleteProtectionConfig = fmt.Sprintf("\ndelete_protection = %t\n", *deleteProtectionEnabled)
+	}
+
+	var privateEndpointServicesResource string
+	var dataSourceDependsOn string
+	if privateEndpointServicesEnabled {
+		privateEndpointServicesResource =
+			`resource "cockroach_private_endpoint_services" "test" {
+				cluster_id = cockroach_cluster.test.id
+			}`
+		dataSourceDependsOn = "depends_on = [cockroach_private_endpoint_services.test]\n"
 	}
 
 	config := fmt.Sprintf(`
@@ -2115,10 +2149,13 @@ resource "cockroach_cluster" "test" {
 	%s
 }
 
+%s
+
 data "cockroach_cluster" "test" {
     id = cockroach_cluster.test.id
+	%s
 }
-`, name, version, vcpus, deleteProtectionConfig)
+`, name, version, vcpus, deleteProtectionConfig, privateEndpointServicesResource, dataSourceDependsOn)
 
 	if finalize {
 		config += fmt.Sprintf(`

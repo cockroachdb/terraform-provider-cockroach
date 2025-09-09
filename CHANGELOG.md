@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added `private_endpoint_dns` as a read-only attribute in the `cockroach_cluster` resource.
+
 ### Fixed
 - Prevent errors when `status` field in cockroach_cluster resource drifts due to
   external changes.

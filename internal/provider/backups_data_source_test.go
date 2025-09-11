@@ -12,9 +12,7 @@ import (
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
 // TestAccBackupsDataSource attempts to list backups for a real cluster.
@@ -27,7 +25,10 @@ func TestAccBackupsDataSource(t *testing.T) {
 	p.service = NewService(cl)
 	clusterName := fmt.Sprintf("%s-cluster-with-backups-%s", tfTestPrefix, GenerateRandomString(4))
 
-	endTime := time.Now().Truncate(time.Second).UTC()
+	// Use 2 days from now as the end time so that date-only inputs (without timestamp)
+	// still include all of today’s data and the test passes regardless of what time of
+	// day it's run.
+	endTime := time.Now().Add(2 * 24 * time.Hour).Truncate(time.Second).UTC()
 	startTime := endTime.Add(-3 * 24 * time.Hour)
 
 	testBackupsDataSource(
@@ -64,7 +65,10 @@ func TestIntegrationBackupsDataSource(t *testing.T) {
 		RetentionDays:    30,
 	}
 
-	endTime := time.Now().Truncate(time.Second).UTC()
+	// Use 2 days from now as the end time so that date-only inputs (without timestamp)
+	// still include all of today’s data and the test passes regardless of what time of
+	// day it's run.
+	endTime := time.Now().Add(2 * 24 * time.Hour).Truncate(time.Second).UTC()
 	startTime := endTime.Add(-3 * 24 * time.Hour)
 	limit := int32(2)
 	order := "DESC"
@@ -98,7 +102,7 @@ func TestIntegrationBackupsDataSource(t *testing.T) {
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(cluster, httpOkResponse, nil).AnyTimes()
 	s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, gomock.Any()).Return(backupConfig, httpOkResponse, nil)
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(backupConfig, httpOkResponse, nil).AnyTimes()
-	s.EXPECT().ListBackups(gomock.Any(), clusterID, listBackupsOptionsWithDate).Return(backups, httpOkResponse, nil).Times(6)
+	s.EXPECT().ListBackups(gomock.Any(), clusterID, listBackupsOptionsWithDate).Return(backups, httpOkResponse, nil).Times(3)
 	s.EXPECT().ListBackups(gomock.Any(), clusterID, listBackupsOptionsWithTimestamp).Return(backups, httpOkResponse, nil).AnyTimes()
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
@@ -134,32 +138,8 @@ func testBackupsDataSource(
 				PreConfig: func() {
 					traceMessageStep("creating cluster and waiting for backups to become available")
 				},
-				Config: getTestBackupsDataSourceConfig(clusterName, startTime.Format(time.DateOnly), endTime.Format(time.DateOnly)),
-				Check: resource.ComposeTestCheckFunc(
-					// Wait for backups to be available before checking.
-					func(s *terraform.State) error {
-						if useMock {
-							// For mock tests, we don't need to wait.
-							return nil
-						}
-
-						// Get cluster ID from state
-						clusterResource := s.RootModule().Resources["cockroach_cluster.test_cluster"]
-						if clusterResource == nil {
-							return fmt.Errorf("cluster resource not found in state")
-						}
-						clusterID := clusterResource.Primary.ID
-
-						// 15m chosen to allow 5m for first backup and a 10m buffer
-						t.Logf("Waiting for backups to be available for cluster %s...", clusterID)
-						err := retry.RetryContext(ctx, 15*time.Minute, waitForBackupReadyFunc(ctx, clusterID, service))
-						if err != nil {
-							return fmt.Errorf("failed waiting for backups: %v", err)
-						}
-
-						return nil
-					},
-				),
+				Config: testGetStandardClusterConfig(clusterName, true /*frequentBackup*/),
+				Check:  testWaitForBackupReadyFunc(t, useMock, ctx, service),
 			},
 			{
 				PreConfig: func() {

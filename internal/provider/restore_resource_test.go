@@ -14,7 +14,6 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -337,19 +336,7 @@ func testRestoreResource(
 					traceMessageStep("creating cluster and waiting for backups to become available")
 				},
 				Config: getTestRestoreResourceConfig(clusterName, false /*includeRestore*/, restoreType, objects, opts, isAdvancedCluster),
-				Check: resource.ComposeTestCheckFunc(
-					func(s *terraform.State) error {
-						if !useMock {
-							clusterResource := s.RootModule().Resources["cockroach_cluster.test_cluster"]
-							clusterID := clusterResource.Primary.ID
-
-							t.Logf("Waiting for backups to be available for cluster %s...", clusterID)
-							return retry.RetryContext(ctx, 10*time.Minute,
-								waitForBackupReadyFunc(ctx, clusterID, service))
-						}
-						return nil
-					},
-				),
+				Check:  testWaitForBackupReadyFunc(t, useMock, ctx, service),
 			},
 			{
 				PreConfig: func() {

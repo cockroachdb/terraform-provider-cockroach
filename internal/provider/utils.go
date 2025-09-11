@@ -320,3 +320,35 @@ func waitForBackupReadyFunc(
 		return nil
 	}
 }
+
+// testWaitForBackupReadyFunc returns a TestCheckFunc that waits for backups to be available for a cluster.
+// For mock tests, it returns immediately without waiting.
+func testWaitForBackupReadyFunc(
+	t *testing.T,
+	useMock bool,
+	ctx context.Context,
+	service client.Service,
+) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if useMock {
+			// For mock tests, we don't need to wait.
+			return nil
+		}
+
+		// Get cluster ID from state
+		clusterResource := s.RootModule().Resources["cockroach_cluster.test_cluster"]
+		if clusterResource == nil {
+			return fmt.Errorf("cluster resource not found in state")
+		}
+		clusterID := clusterResource.Primary.ID
+
+		// 15m chosen to allow 5m for first backup and a 10m buffer
+		t.Logf("Waiting for backups to be available for cluster %s", clusterID)
+		err := retry.RetryContext(ctx, 15*time.Minute, waitForBackupReadyFunc(ctx, clusterID, service))
+		if err != nil {
+			return fmt.Errorf("failed waiting for backups: %v", err)
+		}
+
+		return nil
+	}
+}

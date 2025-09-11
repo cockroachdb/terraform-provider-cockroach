@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for creating egress private endpoints via the
   `cockroach_egress_private_endpoint` resource.
 
+- Added support for creating egress private endpoints domain names via
+  the `cockroach_egress_private_endpoint_domain_names` resource.
+
 ### Fixed
 - Prevent errors when `status` field in cockroach_cluster resource drifts due to
   external changes.

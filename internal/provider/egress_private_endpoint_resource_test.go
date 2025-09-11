@@ -82,6 +82,9 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 		EndpointConnectionId: "generatedID",
 		EndpointAddress:      "generatedAddress",
 		State:                client.EGRESSPRIVATEENDPOINTSTATETYPE_AVAILABLE,
+		DomainNames: []string{
+			"foo.bar.com",
+		},
 	}
 
 	testCases := []struct {
@@ -150,7 +153,7 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 					Return(&client.GetEgressPrivateEndpointResponse{
 						EgressPrivateEndpoint: &testCase.endpoint,
 					}, nil, nil).
-					Times(3)
+					Times(9)
 
 				s.EXPECT().GetEgressPrivateEndpoint(gomock.Any(), clusterID, gomock.Any()).
 					Return(&client.GetEgressPrivateEndpointResponse{
@@ -160,6 +163,11 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 				s.EXPECT().DeleteEgressPrivateEndpoint(
 					gomock.Any(), cluster.Id, testCase.endpoint.Id).
 					Return(nil, nil)
+
+				s.EXPECT().UpdateEgressPrivateEndpointDomainNames(
+					gomock.Any(), clusterID, testCase.endpoint.Id, gomock.Any()).
+					Return(nil, nil).
+					Times(2)
 			}
 
 			testEgressPrivateEndpointResource(
@@ -180,7 +188,8 @@ func testEgressPrivateEndpointResource(
 	expectError string,
 	useMock bool,
 ) {
-	resourceName := "cockroach_egress_private_endpoint.test"
+	endpointResourceName := "cockroach_egress_private_endpoint.test"
+	domainNameResourceName := "cockroach_egress_private_endpoint_domain_names.test"
 
 	getConfigFn := getTestEgressPrivateEndpointResourceConfigWithCluster
 	if useMock {
@@ -192,39 +201,57 @@ func testEgressPrivateEndpointResource(
 			Config: getConfigFn(cluster, endpoint),
 			Check: resource.ComposeTestCheckFunc(
 				resource.TestCheckResourceAttr(
-					resourceName, "region", endpoint.Region,
+					endpointResourceName, "region", endpoint.Region,
 				),
 				resource.TestCheckResourceAttr(
-					resourceName, "target_service_identifier", endpoint.TargetServiceIdentifier,
+					endpointResourceName, "target_service_identifier", endpoint.TargetServiceIdentifier,
 				),
 				resource.TestCheckResourceAttr(
-					resourceName, "target_service_type", string(endpoint.TargetServiceType),
+					endpointResourceName, "target_service_type", string(endpoint.TargetServiceType),
 				),
 				resource.TestCheckResourceAttrSet(
-					resourceName, "id",
+					endpointResourceName, "id",
 				),
 				resource.TestCheckResourceAttrSet(
-					resourceName, "cluster_id",
+					endpointResourceName, "cluster_id",
 				),
 				resource.TestCheckResourceAttrSet(
-					resourceName, "endpoint_connection_id",
+					endpointResourceName, "endpoint_connection_id",
 				),
 				resource.TestCheckResourceAttrSet(
-					resourceName, "endpoint_address",
+					endpointResourceName, "endpoint_address",
 				),
 				resource.TestCheckResourceAttrSet(
-					resourceName, "state",
+					endpointResourceName, "state",
+				),
+				resource.TestCheckResourceAttrSet(
+					domainNameResourceName, "endpoint_id",
+				),
+				resource.TestCheckResourceAttrSet(
+					domainNameResourceName, "cluster_id",
+				),
+				resource.TestCheckResourceAttrSet(
+					domainNameResourceName, "domain_names.0",
 				),
 			),
 		},
 	}
 	if useMock {
-		steps = append(steps, resource.TestStep{
-			ResourceName:      resourceName,
-			ImportState:       true,
-			ImportStateVerify: true,
-			ImportStateId:     fmt.Sprintf("%s:%s", cluster.Id, endpoint.Id),
-		})
+		steps = append(steps,
+			resource.TestStep{
+				ResourceName:      endpointResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateId:     fmt.Sprintf("%s:%s", cluster.Id, endpoint.Id),
+			},
+			resource.TestStep{
+				ResourceName:                         domainNameResourceName,
+				ImportState:                          true,
+				ImportStateVerify:                    true,
+				ImportStateId:                        fmt.Sprintf("%s:%s", cluster.Id, endpoint.Id),
+				ImportStateVerifyIdentifierAttribute: "endpoint_id",
+			},
+		)
 	}
 
 	if expectError != "" {
@@ -257,7 +284,13 @@ resource "cockroach_egress_private_endpoint" "test" {
   target_service_type       = "%s"
   target_service_identifier = "%s"
 }
-`, clusterID, endpoint.Region, string(endpoint.TargetServiceType), endpoint.TargetServiceIdentifier)
+
+resource "cockroach_egress_private_endpoint_domain_names" "test" {
+  cluster_id   = %s
+  endpoint_id  = cockroach_egress_private_endpoint.test.id
+  domain_names = ["foo.bar.com"]
+}
+`, clusterID, endpoint.Region, string(endpoint.TargetServiceType), endpoint.TargetServiceIdentifier, clusterID)
 	return endpointConfig
 }
 

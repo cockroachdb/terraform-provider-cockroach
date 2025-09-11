@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+- Added acceptance test for cockroach_backups data source.
+
 - Added support for the Bring Your Own Cloud feature in Private Preview. Users can specify
   a `customer_cloud_account` when creating a cluster to direct CockroachDB Cloud to
   create the cluster in an AWS account, GCP project, or Azure subscription that they own.
@@ -18,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `cockroach_egress_private_endpoint` resource.
 
 ### Fixed
+
 - Prevent errors when `status` field in cockroach_cluster resource drifts due to
   external changes.
 

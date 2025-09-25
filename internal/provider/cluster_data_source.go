@@ -65,6 +65,46 @@ func (d *clusterDataSource) Schema(
 				Computed:    true,
 				Description: "The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.",
 			},
+			"customer_cloud_account": schema.SingleNestedAttribute{
+				Computed: true,
+				MarkdownDescription: "Cloud-specific details required to host the cluster in your own cloud account." +
+					" Returned value is one of: `aws`, `gcp`, or `azure`. This feature is available in" +
+					" [Private Preview](https://www.cockroachlabs.com/docs/stable/cockroachdb-feature-availability)." +
+					" Contact your Cockroach Labs account team to enable this feature.",
+				Attributes: map[string]schema.Attribute{
+					"aws": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"arn": schema.StringAttribute{
+								Computed:            true,
+								MarkdownDescription: "The AWS IAM Role ARN that CockroachDB Cloud will assume in your account.",
+							},
+						},
+					},
+					"gcp": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"service_account_email": schema.StringAttribute{
+								Computed:            true,
+								MarkdownDescription: "The customer-owned GCP service account email CockroachDB Cloud will impersonate.",
+							},
+						},
+					},
+					"azure": schema.SingleNestedAttribute{
+						Computed: true,
+						Attributes: map[string]schema.Attribute{
+							"subscription_id": schema.StringAttribute{
+								Computed:            true,
+								MarkdownDescription: "The Azure subscription ID in the customer-owned tenant.",
+							},
+							"tenant_id": schema.StringAttribute{
+								Computed:            true,
+								MarkdownDescription: "The customer-owned Azure tenant ID that contains the subscription.",
+							},
+						},
+					},
+				},
+			},
 			"serverless": schema.SingleNestedAttribute{
 				Computed: true,
 				Attributes: map[string]schema.Attribute{

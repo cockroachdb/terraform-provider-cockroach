@@ -2110,8 +2110,23 @@ func (mr *MockServiceMockRecorder) UpdateClusterDisruption(arg0, arg1, arg2 inte
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateClusterDisruption", reflect.TypeOf((*MockService)(nil).UpdateClusterDisruption), arg0, arg1, arg2)
 }
 
+// UpdateEgressPrivateEndpoint mocks base method.
+func (m *MockService) UpdateEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateEgressPrivateEndpointRequest) (*http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateEgressPrivateEndpoint", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*http.Response)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateEgressPrivateEndpoint indicates an expected call of UpdateEgressPrivateEndpoint.
+func (mr *MockServiceMockRecorder) UpdateEgressPrivateEndpoint(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateEgressPrivateEndpoint", reflect.TypeOf((*MockService)(nil).UpdateEgressPrivateEndpoint), arg0, arg1, arg2, arg3)
+}
+
 // UpdateEgressPrivateEndpointDomainNames mocks base method.
-func (m *MockService) UpdateEgressPrivateEndpointDomainNames(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateEgressPrivateEndpointDomainNamesRequest) (*http.Response, error) {
+func (m *MockService) UpdateEgressPrivateEndpointDomainNames(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateEgressPrivateEndpointRequest) (*http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEgressPrivateEndpointDomainNames", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(*http.Response)

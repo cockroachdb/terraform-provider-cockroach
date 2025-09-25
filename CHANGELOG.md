@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Added support for the Bring Your Own Cloud feature in Private Preview. Users can specify
+  a `customer_cloud_account` when creating a cluster to direct CockroachDB Cloud to
+  create the cluster in an AWS account, GCP project, or Azure subscription that they own.
+
 - Added `private_endpoint_dns` as a read-only attribute in the `cockroach_cluster` resource.
 
 - Added support for creating egress private endpoints via the

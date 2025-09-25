@@ -101,6 +101,7 @@ resource "cockroach_cluster" "basic" {
 - `backup_config` (Attributes) The backup settings for a cluster.
  Each cluster has backup settings that determine if backups are enabled, how frequently they are taken, and how long they are retained for. Use this attribute to manage those settings. (see [below for nested schema](#nestedatt--backup_config))
 - `cockroach_version` (String) The major version of CockroachDB running on the cluster. This value can be used to orchestrate version upgrades. Supported for ADVANCED and STANDARD clusters (when `serverless.upgrade_type` set to 'MANUAL'). (e.g. v25.0)
+- `customer_cloud_account` (Attributes) Cloud-specific details required to host the cluster in your own cloud account. Only one of `aws`, `gcp`, or `azure` may be specified. This feature is available in [Private Preview](https://www.cockroachlabs.com/docs/stable/cockroachdb-feature-availability). Contact your Cockroach Labs account team to enable this feature. (see [below for nested schema](#nestedatt--customer_cloud_account))
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster. If unset, the server chooses the value on cluster creation, and preserves the value on cluster update.
 - `labels` (Map of String) Map of key-value pairs used to organize and categorize resources. If unset, labels will not be managed by Terraform. If set, labels defined in Terraform will overwrite any labels configured outside this platform.
@@ -148,6 +149,41 @@ Optional:
 - `retention_days` (Number) The number of days to retain backups for.  Valid values are [2, 7, 30, 90, 365]. Can only be set once, further changes require opening a support ticket. See [Updating backup retention](../guides/updating-backup-retention) for more information.
 
 
+<a id="nestedatt--customer_cloud_account"></a>
+### Nested Schema for `customer_cloud_account`
+
+Optional:
+
+- `aws` (Attributes) (see [below for nested schema](#nestedatt--customer_cloud_account--aws))
+- `azure` (Attributes) (see [below for nested schema](#nestedatt--customer_cloud_account--azure))
+- `gcp` (Attributes) (see [below for nested schema](#nestedatt--customer_cloud_account--gcp))
+
+<a id="nestedatt--customer_cloud_account--aws"></a>
+### Nested Schema for `customer_cloud_account.aws`
+
+Required:
+
+- `arn` (String) The AWS IAM Role ARN that CockroachDB Cloud will assume in your account.
+
+
+<a id="nestedatt--customer_cloud_account--azure"></a>
+### Nested Schema for `customer_cloud_account.azure`
+
+Required:
+
+- `subscription_id` (String) The Azure subscription ID in the customer-owned tenant.
+- `tenant_id` (String) The customer-owned Azure tenant ID that contains the subscription.
+
+
+<a id="nestedatt--customer_cloud_account--gcp"></a>
+### Nested Schema for `customer_cloud_account.gcp`
+
+Required:
+
+- `service_account_email` (String) The customer-owned GCP service account email CockroachDB Cloud will impersonate.
+
+
+
 <a id="nestedatt--dedicated"></a>
 ### Nested Schema for `dedicated`
 
@@ -159,7 +195,7 @@ Optional:
 - `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
 - `private_network_visibility` (Boolean) Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.
 - `storage_gib` (Number) Storage amount per node in GiB.
-- `supports_cluster_virtualization` (Boolean) supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview
+- `supports_cluster_virtualization` (Boolean) supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Private Preview usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview
 
 Read-Only:
 

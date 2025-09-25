@@ -20,8 +20,9 @@ package client
 
 // CreateClusterSpecification struct for CreateClusterSpecification.
 type CreateClusterSpecification struct {
-	Dedicated        *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
-	DeleteProtection *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
+	CustomerCloudAccount *CustomerCloudAccount                `json:"customer_cloud_account,omitempty"`
+	Dedicated            *DedicatedClusterCreateSpecification `json:"dedicated,omitempty"`
+	DeleteProtection     *DeleteProtectionStateType           `json:"delete_protection,omitempty"`
 	// labels are key-value pairs used to organize and categorize resources.
 	Labels *map[string]string `json:"labels,omitempty"`
 	// Preview: The parent ID is a folder ID. An empty string or \"root\" will create a cluster at the root level.
@@ -37,6 +38,20 @@ type CreateClusterSpecification struct {
 func NewCreateClusterSpecification() *CreateClusterSpecification {
 	p := CreateClusterSpecification{}
 	return &p
+}
+
+// GetCustomerCloudAccount returns the CustomerCloudAccount field value if set, zero value otherwise.
+func (o *CreateClusterSpecification) GetCustomerCloudAccount() CustomerCloudAccount {
+	if o == nil || o.CustomerCloudAccount == nil {
+		var ret CustomerCloudAccount
+		return ret
+	}
+	return *o.CustomerCloudAccount
+}
+
+// SetCustomerCloudAccount gets a reference to the given CustomerCloudAccount and assigns it to the CustomerCloudAccount field.
+func (o *CreateClusterSpecification) SetCustomerCloudAccount(v CustomerCloudAccount) {
+	o.CustomerCloudAccount = &v
 }
 
 // GetDedicated returns the Dedicated field value if set, zero value otherwise.

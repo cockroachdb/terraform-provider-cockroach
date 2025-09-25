@@ -73,6 +73,29 @@ type UsageLimits struct {
 	ProvisionedVirtualCpus types.Int64 `tfsdk:"provisioned_virtual_cpus"`
 }
 
+// AwsCustomerCloudAccount contains the details for a BYOC cluster on AWS.
+type AwsCustomerCloudAccount struct {
+	Arn types.String `tfsdk:"arn"`
+}
+
+// GcpCustomerCloudAccount contains the details for a BYOC cluster on GCP.
+type GcpCustomerCloudAccount struct {
+	ServiceAccountEmail types.String `tfsdk:"service_account_email"`
+}
+
+// AzureCustomerCloudAccount contains the details for a BYOC cluster on Azure.
+type AzureCustomerCloudAccount struct {
+	SubscriptionId types.String `tfsdk:"subscription_id"`
+	TenantId       types.String `tfsdk:"tenant_id"`
+}
+
+// CustomerCloudAccount is the union of cloud-specific BYOC details.
+type CustomerCloudAccount struct {
+	Aws   *AwsCustomerCloudAccount   `tfsdk:"aws"`
+	Gcp   *GcpCustomerCloudAccount   `tfsdk:"gcp"`
+	Azure *AzureCustomerCloudAccount `tfsdk:"azure"`
+}
+
 type SQLUser struct {
 	ClusterId types.String `tfsdk:"cluster_id"`
 	Name      types.String `tfsdk:"name"`
@@ -94,24 +117,25 @@ func (e *APIErrorMessage) String() string {
 // and the cluster data source. Changes to this model
 // should be supported by both.
 type CockroachCluster struct {
-	ID               types.String             `tfsdk:"id"`
-	Name             types.String             `tfsdk:"name"`
-	CloudProvider    types.String             `tfsdk:"cloud_provider"`
-	AccountId        types.String             `tfsdk:"account_id"`
-	DedicatedConfig  *DedicatedClusterConfig  `tfsdk:"dedicated"`
-	ServerlessConfig *ServerlessClusterConfig `tfsdk:"serverless"`
-	Regions          []Region                 `tfsdk:"regions"`
-	CockroachVersion types.String             `tfsdk:"cockroach_version"`
-	FullVersion      types.String             `tfsdk:"full_version"`
-	Plan             types.String             `tfsdk:"plan"`
-	State            types.String             `tfsdk:"state"`
-	CreatorId        types.String             `tfsdk:"creator_id"`
-	OperationStatus  types.String             `tfsdk:"operation_status"`
-	UpgradeStatus    types.String             `tfsdk:"upgrade_status"`
-	ParentId         types.String             `tfsdk:"parent_id"`
-	DeleteProtection types.Bool               `tfsdk:"delete_protection"`
-	BackupConfig     types.Object             `tfsdk:"backup_config"`
-	Labels           types.Map                `tfsdk:"labels"`
+	ID                   types.String             `tfsdk:"id"`
+	Name                 types.String             `tfsdk:"name"`
+	CloudProvider        types.String             `tfsdk:"cloud_provider"`
+	AccountId            types.String             `tfsdk:"account_id"`
+	CustomerCloudAccount *CustomerCloudAccount    `tfsdk:"customer_cloud_account"`
+	DedicatedConfig      *DedicatedClusterConfig  `tfsdk:"dedicated"`
+	ServerlessConfig     *ServerlessClusterConfig `tfsdk:"serverless"`
+	Regions              []Region                 `tfsdk:"regions"`
+	CockroachVersion     types.String             `tfsdk:"cockroach_version"`
+	FullVersion          types.String             `tfsdk:"full_version"`
+	Plan                 types.String             `tfsdk:"plan"`
+	State                types.String             `tfsdk:"state"`
+	CreatorId            types.String             `tfsdk:"creator_id"`
+	OperationStatus      types.String             `tfsdk:"operation_status"`
+	UpgradeStatus        types.String             `tfsdk:"upgrade_status"`
+	ParentId             types.String             `tfsdk:"parent_id"`
+	DeleteProtection     types.Bool               `tfsdk:"delete_protection"`
+	BackupConfig         types.Object             `tfsdk:"backup_config"`
+	Labels               types.Map                `tfsdk:"labels"`
 }
 
 type AllowlistEntry struct {

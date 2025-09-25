@@ -35,6 +35,7 @@ data "cockroach_cluster" "cockroach" {
   * AZURE
 - `cockroach_version` (String) The major version of CockroachDB running on the cluster. (e.g. v25.0)
 - `creator_id` (String) ID of the user who created the cluster.
+- `customer_cloud_account` (Attributes) Cloud-specific details required to host the cluster in your own cloud account. Returned value is one of: `aws`, `gcp`, or `azure`. This feature is available in [Private Preview](https://www.cockroachlabs.com/docs/stable/cockroachdb-feature-availability). Contact your Cockroach Labs account team to enable this feature. (see [below for nested schema](#nestedatt--customer_cloud_account))
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
 - `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
@@ -57,6 +58,41 @@ Read-Only:
 - `enabled` (Boolean) Indicates whether backups are enabled.
 - `frequency_minutes` (Number) The frequency of backups in minutes.
 - `retention_days` (Number) The number of days to retain backups for.
+
+
+<a id="nestedatt--customer_cloud_account"></a>
+### Nested Schema for `customer_cloud_account`
+
+Read-Only:
+
+- `aws` (Attributes) (see [below for nested schema](#nestedatt--customer_cloud_account--aws))
+- `azure` (Attributes) (see [below for nested schema](#nestedatt--customer_cloud_account--azure))
+- `gcp` (Attributes) (see [below for nested schema](#nestedatt--customer_cloud_account--gcp))
+
+<a id="nestedatt--customer_cloud_account--aws"></a>
+### Nested Schema for `customer_cloud_account.aws`
+
+Read-Only:
+
+- `arn` (String) The AWS IAM Role ARN that CockroachDB Cloud will assume in your account.
+
+
+<a id="nestedatt--customer_cloud_account--azure"></a>
+### Nested Schema for `customer_cloud_account.azure`
+
+Read-Only:
+
+- `subscription_id` (String) The Azure subscription ID in the customer-owned tenant.
+- `tenant_id` (String) The customer-owned Azure tenant ID that contains the subscription.
+
+
+<a id="nestedatt--customer_cloud_account--gcp"></a>
+### Nested Schema for `customer_cloud_account.gcp`
+
+Read-Only:
+
+- `service_account_email` (String) The customer-owned GCP service account email CockroachDB Cloud will impersonate.
+
 
 
 <a id="nestedatt--dedicated"></a>

@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"reflect"
 	"regexp"
 	"sort"
 	"strconv"
@@ -145,6 +146,49 @@ func (r *clusterResource) Schema(
 					stringplanmodifier.UseStateForUnknown(),
 				},
 				Description: "The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.",
+			},
+			"customer_cloud_account": schema.SingleNestedAttribute{
+				Optional: true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				MarkdownDescription: "Cloud-specific details required to host the cluster in your own cloud account." +
+					" Only one of `aws`, `gcp`, or `azure` may be specified. This feature is available in" +
+					" [Private Preview](https://www.cockroachlabs.com/docs/stable/cockroachdb-feature-availability)." +
+					" Contact your Cockroach Labs account team to enable this feature.",
+				Attributes: map[string]schema.Attribute{
+					"aws": schema.SingleNestedAttribute{
+						Optional: true,
+						Attributes: map[string]schema.Attribute{
+							"arn": schema.StringAttribute{
+								Required:            true,
+								MarkdownDescription: "The AWS IAM Role ARN that CockroachDB Cloud will assume in your account.",
+							},
+						},
+					},
+					"gcp": schema.SingleNestedAttribute{
+						Optional: true,
+						Attributes: map[string]schema.Attribute{
+							"service_account_email": schema.StringAttribute{
+								Required:            true,
+								MarkdownDescription: "The customer-owned GCP service account email CockroachDB Cloud will impersonate.",
+							},
+						},
+					},
+					"azure": schema.SingleNestedAttribute{
+						Optional: true,
+						Attributes: map[string]schema.Attribute{
+							"subscription_id": schema.StringAttribute{
+								Required:            true,
+								MarkdownDescription: "The Azure subscription ID in the customer-owned tenant.",
+							},
+							"tenant_id": schema.StringAttribute{
+								Required:            true,
+								MarkdownDescription: "The customer-owned Azure tenant ID that contains the subscription.",
+							},
+						},
+					},
+				},
 			},
 			"plan": schema.StringAttribute{
 				Computed: true,
@@ -276,7 +320,7 @@ func (r *clusterResource) Schema(
 						// This is false since our SDK does not currently provide
 						// any indicator of whether a cluster supports PCR or not.
 						Computed:            false,
-						MarkdownDescription: "supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Limited Access usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview",
+						MarkdownDescription: "supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Private Preview usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},
@@ -391,6 +435,24 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 		resourcevalidator.Conflicting(
 			path.MatchRoot("dedicated"),
 			path.MatchRoot("serverless"),
+		),
+		// BYOC is not supported on serverless clusters.
+		resourcevalidator.Conflicting(
+			path.MatchRoot("serverless"),
+			path.MatchRoot("customer_cloud_account"),
+		),
+		// Only one BYOC provider block may be configured at a time.
+		resourcevalidator.Conflicting(
+			path.MatchRoot("customer_cloud_account").AtName("aws"),
+			path.MatchRoot("customer_cloud_account").AtName("gcp"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("customer_cloud_account").AtName("aws"),
+			path.MatchRoot("customer_cloud_account").AtName("azure"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("customer_cloud_account").AtName("gcp"),
+			path.MatchRoot("customer_cloud_account").AtName("azure"),
 		),
 		resourcevalidator.Conflicting(
 			path.MatchRoot("dedicated").AtName("num_virtual_cpus"),
@@ -589,6 +651,54 @@ func (r *clusterResource) Create(
 			dedicated.SupportsClusterVirtualization = ptr(cfg.SupportsClusterVirtualization.ValueBool())
 		}
 		clusterSpec.SetDedicated(dedicated)
+	}
+
+	// Customer Cloud Account for BYOC.
+	if plan.CustomerCloudAccount != nil {
+		// Ensure only one provider is set.
+		providersSet := 0
+
+		cca := client.NewCustomerCloudAccount()
+		if plan.CustomerCloudAccount.Aws != nil && IsKnown(plan.CustomerCloudAccount.Aws.Arn) {
+			providersSet++
+			aws := client.NewAwsCustomerCloudAccount(plan.CustomerCloudAccount.Aws.Arn.ValueString())
+			cca.SetAws(*aws)
+		}
+		if plan.CustomerCloudAccount.Gcp != nil && IsKnown(plan.CustomerCloudAccount.Gcp.ServiceAccountEmail) {
+			providersSet++
+			gcp := client.NewGcpCustomerCloudAccount(plan.CustomerCloudAccount.Gcp.ServiceAccountEmail.ValueString())
+			cca.SetGcp(*gcp)
+		}
+		if plan.CustomerCloudAccount.Azure != nil &&
+			IsKnown(plan.CustomerCloudAccount.Azure.SubscriptionId) &&
+			IsKnown(plan.CustomerCloudAccount.Azure.TenantId) {
+			providersSet++
+			azure := client.NewAzureCustomerCloudAccount(
+				plan.CustomerCloudAccount.Azure.SubscriptionId.ValueString(),
+				plan.CustomerCloudAccount.Azure.TenantId.ValueString(),
+			)
+			cca.SetAzure(*azure)
+		}
+
+		if providersSet == 0 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("customer_cloud_account"),
+				"Invalid Configuration",
+				"customer_cloud_account must specify details for exactly one cloud provider, found none.",
+			)
+			return
+		}
+
+		if providersSet > 1 {
+			resp.Diagnostics.AddAttributeError(
+				path.Root("customer_cloud_account"),
+				"Invalid Configuration",
+				"customer_cloud_account must specify details for exactly one cloud provider, found multiple.",
+			)
+			return
+		}
+
+		clusterSpec.SetCustomerCloudAccount(*cca)
 	}
 
 	if resp.Diagnostics.HasError() {
@@ -811,6 +921,13 @@ func (r *clusterResource) ModifyPlan(
 			resp.Diagnostics.AddError("Cannot update cluster cloud provider",
 				"To prevent accidental deletion of data, changing a cluster's cloud provider "+
 					"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
+		}
+		// BYOC details are immutable after creation.
+		if !byocEqual(plan.CustomerCloudAccount, state.CustomerCloudAccount) {
+			resp.Diagnostics.AddError("Cannot update customer_cloud_account_details",
+				"Changing whether a cluster is hosted in a customer cloud account or modifying "+
+					"its details is not allowed. Destroy and re-create the cluster to change "+
+					"customer cloud account settings.")
 		}
 		if ((plan.DedicatedConfig == nil) != (state.DedicatedConfig == nil)) ||
 			((plan.ServerlessConfig == nil) != (state.ServerlessConfig == nil)) {
@@ -1318,6 +1435,26 @@ func loadClusterToTerraformState(
 	state.State = types.StringValue(string(clusterObj.State))
 	state.CreatorId = types.StringValue(clusterObj.CreatorId)
 	state.OperationStatus = types.StringValue(string(clusterObj.OperationStatus))
+	// BYOC details
+	if clusterObj.CustomerCloudAccount != nil {
+		cca := clusterObj.CustomerCloudAccount
+		details := &CustomerCloudAccount{}
+		if cca.Aws != nil {
+			details.Aws = &AwsCustomerCloudAccount{Arn: types.StringValue(cca.Aws.Arn)}
+		}
+		if cca.Gcp != nil {
+			details.Gcp = &GcpCustomerCloudAccount{ServiceAccountEmail: types.StringValue(cca.Gcp.ServiceAccountEmail)}
+		}
+		if cca.Azure != nil {
+			details.Azure = &AzureCustomerCloudAccount{
+				SubscriptionId: types.StringValue(cca.Azure.SubscriptionId),
+				TenantId:       types.StringValue(cca.Azure.TenantId),
+			}
+		}
+		state.CustomerCloudAccount = details
+	} else {
+		state.CustomerCloudAccount = nil
+	}
 	var planRegions []Region
 	if plan != nil {
 		planRegions = plan.Regions
@@ -1604,4 +1741,8 @@ func reconcileRegionUpdate(
 
 func NewClusterResource() resource.Resource {
 	return &clusterResource{}
+}
+
+func byocEqual(a *CustomerCloudAccount, b *CustomerCloudAccount) bool {
+	return reflect.DeepEqual(a, b)
 }

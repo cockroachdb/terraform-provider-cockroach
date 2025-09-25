@@ -164,7 +164,9 @@ type Service interface {
 	// List egress private endpoints
 	ListEgressPrivateEndpoints(ctx _context.Context, clusterId string, options *ListEgressPrivateEndpointsOptions) (*ListEgressPrivateEndpointsResponse, *_nethttp.Response, error)
 	// Update egress private endpoint domain names
-	UpdateEgressPrivateEndpointDomainNames(ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointDomainNamesRequest *UpdateEgressPrivateEndpointDomainNamesRequest) (*_nethttp.Response, error)
+	UpdateEgressPrivateEndpoint(ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest) (*_nethttp.Response, error)
+	// Deprecated: Update egress private endpoint domain names. This endpoint is deprecated in favor of PATCH /api/v1/clusters/{cluster_id}/networking/egress-private-endpoints/{id} and will be removed in a future version.
+	UpdateEgressPrivateEndpointDomainNames(ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest) (*_nethttp.Response, error)
 
 	//
 	// EgressRules
@@ -1705,12 +1707,6 @@ func (a *ServiceImpl) GetRestore(
 
 // ListBackupsOptions contains optional parameters for ListBackups.
 type ListBackupsOptions struct {
-	// The beginning of the time range (inclusive) used to search for backups based on their restore point. If this field is provided, end_time must also be included in the request.
-	StartTime *time.Time
-
-	// The end of the time range (exclusive) used to search for backups based on their restore point. If this field is provided, start_time must also be included in the request.
-	EndTime *time.Time
-
 	PaginationPage *string
 
 	PaginationLimit *int32
@@ -1719,6 +1715,12 @@ type ListBackupsOptions struct {
 
 	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
 	PaginationSortOrder *string
+
+	// The beginning of the time range (inclusive) used to search for backups.
+	StartTime *time.Time
+
+	// The end of the time range (exclusive) used to search for backups.
+	EndTime *time.Time
 }
 
 // ListBackups executes the request.
@@ -1742,12 +1744,6 @@ func (a *ServiceImpl) ListBackups(
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if options.StartTime != nil {
-		localVarQueryParams.Add("start_time", parameterToString(*options.StartTime, ""))
-	}
-	if options.EndTime != nil {
-		localVarQueryParams.Add("end_time", parameterToString(*options.EndTime, ""))
-	}
 	if options.PaginationPage != nil {
 		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
 	}
@@ -1759,6 +1755,12 @@ func (a *ServiceImpl) ListBackups(
 	}
 	if options.PaginationSortOrder != nil {
 		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	if options.StartTime != nil {
+		localVarQueryParams.Add("start_time", parameterToString(*options.StartTime, ""))
+	}
+	if options.EndTime != nil {
+		localVarQueryParams.Add("end_time", parameterToString(*options.EndTime, ""))
 	}
 	// Determine the Content-Type header.
 	localVarHTTPContentTypes := []string{}
@@ -1874,12 +1876,6 @@ func (a *ServiceImpl) ListBackups(
 
 // ListRestoresOptions contains optional parameters for ListRestores.
 type ListRestoresOptions struct {
-	// The beginning of the time range (inclusive) used to search for restores.
-	StartTime *time.Time
-
-	// The end of the time range (exclusive) used to search for restores.
-	EndTime *time.Time
-
 	PaginationPage *string
 
 	PaginationLimit *int32
@@ -1888,6 +1884,12 @@ type ListRestoresOptions struct {
 
 	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
 	PaginationSortOrder *string
+
+	// The beginning of the time range (inclusive) used to search for restores.
+	StartTime *time.Time
+
+	// The end of the time range (exclusive) used to search for restores.
+	EndTime *time.Time
 }
 
 // ListRestores executes the request.
@@ -1911,12 +1913,6 @@ func (a *ServiceImpl) ListRestores(
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
-	if options.StartTime != nil {
-		localVarQueryParams.Add("start_time", parameterToString(*options.StartTime, ""))
-	}
-	if options.EndTime != nil {
-		localVarQueryParams.Add("end_time", parameterToString(*options.EndTime, ""))
-	}
 	if options.PaginationPage != nil {
 		localVarQueryParams.Add("pagination.page", parameterToString(*options.PaginationPage, ""))
 	}
@@ -1928,6 +1924,12 @@ func (a *ServiceImpl) ListRestores(
 	}
 	if options.PaginationSortOrder != nil {
 		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	if options.StartTime != nil {
+		localVarQueryParams.Add("start_time", parameterToString(*options.StartTime, ""))
+	}
+	if options.EndTime != nil {
+		localVarQueryParams.Add("end_time", parameterToString(*options.EndTime, ""))
 	}
 	// Determine the Content-Type header.
 	localVarHTTPContentTypes := []string{}
@@ -6405,9 +6407,9 @@ func (a *ServiceImpl) ListEgressPrivateEndpoints(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
-// UpdateEgressPrivateEndpointDomainNames executes the request.
-func (a *ServiceImpl) UpdateEgressPrivateEndpointDomainNames(
-	ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointDomainNamesRequest *UpdateEgressPrivateEndpointDomainNamesRequest,
+// UpdateEgressPrivateEndpoint executes the request.
+func (a *ServiceImpl) UpdateEgressPrivateEndpoint(
+	ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest,
 ) (*_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
@@ -6419,15 +6421,15 @@ func (a *ServiceImpl) UpdateEgressPrivateEndpointDomainNames(
 
 	localBasePath := a.client.cfg.ServerURL
 
-	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-private-endpoints/{id}/domain-names"
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-private-endpoints/{id}"
 	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
 	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
 
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
-	if updateEgressPrivateEndpointDomainNamesRequest == nil {
-		return nil, reportError("updateEgressPrivateEndpointDomainNamesRequest is required and must be specified")
+	if updateEgressPrivateEndpointRequest == nil {
+		return nil, reportError("updateEgressPrivateEndpointRequest is required and must be specified")
 	}
 
 	// Determine the Content-Type header.
@@ -6448,7 +6450,137 @@ func (a *ServiceImpl) UpdateEgressPrivateEndpointDomainNames(
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// Body params.
-	localVarPostBody = updateEgressPrivateEndpointDomainNamesRequest
+	localVarPostBody = updateEgressPrivateEndpointRequest
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return localVarHTTPResponse, newErr
+	}
+
+	return localVarHTTPResponse, nil
+}
+
+// UpdateEgressPrivateEndpointDomainNames executes the request.
+// Deprecated.
+func (a *ServiceImpl) UpdateEgressPrivateEndpointDomainNames(
+	ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest,
+) (*_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPatch
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/networking/egress-private-endpoints/{id}/domain-names"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+	localVarPath = strings.Replace(localVarPath, "{"+"id"+"}", _neturl.PathEscape(parameterToString(id, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if updateEgressPrivateEndpointRequest == nil {
+		return nil, reportError("updateEgressPrivateEndpointRequest is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = updateEgressPrivateEndpointRequest
 	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, err

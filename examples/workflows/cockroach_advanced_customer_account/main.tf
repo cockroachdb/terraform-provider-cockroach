@@ -1,3 +1,9 @@
+# Populate the service account email in your GCP project in a terraform.tfvars file.
+variable "service_account_email" {
+  type     = string
+  nullable = false
+}
+
 variable "cluster_name" {
   type     = string
   nullable = false
@@ -98,7 +104,6 @@ resource "cockroach_cluster" "example" {
   dedicated = {
     storage_gib      = var.storage_gib
     num_virtual_cpus = var.num_virtual_cpus
-    cidr_range       = "172.28.0.0/14"
   }
   regions = [
     for r in var.cloud_provider_regions : {
@@ -114,6 +119,11 @@ resource "cockroach_cluster" "example" {
   labels = {
     environment   = "production",
     "cost-center" = "mkt-1234"
+  }
+  customer_cloud_account = {
+    gcp = {
+      service_account_email = var.service_account_email
+    }
   }
 }
 

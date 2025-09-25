@@ -829,6 +829,23 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 		ignoreImportPaths []string
 	}{
 		{
+			name: "serverless rejects BYOC in Create",
+			createStep: func() resource.TestStep {
+				return resource.TestStep{
+					Config: fmt.Sprintf(`
+                        resource "cockroach_cluster" "test" {
+                            name           = "%s"
+                            cloud_provider = "GCP"
+                            serverless = {}
+                            regions = [{ name = "us-central1" }]
+                            customer_cloud_account = { gcp = { service_account_email = "sa@example.iam.gserviceaccount.com" } }
+                        }
+                    `, clusterName),
+					ExpectError: regexp.MustCompile(`These attributes cannot be configured together:\s\[serverless,customer_cloud_account\]`),
+				}
+			},
+		},
+		{
 			name: "STANDARD clusters must not have a node_count",
 			createStep: func() resource.TestStep {
 				return resource.TestStep{
@@ -1977,6 +1994,116 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	testDedicatedClusterResource(t, clusterName, true, scaleStep)
 }
 
+// TestIntegrationDedicatedClusterBYOC validates that BYOC details are passed in
+// the create request and are reflected in state.
+func TestIntegrationDedicatedClusterBYOC(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-dedicated-byoc-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	arn := "arn:aws:iam::123456789012:role/CRDB_Test"
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	initialCluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				NumVirtualCpus: 4,
+				StorageGib:     15,
+				MemoryGib:      8,
+			},
+		},
+		Regions: []client.Region{{Name: "us-east-1", NodeCount: 1}},
+		CustomerCloudAccount: &client.CustomerCloudAccount{
+			Aws: &client.AwsCustomerCloudAccount{Arn: arn},
+		},
+	}
+
+	// Validate CreateCluster receives BYOC details
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+			if req.Spec.CustomerCloudAccount == nil || req.Spec.CustomerCloudAccount.Aws == nil {
+				return nil, nil, fmt.Errorf("missing BYOC details in create request")
+			}
+			if req.Spec.CustomerCloudAccount.Aws.Arn != arn {
+				return nil, nil, fmt.Errorf("unexpected arn: %s", req.Spec.CustomerCloudAccount.Aws.Arn)
+			}
+			return &initialCluster, httpOk, nil
+		},
+	)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&initialCluster, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	cfg := `
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  dedicated = {
+    storage_gib = 15
+    num_virtual_cpus = 4
+  }
+  regions = [{
+    name = "us-east-1"
+    node_count = 1
+  }]
+  customer_cloud_account = {
+    %s
+  }
+}
+
+data "cockroach_cluster" "test" {
+  id = cockroach_cluster.test.id
+}
+`
+
+	// Test that a spec with multiple clouds is rejected.
+	multipleCloudsSpec := fmt.Sprintf(`
+	aws = { arn = "%s" }
+	gcp = { service_account_email = "%s" }
+`, arn, "test@example.com")
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      fmt.Sprintf(cfg, clusterName, multipleCloudsSpec),
+				ExpectError: regexp.MustCompile(`These attributes cannot be configured together:\s\[customer_cloud_account.aws,customer_cloud_account.gcp\]`),
+			},
+		},
+	})
+
+	// Test that a spec with one cloud is accepted.
+	oneCloudSpec := fmt.Sprintf(`aws = { arn = "%s" }`, arn)
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(cfg, clusterName, oneCloudSpec),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "customer_cloud_account.aws.arn", arn),
+					resource.TestCheckResourceAttr("data.cockroach_cluster.test", "customer_cloud_account.aws.arn", arn),
+				),
+			},
+		},
+	})
+}
+
 func testDedicatedClusterResource(
 	t *testing.T, clusterName string, useMock bool, additionalSteps ...resource.TestStep,
 ) {
@@ -2911,4 +3038,86 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 			},
 		},
 	})
+}
+
+func TestByocEqual(t *testing.T) {
+	tests := []struct {
+		name string
+		a    *CustomerCloudAccount
+		b    *CustomerCloudAccount
+		want bool
+	}{
+		{
+			name: "aws equal",
+			a:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test")}},
+			b:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test")}},
+			want: true,
+		},
+		{
+			name: "aws not equal",
+			a:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test")}},
+			b:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test2")}},
+			want: false,
+		},
+		{
+			name: "gcp equal",
+			a:    &CustomerCloudAccount{Gcp: &GcpCustomerCloudAccount{ServiceAccountEmail: types.StringValue("test@example.com")}},
+			b:    &CustomerCloudAccount{Gcp: &GcpCustomerCloudAccount{ServiceAccountEmail: types.StringValue("test@example.com")}},
+			want: true,
+		},
+		{
+			name: "gcp not equal",
+			a:    &CustomerCloudAccount{Gcp: &GcpCustomerCloudAccount{ServiceAccountEmail: types.StringValue("test@example.com")}},
+			b:    &CustomerCloudAccount{Gcp: &GcpCustomerCloudAccount{ServiceAccountEmail: types.StringValue("test@example.com2")}},
+			want: false,
+		},
+		{
+			name: "azure equal",
+			a:    &CustomerCloudAccount{Azure: &AzureCustomerCloudAccount{SubscriptionId: types.StringValue("123456789012"), TenantId: types.StringValue("123456789012")}},
+			b:    &CustomerCloudAccount{Azure: &AzureCustomerCloudAccount{SubscriptionId: types.StringValue("123456789012"), TenantId: types.StringValue("123456789012")}},
+			want: true,
+		},
+		{
+			name: "azure not equal",
+			a:    &CustomerCloudAccount{Azure: &AzureCustomerCloudAccount{SubscriptionId: types.StringValue("123456789012"), TenantId: types.StringValue("123456789012")}},
+			b:    &CustomerCloudAccount{Azure: &AzureCustomerCloudAccount{SubscriptionId: types.StringValue("123456789012"), TenantId: types.StringValue("1234567890122")}},
+			want: false,
+		},
+		{
+			name: "equal nil",
+			a:    &CustomerCloudAccount{},
+			b:    &CustomerCloudAccount{},
+			want: true,
+		},
+		{
+			name: "not equal nil",
+			a:    &CustomerCloudAccount{},
+			b:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test")}},
+			want: false,
+		},
+		{
+			name: "not equal different clouds",
+			a:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test")}},
+			b:    &CustomerCloudAccount{Gcp: &GcpCustomerCloudAccount{ServiceAccountEmail: types.StringValue("test@example.com")}},
+			want: false,
+		},
+		{
+			name: "both unset",
+			a:    nil,
+			b:    nil,
+			want: true,
+		},
+		{
+			name: "one unset",
+			a:    nil,
+			b:    &CustomerCloudAccount{Aws: &AwsCustomerCloudAccount{Arn: types.StringValue("arn:aws:iam::123456789012:role/CRDB_Test")}},
+			want: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			equal := byocEqual(test.a, test.b)
+			require.Equal(t, test.want, equal)
+		})
+	}
 }

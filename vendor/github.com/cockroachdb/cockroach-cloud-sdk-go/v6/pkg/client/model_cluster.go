@@ -29,16 +29,17 @@ type Cluster struct {
 	// The client ID of the Azure cluster identity associated with this cluster. This field is only populated for clusters deployed on Azure and is used to support customer-managed encryption keys (CMEK).
 	AzureClusterIdentityClientId *string `json:"azure_cluster_identity_client_id,omitempty"`
 	// cidr_range is the IPv4 range in CIDR format that will be used by the cluster. It is only set on GCP Advanced tier clusters and is otherwise empty.
-	CidrRange           string                     `json:"cidr_range"`
-	CloudProvider       CloudProviderType          `json:"cloud_provider"`
-	CockroachVersion    string                     `json:"cockroach_version"`
-	Config              ClusterConfig              `json:"config"`
-	CreatedAt           *time.Time                 `json:"created_at,omitempty"`
-	CreatorId           string                     `json:"creator_id"`
-	DeleteProtection    *DeleteProtectionStateType `json:"delete_protection,omitempty"`
-	DeletedAt           *time.Time                 `json:"deleted_at,omitempty"`
-	EgressTrafficPolicy *EgressTrafficPolicyType   `json:"egress_traffic_policy,omitempty"`
-	Id                  string                     `json:"id"`
+	CidrRange            string                     `json:"cidr_range"`
+	CloudProvider        CloudProviderType          `json:"cloud_provider"`
+	CockroachVersion     string                     `json:"cockroach_version"`
+	Config               ClusterConfig              `json:"config"`
+	CreatedAt            *time.Time                 `json:"created_at,omitempty"`
+	CreatorId            string                     `json:"creator_id"`
+	CustomerCloudAccount *CustomerCloudAccount      `json:"customer_cloud_account,omitempty"`
+	DeleteProtection     *DeleteProtectionStateType `json:"delete_protection,omitempty"`
+	DeletedAt            *time.Time                 `json:"deleted_at,omitempty"`
+	EgressTrafficPolicy  *EgressTrafficPolicyType   `json:"egress_traffic_policy,omitempty"`
+	Id                   string                     `json:"id"`
 	// labels are key-value pairs used to organize and categorize resources.
 	Labels            map[string]string      `json:"labels"`
 	Name              string                 `json:"name"`
@@ -200,6 +201,20 @@ func (o *Cluster) GetCreatorId() string {
 // SetCreatorId sets field value.
 func (o *Cluster) SetCreatorId(v string) {
 	o.CreatorId = v
+}
+
+// GetCustomerCloudAccount returns the CustomerCloudAccount field value if set, zero value otherwise.
+func (o *Cluster) GetCustomerCloudAccount() CustomerCloudAccount {
+	if o == nil || o.CustomerCloudAccount == nil {
+		var ret CustomerCloudAccount
+		return ret
+	}
+	return *o.CustomerCloudAccount
+}
+
+// SetCustomerCloudAccount gets a reference to the given CustomerCloudAccount and assigns it to the CustomerCloudAccount field.
+func (o *Cluster) SetCustomerCloudAccount(v CustomerCloudAccount) {
+	o.CustomerCloudAccount = &v
 }
 
 // GetDeleteProtection returns the DeleteProtection field value if set, zero value otherwise.

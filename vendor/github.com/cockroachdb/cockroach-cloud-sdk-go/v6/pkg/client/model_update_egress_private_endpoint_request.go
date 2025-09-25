@@ -18,32 +18,32 @@
 
 package client
 
-// UpdateEgressPrivateEndpointDomainNamesRequest struct for UpdateEgressPrivateEndpointDomainNamesRequest.
-type UpdateEgressPrivateEndpointDomainNamesRequest struct {
+// UpdateEgressPrivateEndpointRequest struct for UpdateEgressPrivateEndpointRequest.
+type UpdateEgressPrivateEndpointRequest struct {
 	// domain_names are the domain names to associate with the egress private endpoint.
 	DomainNames []string `json:"domain_names"`
 }
 
-// NewUpdateEgressPrivateEndpointDomainNamesRequest instantiates a new UpdateEgressPrivateEndpointDomainNamesRequest object.
+// NewUpdateEgressPrivateEndpointRequest instantiates a new UpdateEgressPrivateEndpointRequest object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUpdateEgressPrivateEndpointDomainNamesRequest(domainNames []string) *UpdateEgressPrivateEndpointDomainNamesRequest {
-	p := UpdateEgressPrivateEndpointDomainNamesRequest{}
+func NewUpdateEgressPrivateEndpointRequest(domainNames []string) *UpdateEgressPrivateEndpointRequest {
+	p := UpdateEgressPrivateEndpointRequest{}
 	p.DomainNames = domainNames
 	return &p
 }
 
-// NewUpdateEgressPrivateEndpointDomainNamesRequestWithDefaults instantiates a new UpdateEgressPrivateEndpointDomainNamesRequest object.
+// NewUpdateEgressPrivateEndpointRequestWithDefaults instantiates a new UpdateEgressPrivateEndpointRequest object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewUpdateEgressPrivateEndpointDomainNamesRequestWithDefaults() *UpdateEgressPrivateEndpointDomainNamesRequest {
-	p := UpdateEgressPrivateEndpointDomainNamesRequest{}
+func NewUpdateEgressPrivateEndpointRequestWithDefaults() *UpdateEgressPrivateEndpointRequest {
+	p := UpdateEgressPrivateEndpointRequest{}
 	return &p
 }
 
 // GetDomainNames returns the DomainNames field value.
-func (o *UpdateEgressPrivateEndpointDomainNamesRequest) GetDomainNames() []string {
+func (o *UpdateEgressPrivateEndpointRequest) GetDomainNames() []string {
 	if o == nil {
 		var ret []string
 		return ret
@@ -53,6 +53,6 @@ func (o *UpdateEgressPrivateEndpointDomainNamesRequest) GetDomainNames() []strin
 }
 
 // SetDomainNames sets field value.
-func (o *UpdateEgressPrivateEndpointDomainNamesRequest) SetDomainNames(v []string) {
+func (o *UpdateEgressPrivateEndpointRequest) SetDomainNames(v []string) {
 	o.DomainNames = v
 }

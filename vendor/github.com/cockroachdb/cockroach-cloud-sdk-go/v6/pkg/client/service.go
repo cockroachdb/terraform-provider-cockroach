@@ -76,7 +76,7 @@ type Service interface {
 	// Get a specific invoice for an organization
 	GetInvoice(ctx _context.Context, invoiceId string) (*Invoice, *_nethttp.Response, error)
 	// List invoices for a given organization
-	ListInvoices(ctx _context.Context) (*ListInvoicesResponse, *_nethttp.Response, error)
+	ListInvoices(ctx _context.Context, options *ListInvoicesOptions) (*ListInvoicesResponse, *_nethttp.Response, error)
 
 	//
 	// ClientCACertificates
@@ -160,11 +160,11 @@ type Service interface {
 	// Delete an egress private endpoint
 	DeleteEgressPrivateEndpoint(ctx _context.Context, clusterId string, id string) (*_nethttp.Response, error)
 	// Get egress private endpoint
-	GetEgressPrivateEndpoint(ctx _context.Context, clusterId string, id string) (*GetEgressPrivateEndpointResponse, *_nethttp.Response, error)
+	GetEgressPrivateEndpoint(ctx _context.Context, clusterId string, id string) (*EgressPrivateEndpoint, *_nethttp.Response, error)
 	// List egress private endpoints
 	ListEgressPrivateEndpoints(ctx _context.Context, clusterId string, options *ListEgressPrivateEndpointsOptions) (*ListEgressPrivateEndpointsResponse, *_nethttp.Response, error)
-	// Update egress private endpoint domain names
-	UpdateEgressPrivateEndpoint(ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest) (*_nethttp.Response, error)
+	// Update egress private endpoint.
+	UpdateEgressPrivateEndpoint(ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest) (*EgressPrivateEndpoint, *_nethttp.Response, error)
 	// Deprecated: Update egress private endpoint domain names. This endpoint is deprecated in favor of PATCH /api/v1/clusters/{cluster_id}/networking/egress-private-endpoints/{id} and will be removed in a future version.
 	UpdateEgressPrivateEndpointDomainNames(ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest) (*_nethttp.Response, error)
 
@@ -2314,9 +2314,15 @@ func (a *ServiceImpl) GetInvoice(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// ListInvoicesOptions contains optional parameters for ListInvoices.
+type ListInvoicesOptions struct {
+	// Filters the response to only include invoices with the specified status. This will be sent as a query parameter on the GET request. If not specified, both Finalized and Draft invoices will be included.
+	Status *string
+}
+
 // ListInvoices executes the request.
 func (a *ServiceImpl) ListInvoices(
-	ctx _context.Context,
+	ctx _context.Context, options *ListInvoicesOptions,
 ) (*ListInvoicesResponse, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
@@ -2334,6 +2340,9 @@ func (a *ServiceImpl) ListInvoices(
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 
+	if options.Status != nil {
+		localVarQueryParams.Add("status", parameterToString(*options.Status, ""))
+	}
 	// Determine the Content-Type header.
 	localVarHTTPContentTypes := []string{}
 
@@ -6119,7 +6128,7 @@ func (a *ServiceImpl) DeleteEgressPrivateEndpoint(
 // GetEgressPrivateEndpoint executes the request.
 func (a *ServiceImpl) GetEgressPrivateEndpoint(
 	ctx _context.Context, clusterId string, id string,
-) (*GetEgressPrivateEndpointResponse, *_nethttp.Response, error) {
+) (*EgressPrivateEndpoint, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodGet
 		localVarPostBody     interface{}
@@ -6237,7 +6246,7 @@ func (a *ServiceImpl) GetEgressPrivateEndpoint(
 		return nil, localVarHTTPResponse, newErr
 	}
 
-	var localVarReturnValue GetEgressPrivateEndpointResponse
+	var localVarReturnValue EgressPrivateEndpoint
 	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 	if err != nil {
 		newErr := Error{
@@ -6410,7 +6419,7 @@ func (a *ServiceImpl) ListEgressPrivateEndpoints(
 // UpdateEgressPrivateEndpoint executes the request.
 func (a *ServiceImpl) UpdateEgressPrivateEndpoint(
 	ctx _context.Context, clusterId string, id string, updateEgressPrivateEndpointRequest *UpdateEgressPrivateEndpointRequest,
-) (*_nethttp.Response, error) {
+) (*EgressPrivateEndpoint, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPatch
 		localVarPostBody     interface{}
@@ -6429,7 +6438,7 @@ func (a *ServiceImpl) UpdateEgressPrivateEndpoint(
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
 	if updateEgressPrivateEndpointRequest == nil {
-		return nil, reportError("updateEgressPrivateEndpointRequest is required and must be specified")
+		return nil, nil, reportError("updateEgressPrivateEndpointRequest is required and must be specified")
 	}
 
 	// Determine the Content-Type header.
@@ -6453,19 +6462,19 @@ func (a *ServiceImpl) UpdateEgressPrivateEndpoint(
 	localVarPostBody = updateEgressPrivateEndpointRequest
 	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	localVarHTTPResponse, err := a.client.callAPI(req)
 	if err != nil || localVarHTTPResponse == nil {
-		return localVarHTTPResponse, err
+		return nil, localVarHTTPResponse, err
 	}
 
 	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
 	localVarHTTPResponse.Body.Close()
 	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
 	if err != nil {
-		return localVarHTTPResponse, err
+		return nil, localVarHTTPResponse, err
 	}
 
 	if localVarHTTPResponse.StatusCode >= 300 {
@@ -6478,62 +6487,72 @@ func (a *ServiceImpl) UpdateEgressPrivateEndpoint(
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return nil, localVarHTTPResponse, newErr
 			}
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return nil, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 401 {
 			var v interface{}
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return nil, localVarHTTPResponse, newErr
 			}
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return nil, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 403 {
 			var v interface{}
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return nil, localVarHTTPResponse, newErr
 			}
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return nil, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 404 {
 			var v interface{}
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return nil, localVarHTTPResponse, newErr
 			}
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return nil, localVarHTTPResponse, newErr
 		}
 		if localVarHTTPResponse.StatusCode == 500 {
 			var v interface{}
 			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 			if err != nil {
 				newErr.error = err.Error()
-				return localVarHTTPResponse, newErr
+				return nil, localVarHTTPResponse, newErr
 			}
 			newErr.model = v
-			return localVarHTTPResponse, newErr
+			return nil, localVarHTTPResponse, newErr
 		}
 		var v Status
 		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
 		if err != nil {
 			newErr.error = err.Error()
-			return localVarHTTPResponse, newErr
+			return nil, localVarHTTPResponse, newErr
 		}
 		newErr.model = v
-		return localVarHTTPResponse, newErr
+		return nil, localVarHTTPResponse, newErr
 	}
 
-	return localVarHTTPResponse, nil
+	var localVarReturnValue EgressPrivateEndpoint
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
 // UpdateEgressPrivateEndpointDomainNames executes the request.

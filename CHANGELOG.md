@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Updated egress private endpoint resource to reflect changes to the
+  underlying GET API.
+
 ## [1.15.0] - 2025-09-30
 
 ### Added

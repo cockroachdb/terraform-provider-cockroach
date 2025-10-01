@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.1] - 2025-10-01
+
 ### Fixed
 
 - Stopped using state for unknown `account_id` in the `Cluster` resource because

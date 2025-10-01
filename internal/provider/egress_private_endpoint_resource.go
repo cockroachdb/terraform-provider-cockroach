@@ -18,7 +18,6 @@ package provider
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -515,10 +514,6 @@ func getEgressPrivateEndpoint(
 			"encounted server error getting egress private endpoint, will retry: %s",
 			formatAPIErrorMessage(err),
 		))
-	} else if resp == nil {
-		return nil, retry.RetryableError(
-			errors.New("got no response when getting egress private endpoint"),
-		)
 	}
-	return resp.EgressPrivateEndpoint, nil
+	return resp, nil
 }

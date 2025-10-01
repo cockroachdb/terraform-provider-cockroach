@@ -944,10 +944,10 @@ func (mr *MockServiceMockRecorder) GetDatadogMetricExportInfo(arg0, arg1 interfa
 }
 
 // GetEgressPrivateEndpoint mocks base method.
-func (m *MockService) GetEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string) (*client.GetEgressPrivateEndpointResponse, *http.Response, error) {
+func (m *MockService) GetEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string) (*client.EgressPrivateEndpoint, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetEgressPrivateEndpoint", arg0, arg1, arg2)
-	ret0, _ := ret[0].(*client.GetEgressPrivateEndpointResponse)
+	ret0, _ := ret[0].(*client.EgressPrivateEndpoint)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
@@ -1584,9 +1584,9 @@ func (mr *MockServiceMockRecorder) ListFolders(arg0, arg1 interface{}) *gomock.C
 }
 
 // ListInvoices mocks base method.
-func (m *MockService) ListInvoices(arg0 context.Context) (*client.ListInvoicesResponse, *http.Response, error) {
+func (m *MockService) ListInvoices(arg0 context.Context, arg1 *client.ListInvoicesOptions) (*client.ListInvoicesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ListInvoices", arg0)
+	ret := m.ctrl.Call(m, "ListInvoices", arg0, arg1)
 	ret0, _ := ret[0].(*client.ListInvoicesResponse)
 	ret1, _ := ret[1].(*http.Response)
 	ret2, _ := ret[2].(error)
@@ -1594,9 +1594,9 @@ func (m *MockService) ListInvoices(arg0 context.Context) (*client.ListInvoicesRe
 }
 
 // ListInvoices indicates an expected call of ListInvoices.
-func (mr *MockServiceMockRecorder) ListInvoices(arg0 interface{}) *gomock.Call {
+func (mr *MockServiceMockRecorder) ListInvoices(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvoices", reflect.TypeOf((*MockService)(nil).ListInvoices), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvoices", reflect.TypeOf((*MockService)(nil).ListInvoices), arg0, arg1)
 }
 
 // ListJWTIssuers mocks base method.
@@ -2111,12 +2111,13 @@ func (mr *MockServiceMockRecorder) UpdateClusterDisruption(arg0, arg1, arg2 inte
 }
 
 // UpdateEgressPrivateEndpoint mocks base method.
-func (m *MockService) UpdateEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateEgressPrivateEndpointRequest) (*http.Response, error) {
+func (m *MockService) UpdateEgressPrivateEndpoint(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateEgressPrivateEndpointRequest) (*client.EgressPrivateEndpoint, *http.Response, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpdateEgressPrivateEndpoint", arg0, arg1, arg2, arg3)
-	ret0, _ := ret[0].(*http.Response)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret0, _ := ret[0].(*client.EgressPrivateEndpoint)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // UpdateEgressPrivateEndpoint indicates an expected call of UpdateEgressPrivateEndpoint.

@@ -147,15 +147,11 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 					Return(&testCase.endpoint, nil, nil)
 
 				call := s.EXPECT().GetEgressPrivateEndpoint(gomock.Any(), clusterID, gomock.Any()).
-					Return(&client.GetEgressPrivateEndpointResponse{
-						EgressPrivateEndpoint: &testCase.endpoint,
-					}, nil, nil).
+					Return(&testCase.endpoint, nil, nil).
 					Times(3)
 
 				s.EXPECT().GetEgressPrivateEndpoint(gomock.Any(), clusterID, gomock.Any()).
-					Return(&client.GetEgressPrivateEndpointResponse{
-						EgressPrivateEndpoint: nil,
-					}, nil, nil).After(call)
+					Return(nil, nil, nil).After(call)
 
 				s.EXPECT().DeleteEgressPrivateEndpoint(
 					gomock.Any(), cluster.Id, testCase.endpoint.Id).

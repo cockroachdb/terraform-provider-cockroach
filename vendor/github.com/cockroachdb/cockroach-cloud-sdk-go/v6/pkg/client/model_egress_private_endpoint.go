@@ -21,8 +21,9 @@ package client
 // EgressPrivateEndpoint struct for EgressPrivateEndpoint.
 type EgressPrivateEndpoint struct {
 	// domain_names are the domain names associated with the egress private endpoint.
-	DomainNames     []string `json:"domain_names"`
-	EndpointAddress string   `json:"endpoint_address"`
+	DomainNames      []string                                   `json:"domain_names"`
+	DomainNamesState *EgressPrivateEndpointDomainNamesStateType `json:"domain_names_state,omitempty"`
+	EndpointAddress  string                                     `json:"endpoint_address"`
 	// endpoint_connection_id is the cloud-specific id for egress private endpoints. This connection ID is visible in CRL and CSP consoles as \"VPC endpoint ID\" and is used to uniquely identify the endpoint in external configurations.
 	EndpointConnectionId string `json:"endpoint_connection_id"`
 	// A generated ID that uniquely identifies the egress_private_endpoint for use with the CockroachDB Cloud API. This ID is generic and not specific to the cloud provider.
@@ -73,6 +74,20 @@ func (o *EgressPrivateEndpoint) GetDomainNames() []string {
 // SetDomainNames sets field value.
 func (o *EgressPrivateEndpoint) SetDomainNames(v []string) {
 	o.DomainNames = v
+}
+
+// GetDomainNamesState returns the DomainNamesState field value if set, zero value otherwise.
+func (o *EgressPrivateEndpoint) GetDomainNamesState() EgressPrivateEndpointDomainNamesStateType {
+	if o == nil || o.DomainNamesState == nil {
+		var ret EgressPrivateEndpointDomainNamesStateType
+		return ret
+	}
+	return *o.DomainNamesState
+}
+
+// SetDomainNamesState gets a reference to the given EgressPrivateEndpointDomainNamesStateType and assigns it to the DomainNamesState field.
+func (o *EgressPrivateEndpoint) SetDomainNamesState(v EgressPrivateEndpointDomainNamesStateType) {
+	o.DomainNamesState = &v
 }
 
 // GetEndpointAddress returns the EndpointAddress field value.

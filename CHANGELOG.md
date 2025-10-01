@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Stopped using state for unknown `account_id` in the `Cluster` resource because
+  it can change when swapping between basic and standard plans.
+
 - Updated egress private endpoint resource to reflect changes to the
   underlying GET API.
 

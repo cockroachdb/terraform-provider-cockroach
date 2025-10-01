@@ -141,10 +141,7 @@ func (r *clusterResource) Schema(
 				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"account_id": schema.StringAttribute{
-				Computed: true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.UseStateForUnknown(),
-				},
+				Computed:    true,
 				Description: "The cloud provider account ID that hosts the cluster. Needed for CMEK and other advanced features.",
 			},
 			"customer_cloud_account": schema.SingleNestedAttribute{

@@ -16,6 +16,8 @@ package provider
 import (
 	"context"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"net/http"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
@@ -33,8 +35,13 @@ var versionDeferralAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "Cluster ID.",
 	},
 	"deferral_policy": schema.StringAttribute{
-		Required:            true,
-		MarkdownDescription: "The policy for managing automated minor version upgrades. Set to FIXED_DEFERRAL to defer upgrades by 60 days or NOT_DEFERRED to apply upgrades immediately.",
+		Required: true,
+		MarkdownDescription: "The policy for delaying automated patch version upgrades after their release.\n" +
+			"  - Set to `DEFERRAL_30_DAYS` to defer each upgrade by 30 days.\n" +
+			"  - Set to `DEFERRAL_60_DAYS` to defer each upgrade by 60 days.\n" +
+			"  - Set to `DEFERRAL_90_DAYS` to defer each upgrade by 90 days.\n" +
+			"  - Set to `NOT_DEFERRED` to apply each upgrade soon after the patch is released.",
+		Validators: []validator.String{stringvalidator.OneOf("DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS", "NOT_DEFERRED", "FIXED_DEFERRAL")},
 	},
 }
 

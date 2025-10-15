@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for creating egress private endpoints domain names via
   the `cockroach_egress_private_endpoint_domain_names` resource.
 
+- Added support for configurable 30, 60, or 90 day patch upgrade deferrals in
+  `cockroach_version_deferral` resource.
+
 ## [1.15.2] - 2025-10-16
 
 ### Fixed

@@ -28,14 +28,17 @@ import (
 
 // TestAccVersionDeferralResource attempts to create, check, and destroy a
 // real cluster. It will be skipped if TF_ACC isn't set.
+// This test covers all deferral policy transitions in a single test to minimize resource creation.
 func TestAccVersionDeferralResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-version-deferral-%s", tfTestPrefix, GenerateRandomString(4))
-	testVersionDeferralResource(t, clusterName, false)
+	policies := []string{"FIXED_DEFERRAL", "DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS", "NOT_DEFERRED"}
+	testVersionDeferralResourceMultiStep(t, clusterName, false, policies)
 }
 
 // TestIntegrationVersionDeferralResource attempts to create, check, and
 // destroy a cluster, but uses a mocked API service.
+// This test covers all deferral policy transitions: FIXED_DEFERRAL → 30 → 60 → 90 → NOT_DEFERRED
 func TestIntegrationVersionDeferralResource(t *testing.T) {
 	clusterName := fmt.Sprintf("%s-deferral-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterID := uuid.Nil.String()
@@ -49,6 +52,114 @@ func TestIntegrationVersionDeferralResource(t *testing.T) {
 		return s
 	})()
 
+	clusterInfo := getClusterInfo(clusterID, clusterName)
+
+	policies := []string{"FIXED_DEFERRAL", "DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS", "NOT_DEFERRED"}
+	setupMockExpectationsForPolicyTransitions(s, clusterInfo, clusterID, policies)
+
+	testVersionDeferralResourceMultiStep(t, clusterName, true, policies)
+}
+
+// Helper function to set up mock expectations for policy transitions
+func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clusterInfo *client.Cluster, clusterID string, policies []string) {
+	// Map policy strings to SDK types
+	policyTypeMap := map[string]client.ClusterVersionDeferralPolicyType{
+		"FIXED_DEFERRAL":   client.CLUSTERVERSIONDEFERRALPOLICYTYPE_FIXED_DEFERRAL,
+		"DEFERRAL_30_DAYS": client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_30_DAYS,
+		"DEFERRAL_60_DAYS": client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_60_DAYS,
+		"DEFERRAL_90_DAYS": client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_90_DAYS,
+		"NOT_DEFERRED":     client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
+	}
+
+	// Allow any number of GetCluster and GetBackupConfiguration calls throughout the test
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+
+	// Create cluster - this happens first
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(clusterInfo, nil, nil).
+		Times(1)
+
+	// Set up policy transitions using InOrder to ensure sequential execution
+	var calls []*gomock.Call
+
+	// First policy (creation)
+	firstPolicy := &client.ClusterVersionDeferral{
+		DeferralPolicy: policyTypeMap[policies[0]],
+	}
+	calls = append(calls,
+		s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, firstPolicy).
+			Return(firstPolicy, nil, nil).
+			Times(1))
+	calls = append(calls,
+		s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+			Return(firstPolicy, nil, nil).
+			Times(2))
+
+	// Each subsequent policy update
+	for i := 1; i < len(policies); i++ {
+		currentPolicy := &client.ClusterVersionDeferral{
+			DeferralPolicy: policyTypeMap[policies[i]],
+		}
+
+		calls = append(calls,
+			s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, currentPolicy).
+				Return(currentPolicy, nil, nil).
+				Times(1))
+		calls = append(calls,
+			s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+				Return(currentPolicy, nil, nil).
+				Times(2))
+	}
+
+	gomock.InOrder(calls...)
+
+	// Delete expectations
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Times(1)
+	lastPolicy := &client.ClusterVersionDeferral{
+		DeferralPolicy: policyTypeMap[policies[len(policies)-1]],
+	}
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, lastPolicy).Times(1)
+}
+
+// Helper function to test version deferral resource with multiple policy transitions
+func testVersionDeferralResourceMultiStep(t *testing.T, clusterName string, useMock bool, policies []string) {
+	var (
+		clusterResourceName         = "cockroach_cluster.test"
+		versionDeferralResourceName = "cockroach_version_deferral.test"
+	)
+
+	// Build test steps for each policy
+	steps := make([]resource.TestStep, 0, len(policies)+1)
+	for _, policy := range policies {
+		steps = append(steps, resource.TestStep{
+			Config: getTestVersionDeferralConfig(clusterName, policy),
+			Check: resource.ComposeTestCheckFunc(
+				testCheckCockroachClusterExists(clusterResourceName),
+				resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", policy),
+			),
+		})
+	}
+
+	// Add import state verification step at the end
+	steps = append(steps, resource.TestStep{
+		ResourceName:      versionDeferralResourceName,
+		ImportState:       true,
+		ImportStateVerify: true,
+	})
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps:                    steps,
+	})
+}
+
+func getClusterInfo(clusterID string, clusterName string) *client.Cluster {
 	clusterInfo := &client.Cluster{
 		Id:               clusterID,
 		Name:             clusterName,
@@ -71,83 +182,10 @@ func TestIntegrationVersionDeferralResource(t *testing.T) {
 			},
 		},
 	}
-	createdVersionDeferralInfo := &client.ClusterVersionDeferral{
-		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_FIXED_DEFERRAL,
-	}
-	updatedVersionDeferralInfo := &client.ClusterVersionDeferral{
-		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
-	}
-	deletedVersionDeferralInfo := &client.ClusterVersionDeferral{
-		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
-	}
-
-	// Create
-	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
-		Return(clusterInfo, nil, nil)
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
-		Times(3)
-	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
-		Return(initialBackupConfig, httpOk, nil).AnyTimes()
-	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, createdVersionDeferralInfo).
-		Return(createdVersionDeferralInfo, nil, nil)
-	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
-		Return(createdVersionDeferralInfo, nil, nil)
-
-	// Update
-	s.EXPECT().GetCluster(gomock.Any(), clusterID).
-		Return(clusterInfo, nil, nil).
-		Times(3)
-	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
-		Return(createdVersionDeferralInfo, nil, nil)
-	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, updatedVersionDeferralInfo).
-		Return(updatedVersionDeferralInfo, nil, nil)
-	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
-		Return(updatedVersionDeferralInfo, nil, nil).
-		Times(2)
-
-	// Delete
-	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
-	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, deletedVersionDeferralInfo)
-
-	testVersionDeferralResource(t, clusterName, true)
+	return clusterInfo
 }
 
-func testVersionDeferralResource(t *testing.T, clusterName string, useMock bool) {
-	var (
-		clusterResourceName         = "cockroach_cluster.test"
-		versionDeferralResourceName = "cockroach_version_deferral.test"
-	)
-
-	resource.Test(t, resource.TestCase{
-		IsUnitTest:               useMock,
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: getTestVersionDeferralResourceCreateConfig(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckCockroachClusterExists(clusterResourceName),
-					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", "FIXED_DEFERRAL"),
-				),
-			},
-			{
-				Config: getTestVersionDeferralResourceUpdateConfig(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckCockroachClusterExists(clusterResourceName),
-					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", "NOT_DEFERRED"),
-				),
-			},
-			{
-				ResourceName:      versionDeferralResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
-			},
-		},
-	})
-}
-
-func getTestVersionDeferralResourceCreateConfig(name string) string {
+func getTestVersionDeferralConfig(name string, policy string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
@@ -163,28 +201,7 @@ resource "cockroach_cluster" "test" {
 }
 resource "cockroach_version_deferral" "test" {
   id              = cockroach_cluster.test.id
-  deferral_policy = "FIXED_DEFERRAL"
+  deferral_policy = "%s"
 }
-`, name)
-}
-
-func getTestVersionDeferralResourceUpdateConfig(name string) string {
-	return fmt.Sprintf(`
-resource "cockroach_cluster" "test" {
-  name           = "%s"
-  cloud_provider = "GCP"
-  dedicated = {
-    storage_gib  = 35
-  	num_virtual_cpus = 4
-  }
-  regions = [{
-    name = "us-east1"
-    node_count: 3
-  }]
-}
-resource "cockroach_version_deferral" "test" {
-  id              = cockroach_cluster.test.id
-  deferral_policy = "NOT_DEFERRED"
-}
-`, name)
+`, name, policy)
 }

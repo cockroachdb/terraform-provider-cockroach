@@ -31,7 +31,7 @@ import (
 func TestAccVersionDeferralResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-version-deferral-%s", tfTestPrefix, GenerateRandomString(4))
-	testVersionDeferralResource(t, clusterName, false)
+	testVersionDeferralResourceTransition(t, clusterName, false, "FIXED_DEFERRAL", "NOT_DEFERRED")
 }
 
 // TestIntegrationVersionDeferralResource attempts to create, check, and
@@ -49,28 +49,8 @@ func TestIntegrationVersionDeferralResource(t *testing.T) {
 		return s
 	})()
 
-	clusterInfo := &client.Cluster{
-		Id:               clusterID,
-		Name:             clusterName,
-		CockroachVersion: "v22.2.0",
-		Plan:             "ADVANCED",
-		CloudProvider:    "GCP",
-		State:            "CREATED",
-		Config: client.ClusterConfig{
-			Dedicated: &client.DedicatedHardwareConfig{
-				MachineType:    "m5.xlarge",
-				NumVirtualCpus: 4,
-				StorageGib:     35,
-				MemoryGib:      8,
-			},
-		},
-		Regions: []client.Region{
-			{
-				Name:      "us-east1",
-				NodeCount: 3,
-			},
-		},
-	}
+	clusterInfo := getClusterInfo(clusterID, clusterName)
+
 	createdVersionDeferralInfo := &client.ClusterVersionDeferral{
 		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_FIXED_DEFERRAL,
 	}
@@ -110,10 +90,242 @@ func TestIntegrationVersionDeferralResource(t *testing.T) {
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, deletedVersionDeferralInfo)
 
-	testVersionDeferralResource(t, clusterName, true)
+	testVersionDeferralResourceTransition(t, clusterName, true, "FIXED_DEFERRAL", "NOT_DEFERRED")
 }
 
-func testVersionDeferralResource(t *testing.T, clusterName string, useMock bool) {
+// TestIntegrationVersionDeferral30Days tests the DEFERRAL_FIXED_DAYS policy for backward compatibility
+func TestIntegrationVersionDeferralFixedTo30Days(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-deferral-30-%s", tfTestPrefix, GenerateRandomString(4))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	clusterInfo := getClusterInfo(clusterID, clusterName)
+
+	createdVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_FIXED_DEFERRAL,
+	}
+	updatedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_30_DAYS,
+	}
+	deletedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
+	}
+
+	// Create
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(clusterInfo, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(3)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, createdVersionDeferralInfo).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+
+	// Update to 30 days
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, nil, nil).
+		Times(3)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, updatedVersionDeferralInfo).
+		Return(updatedVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(updatedVersionDeferralInfo, nil, nil).
+		Times(2)
+
+	// Delete
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, deletedVersionDeferralInfo)
+
+	testVersionDeferralResourceTransition(t, clusterName, true, "FIXED_DEFERRAL", "DEFERRAL_30_DAYS")
+}
+
+// TestIntegrationVersionDeferral30Days tests the DEFERRAL_30_DAYS policy
+func TestIntegrationVersionDeferral30Days(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-deferral-30-%s", tfTestPrefix, GenerateRandomString(4))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	clusterInfo := getClusterInfo(clusterID, clusterName)
+
+	createdVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_30_DAYS,
+	}
+	updatedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_60_DAYS,
+	}
+	deletedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
+	}
+
+	// Create
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(clusterInfo, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(3)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, createdVersionDeferralInfo).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+
+	// Update to 60 days
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, nil, nil).
+		Times(3)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, updatedVersionDeferralInfo).
+		Return(updatedVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(updatedVersionDeferralInfo, nil, nil).
+		Times(2)
+
+	// Delete
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, deletedVersionDeferralInfo)
+
+	testVersionDeferralResourceTransition(t, clusterName, true, "DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS")
+}
+
+// TestIntegrationVersionDeferral60Days tests the DEFERRAL_60_DAYS policy
+func TestIntegrationVersionDeferral60Days(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-deferral-60-%s", tfTestPrefix, GenerateRandomString(4))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	clusterInfo := getClusterInfo(clusterID, clusterName)
+
+	createdVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_60_DAYS,
+	}
+	updatedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_90_DAYS,
+	}
+	deletedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
+	}
+
+	// Create
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(clusterInfo, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(3)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, createdVersionDeferralInfo).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+
+	// Update to 90 days
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, nil, nil).
+		Times(3)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, updatedVersionDeferralInfo).
+		Return(updatedVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(updatedVersionDeferralInfo, nil, nil).
+		Times(2)
+
+	// Delete
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, deletedVersionDeferralInfo)
+
+	testVersionDeferralResourceTransition(t, clusterName, true, "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS")
+}
+
+// TestIntegrationVersionDeferral90Days tests the DEFERRAL_90_DAYS policy
+func TestIntegrationVersionDeferral90Days(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-deferral-90-%s", tfTestPrefix, GenerateRandomString(4))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	clusterInfo := getClusterInfo(clusterID, clusterName)
+
+	createdVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_90_DAYS,
+	}
+	updatedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
+	}
+	deletedVersionDeferralInfo := &client.ClusterVersionDeferral{
+		DeferralPolicy: client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
+	}
+
+	// Create
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(clusterInfo, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
+		Times(3)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, createdVersionDeferralInfo).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+
+	// Update to NOT_DEFERRED
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(clusterInfo, nil, nil).
+		Times(3)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(createdVersionDeferralInfo, nil, nil)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, updatedVersionDeferralInfo).
+		Return(updatedVersionDeferralInfo, nil, nil)
+	s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
+		Return(updatedVersionDeferralInfo, nil, nil).
+		Times(2)
+
+	// Delete
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, deletedVersionDeferralInfo)
+
+	testVersionDeferralResourceTransition(t, clusterName, true, "DEFERRAL_90_DAYS", "NOT_DEFERRED")
+}
+
+func testVersionDeferralResourceTransition(t *testing.T, clusterName string, useMock bool, from string, to string) {
 	var (
 		clusterResourceName         = "cockroach_cluster.test"
 		versionDeferralResourceName = "cockroach_version_deferral.test"
@@ -125,17 +337,17 @@ func testVersionDeferralResource(t *testing.T, clusterName string, useMock bool)
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestVersionDeferralResourceCreateConfig(clusterName),
+				Config: getTestVersionDeferralConfig(clusterName, from),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckCockroachClusterExists(clusterResourceName),
-					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", "FIXED_DEFERRAL"),
+					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", from),
 				),
 			},
 			{
-				Config: getTestVersionDeferralResourceUpdateConfig(clusterName),
+				Config: getTestVersionDeferralConfig(clusterName, to),
 				Check: resource.ComposeTestCheckFunc(
 					testCheckCockroachClusterExists(clusterResourceName),
-					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", "NOT_DEFERRED"),
+					resource.TestCheckResourceAttr(versionDeferralResourceName, "deferral_policy", to),
 				),
 			},
 			{
@@ -147,28 +359,33 @@ func testVersionDeferralResource(t *testing.T, clusterName string, useMock bool)
 	})
 }
 
-func getTestVersionDeferralResourceCreateConfig(name string) string {
-	return fmt.Sprintf(`
-resource "cockroach_cluster" "test" {
-  name           = "%s"
-  cloud_provider = "GCP"
-  dedicated = {
-    storage_gib  = 35
-  	num_virtual_cpus = 4
-  }
-  regions = [{
-    name = "us-east1"
-    node_count: 3
-  }]
-}
-resource "cockroach_version_deferral" "test" {
-  id              = cockroach_cluster.test.id
-  deferral_policy = "FIXED_DEFERRAL"
-}
-`, name)
+func getClusterInfo(clusterID string, clusterName string) *client.Cluster {
+	clusterInfo := &client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: "v22.2.0",
+		Plan:             "ADVANCED",
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				MachineType:    "m5.xlarge",
+				NumVirtualCpus: 4,
+				StorageGib:     35,
+				MemoryGib:      8,
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name:      "us-east1",
+				NodeCount: 3,
+			},
+		},
+	}
+	return clusterInfo
 }
 
-func getTestVersionDeferralResourceUpdateConfig(name string) string {
+func getTestVersionDeferralConfig(name string, policy string) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
@@ -184,7 +401,7 @@ resource "cockroach_cluster" "test" {
 }
 resource "cockroach_version_deferral" "test" {
   id              = cockroach_cluster.test.id
-  deferral_policy = "NOT_DEFERRED"
+  deferral_policy = "%s"
 }
-`, name)
+`, name, policy)
 }

@@ -20,32 +20,42 @@ package client
 
 // RestoreItem struct for RestoreItem.
 type RestoreItem struct {
-	Database *string `json:"Database,omitempty"`
-	Schema   *string `json:"Schema,omitempty"`
-	Table    *string `json:"Table,omitempty"`
+	Database string  `json:"database"`
+	Schema   *string `json:"schema,omitempty"`
+	Table    *string `json:"table,omitempty"`
 }
 
 // NewRestoreItem instantiates a new RestoreItem object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRestoreItem() *RestoreItem {
+func NewRestoreItem(database string) *RestoreItem {
+	p := RestoreItem{}
+	p.Database = database
+	return &p
+}
+
+// NewRestoreItemWithDefaults instantiates a new RestoreItem object.
+// This constructor will only assign default values to properties that have it defined,
+// but it doesn't guarantee that properties required by API are set
+func NewRestoreItemWithDefaults() *RestoreItem {
 	p := RestoreItem{}
 	return &p
 }
 
-// GetDatabase returns the Database field value if set, zero value otherwise.
+// GetDatabase returns the Database field value.
 func (o *RestoreItem) GetDatabase() string {
-	if o == nil || o.Database == nil {
+	if o == nil {
 		var ret string
 		return ret
 	}
-	return *o.Database
+
+	return o.Database
 }
 
-// SetDatabase gets a reference to the given string and assigns it to the Database field.
+// SetDatabase sets field value.
 func (o *RestoreItem) SetDatabase(v string) {
-	o.Database = &v
+	o.Database = v
 }
 
 // GetSchema returns the Schema field value if set, zero value otherwise.

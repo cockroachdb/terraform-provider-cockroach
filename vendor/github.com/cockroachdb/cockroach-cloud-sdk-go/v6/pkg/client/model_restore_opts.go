@@ -31,6 +31,8 @@ type RestoreOpts struct {
 	// Allows a table to be restored even if it has foreign key constraints referencing rows that no longer exist in the target cluster.
 	SkipMissingForeignKeys *bool `json:"skip_missing_foreign_keys,omitempty"`
 	SkipMissingSequences   *bool `json:"skip_missing_sequences,omitempty"`
+	// Allows the operation to skip restoring views that cannot be restored because their dependencies are not included in the current restore operation.
+	SkipMissingViews *bool `json:"skip_missing_views,omitempty"`
 }
 
 // NewRestoreOpts instantiates a new RestoreOpts object.
@@ -124,4 +126,18 @@ func (o *RestoreOpts) GetSkipMissingSequences() bool {
 // SetSkipMissingSequences gets a reference to the given bool and assigns it to the SkipMissingSequences field.
 func (o *RestoreOpts) SetSkipMissingSequences(v bool) {
 	o.SkipMissingSequences = &v
+}
+
+// GetSkipMissingViews returns the SkipMissingViews field value if set, zero value otherwise.
+func (o *RestoreOpts) GetSkipMissingViews() bool {
+	if o == nil || o.SkipMissingViews == nil {
+		var ret bool
+		return ret
+	}
+	return *o.SkipMissingViews
+}
+
+// SetSkipMissingViews gets a reference to the given bool and assigns it to the SkipMissingViews field.
+func (o *RestoreOpts) SetSkipMissingViews(v bool) {
+	o.SkipMissingViews = &v
 }

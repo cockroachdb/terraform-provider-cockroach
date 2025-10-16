@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.15.2] - 2025-10-16
+
+### Fixed
+- Fixed `TABLE` and `DATABASE` restore operations that were failing due to field
+  name capitalization in API requests. Users running `TABLE` or `DATABASE` restores 
+  must upgrade to this version.
+
 ## [1.15.1] - 2025-10-01
 
 ### Fixed

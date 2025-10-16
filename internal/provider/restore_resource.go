@@ -186,7 +186,7 @@ func (r *restoreResource) Create(
 			// If tables are specified, create individual RestoreItem objects for each table.
 			for _, table := range tables {
 				objects = append(objects, client.RestoreItem{
-					Database: object.Database.ValueStringPointer(),
+					Database: object.Database.ValueString(),
 					Schema:   object.Schema.ValueStringPointer(),
 					Table:    table.ValueStringPointer(),
 				})
@@ -194,7 +194,7 @@ func (r *restoreResource) Create(
 		} else {
 			// If no tables are specified, create a single RestoreItem for the database.
 			objects = append(objects, client.RestoreItem{
-				Database: object.Database.ValueStringPointer(),
+				Database: object.Database.ValueString(),
 			})
 		}
 	}

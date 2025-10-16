@@ -548,13 +548,13 @@ func testCheckRestoreResource(restoreResourceName string, clusterResourceName st
 }
 
 func dbRestoreItem(database string) client.RestoreItem {
-	return client.RestoreItem{Database: ptr(database)}
+	return client.RestoreItem{Database: database}
 }
 
 func tablesRestoreItem(database string, schema string, tables []string) []client.RestoreItem {
 	var restoreItems []client.RestoreItem
 	for _, table := range tables {
-		restoreItems = append(restoreItems, client.RestoreItem{Database: ptr(database), Schema: ptr(schema), Table: ptr(table)})
+		restoreItems = append(restoreItems, client.RestoreItem{Database: database, Schema: ptr(schema), Table: ptr(table)})
 	}
 	return restoreItems
 }

@@ -164,6 +164,22 @@ func (mr *MockServiceMockRecorder) CreateApiKey(arg0, arg1 interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateApiKey", reflect.TypeOf((*MockService)(nil).CreateApiKey), arg0, arg1)
 }
 
+// CreateBlackoutWindow mocks base method.
+func (m *MockService) CreateBlackoutWindow(arg0 context.Context, arg1 string, arg2 *client.CreateBlackoutWindowRequest) (*client.BlackoutWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateBlackoutWindow", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.BlackoutWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// CreateBlackoutWindow indicates an expected call of CreateBlackoutWindow.
+func (mr *MockServiceMockRecorder) CreateBlackoutWindow(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateBlackoutWindow", reflect.TypeOf((*MockService)(nil).CreateBlackoutWindow), arg0, arg1, arg2)
+}
+
 // CreateCluster mocks base method.
 func (m *MockService) CreateCluster(arg0 context.Context, arg1 *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -370,6 +386,22 @@ func (m *MockService) DeleteApiKey(arg0 context.Context, arg1 string) (*client.A
 func (mr *MockServiceMockRecorder) DeleteApiKey(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteApiKey", reflect.TypeOf((*MockService)(nil).DeleteApiKey), arg0, arg1)
+}
+
+// DeleteBlackoutWindow mocks base method.
+func (m *MockService) DeleteBlackoutWindow(arg0 context.Context, arg1, arg2 string) (*client.BlackoutWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteBlackoutWindow", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.BlackoutWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteBlackoutWindow indicates an expected call of DeleteBlackoutWindow.
+func (mr *MockServiceMockRecorder) DeleteBlackoutWindow(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteBlackoutWindow", reflect.TypeOf((*MockService)(nil).DeleteBlackoutWindow), arg0, arg1, arg2)
 }
 
 // DeleteClientCACert mocks base method.
@@ -813,6 +845,22 @@ func (m *MockService) GetBackupConfiguration(arg0 context.Context, arg1 string) 
 func (mr *MockServiceMockRecorder) GetBackupConfiguration(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBackupConfiguration", reflect.TypeOf((*MockService)(nil).GetBackupConfiguration), arg0, arg1)
+}
+
+// GetBlackoutWindow mocks base method.
+func (m *MockService) GetBlackoutWindow(arg0 context.Context, arg1, arg2 string) (*client.BlackoutWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetBlackoutWindow", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.BlackoutWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetBlackoutWindow indicates an expected call of GetBlackoutWindow.
+func (mr *MockServiceMockRecorder) GetBlackoutWindow(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBlackoutWindow", reflect.TypeOf((*MockService)(nil).GetBlackoutWindow), arg0, arg1, arg2)
 }
 
 // GetCMEKClusterInfo mocks base method.
@@ -1471,6 +1519,22 @@ func (mr *MockServiceMockRecorder) ListBackups(arg0, arg1, arg2 interface{}) *go
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBackups", reflect.TypeOf((*MockService)(nil).ListBackups), arg0, arg1, arg2)
 }
 
+// ListBlackoutWindows mocks base method.
+func (m *MockService) ListBlackoutWindows(arg0 context.Context, arg1 string, arg2 *client.ListBlackoutWindowsOptions) (*client.ListBlackoutWindowsResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListBlackoutWindows", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ListBlackoutWindowsResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListBlackoutWindows indicates an expected call of ListBlackoutWindows.
+func (mr *MockServiceMockRecorder) ListBlackoutWindows(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListBlackoutWindows", reflect.TypeOf((*MockService)(nil).ListBlackoutWindows), arg0, arg1, arg2)
+}
+
 // ListClusterNodes mocks base method.
 func (m *MockService) ListClusterNodes(arg0 context.Context, arg1 string, arg2 *client.ListClusterNodesOptions) (*client.ListClusterNodesResponse, *http.Response, error) {
 	m.ctrl.T.Helper()
@@ -2028,6 +2092,22 @@ func (m *MockService) UpdateBackupConfiguration(arg0 context.Context, arg1 strin
 func (mr *MockServiceMockRecorder) UpdateBackupConfiguration(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBackupConfiguration", reflect.TypeOf((*MockService)(nil).UpdateBackupConfiguration), arg0, arg1, arg2)
+}
+
+// UpdateBlackoutWindow mocks base method.
+func (m *MockService) UpdateBlackoutWindow(arg0 context.Context, arg1, arg2 string, arg3 *client.UpdateBlackoutWindowRequest) (*client.BlackoutWindow, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateBlackoutWindow", arg0, arg1, arg2, arg3)
+	ret0, _ := ret[0].(*client.BlackoutWindow)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// UpdateBlackoutWindow indicates an expected call of UpdateBlackoutWindow.
+func (mr *MockServiceMockRecorder) UpdateBlackoutWindow(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateBlackoutWindow", reflect.TypeOf((*MockService)(nil).UpdateBlackoutWindow), arg0, arg1, arg2, arg3)
 }
 
 // UpdateCMEKSpec mocks base method.

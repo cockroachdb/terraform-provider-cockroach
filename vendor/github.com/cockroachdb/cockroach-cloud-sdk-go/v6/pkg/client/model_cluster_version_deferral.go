@@ -18,7 +18,7 @@
 
 package client
 
-// ClusterVersionDeferral ClusterVersionDeferral specifies whether automatic patch version upgrades are applied immediately or deferred. If upgrades are deferred, the cluster will be automatically upgraded to each patch version 60 days after the version is released to CockroachDB Cloud..
+// ClusterVersionDeferral ClusterVersionDeferral specifies whether automatic patch version upgrades are applied immediately or deferred. If upgrades are deferred, the cluster will be automatically upgraded to each patch version after the specified number of days (30, 60, or 90) after the version is released to CockroachDB Cloud..
 type ClusterVersionDeferral struct {
 	DeferralPolicy ClusterVersionDeferralPolicyType `json:"deferral_policy"`
 }

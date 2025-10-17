@@ -33,8 +33,12 @@ var versionDeferralAttributes = map[string]schema.Attribute{
 		MarkdownDescription: "Cluster ID.",
 	},
 	"deferral_policy": schema.StringAttribute{
-		Required:            true,
-		MarkdownDescription: "The policy for managing automated minor version upgrades. Set to FIXED_DEFERRAL to defer upgrades by 60 days or NOT_DEFERRED to apply upgrades immediately.",
+		Required: true,
+		MarkdownDescription: "The policy for managing automated minor version upgrades.\n" +
+			"Set to DEFERRAL_30_DAYS to defer upgrades by 30 days.\n" +
+			"Set to DEFERRAL_60_DAYS to defer upgrades by 60 days.\n" +
+			"Set to DEFERRAL_90_DAYS to defer upgrades by 90 days.\n" +
+			"Set to NOT_DEFERRED to apply upgrades immediately.",
 	},
 }
 

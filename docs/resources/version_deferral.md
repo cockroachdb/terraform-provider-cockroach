@@ -34,7 +34,11 @@ resource "cockroach_version_deferral" "example" {
 
 ### Required
 
-- `deferral_policy` (String) The policy for managing automated minor version upgrades. Set to FIXED_DEFERRAL to defer upgrades by 60 days or NOT_DEFERRED to apply upgrades immediately.
+- `deferral_policy` (String) The policy for managing automated minor version upgrades.
+Set to DEFERRAL_30_DAYS to defer upgrades by 30 days.
+Set to DEFERRAL_60_DAYS to defer upgrades by 60 days.
+Set to DEFERRAL_90_DAYS to defer upgrades by 90 days.
+Set to NOT_DEFERRED to apply upgrades immediately.
 - `id` (String) Cluster ID.
 
 ## Import

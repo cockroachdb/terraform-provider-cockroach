@@ -15,6 +15,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for configurable 30, 60, or 90 day patch upgrade deferrals in
   `cockroach_version_deferral` resource.
 
+- Added support for creating blackout windows via the 
+  `cockroach_blackout_window` resource.
+  
+- Added `cockroach_blackout_windows` data source for listing blackout windows
+  for a cluster
+
 ## [1.15.2] - 2025-10-16
 
 ### Fixed

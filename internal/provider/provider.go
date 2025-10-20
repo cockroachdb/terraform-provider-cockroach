@@ -155,6 +155,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewRestoreResource,
 		NewEgressPrivateEndpointResource,
 		NewEgressPrivateEndpointDomainNamesResource,
+		NewBlackoutWindowResource,
 	}
 }
 
@@ -168,6 +169,7 @@ func (p *provider) DataSources(_ context.Context) []func() datasource.DataSource
 		NewPersonUserDataSource,
 		NewBackupsDataSource,
 		NewRestoresDataSource,
+		NewBlackoutWindowDataSource,
 	}
 }
 

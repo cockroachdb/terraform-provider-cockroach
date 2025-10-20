@@ -481,3 +481,19 @@ type EgressPrivateEndpointDomainNames struct {
 	ClusterID   types.String `tfsdk:"cluster_id"`
 	DomainNames types.List   `tfsdk:"domain_names"`
 }
+
+type BlackoutWindow struct {
+	ID        types.String `tfsdk:"id"`
+	ClusterID types.String `tfsdk:"cluster_id"`
+	StartTime types.String `tfsdk:"start_time"`
+	EndTime   types.String `tfsdk:"end_time"`
+}
+
+type BlackoutWindowList struct {
+	ClusterID       types.String     `tfsdk:"cluster_id"`
+	Page            types.String     `tfsdk:"page"`
+	SortOrder       types.String     `tfsdk:"sort_order"`
+	Limit           types.Int32      `tfsdk:"limit"`
+	NextPage        types.String     `tfsdk:"next_page"`
+	BlackoutWindows []BlackoutWindow `tfsdk:"blackout_windows"`
+}

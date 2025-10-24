@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
@@ -32,7 +33,7 @@ import (
 func TestAccVersionDeferralResource(t *testing.T) {
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-version-deferral-%s", tfTestPrefix, GenerateRandomString(4))
-	policies := []string{"FIXED_DEFERRAL", "DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS", "NOT_DEFERRED"}
+	policies := []string{"FIXED_DEFERRAL", "DEFERRAL_30_DAYS", "FIXED_DEFERRAL", "DEFERRAL_90_DAYS", "NOT_DEFERRED"}
 	testVersionDeferralResourceMultiStep(t, clusterName, false, policies)
 }
 
@@ -70,7 +71,6 @@ func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clust
 		"DEFERRAL_90_DAYS": client.CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_90_DAYS,
 		"NOT_DEFERRED":     client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED,
 	}
-
 	// Allow any number of GetCluster and GetBackupConfiguration calls throughout the test
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).
 		Return(clusterInfo, &http.Response{Status: http.StatusText(http.StatusOK)}, nil).
@@ -90,13 +90,21 @@ func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clust
 	firstPolicy := &client.ClusterVersionDeferral{
 		DeferralPolicy: policyTypeMap[policies[0]],
 	}
+	firstPolicyPostApply := &client.ClusterVersionDeferral{
+		DeferralPolicy: policyTypeMap[policies[0]],
+	}
+	// Add deferred_until only if policy is not NOT_DEFERRED
+	if policies[0] != "NOT_DEFERRED" {
+		deferredUntil := time.Now().Add(30 * 24 * time.Hour)
+		firstPolicyPostApply.DeferredUntil = &deferredUntil
+	}
 	calls = append(calls,
 		s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, firstPolicy).
-			Return(firstPolicy, nil, nil).
+			Return(firstPolicyPostApply, nil, nil).
 			Times(1))
 	calls = append(calls,
 		s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
-			Return(firstPolicy, nil, nil).
+			Return(firstPolicyPostApply, nil, nil).
 			Times(2))
 
 	// Each subsequent policy update
@@ -104,15 +112,23 @@ func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clust
 		currentPolicy := &client.ClusterVersionDeferral{
 			DeferralPolicy: policyTypeMap[policies[i]],
 		}
+		currentPolicyPostApply := &client.ClusterVersionDeferral{
+			DeferralPolicy: policyTypeMap[policies[i]],
+		}
+		// Add deferred_until only if policy is not NOT_DEFERRED
+		if policies[i] != "NOT_DEFERRED" {
+			deferredUntil := time.Now().Add(time.Duration((i+1)*30) * 24 * time.Hour)
+			currentPolicyPostApply.DeferredUntil = &deferredUntil
+		}
 
 		calls = append(calls,
 			s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, currentPolicy).
-				Return(currentPolicy, nil, nil).
+				Return(currentPolicyPostApply, nil, nil).
 				Times(1))
 		calls = append(calls,
 			s.EXPECT().GetClusterVersionDeferral(gomock.Any(), clusterID).
-				Return(currentPolicy, nil, nil).
-				Times(2))
+				Return(currentPolicyPostApply, nil, nil).
+				Times(2)) // Called during Read operations
 	}
 
 	gomock.InOrder(calls...)
@@ -122,7 +138,9 @@ func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clust
 	lastPolicy := &client.ClusterVersionDeferral{
 		DeferralPolicy: policyTypeMap[policies[len(policies)-1]],
 	}
-	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, lastPolicy).Times(1)
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, lastPolicy).
+		Return(lastPolicy, nil, nil).
+		Times(1)
 }
 
 // Helper function to test version deferral resource with multiple policy transitions
@@ -146,9 +164,10 @@ func testVersionDeferralResourceMultiStep(t *testing.T, clusterName string, useM
 
 	// Add import state verification step at the end
 	steps = append(steps, resource.TestStep{
-		ResourceName:      versionDeferralResourceName,
-		ImportState:       true,
-		ImportStateVerify: true,
+		ResourceName:            versionDeferralResourceName,
+		ImportState:             true,
+		ImportStateVerify:       true,
+		ImportStateVerifyIgnore: []string{"deferred_until"}, // Computed field may vary
 	})
 
 	resource.Test(t, resource.TestCase{

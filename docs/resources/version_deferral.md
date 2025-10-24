@@ -36,10 +36,15 @@ resource "cockroach_version_deferral" "example" {
 
 - `deferral_policy` (String) The policy for delaying automated patch version upgrades after their release.
   - Set to `DEFERRAL_30_DAYS` to defer each upgrade by 30 days.
-  - Set to `DEFERRAL_60_DAYS` to defer each upgrade by 60 days.
+  - Set to `FIXED_DEFERRAL` to defer each upgrade by 60 days.
   - Set to `DEFERRAL_90_DAYS` to defer each upgrade by 90 days.
   - Set to `NOT_DEFERRED` to apply each upgrade soon after the patch is released.
 - `id` (String) Cluster ID.
+
+### Read-Only
+
+- `deferred_until` (String) The date after which the cluster will be eligible for the next patch based on `deferral_policy`.
+The next patch will be applied in a maintenance window available after the deferral date.
 
 ## Import
 

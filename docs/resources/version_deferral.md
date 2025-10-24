@@ -41,6 +41,11 @@ resource "cockroach_version_deferral" "example" {
   - Set to `NOT_DEFERRED` to apply each upgrade soon after the patch is released.
 - `id` (String) Cluster ID.
 
+### Read-Only
+
+- `deferred_until` (String) The earliest possible date and time for the next patch update, as calculated based on the configured `deferral_policy`.
+The next patch is applied after this deferral date and time in a maintenance window..
+
 ## Import
 
 Import is supported using the following syntax:

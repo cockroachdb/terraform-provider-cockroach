@@ -38,10 +38,15 @@ var versionDeferralAttributes = map[string]schema.Attribute{
 		Required: true,
 		MarkdownDescription: "The policy for delaying automated patch version upgrades after their release.\n" +
 			"  - Set to `DEFERRAL_30_DAYS` to defer each upgrade by 30 days.\n" +
-			"  - Set to `DEFERRAL_60_DAYS` to defer each upgrade by 60 days.\n" +
+			"  - Set to `FIXED_DEFERRAL` to defer each upgrade by 60 days.\n" +
 			"  - Set to `DEFERRAL_90_DAYS` to defer each upgrade by 90 days.\n" +
 			"  - Set to `NOT_DEFERRED` to apply each upgrade soon after the patch is released.",
 		Validators: []validator.String{stringvalidator.OneOf("DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS", "NOT_DEFERRED", "FIXED_DEFERRAL")},
+	},
+	"deferred_until": schema.StringAttribute{
+		Computed: true,
+		MarkdownDescription: "The date after which the cluster will be eligible for the next patch based on `deferral_policy`.\n" +
+			"The next patch will be applied in a maintenance window available after the deferral date.\n\n",
 	},
 }
 
@@ -126,6 +131,11 @@ func (r *versionDeferralResource) Read(
 		return
 	}
 	state.DeferralPolicy = basetypes.NewStringValue(string(obj.DeferralPolicy))
+	if obj.DeferredUntil != nil {
+		state.DeferredUntil = basetypes.NewStringValue(obj.DeferredUntil.Format("2006-01-02T15:04:05Z07:00"))
+	} else {
+		state.DeferredUntil = basetypes.NewStringNull()
+	}
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -172,7 +182,7 @@ func (r *versionDeferralResource) setVersionDeferral(
 	clientVersionDeferral := client.NewClusterVersionDeferralWithDefaults()
 	clientVersionDeferral.DeferralPolicy = client.ClusterVersionDeferralPolicyType(versionDeferral.DeferralPolicy.ValueString())
 	traceAPICall("SetClusterVersionDeferral")
-	_, _, err := r.provider.service.SetClusterVersionDeferral(ctx, versionDeferral.ID.ValueString(), clientVersionDeferral)
+	obj, _, err := r.provider.service.SetClusterVersionDeferral(ctx, versionDeferral.ID.ValueString(), clientVersionDeferral)
 	if err != nil {
 		diags.AddError(
 			"Error setting version deferral",
@@ -180,5 +190,13 @@ func (r *versionDeferralResource) setVersionDeferral(
 		)
 		return
 	}
+
+	versionDeferral.DeferralPolicy = basetypes.NewStringValue(string(obj.DeferralPolicy))
+	if obj.DeferredUntil != nil {
+		versionDeferral.DeferredUntil = basetypes.NewStringValue(obj.DeferredUntil.Format("2006-01-02T15:04:05Z07:00"))
+	} else {
+		versionDeferral.DeferredUntil = basetypes.NewStringNull()
+	}
+
 	diags.Append(state.Set(ctx, versionDeferral)...)
 }

@@ -314,6 +314,7 @@ type ClusterMaintenanceWindow struct {
 type ClusterVersionDeferral struct {
 	ID             types.String `tfsdk:"id"`
 	DeferralPolicy types.String `tfsdk:"deferral_policy"`
+	DeferredUntil  types.String `tfsdk:"deferred_until"`
 }
 
 type ClusterBackupConfiguration struct {

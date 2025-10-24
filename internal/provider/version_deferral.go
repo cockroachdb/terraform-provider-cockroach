@@ -18,7 +18,9 @@ import (
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"net/http"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -26,7 +28,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/tfsdk"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 var versionDeferralAttributes = map[string]schema.Attribute{
@@ -41,8 +42,21 @@ var versionDeferralAttributes = map[string]schema.Attribute{
 			"  - Set to `DEFERRAL_60_DAYS` to defer each upgrade by 60 days.\n" +
 			"  - Set to `DEFERRAL_90_DAYS` to defer each upgrade by 90 days.\n" +
 			"  - Set to `NOT_DEFERRED` to apply each upgrade soon after the patch is released.",
-		Validators: []validator.String{stringvalidator.OneOf("DEFERRAL_30_DAYS", "DEFERRAL_60_DAYS", "DEFERRAL_90_DAYS", "NOT_DEFERRED", "FIXED_DEFERRAL")},
+		Validators: []validator.String{stringvalidator.OneOf(allowedVersionDeferralPolicyValues()...)},
 	},
+	"deferred_until": schema.StringAttribute{
+		Computed: true,
+		MarkdownDescription: "The earliest possible date and time for the next patch update, as calculated based on the configured `deferral_policy`.\n" +
+			"The next patch is applied after this deferral date and time in a maintenance window..\n\n",
+	},
+}
+
+func allowedVersionDeferralPolicyValues() []string {
+	values := make([]string, len(client.AllowedClusterVersionDeferralPolicyTypeEnumValues))
+	for i, v := range client.AllowedClusterVersionDeferralPolicyTypeEnumValues {
+		values[i] = string(v)
+	}
+	return values
 }
 
 type versionDeferralResource struct {
@@ -111,7 +125,7 @@ func (r *versionDeferralResource) Read(
 
 	clusterID := state.ID.ValueString()
 	traceAPICall("GetClusterVersionDeferral")
-	obj, httpResp, err := r.provider.service.GetClusterVersionDeferral(ctx, clusterID)
+	serverVersionDeferral, httpResp, err := r.provider.service.GetClusterVersionDeferral(ctx, clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
@@ -125,7 +139,12 @@ func (r *versionDeferralResource) Read(
 		}
 		return
 	}
-	state.DeferralPolicy = basetypes.NewStringValue(string(obj.DeferralPolicy))
+	state.DeferralPolicy = types.StringValue(string(serverVersionDeferral.DeferralPolicy))
+	if serverVersionDeferral.DeferredUntil != nil {
+		state.DeferredUntil = types.StringValue(serverVersionDeferral.DeferredUntil.Format(time.RFC3339))
+	} else {
+		state.DeferredUntil = types.StringNull()
+	}
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -152,7 +171,7 @@ func (r *versionDeferralResource) Delete(
 		return
 	}
 
-	versionDeferral.DeferralPolicy = basetypes.NewStringValue(string(client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED))
+	versionDeferral.DeferralPolicy = types.StringValue(string(client.CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED))
 	r.setVersionDeferral(ctx, &resp.State, &resp.Diagnostics, versionDeferral)
 }
 
@@ -172,7 +191,7 @@ func (r *versionDeferralResource) setVersionDeferral(
 	clientVersionDeferral := client.NewClusterVersionDeferralWithDefaults()
 	clientVersionDeferral.DeferralPolicy = client.ClusterVersionDeferralPolicyType(versionDeferral.DeferralPolicy.ValueString())
 	traceAPICall("SetClusterVersionDeferral")
-	_, _, err := r.provider.service.SetClusterVersionDeferral(ctx, versionDeferral.ID.ValueString(), clientVersionDeferral)
+	serverVersionDeferral, _, err := r.provider.service.SetClusterVersionDeferral(ctx, versionDeferral.ID.ValueString(), clientVersionDeferral)
 	if err != nil {
 		diags.AddError(
 			"Error setting version deferral",
@@ -180,5 +199,13 @@ func (r *versionDeferralResource) setVersionDeferral(
 		)
 		return
 	}
+
+	versionDeferral.DeferralPolicy = types.StringValue(string(serverVersionDeferral.DeferralPolicy))
+	if serverVersionDeferral.DeferredUntil != nil {
+		versionDeferral.DeferredUntil = types.StringValue(serverVersionDeferral.DeferredUntil.Format(time.RFC3339))
+	} else {
+		versionDeferral.DeferredUntil = types.StringNull()
+	}
+
 	diags.Append(state.Set(ctx, versionDeferral)...)
 }

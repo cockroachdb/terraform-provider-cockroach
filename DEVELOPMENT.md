@@ -151,14 +151,33 @@ depends on. Prefer using serverless clusters in tests when possible, since they'
 
 There's currently no set release cadence. Whenever a couple features and/or bug fixes are ready, we kick off a release.
 
-Before starting a new release, first make sure `CHANGELOG.md` is up-to-date. Then it's recommended that you run
-`COCKROACH_SERVER=<non-production QA server> COCKROACH_API_KEY=<API key for that server> make testacc`.
+Before starting a new release, the version should be added to the `CHANGELOG.md` file. Tags should follow [semver](https://semver.org/) semantics with a 'v' prefix, e.g. "v1.0.0". However, the version we use in the change log does not include the 'v'.  The "unreleased" header should be left at the top. For example, the diff will look something like this:
+```
+--- a/CHANGELOG.md
++++ b/CHANGELOG.md
+@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
-To start the release process, simply push a new tag. Tags should follow [semver](https://semver.org/) semantics with a
-'v' prefix, e.g. "v1.0.0". From there, it's all GitHub workflow magic. It'll run all tests (including acceptance) and,
-if they pass, generate and publish platform-specific binaries. The new version should show up on the [Terraform provider
-registry](https://registry.terraform.io/providers/cockroachdb/cockroach/latest) shortly after. Sometimes it can take up
+ ## [Unreleased]
+
++## [1.16.0] - 2026-10-29
++
+ ### Added
+```
+
+Create a PR updating the changelog.  Consider manually running the acceptance tests on the tag PR.  We don't currently require a successful test run for each merge so it's possible any previous commit has broken the tests.  The acceptance tests can be run manually using the [Manually Run Acceptance Tests action](https://github.com/cockroachdb/terraform-provider-cockroach/actions/workflows/acceptance-tests.yml).  Click "Run Workflow" and select the correct branch to run them on.
+
+After the PR updating the changelog is merged down, update your local checkout, tag it with your tag including the 'v' and push the tag.
+Pushing the tag will trigger another set of acceptance tests. For example,
+```
+git pull
+git tag v1.0.0
+git push origin v1.0.0
+```
+
+After the acceptance tests are complete, you'll run the [release action](https://github.com/cockroachdb/terraform-provider-cockroach/actions/workflows/release.yml).  Visit that page, click "Run Workflow" and select the tag you just pushed from the dropdown. The new version should show up on the [Terraform provider registry](https://registry.terraform.io/providers/cockroachdb/cockroach/latest) shortly after. Sometimes it can take up
 to a day or so, but usually it's much quicker.
+
+After a release goes out we customarily post something in our internal [#cc-terraform](https://cockroachlabs.slack.com/archives/C035VTG778F) channel letting internal stakeholders know what was released. Here is an [example](https://cockroachlabs.slack.com/archives/C035VTG778F/p1733863374785779).
 
 ## FAQs
 **Q: What's the difference between the plan and the config in create/update requests?**

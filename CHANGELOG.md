@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.16.0] - 2025-10-30
+
 ### Added
 
 - Added a new field `deferred_until` to show cluster eligibility for next patch to `cockroach_version_deferral` resource

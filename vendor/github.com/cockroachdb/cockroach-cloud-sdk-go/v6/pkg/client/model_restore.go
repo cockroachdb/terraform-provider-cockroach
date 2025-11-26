@@ -24,28 +24,48 @@ import (
 
 // Restore struct for Restore.
 type Restore struct {
-	// The ID of the backup used for this restore operation.
+	// The timestamp at which the backup data was captured.
+	BackupEndTime time.Time `json:"backup_end_time"`
+	// The ID of the backup used for this restore job.
 	BackupId string `json:"backup_id"`
-	// The percentage of the restore operation that has been completed. The value ranges from 0 to 1.
+	// Error code from the restore job, only populated if it has failed.
+	ClientErrorCode *int32 `json:"client_error_code,omitempty"`
+	// Error message from the restore job, only populated if it has failed.
+	ClientErrorMessage *string `json:"client_error_message,omitempty"`
+	// The timestamp at which the restore job completed.
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+	// The percentage of the restore job that has been completed. The value ranges from 0 to 1.
 	CompletionPercent float32 `json:"completion_percent"`
-	// The time at which the restore operation was initiated.
+	// The CockroachDB internal job ID for the restore job.
+	CrdbJobId *string `json:"crdb_job_id,omitempty"`
+	// The time at which the restore job was initiated.
 	CreatedAt time.Time `json:"created_at"`
+	// The name of the cluster to which the restore is being applied.
+	DestinationClusterName string `json:"destination_cluster_name"`
 	// The unique identifier associated with the restore.
-	Id     string            `json:"id"`
-	Status RestoreStatusType `json:"status"`
-	Type   RestoreTypeType   `json:"type"`
+	Id string `json:"id"`
+	// The list of database objects (databases, tables) that were restored.
+	Objects     *[]RestoreItem `json:"objects,omitempty"`
+	RestoreOpts *RestoreOpts   `json:"restore_opts,omitempty"`
+	// The name of the cluster from which the backup was taken.
+	SourceClusterName string            `json:"source_cluster_name"`
+	Status            RestoreStatusType `json:"status"`
+	Type              RestoreTypeType   `json:"type"`
 }
 
 // NewRestore instantiates a new Restore object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewRestore(backupId string, completionPercent float32, createdAt time.Time, id string, status RestoreStatusType, type_ RestoreTypeType) *Restore {
+func NewRestore(backupEndTime time.Time, backupId string, completionPercent float32, createdAt time.Time, destinationClusterName string, id string, sourceClusterName string, status RestoreStatusType, type_ RestoreTypeType) *Restore {
 	p := Restore{}
+	p.BackupEndTime = backupEndTime
 	p.BackupId = backupId
 	p.CompletionPercent = completionPercent
 	p.CreatedAt = createdAt
+	p.DestinationClusterName = destinationClusterName
 	p.Id = id
+	p.SourceClusterName = sourceClusterName
 	p.Status = status
 	p.Type = type_
 	return &p
@@ -57,6 +77,21 @@ func NewRestore(backupId string, completionPercent float32, createdAt time.Time,
 func NewRestoreWithDefaults() *Restore {
 	p := Restore{}
 	return &p
+}
+
+// GetBackupEndTime returns the BackupEndTime field value.
+func (o *Restore) GetBackupEndTime() time.Time {
+	if o == nil {
+		var ret time.Time
+		return ret
+	}
+
+	return o.BackupEndTime
+}
+
+// SetBackupEndTime sets field value.
+func (o *Restore) SetBackupEndTime(v time.Time) {
+	o.BackupEndTime = v
 }
 
 // GetBackupId returns the BackupId field value.
@@ -74,6 +109,48 @@ func (o *Restore) SetBackupId(v string) {
 	o.BackupId = v
 }
 
+// GetClientErrorCode returns the ClientErrorCode field value if set, zero value otherwise.
+func (o *Restore) GetClientErrorCode() int32 {
+	if o == nil || o.ClientErrorCode == nil {
+		var ret int32
+		return ret
+	}
+	return *o.ClientErrorCode
+}
+
+// SetClientErrorCode gets a reference to the given int32 and assigns it to the ClientErrorCode field.
+func (o *Restore) SetClientErrorCode(v int32) {
+	o.ClientErrorCode = &v
+}
+
+// GetClientErrorMessage returns the ClientErrorMessage field value if set, zero value otherwise.
+func (o *Restore) GetClientErrorMessage() string {
+	if o == nil || o.ClientErrorMessage == nil {
+		var ret string
+		return ret
+	}
+	return *o.ClientErrorMessage
+}
+
+// SetClientErrorMessage gets a reference to the given string and assigns it to the ClientErrorMessage field.
+func (o *Restore) SetClientErrorMessage(v string) {
+	o.ClientErrorMessage = &v
+}
+
+// GetCompletedAt returns the CompletedAt field value if set, zero value otherwise.
+func (o *Restore) GetCompletedAt() time.Time {
+	if o == nil || o.CompletedAt == nil {
+		var ret time.Time
+		return ret
+	}
+	return *o.CompletedAt
+}
+
+// SetCompletedAt gets a reference to the given time.Time and assigns it to the CompletedAt field.
+func (o *Restore) SetCompletedAt(v time.Time) {
+	o.CompletedAt = &v
+}
+
 // GetCompletionPercent returns the CompletionPercent field value.
 func (o *Restore) GetCompletionPercent() float32 {
 	if o == nil {
@@ -87,6 +164,20 @@ func (o *Restore) GetCompletionPercent() float32 {
 // SetCompletionPercent sets field value.
 func (o *Restore) SetCompletionPercent(v float32) {
 	o.CompletionPercent = v
+}
+
+// GetCrdbJobId returns the CrdbJobId field value if set, zero value otherwise.
+func (o *Restore) GetCrdbJobId() string {
+	if o == nil || o.CrdbJobId == nil {
+		var ret string
+		return ret
+	}
+	return *o.CrdbJobId
+}
+
+// SetCrdbJobId gets a reference to the given string and assigns it to the CrdbJobId field.
+func (o *Restore) SetCrdbJobId(v string) {
+	o.CrdbJobId = &v
 }
 
 // GetCreatedAt returns the CreatedAt field value.
@@ -104,6 +195,21 @@ func (o *Restore) SetCreatedAt(v time.Time) {
 	o.CreatedAt = v
 }
 
+// GetDestinationClusterName returns the DestinationClusterName field value.
+func (o *Restore) GetDestinationClusterName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.DestinationClusterName
+}
+
+// SetDestinationClusterName sets field value.
+func (o *Restore) SetDestinationClusterName(v string) {
+	o.DestinationClusterName = v
+}
+
 // GetId returns the Id field value.
 func (o *Restore) GetId() string {
 	if o == nil {
@@ -117,6 +223,49 @@ func (o *Restore) GetId() string {
 // SetId sets field value.
 func (o *Restore) SetId(v string) {
 	o.Id = v
+}
+
+// GetObjects returns the Objects field value if set, zero value otherwise.
+func (o *Restore) GetObjects() []RestoreItem {
+	if o == nil || o.Objects == nil {
+		var ret []RestoreItem
+		return ret
+	}
+	return *o.Objects
+}
+
+// SetObjects gets a reference to the given []RestoreItem and assigns it to the Objects field.
+func (o *Restore) SetObjects(v []RestoreItem) {
+	o.Objects = &v
+}
+
+// GetRestoreOpts returns the RestoreOpts field value if set, zero value otherwise.
+func (o *Restore) GetRestoreOpts() RestoreOpts {
+	if o == nil || o.RestoreOpts == nil {
+		var ret RestoreOpts
+		return ret
+	}
+	return *o.RestoreOpts
+}
+
+// SetRestoreOpts gets a reference to the given RestoreOpts and assigns it to the RestoreOpts field.
+func (o *Restore) SetRestoreOpts(v RestoreOpts) {
+	o.RestoreOpts = &v
+}
+
+// GetSourceClusterName returns the SourceClusterName field value.
+func (o *Restore) GetSourceClusterName() string {
+	if o == nil {
+		var ret string
+		return ret
+	}
+
+	return o.SourceClusterName
+}
+
+// SetSourceClusterName sets field value.
+func (o *Restore) SetSourceClusterName(v string) {
+	o.SourceClusterName = v
 }
 
 // GetStatus returns the Status field value.

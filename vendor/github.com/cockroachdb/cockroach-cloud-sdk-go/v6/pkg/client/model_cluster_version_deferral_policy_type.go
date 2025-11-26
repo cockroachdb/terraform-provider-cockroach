@@ -28,8 +28,8 @@ type ClusterVersionDeferralPolicyType string
 // List of ClusterVersionDeferralPolicy.Type.
 const (
 	CLUSTERVERSIONDEFERRALPOLICYTYPE_NOT_DEFERRED     ClusterVersionDeferralPolicyType = "NOT_DEFERRED"
-	CLUSTERVERSIONDEFERRALPOLICYTYPE_FIXED_DEFERRAL   ClusterVersionDeferralPolicyType = "FIXED_DEFERRAL"
 	CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_60_DAYS ClusterVersionDeferralPolicyType = "DEFERRAL_60_DAYS"
+	CLUSTERVERSIONDEFERRALPOLICYTYPE_FIXED_DEFERRAL   ClusterVersionDeferralPolicyType = "FIXED_DEFERRAL"
 	CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_30_DAYS ClusterVersionDeferralPolicyType = "DEFERRAL_30_DAYS"
 	CLUSTERVERSIONDEFERRALPOLICYTYPE_DEFERRAL_90_DAYS ClusterVersionDeferralPolicyType = "DEFERRAL_90_DAYS"
 )
@@ -37,8 +37,8 @@ const (
 // All allowed values of ClusterVersionDeferralPolicyType enum.
 var AllowedClusterVersionDeferralPolicyTypeEnumValues = []ClusterVersionDeferralPolicyType{
 	"NOT_DEFERRED",
-	"FIXED_DEFERRAL",
 	"DEFERRAL_60_DAYS",
+	"FIXED_DEFERRAL",
 	"DEFERRAL_30_DAYS",
 	"DEFERRAL_90_DAYS",
 }

@@ -88,28 +88,79 @@ func TestIntegrationRestoresDataSource(t *testing.T) {
 	// Mock restore for the restore resource creation
 	restoreID := "00000000-0000-0000-0000-000000000005"
 	backupID := "00000000-0000-0000-0000-000000000001"
+	backupEndTime := restoreTime.Add(-1 * time.Hour)
+
 	restorePending := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_CLUSTER,
-		Status:            client.RESTORESTATUSTYPE_PENDING,
-		CreatedAt:         restoreTime,
-		CompletionPercent: 0.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_CLUSTER,
+		Status:                 client.RESTORESTATUSTYPE_PENDING,
+		CreatedAt:              restoreTime,
+		CompletionPercent:      0.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CrdbJobId:              ptr("12345"),
 	}
 
+	completedAt := restoreTime.Add(30 * time.Minute)
 	restoreSuccess := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_CLUSTER,
-		Status:            client.RESTORESTATUSTYPE_SUCCESS,
-		CreatedAt:         restoreTime,
-		CompletionPercent: 1.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_CLUSTER,
+		Status:                 client.RESTORESTATUSTYPE_SUCCESS,
+		CreatedAt:              restoreTime,
+		CompletionPercent:      1.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CompletedAt:            &completedAt,
+		CrdbJobId:              ptr("12345"),
+	}
+
+	// Mock objects in lexicographically sorted order (as API returns them)
+	// These will be grouped by database+schema (for failed TABLE restore)
+	mockObjects := &[]client.RestoreItem{
+		{Database: "otherdb", Schema: ptr("private"), Table: ptr("settings")},
+		{Database: "testdb", Schema: ptr("public"), Table: ptr("orders")},
+		{Database: "testdb", Schema: ptr("public"), Table: ptr("products")},
+		{Database: "testdb", Schema: ptr("public"), Table: ptr("users")},
+	}
+
+	mockRestoreOpts := &client.RestoreOpts{
+		SkipLocalitiesCheck:    ptr(true),
+		SkipMissingForeignKeys: ptr(false),
+		SchemaOnly:             ptr(false),
+		IntoDb:                 ptr("testdb"),
+	}
+
+	// Mock a failed restore to test error fields
+	failedRestoreID := "00000000-0000-0000-0000-000000000006"
+	errorCode := int32(500)
+	errorMessage := "restore job failed due to insufficient permissions"
+	restoreFailed := &client.Restore{
+		Id:                     failedRestoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_TABLE,
+		Status:                 client.RESTORESTATUSTYPE_FAILED,
+		CreatedAt:              restoreTime.Add(-2 * time.Hour),
+		CompletionPercent:      0.5,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CompletedAt:            &completedAt,
+		CrdbJobId:              ptr("67890"),
+		ClientErrorCode:        &errorCode,
+		ClientErrorMessage:     &errorMessage,
+		Objects:                mockObjects,
+		RestoreOpts:            mockRestoreOpts,
 	}
 
 	// Mock restores response.
 	restores := &client.ListRestoresResponse{
 		Restores: []client.Restore{
 			*restoreSuccess,
+			*restoreFailed,
 		},
 	}
 
@@ -164,6 +215,57 @@ func testRestoresDataSource(
 ) {
 	restoresDataSourceName := "data.cockroach_restores.test"
 
+	// Build check functions
+	buildChecks := func() []resource.TestCheckFunc {
+		// Common checks that work for both mock and real scenarios
+		checks := []resource.TestCheckFunc{
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "cluster_id"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.id"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.backup_id"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.status"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.created_at"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.type"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.completion_percent"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.source_cluster_name"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.destination_cluster_name"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.backup_end_time"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.completed_at"),
+			resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.crdb_job_id"),
+		}
+
+		// Additional checks for the second restore (only in mock scenario)
+		if useMock {
+			checks = append(checks,
+				// Check failed TABLE restore (second item in list) with objects, restore_opts, and error fields
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.status", "FAILED"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.client_error_code", "500"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.client_error_message", "restore job failed due to insufficient permissions"),
+				// Check objects field and grouping logic on the failed restore
+				// API returns objects in lexicographically sorted order, so we get:
+				// Group 0: otherdb.private with 1 table (settings)
+				// Group 1: testdb.public with 3 tables (orders, products, users)
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.#", "2"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.0.database", "otherdb"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.0.schema", "private"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.0.tables.#", "1"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.0.tables.0", "settings"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.1.database", "testdb"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.1.schema", "public"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.1.tables.#", "3"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.1.tables.0", "orders"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.1.tables.1", "products"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.objects.1.tables.2", "users"),
+				// Check restore_opts fields on the failed restore
+				// Only check fields that are set to true or non-empty strings
+				// (false booleans are left as null to match Terraform expectations)
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.restore_opts.skip_localities_check", "true"),
+				resource.TestCheckResourceAttr(restoresDataSourceName, "restores.1.restore_opts.into_db", "testdb"),
+			)
+		}
+
+		return checks
+	}
+
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
 		PreCheck:                 func() { testAccPreCheck(t) },
@@ -181,30 +283,14 @@ func testRestoresDataSource(
 					traceMessageStep("starting restore operation and listing restore jobs between two dates")
 				},
 				Config: getTestRestoresDataSourceConfig(clusterName, startTime.Format(time.DateOnly), endTime.Format(time.DateOnly)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "cluster_id"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.id"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.backup_id"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.status"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.created_at"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.type"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.completion_percent"),
-				),
+				Check:  resource.ComposeTestCheckFunc(buildChecks()...),
 			},
 			{
 				PreConfig: func() {
 					traceMessageStep("listing restore jobs between two timestamps")
 				},
 				Config: getTestRestoresDataSourceConfig(clusterName, startTime.Format(time.RFC3339), endTime.Format(time.RFC3339)),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "cluster_id"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.id"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.backup_id"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.status"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.created_at"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.type"),
-					resource.TestCheckResourceAttrSet(restoresDataSourceName, "restores.0.completion_percent"),
-				),
+				Check:  resource.ComposeTestCheckFunc(buildChecks()...),
 			},
 		},
 	})

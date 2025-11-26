@@ -25,8 +25,8 @@ github.com/bufbuild/protocompile v0.4.0 h1:LbFKd2XowZvQ/kajzguUp2DC9UEIQhIq77fZZ
 github.com/bufbuild/protocompile v0.4.0/go.mod h1:3v93+mbWn/v3xzN+31nwkJfrEpAUwp+BagBSZWx+TP8=
 github.com/cloudflare/circl v1.6.1 h1:zqIqSPIndyBh1bjLVVDHMPpVKqp8Su/V+6MeDzzQBQ0=
 github.com/cloudflare/circl v1.6.1/go.mod h1:uddAzsPgqdMAYatqJ0lsjX1oECcQLIlRpzZh3pJrofs=
-github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.9.0 h1:waY6dJFFhrfVqLL4ysYdtXpOq/w95E7PX5Ur2UZnMZU=
-github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.9.0/go.mod h1:8l4PNIhne5ZKgIBFYHF+1IiKwtL2oCH1FhVACby8YmU=
+github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.10.0 h1:JfqVOEbCwwxbcy68vkPfcEt3/Mfai3imLOHf+fmjt2k=
+github.com/cockroachdb/cockroach-cloud-sdk-go/v6 v6.10.0/go.mod h1:8l4PNIhne5ZKgIBFYHF+1IiKwtL2oCH1FhVACby8YmU=
 github.com/cyphar/filepath-securejoin v0.4.1 h1:JyxxyPEaktOD+GAnqIqTf9A8tHyAG22rowi7HkoSU1s=
 github.com/cyphar/filepath-securejoin v0.4.1/go.mod h1:Sdj7gXlvMcPZsbhwhQ33GguGLDGQL7h7bg04C/+u9jI=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

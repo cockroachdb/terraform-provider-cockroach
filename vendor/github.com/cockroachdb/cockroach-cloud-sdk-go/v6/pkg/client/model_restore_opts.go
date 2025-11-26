@@ -20,18 +20,18 @@ package client
 
 // RestoreOpts struct for RestoreOpts.
 type RestoreOpts struct {
-	// Specifies the target database to restore the table into during a table restore operation. If not set, the table will be restored into the database it belonged to in the source backup.
+	// Specifies the target database to restore the table into during a table restore job. If not set, the table will be restored into the database it belonged to in the source backup.
 	IntoDb *string `json:"into_db,omitempty"`
-	// Specifies the name of the database to create during a database restore operation. If not set, the name defaults to the original database name from the source cluster.
+	// Specifies the name of the database to create during a database restore job. If not set, the name defaults to the original database name from the source cluster.
 	NewDbName *string `json:"new_db_name,omitempty"`
 	// If set, only the schema will be restored and no user data will be included.
 	SchemaOnly *bool `json:"schema_only,omitempty"`
-	// Allows the restore operation to continue in the event that there are mismatched localities between the backup and target cluster. Useful when restoring multi-region tables to a cluster missing some localities.
+	// Allows the restore job to continue in the event that there are mismatched localities between the backup and target cluster. Useful when restoring multi-region tables to a cluster missing some localities.
 	SkipLocalitiesCheck *bool `json:"skip_localities_check,omitempty"`
 	// Allows a table to be restored even if it has foreign key constraints referencing rows that no longer exist in the target cluster.
 	SkipMissingForeignKeys *bool `json:"skip_missing_foreign_keys,omitempty"`
 	SkipMissingSequences   *bool `json:"skip_missing_sequences,omitempty"`
-	// Allows the operation to skip restoring views that cannot be restored because their dependencies are not included in the current restore operation.
+	// Allows the job to skip restoring views that cannot be restored because their dependencies are not included in the current restore job.
 	SkipMissingViews *bool `json:"skip_missing_views,omitempty"`
 }
 

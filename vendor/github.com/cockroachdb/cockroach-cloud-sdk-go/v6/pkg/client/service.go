@@ -64,7 +64,7 @@ type Service interface {
 	GetRestore(ctx _context.Context, clusterId string, restoreId string) (*Restore, *_nethttp.Response, error)
 	// List cluster backups
 	ListBackups(ctx _context.Context, clusterId string, options *ListBackupsOptions) (*ListBackupsResponse, *_nethttp.Response, error)
-	// List restore operations
+	// List restore jobs
 	ListRestores(ctx _context.Context, clusterId string, options *ListRestoresOptions) (*ListRestoresResponse, *_nethttp.Response, error)
 	// Update the backup configuration for a cluster
 	UpdateBackupConfiguration(ctx _context.Context, clusterId string, updateBackupConfigurationSpec *UpdateBackupConfigurationSpec) (*BackupConfiguration, *_nethttp.Response, error)

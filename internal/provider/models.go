@@ -421,12 +421,21 @@ type Backups struct {
 }
 
 type RestoreSummary struct {
-	ID                types.String  `tfsdk:"id"`
-	BackupID          types.String  `tfsdk:"backup_id"`
-	Status            types.String  `tfsdk:"status"`
-	CreatedAt         types.String  `tfsdk:"created_at"`
-	Type              types.String  `tfsdk:"type"`
-	CompletionPercent types.Float32 `tfsdk:"completion_percent"`
+	ID                     types.String  `tfsdk:"id"`
+	BackupID               types.String  `tfsdk:"backup_id"`
+	Status                 types.String  `tfsdk:"status"`
+	CreatedAt              types.String  `tfsdk:"created_at"`
+	Type                   types.String  `tfsdk:"type"`
+	CompletionPercent      types.Float32 `tfsdk:"completion_percent"`
+	SourceClusterName      types.String  `tfsdk:"source_cluster_name"`
+	DestinationClusterName types.String  `tfsdk:"destination_cluster_name"`
+	BackupEndTime          types.String  `tfsdk:"backup_end_time"`
+	CompletedAt            types.String  `tfsdk:"completed_at"`
+	CrdbJobID              types.String  `tfsdk:"crdb_job_id"`
+	Objects                []RestoreItem `tfsdk:"objects"`
+	RestoreOpts            *RestoreOpts  `tfsdk:"restore_opts"`
+	ClientErrorCode        types.Int32   `tfsdk:"client_error_code"`
+	ClientErrorMessage     types.String  `tfsdk:"client_error_message"`
 }
 
 type Restores struct {
@@ -450,20 +459,28 @@ type RestoreOpts struct {
 	SkipLocalitiesCheck    types.Bool   `tfsdk:"skip_localities_check"`
 	SkipMissingForeignKeys types.Bool   `tfsdk:"skip_missing_foreign_keys"`
 	SkipMissingSequences   types.Bool   `tfsdk:"skip_missing_sequences"`
+	SkipMissingViews       types.Bool   `tfsdk:"skip_missing_views"`
 	SchemaOnly             types.Bool   `tfsdk:"schema_only"`
 }
 
 type Restore struct {
-	ID                   types.String  `tfsdk:"id"`
-	DestinationClusterID types.String  `tfsdk:"destination_cluster_id"`
-	Type                 types.String  `tfsdk:"type"`
-	BackupID             types.String  `tfsdk:"backup_id"`
-	SourceClusterID      types.String  `tfsdk:"source_cluster_id"`
-	Objects              []RestoreItem `tfsdk:"objects"`
-	RestoreOpts          *RestoreOpts  `tfsdk:"restore_opts"`
-	Status               types.String  `tfsdk:"status"`
-	CreatedAt            types.String  `tfsdk:"created_at"`
-	CompletionPercent    types.Float32 `tfsdk:"completion_percent"`
+	ID                     types.String  `tfsdk:"id"`
+	DestinationClusterID   types.String  `tfsdk:"destination_cluster_id"`
+	Type                   types.String  `tfsdk:"type"`
+	BackupID               types.String  `tfsdk:"backup_id"`
+	SourceClusterID        types.String  `tfsdk:"source_cluster_id"`
+	Objects                []RestoreItem `tfsdk:"objects"`
+	RestoreOpts            *RestoreOpts  `tfsdk:"restore_opts"`
+	Status                 types.String  `tfsdk:"status"`
+	CreatedAt              types.String  `tfsdk:"created_at"`
+	CompletionPercent      types.Float32 `tfsdk:"completion_percent"`
+	SourceClusterName      types.String  `tfsdk:"source_cluster_name"`
+	DestinationClusterName types.String  `tfsdk:"destination_cluster_name"`
+	BackupEndTime          types.String  `tfsdk:"backup_end_time"`
+	CompletedAt            types.String  `tfsdk:"completed_at"`
+	CrdbJobID              types.String  `tfsdk:"crdb_job_id"`
+	ClientErrorCode        types.Int32   `tfsdk:"client_error_code"`
+	ClientErrorMessage     types.String  `tfsdk:"client_error_message"`
 }
 
 type EgressPrivateEndpoint struct {

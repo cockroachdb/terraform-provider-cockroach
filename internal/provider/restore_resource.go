@@ -18,7 +18,7 @@ import (
 
 const createRestoreEndpointTimeout = time.Hour * 2
 
-var createRestorePendingErr = errors.New("restore job is still pending")
+var errCreateRestorePending = errors.New("restore job is still pending")
 
 type restoreResource struct {
 	provider *provider
@@ -82,6 +82,10 @@ func (r *restoreResource) Schema(
 						MarkdownDescription: "Allows a table to be restored even if it contains a column whose `DEFAULT` value depends on a sequence. More information can be found [here](https://www.cockroachlabs.com/docs/stable/show-sequences).",
 						Optional:            true,
 					},
+					"skip_missing_views": schema.BoolAttribute{
+						Description: "Allows the job to skip restoring views that cannot be restored because their dependencies are not included in the current restore job.",
+						Optional:    true,
+					},
 					"schema_only": schema.BoolAttribute{
 						Description: "If set, only the schema without any user data is restored.",
 						Optional:    true,
@@ -98,6 +102,34 @@ func (r *restoreResource) Schema(
 			},
 			"completion_percent": schema.Float32Attribute{
 				Description: "Decimal value showing the percentage of the restore job that has been completed. Value ranges from 0 to 1.",
+				Computed:    true,
+			},
+			"source_cluster_name": schema.StringAttribute{
+				Description: "The name of the cluster from which the backup was taken.",
+				Computed:    true,
+			},
+			"destination_cluster_name": schema.StringAttribute{
+				Description: "The name of the cluster to which the restore is being applied.",
+				Computed:    true,
+			},
+			"backup_end_time": schema.StringAttribute{
+				Description: "The timestamp at which the backup data was captured.",
+				Computed:    true,
+			},
+			"completed_at": schema.StringAttribute{
+				Description: "The timestamp at which the restore job completed.",
+				Computed:    true,
+			},
+			"crdb_job_id": schema.StringAttribute{
+				Description: "The CockroachDB internal job ID for the restore job.",
+				Computed:    true,
+			},
+			"client_error_code": schema.Int32Attribute{
+				Description: "Error code from the restore job, only populated if it has failed.",
+				Computed:    true,
+			},
+			"client_error_message": schema.StringAttribute{
+				Description: "Error message from the restore job, only populated if it has failed.",
 				Computed:    true,
 			},
 		},
@@ -221,6 +253,9 @@ func (r *restoreResource) Create(
 		if IsKnown(plan.RestoreOpts.SkipMissingSequences) {
 			restoreOpts.SkipMissingSequences = plan.RestoreOpts.SkipMissingSequences.ValueBoolPointer()
 		}
+		if IsKnown(plan.RestoreOpts.SkipMissingViews) {
+			restoreOpts.SkipMissingViews = plan.RestoreOpts.SkipMissingViews.ValueBoolPointer()
+		}
 		if IsKnown(plan.RestoreOpts.SchemaOnly) {
 			restoreOpts.SchemaOnly = plan.RestoreOpts.SchemaOnly.ValueBoolPointer()
 		}
@@ -243,7 +278,7 @@ func (r *restoreResource) Create(
 	err = retry.RetryContext(ctx, createRestoreEndpointTimeout,
 		waitForRestoreReadyFunc(ctx, plan.DestinationClusterID.ValueString(), restoreObj.Id, r.provider.service, restoreObj))
 	if err != nil {
-		if errors.Is(err, createRestorePendingErr) {
+		if errors.Is(err, errCreateRestorePending) {
 			resp.Diagnostics.AddError("Restore job timed out", "The restore job has timed out but will continue to progress in the background.")
 		} else {
 			resp.Diagnostics.AddError("Restore job failed", formatAPIErrorMessage(err))
@@ -257,8 +292,6 @@ func (r *restoreResource) Create(
 		&state,
 		&plan.SourceClusterID,
 		&plan.DestinationClusterID,
-		plan.Objects,
-		plan.RestoreOpts,
 	)
 
 	diags = resp.State.Set(ctx, state)
@@ -306,7 +339,7 @@ func (r *restoreResource) Read(
 		return
 	}
 
-	loadRestoreToTerraformState(restoreObj, &state, nil, nil, nil, nil)
+	loadRestoreToTerraformState(restoreObj, &state, nil, nil)
 
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -352,8 +385,6 @@ func loadRestoreToTerraformState(
 	state *Restore,
 	sourceClusterId *types.String,
 	destinationClusterId *types.String,
-	objects []RestoreItem,
-	restoreOpts *RestoreOpts,
 ) {
 	state.ID = types.StringValue(restoreObj.Id)
 	state.Type = types.StringValue(string(restoreObj.Type))
@@ -361,18 +392,31 @@ func loadRestoreToTerraformState(
 	state.Status = types.StringValue(string(restoreObj.Status))
 	state.CreatedAt = types.StringValue(restoreObj.CreatedAt.String())
 	state.CompletionPercent = types.Float32Value(restoreObj.CompletionPercent)
+	state.SourceClusterName = types.StringValue(restoreObj.SourceClusterName)
+	state.DestinationClusterName = types.StringValue(restoreObj.DestinationClusterName)
+	state.BackupEndTime = types.StringValue(restoreObj.BackupEndTime.String())
+
+	if restoreObj.CompletedAt != nil && !restoreObj.CompletedAt.IsZero() {
+		state.CompletedAt = types.StringValue(restoreObj.CompletedAt.String())
+	}
+	if restoreObj.CrdbJobId != nil {
+		state.CrdbJobID = types.StringValue(*restoreObj.CrdbJobId)
+	}
+	if restoreObj.ClientErrorCode != nil {
+		state.ClientErrorCode = types.Int32Value(*restoreObj.ClientErrorCode)
+	}
+	if restoreObj.ClientErrorMessage != nil {
+		state.ClientErrorMessage = types.StringValue(*restoreObj.ClientErrorMessage)
+	}
+
+	state.Objects = convertObjectsToTerraform(restoreObj.Objects)
+	state.RestoreOpts = convertRestoreOptsToTerraform(restoreObj.RestoreOpts)
 
 	if sourceClusterId != nil {
 		state.SourceClusterID = *sourceClusterId
 	}
 	if destinationClusterId != nil {
 		state.DestinationClusterID = *destinationClusterId
-	}
-	if objects != nil {
-		state.Objects = objects
-	}
-	if restoreOpts != nil {
-		state.RestoreOpts = restoreOpts
 	}
 }
 
@@ -390,12 +434,26 @@ func waitForRestoreReadyFunc(
 			}
 		}
 		restore.Status = res.Status
+		restore.CompletedAt = res.CompletedAt
+		restore.CrdbJobId = res.CrdbJobId
+		restore.ClientErrorCode = res.ClientErrorCode
+		restore.ClientErrorMessage = res.ClientErrorMessage
 
 		switch status := restore.GetStatus(); status {
 		case client.RESTORESTATUSTYPE_PENDING:
-			return retry.RetryableError(createRestorePendingErr)
+			return retry.RetryableError(errCreateRestorePending)
 		case client.RESTORESTATUSTYPE_FAILED:
+			if restore.ClientErrorMessage != nil && *restore.ClientErrorMessage != "" && restore.ClientErrorCode != nil {
+				return retry.NonRetryableError(fmt.Errorf("restore job failed: %s (code: %d)", *restore.ClientErrorMessage, *restore.ClientErrorCode))
+			}
 			return retry.NonRetryableError(errors.New("restore job failed"))
+		case client.RESTORESTATUSTYPE_SUCCESS:
+			// The CompletedAt field is set by the API *after* the restore job is marked as successful, so we should check
+			// that it is set before considering the restore ready.
+			if restore.CompletedAt == nil || restore.CompletedAt.IsZero() {
+				return retry.RetryableError(errors.New("restore succeeded but completed_at not yet set"))
+			}
+			return nil
 		default:
 			return nil
 		}

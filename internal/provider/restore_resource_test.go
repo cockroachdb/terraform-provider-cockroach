@@ -79,22 +79,35 @@ func TestIntegrationClusterRestoreResource(t *testing.T) {
 		SourceClusterId: &clusterID,
 	}
 
+	now := time.Now()
+	backupEndTime := now.Add(-1 * time.Hour)
+
 	restore := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_CLUSTER,
-		Status:            client.RESTORESTATUSTYPE_PENDING,
-		CreatedAt:         time.Now(),
-		CompletionPercent: 0.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_CLUSTER,
+		Status:                 client.RESTORESTATUSTYPE_PENDING,
+		CreatedAt:              now,
+		CompletionPercent:      0.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CrdbJobId:              ptr("12345"),
 	}
 
+	completedAt := now.Add(30 * time.Minute)
 	restoreSuccess := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_CLUSTER,
-		Status:            client.RESTORESTATUSTYPE_SUCCESS,
-		CreatedAt:         time.Now(),
-		CompletionPercent: 1.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_CLUSTER,
+		Status:                 client.RESTORESTATUSTYPE_SUCCESS,
+		CreatedAt:              now,
+		CompletionPercent:      1.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CompletedAt:            &completedAt,
+		CrdbJobId:              ptr("12345"),
 	}
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(cluster, nil, nil)
@@ -175,22 +188,39 @@ func TestIntegrationDatabaseRestoreResource(t *testing.T) {
 		RestoreOpts:     &client.RestoreOpts{NewDbName: ptr("new_test_db")},
 	}
 
+	now := time.Now()
+	backupEndTime := now.Add(-1 * time.Hour)
+
 	restore := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_DATABASE,
-		Status:            client.RESTORESTATUSTYPE_PENDING,
-		CreatedAt:         time.Now(),
-		CompletionPercent: 0.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_DATABASE,
+		Status:                 client.RESTORESTATUSTYPE_PENDING,
+		CreatedAt:              now,
+		CompletionPercent:      0.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CrdbJobId:              ptr("12345"),
+		Objects:                &[]client.RestoreItem{dbRestoreItem("test_db")},
+		RestoreOpts:            &client.RestoreOpts{NewDbName: ptr("new_test_db")},
 	}
 
+	completedAt := now.Add(30 * time.Minute)
 	restoreSuccess := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_DATABASE,
-		Status:            client.RESTORESTATUSTYPE_SUCCESS,
-		CreatedAt:         time.Now(),
-		CompletionPercent: 1.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_DATABASE,
+		Status:                 client.RESTORESTATUSTYPE_SUCCESS,
+		CreatedAt:              now,
+		CompletionPercent:      1.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CompletedAt:            &completedAt,
+		CrdbJobId:              ptr("12345"),
+		Objects:                &[]client.RestoreItem{dbRestoreItem("test_db")},
+		RestoreOpts:            &client.RestoreOpts{NewDbName: ptr("new_test_db")},
 	}
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(cluster, nil, nil)
@@ -280,22 +310,39 @@ func TestIntegrationTableRestoreResource(t *testing.T) {
 		RestoreOpts:     &client.RestoreOpts{IntoDb: ptr("target_db")},
 	}
 
+	now := time.Now()
+	backupEndTime := now.Add(-1 * time.Hour)
+
 	restore := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_TABLE,
-		Status:            client.RESTORESTATUSTYPE_PENDING,
-		CreatedAt:         time.Now(),
-		CompletionPercent: 0.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_TABLE,
+		Status:                 client.RESTORESTATUSTYPE_PENDING,
+		CreatedAt:              now,
+		CompletionPercent:      0.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CrdbJobId:              ptr("12345"),
+		Objects:                &restoreItems,
+		RestoreOpts:            &client.RestoreOpts{IntoDb: ptr("target_db")},
 	}
 
+	completedAt := now.Add(30 * time.Minute)
 	restoreSuccess := &client.Restore{
-		Id:                restoreID,
-		BackupId:          backupID,
-		Type:              client.RESTORETYPETYPE_TABLE,
-		Status:            client.RESTORESTATUSTYPE_SUCCESS,
-		CreatedAt:         time.Now(),
-		CompletionPercent: 1.0,
+		Id:                     restoreID,
+		BackupId:               backupID,
+		Type:                   client.RESTORETYPETYPE_TABLE,
+		Status:                 client.RESTORESTATUSTYPE_SUCCESS,
+		CreatedAt:              now,
+		CompletionPercent:      1.0,
+		SourceClusterName:      clusterName,
+		DestinationClusterName: clusterName,
+		BackupEndTime:          backupEndTime,
+		CompletedAt:            &completedAt,
+		CrdbJobId:              ptr("12345"),
+		Objects:                &restoreItems,
+		RestoreOpts:            &client.RestoreOpts{IntoDb: ptr("target_db")},
 	}
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(cluster, nil, nil)
@@ -543,18 +590,34 @@ func testCheckRestoreResource(restoreResourceName string, clusterResourceName st
 			return fmt.Errorf("expected status to be set, got empty string")
 		}
 
+		sourceClusterName := restore.Primary.Attributes["source_cluster_name"]
+		if sourceClusterName == "" {
+			return fmt.Errorf("expected source_cluster_name to be set, got empty string")
+		}
+
+		destinationClusterName := restore.Primary.Attributes["destination_cluster_name"]
+		if destinationClusterName == "" {
+			return fmt.Errorf("expected destination_cluster_name to be set, got empty string")
+		}
+
+		backupEndTime := restore.Primary.Attributes["backup_end_time"]
+		if backupEndTime == "" {
+			return fmt.Errorf("expected backup_end_time to be set, got empty string")
+		}
+
+		if status == "SUCCESS" {
+			// completed_at is only set when restore completes, so we check it's set if the restore was successful
+			completedAt := restore.Primary.Attributes["completed_at"]
+			if completedAt == "" {
+				return fmt.Errorf("expected completed_at to be set for completed restore, got empty string")
+			}
+			// crdb_job_id is set while the restore is running, so we can only guarantee it's set if the restore was successful
+			crdbJobID := restore.Primary.Attributes["crdb_job_id"]
+			if crdbJobID == "" {
+				return fmt.Errorf("expected crdb_job_id to be set, got empty string")
+			}
+		}
+
 		return nil
 	}
-}
-
-func dbRestoreItem(database string) client.RestoreItem {
-	return client.RestoreItem{Database: database}
-}
-
-func tablesRestoreItem(database string, schema string, tables []string) []client.RestoreItem {
-	var restoreItems []client.RestoreItem
-	for _, table := range tables {
-		restoreItems = append(restoreItems, client.RestoreItem{Database: database, Schema: ptr(schema), Table: ptr(table)})
-	}
-	return restoreItems
 }

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- Added new fields to `restore` resource and `restores` data source: `backup_end_time`, 
+`client_error_code`, `client_error_message`, `completed_at`, `crdb_job_id`, 
+`source_cluster_name`, `destination_cluster_name`, `objects`, `restore_opts` 
+- Added `SkipMissingViews` as a new restore option (`RestoreOpts`)
+
 ## [1.16.0] - 2025-10-30
 
 ### Added

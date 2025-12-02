@@ -352,3 +352,17 @@ func testWaitForBackupReadyFunc(
 		return nil
 	}
 }
+
+// dbRestoreItem returns a client.RestoreItem for a database.
+func dbRestoreItem(database string) client.RestoreItem {
+	return client.RestoreItem{Database: database}
+}
+
+// tablesRestoreItem returns an array of client.RestoreItem objects for tables within a database and schema.
+func tablesRestoreItem(database string, schema string, tables []string) []client.RestoreItem {
+	var restoreItems []client.RestoreItem
+	for _, table := range tables {
+		restoreItems = append(restoreItems, client.RestoreItem{Database: database, Schema: ptr(schema), Table: ptr(table)})
+	}
+	return restoreItems
+}

@@ -59,9 +59,41 @@ data "cockroach_restores" "restores_in_range" {
 
 Read-Only:
 
+- `backup_end_time` (String) The timestamp at which the backup data was captured.
 - `backup_id` (String) The ID of the managed backup used for this restore job.
+- `client_error_code` (Number) Error code from the restore job, only populated if it has failed.
+- `client_error_message` (String) Error message from the restore job, only populated if it has failed.
+- `completed_at` (String) The timestamp at which the restore job completed.
 - `completion_percent` (Number) Decimal value showing the percentage of the restore job that has been completed. Value ranges from 0 to 1.
+- `crdb_job_id` (String) The CockroachDB internal job ID for the restore job.
 - `created_at` (String) The time at which the restore job was initiated.
+- `destination_cluster_name` (String) The name of the cluster to which the restore is being applied.
 - `id` (String) The unique identifier associated with the restore job.
+- `objects` (Attributes List) The list of database objects (databases, tables) that were restored. (see [below for nested schema](#nestedatt--restores--objects))
+- `restore_opts` (Attributes) Additional options controlling the behavior of the restore job. (see [below for nested schema](#nestedatt--restores--restore_opts))
+- `source_cluster_name` (String) The name of the cluster from which the backup was taken.
 - `status` (String) The current status of the restore job.
 - `type` (String) The type of object (to be) restored by this job.
+
+<a id="nestedatt--restores--objects"></a>
+### Nested Schema for `restores.objects`
+
+Read-Only:
+
+- `database` (String) The database name in the fully qualified name of the objects that were restored.
+- `schema` (String) The schema name in the fully qualified name of the objects that were restored.
+- `tables` (List of String) The list of table names in the fully qualified name of the objects that were restored.
+
+
+<a id="nestedatt--restores--restore_opts"></a>
+### Nested Schema for `restores.restore_opts`
+
+Read-Only:
+
+- `into_db` (String) Specifies the target database to restore the table into during a table restore job. If not set, the table will be restored into the database it belonged to in the source backup.
+- `new_db_name` (String) Specifies the name of the database to create during a database restore job. If not set, the name defaults to the original database name from the source cluster.
+- `schema_only` (Boolean) If set, only the schema will be restored and no user data will be included.
+- `skip_localities_check` (Boolean) Allows the restore job to continue in the event that there are mismatched localities between the backup and target cluster. Useful when restoring multi-region tables to a cluster missing some localities.
+- `skip_missing_foreign_keys` (Boolean) Allows a table to be restored even if it has foreign key constraints referencing rows that no longer exist in the target cluster.
+- `skip_missing_sequences` (Boolean) Allows a table to be restored even if it contains a column whose `DEFAULT` value depends on a sequence. (See https://www.cockroachlabs.com/docs/stable/show-sequences)
+- `skip_missing_views` (Boolean) Allows the job to skip restoring views that cannot be restored because their dependencies are not included in the current restore job.

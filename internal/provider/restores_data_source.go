@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -68,6 +69,89 @@ func (d *restoresDataSource) Schema(
 						"completion_percent": schema.Float32Attribute{
 							MarkdownDescription: "Decimal value showing the percentage of the restore job that has been completed. Value ranges from 0 to 1.",
 							Computed:            true,
+						},
+						"source_cluster_name": schema.StringAttribute{
+							MarkdownDescription: "The name of the cluster from which the backup was taken.",
+							Computed:            true,
+						},
+						"destination_cluster_name": schema.StringAttribute{
+							MarkdownDescription: "The name of the cluster to which the restore is being applied.",
+							Computed:            true,
+						},
+						"backup_end_time": schema.StringAttribute{
+							MarkdownDescription: "The timestamp at which the backup data was captured.",
+							Computed:            true,
+						},
+						"completed_at": schema.StringAttribute{
+							MarkdownDescription: "The timestamp at which the restore job completed.",
+							Computed:            true,
+						},
+						"crdb_job_id": schema.StringAttribute{
+							MarkdownDescription: "The CockroachDB internal job ID for the restore job.",
+							Computed:            true,
+						},
+						"client_error_code": schema.Int32Attribute{
+							MarkdownDescription: "Error code from the restore job, only populated if it has failed.",
+							Computed:            true,
+						},
+						"client_error_message": schema.StringAttribute{
+							MarkdownDescription: "Error message from the restore job, only populated if it has failed.",
+							Computed:            true,
+						},
+						"objects": schema.ListNestedAttribute{
+							MarkdownDescription: "The list of database objects (databases, tables) that were restored.",
+							Computed:            true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"database": schema.StringAttribute{
+										MarkdownDescription: "The database name in the fully qualified name of the objects that were restored.",
+										Computed:            true,
+									},
+									"schema": schema.StringAttribute{
+										MarkdownDescription: "The schema name in the fully qualified name of the objects that were restored.",
+										Computed:            true,
+									},
+									"tables": schema.ListAttribute{
+										MarkdownDescription: "The list of table names in the fully qualified name of the objects that were restored.",
+										ElementType:         types.StringType,
+										Computed:            true,
+									},
+								},
+							},
+						},
+						"restore_opts": schema.SingleNestedAttribute{
+							MarkdownDescription: "Additional options controlling the behavior of the restore job.",
+							Computed:            true,
+							Attributes: map[string]schema.Attribute{
+								"new_db_name": schema.StringAttribute{
+									MarkdownDescription: "Specifies the name of the database to create during a database restore job. If not set, the name defaults to the original database name from the source cluster.",
+									Computed:            true,
+								},
+								"into_db": schema.StringAttribute{
+									MarkdownDescription: "Specifies the target database to restore the table into during a table restore job. If not set, the table will be restored into the database it belonged to in the source backup.",
+									Computed:            true,
+								},
+								"skip_localities_check": schema.BoolAttribute{
+									MarkdownDescription: "Allows the restore job to continue in the event that there are mismatched localities between the backup and target cluster. Useful when restoring multi-region tables to a cluster missing some localities.",
+									Computed:            true,
+								},
+								"skip_missing_foreign_keys": schema.BoolAttribute{
+									MarkdownDescription: "Allows a table to be restored even if it has foreign key constraints referencing rows that no longer exist in the target cluster.",
+									Computed:            true,
+								},
+								"skip_missing_sequences": schema.BoolAttribute{
+									MarkdownDescription: "Allows a table to be restored even if it contains a column whose `DEFAULT` value depends on a sequence. (See https://www.cockroachlabs.com/docs/stable/show-sequences)",
+									Computed:            true,
+								},
+								"skip_missing_views": schema.BoolAttribute{
+									MarkdownDescription: "Allows the job to skip restoring views that cannot be restored because their dependencies are not included in the current restore job.",
+									Computed:            true,
+								},
+								"schema_only": schema.BoolAttribute{
+									MarkdownDescription: "If set, only the schema will be restored and no user data will be included.",
+									Computed:            true,
+								},
+							},
 						},
 					},
 				},
@@ -146,14 +230,35 @@ func (d *restoresDataSource) Read(
 	}
 
 	for _, restore := range restoresResp.Restores {
-		restores.Restores = append(restores.Restores, RestoreSummary{
-			ID:                types.StringValue(restore.Id),
-			BackupID:          types.StringValue(restore.BackupId),
-			Status:            types.StringValue(string(restore.Status)),
-			CreatedAt:         types.StringValue(restore.CreatedAt.String()),
-			Type:              types.StringValue(string(restore.Type)),
-			CompletionPercent: types.Float32Value(restore.CompletionPercent),
-		})
+		summary := RestoreSummary{
+			ID:                     types.StringValue(restore.Id),
+			BackupID:               types.StringValue(restore.BackupId),
+			Status:                 types.StringValue(string(restore.Status)),
+			CreatedAt:              types.StringValue(restore.CreatedAt.String()),
+			Type:                   types.StringValue(string(restore.Type)),
+			CompletionPercent:      types.Float32Value(restore.CompletionPercent),
+			SourceClusterName:      types.StringValue(restore.SourceClusterName),
+			DestinationClusterName: types.StringValue(restore.DestinationClusterName),
+			BackupEndTime:          types.StringValue(restore.BackupEndTime.String()),
+		}
+
+		if restore.CompletedAt != nil && !restore.CompletedAt.IsZero() {
+			summary.CompletedAt = types.StringValue(restore.CompletedAt.String())
+		}
+		if restore.CrdbJobId != nil {
+			summary.CrdbJobID = types.StringValue(*restore.CrdbJobId)
+		}
+		if restore.ClientErrorCode != nil {
+			summary.ClientErrorCode = types.Int32Value(*restore.ClientErrorCode)
+		}
+		if restore.ClientErrorMessage != nil {
+			summary.ClientErrorMessage = types.StringValue(*restore.ClientErrorMessage)
+		}
+
+		summary.Objects = convertObjectsToTerraform(restore.Objects)
+		summary.RestoreOpts = convertRestoreOptsToTerraform(restore.RestoreOpts)
+
+		restores.Restores = append(restores.Restores, summary)
 	}
 
 	diags = resp.State.Set(ctx, restores)
@@ -162,4 +267,111 @@ func (d *restoresDataSource) Read(
 
 func NewRestoresDataSource() datasource.DataSource {
 	return &restoresDataSource{}
+}
+
+// makeRestoreItem creates a RestoreItem with proper null handling for tables.
+func makeRestoreItem(database string, schema string, tables []string) RestoreItem {
+	item := RestoreItem{
+		Database: types.StringValue(database),
+	}
+	if schema != "" {
+		item.Schema = types.StringValue(schema)
+	}
+
+	// Set Tables: use null for database-level restores, actual list for table-level restores
+	if len(tables) > 0 {
+		tableValues := make([]attr.Value, len(tables))
+		for i, table := range tables {
+			tableValues[i] = types.StringValue(table)
+		}
+		item.Tables, _ = types.ListValue(types.StringType, tableValues)
+	} else {
+		item.Tables = types.ListNull(types.StringType)
+	}
+
+	return item
+}
+
+// convertObjectsToTerraform converts API objects to Terraform RestoreItems.
+// API returns objects in lexicographically sorted order, so we group consecutive items
+// with the same database+schema to consolidate tables.
+//
+// Example:
+// Input (from API):
+//   [{Database: "db1", Schema: "public", Table: "orders"},
+//    {Database: "db1", Schema: "public", Table: "users"},
+//    {Database: "db2", Schema: "private", Table: "settings"}]
+// Output (to Terraform):
+//   [{Database: "db1", Schema: "public", Tables: ["orders", "users"]},
+//    {Database: "db2", Schema: "private", Tables: ["settings"]}]
+func convertObjectsToTerraform(objects *[]client.RestoreItem) []RestoreItem {
+	if objects == nil || len(*objects) == 0 {
+		return nil
+	}
+
+	var tfObjects []RestoreItem
+	var groupDB, groupSchema string
+	var groupTables []string
+
+	for i, obj := range *objects {
+		objSchema := ""
+		if obj.Schema != nil {
+			objSchema = *obj.Schema
+		}
+
+		// Check if this starts a new database+schema group
+		if i > 0 && (obj.Database != groupDB || objSchema != groupSchema) {
+			// Finalize the previous group
+			tfObjects = append(tfObjects, makeRestoreItem(groupDB, groupSchema, groupTables))
+			groupTables = nil
+		}
+
+		groupDB = obj.Database
+		groupSchema = objSchema
+
+		if obj.Table != nil {
+			groupTables = append(groupTables, *obj.Table)
+		}
+	}
+
+	// Add the last group to the list
+	tfObjects = append(tfObjects, makeRestoreItem(groupDB, groupSchema, groupTables))
+	return tfObjects
+}
+
+// convertRestoreOptsToTerraform converts API restore options to Terraform RestoreOpts.
+func convertRestoreOptsToTerraform(opts *client.RestoreOpts) *RestoreOpts {
+	if opts == nil {
+		return nil
+	}
+
+	result := &RestoreOpts{}
+	hasValue := false
+
+	setString := func(src *string, dest *types.String) {
+		if src != nil && *src != "" {
+			*dest = types.StringValue(*src)
+			hasValue = true
+		}
+	}
+
+	setBool := func(src *bool, dest *types.Bool) {
+		if src != nil && *src {
+			*dest = types.BoolValue(*src)
+			hasValue = true
+		}
+	}
+
+	setString(opts.NewDbName, &result.NewDBName)
+	setString(opts.IntoDb, &result.IntoDB)
+	setBool(opts.SkipLocalitiesCheck, &result.SkipLocalitiesCheck)
+	setBool(opts.SkipMissingForeignKeys, &result.SkipMissingForeignKeys)
+	setBool(opts.SkipMissingSequences, &result.SkipMissingSequences)
+	setBool(opts.SkipMissingViews, &result.SkipMissingViews)
+	setBool(opts.SchemaOnly, &result.SchemaOnly)
+
+	if !hasValue {
+		return nil
+	}
+	return result
 }

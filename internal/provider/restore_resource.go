@@ -433,11 +433,7 @@ func waitForRestoreReadyFunc(
 				return retry.RetryableError(errors.New("encountered a server error while reading restore status - trying again"))
 			}
 		}
-		restore.Status = res.Status
-		restore.CompletedAt = res.CompletedAt
-		restore.CrdbJobId = res.CrdbJobId
-		restore.ClientErrorCode = res.ClientErrorCode
-		restore.ClientErrorMessage = res.ClientErrorMessage
+		*restore = *res
 
 		switch status := restore.GetStatus(); status {
 		case client.RESTORESTATUSTYPE_PENDING:

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.17.0] - 2025-12-04
+
 ### Added
 - Added new fields to `restore` resource and `restores` data source: `backup_end_time`, 
 `client_error_code`, `client_error_message`, `completed_at`, `crdb_job_id`, 

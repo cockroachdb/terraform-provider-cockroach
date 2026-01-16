@@ -17,6 +17,8 @@
 package provider
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -27,6 +29,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAccCMEKResource attempts to create, check, and destroy
@@ -341,4 +344,77 @@ resource "cockroach_cmek" "test" {
 	]
 }
 `, name)
+}
+
+// TestRetryEnableCMEKSpec_Success tests that successful API calls return nil
+func TestRetryEnableCMEKSpec_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_client.NewMockService(ctrl)
+	clusterID := uuid.Nil.String()
+	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekObj := &client.CMEKClusterInfo{}
+	cluster := &client.Cluster{}
+
+	expectedResponse := &client.CMEKClusterInfo{}
+
+	s.EXPECT().EnableCMEKSpec(gomock.Any(), clusterID, cmekSpec).
+		Return(expectedResponse, &http.Response{StatusCode: http.StatusOK}, nil)
+
+	ctx := context.Background()
+	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, cmekSpec, cmekObj)
+	result := retryFunc()
+
+	require.Nil(t, result, "Expected nil for successful call")
+}
+
+// TestRetryEnableCMEKSpec_ServiceUnavailable tests that 503 errors trigger
+// cluster readiness check and retry.
+func TestRetryEnableCMEKSpec_ServiceUnavailable(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_client.NewMockService(ctrl)
+	clusterID := uuid.Nil.String()
+	cluster := &client.Cluster{State: client.CLUSTERSTATETYPE_CREATED}
+	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekObj := &client.CMEKClusterInfo{}
+
+	// First call returns 503, which should trigger a cluster check and retry
+	s.EXPECT().EnableCMEKSpec(gomock.Any(), clusterID, cmekSpec).
+		Return(nil, &http.Response{StatusCode: http.StatusServiceUnavailable}, errors.New("service unavailable"))
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&client.Cluster{Id: clusterID, State: client.CLUSTERSTATETYPE_CREATED}, nil, nil)
+
+	ctx := context.Background()
+	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, cmekSpec, cmekObj)
+	result := retryFunc()
+
+	require.NotNil(t, result, "Expected retryable error")
+	require.True(t, result.Retryable, "Expected retryable error for 503, got non-retryable: %v", result.Err)
+}
+
+// TestRetryEnableCMEKSpec_IAMRetryable tests that IAM-related errors (403)
+// trigger a retryable error on first occurrence.
+func TestRetryEnableCMEKSpec_IAMRetryable(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_client.NewMockService(ctrl)
+	clusterID := uuid.Nil.String()
+	cluster := &client.Cluster{State: client.CLUSTERSTATETYPE_CREATED}
+	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekObj := &client.CMEKClusterInfo{}
+
+	// Return 403 Forbidden, which indicates IAM permission not yet propagated
+	s.EXPECT().EnableCMEKSpec(gomock.Any(), clusterID, cmekSpec).
+		Return(nil, &http.Response{StatusCode: http.StatusForbidden}, errors.New("access denied"))
+
+	ctx := context.Background()
+	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, cmekSpec, cmekObj)
+	result := retryFunc()
+
+	require.NotNil(t, result, "Expected retryable error for IAM error")
+	require.True(t, result.Retryable, "Expected retryable error for 403, got non-retryable: %v", result.Err)
 }

@@ -168,17 +168,22 @@ func (r *cmekResource) Create(
 	}
 	cmekSpec.SetRegionSpecs(regionSpecs)
 
-	traceAPICall("EnableCMEKSpec")
-	cmekObj, _, err := r.provider.service.EnableCMEKSpec(ctx, plan.ID.ValueString(), cmekSpec)
+	clusterID := plan.ID.ValueString()
+	cmekObj := &client.CMEKClusterInfo{}
+	cluster := &client.Cluster{}
+
+	err := retry.RetryContext(ctx, clusterUpdateTimeout,
+		retryEnableCMEKSpec(ctx, r.provider.service, clusterID, cluster, cmekSpec, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling CMEK",
-			fmt.Sprintf("Could not enable CMEK: %v", formatAPIErrorMessage(err)),
+			fmt.Sprintf("Could not enable CMEK: %v", err.Error()),
 		)
 		return
 	}
+
 	err = retry.RetryContext(ctx, clusterUpdateTimeout,
-		waitForCMEKReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cmekObj))
+		waitForCMEKReadyFunc(ctx, clusterID, r.provider.service, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"CMEK enable failed",
@@ -437,6 +442,50 @@ func cmekRegionToClientSpec(region CMEKRegion) client.CMEKRegionSpecification {
 			Uri:           &uri,
 			AuthPrincipal: &authPrincipal,
 		},
+	}
+}
+
+func retryEnableCMEKSpec(
+	ctx context.Context,
+	cl client.Service,
+	clusterID string,
+	cluster *client.Cluster,
+	cmekSpec *client.CMEKClusterSpecification,
+	cmekObj *client.CMEKClusterInfo,
+) retry.RetryFunc {
+	iamHelper := newIAMRetryHelper()
+
+	return func() *retry.RetryError {
+		traceAPICall("EnableCMEKSpec")
+		apiResp, httpResp, err := cl.EnableCMEKSpec(ctx, clusterID, cmekSpec)
+		if err != nil {
+			apiErrMsg := formatAPIErrorMessage(err)
+
+			// Check for IAM eventual consistency errors
+			if isRetryable, iamErr := iamHelper.checkRetryableCloudError(httpResp, apiErrMsg); isRetryable {
+				return retry.RetryableError(fmt.Errorf("retrying: %s", apiErrMsg))
+			} else if iamErr != nil {
+				return retry.NonRetryableError(iamErr)
+			}
+
+			// Check for transient cluster errors (503)
+			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
+				// Wait for cluster to be ready.
+				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
+				if clusterErr != nil {
+					return retry.NonRetryableError(
+						fmt.Errorf("error checking cluster availability: %s", clusterErr.Error()))
+				}
+				return retry.RetryableError(fmt.Errorf("cluster was not ready - trying again"))
+			}
+
+			return retry.NonRetryableError(
+				fmt.Errorf("could not enable CMEK: %v", apiErrMsg),
+			)
+		}
+		*cmekObj = *apiResp
+		return nil
 	}
 }
 

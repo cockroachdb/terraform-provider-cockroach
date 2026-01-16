@@ -57,6 +57,10 @@ const (
 	clusterVersionPreview = "preview"
 )
 
+// iamPropagationTimeout is the max time to wait for IAM eventual consistency.
+// This is a var (not const) to allow testing with shorter timeouts.
+var iamPropagationTimeout = time.Minute * 10
+
 type clusterResource struct {
 	provider *provider
 }

@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Added retry logic for cloud provider IAM eventual consistency issues when enabling
+  CMEK and Log Export configurations. This fixes transient 400, 401, and 403 errors
+  that can occur when newly created IAM roles or permissions haven't fully propagated.
+
 ## [1.17.0] - 2025-12-04
 
 ### Added

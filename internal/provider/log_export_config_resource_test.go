@@ -31,6 +31,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"github.com/stretchr/testify/require"
 )
 
 // TestAccLogExportConfigResource attempts to create, check, and destroy
@@ -329,4 +330,60 @@ resource "cockroach_log_export_config" "test" {
   omitted_channels = ["SQL_SCHEMA"]
 }
 `, name)
+}
+
+// Note: IAM retry helper behavior (isRetryableCloudError, iamRetryHelper)
+// is tested in utils_test.go. The tests below verify log export-specific
+// retry logic integration.
+
+// TestRetryEnableLogExport_Success tests that successful API calls return nil
+func TestRetryEnableLogExport_Success(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_client.NewMockService(ctrl)
+	clusterID := uuid.Nil.String()
+	cluster := &client.Cluster{}
+	logExportRequest := client.NewEnableLogExportRequestWithDefaults()
+	apiLogExportObj := &client.LogExportClusterInfo{}
+
+	expectedResponse := &client.LogExportClusterInfo{
+		ClusterId: &clusterID,
+	}
+
+	s.EXPECT().EnableLogExport(gomock.Any(), clusterID, logExportRequest).
+		Return(expectedResponse, &http.Response{StatusCode: http.StatusOK}, nil)
+
+	ctx := context.Background()
+	retryFunc := retryEnableLogExport(ctx, iamPropagationTimeout, s, clusterID, cluster, logExportRequest, apiLogExportObj)
+	result := retryFunc()
+
+	require.Nil(t, result, "Expected nil for successful call")
+}
+
+// TestRetryEnableLogExport_ServiceUnavailable tests that 503 errors trigger
+// cluster readiness check and retry.
+func TestRetryEnableLogExport_ServiceUnavailable(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	s := mock_client.NewMockService(ctrl)
+	clusterID := uuid.Nil.String()
+	cluster := &client.Cluster{State: client.CLUSTERSTATETYPE_CREATED}
+	logExportRequest := client.NewEnableLogExportRequestWithDefaults()
+	apiLogExportObj := &client.LogExportClusterInfo{}
+
+	// First call returns 503, which should trigger a cluster check and retry
+	s.EXPECT().EnableLogExport(gomock.Any(), clusterID, logExportRequest).
+		Return(nil, &http.Response{StatusCode: http.StatusServiceUnavailable}, errors.New("service unavailable"))
+
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(cluster, &http.Response{StatusCode: http.StatusOK}, nil)
+
+	ctx := context.Background()
+	retryFunc := retryEnableLogExport(ctx, iamPropagationTimeout, s, clusterID, cluster, logExportRequest, apiLogExportObj)
+	result := retryFunc()
+
+	require.NotNil(t, result, "Expected retryable error")
+	require.True(t, result.Retryable, "Expected retryable error for 503, got non-retryable: %v", result.Err)
 }

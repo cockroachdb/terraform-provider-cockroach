@@ -250,11 +250,21 @@ func retryEnableLogExport(
 	logExportRequest *client.EnableLogExportRequest,
 	apiLogExportObj *client.LogExportClusterInfo,
 ) retry.RetryFunc {
+	iamHelper := newIAMRetryHelper()
+
 	return func() *retry.RetryError {
 		traceAPICall("EnableLogExport")
 		apiResp, httpResp, err := cl.EnableLogExport(ctx, clusterID, logExportRequest)
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
+
+			// Check for IAM eventual consistency errors
+			if isRetryable, iamErr := iamHelper.checkRetryableCloudError(httpResp, apiErrMsg); isRetryable {
+				return retry.RetryableError(fmt.Errorf("retrying: %s", apiErrMsg))
+			} else if iamErr != nil {
+				return retry.NonRetryableError(iamErr)
+			}
+
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.

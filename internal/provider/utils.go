@@ -96,6 +96,62 @@ func formatAPIErrorMessage(err error) string {
 	return err.Error()
 }
 
+// isRetryableCloudError checks if an HTTP response indicates a cloud provider
+// IAM/identity propagation issue that should be retried. Cloud provider IAM systems
+// (AWS IAM, GCP IAM) are eventually consistent, so newly created roles or permission
+// grants may not be immediately available for use by other services.
+//
+// The function checks for HTTP status codes that indicate authentication/authorization issues:
+//   - 400 Bad Request: The request is malformed (invalid argument - returned while enabling CMEK - Insufficient permissions to access the KMS key)
+//   - 401 Unauthorized: The identity is not authenticated (credentials may not be propagated yet)
+//   - 403 Forbidden: The identity lacks required permissions (role binding may not be propagated yet)
+//
+// References:
+//   - AWS IAM eventual consistency: https://docs.aws.amazon.com/IAM/latest/UserGuide/troubleshoot_general.html#troubleshoot_general_eventual-consistency
+//   - GCP IAM consistency: https://cloud.google.com/iam/docs/overview#consistency
+func isRetryableCloudError(httpResp *http.Response) bool {
+	if httpResp == nil {
+		return false
+	}
+	statusCode := httpResp.StatusCode
+	return statusCode == http.StatusUnauthorized ||
+		statusCode == http.StatusForbidden ||
+		statusCode == http.StatusBadRequest
+}
+
+// iamRetryHelper tracks IAM error timing and determines if retries should continue.
+// It provides bounded retries for IAM eventual consistency issues, failing fast
+// when errors persist beyond iamPropagationTimeout.
+type iamRetryHelper struct {
+	firstErrorTime *time.Time
+}
+
+// newIAMRetryHelper creates a new helper for tracking IAM retry timing.
+func newIAMRetryHelper() *iamRetryHelper {
+	return &iamRetryHelper{}
+}
+
+// checkRetryableCloudError checks if an HTTP response indicates a retryable cloud
+// IAM error and tracks timing. Returns:
+//   - (true, nil) if the error is retryable (within timeout)
+//   - (false, error) if the error has persisted beyond iamPropagationTimeout
+//   - (false, nil) if this is not a cloud IAM error
+func (h *iamRetryHelper) checkRetryableCloudError(httpResp *http.Response, apiErrMsg string) (bool, error) {
+	if !isRetryableCloudError(httpResp) {
+		return false, nil
+	}
+
+	now := time.Now()
+	if h.firstErrorTime == nil {
+		h.firstErrorTime = &now
+	} else if time.Since(*h.firstErrorTime) > iamPropagationTimeout {
+		return false, fmt.Errorf(
+			"cloud IAM error persisted for %v, likely a permanent permission issue: %s",
+			iamPropagationTimeout, apiErrMsg)
+	}
+	return true, nil
+}
+
 const uuidRegexString = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}"
 
 var uuidRegex = regexp.MustCompile(uuidRegexString)

@@ -15,10 +15,12 @@ import (
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	datasource_schema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	resource_schema "github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -421,4 +423,38 @@ func tablesRestoreItem(database string, schema string, tables []string) []client
 		restoreItems = append(restoreItems, client.RestoreItem{Database: database, Schema: ptr(schema), Table: ptr(table)})
 	}
 	return restoreItems
+}
+
+// int32ListToSlice converts a Terraform types.List of Int32 values to a Go []int32 slice.
+// Returns nil if the list is null or unknown.
+func int32ListToSlice(ctx context.Context, list types.List) ([]int32, diag.Diagnostics) {
+	if list.IsNull() || list.IsUnknown() {
+		return nil, nil
+	}
+
+	var tfInts []types.Int32
+	diags := list.ElementsAs(ctx, &tfInts, false)
+	if diags.HasError() {
+		return nil, diags
+	}
+
+	result := make([]int32, len(tfInts))
+	for i, v := range tfInts {
+		result[i] = v.ValueInt32()
+	}
+	return result, nil
+}
+
+// int32SliceToList converts a Go []int32 slice to a Terraform types.List of Int32 values.
+// Returns a null list if the input slice is nil or empty.
+func int32SliceToList(_ context.Context, slice []int32) (types.List, diag.Diagnostics) {
+	if len(slice) == 0 {
+		return types.ListNull(types.Int32Type), nil
+	}
+
+	portValues := make([]attr.Value, len(slice))
+	for i, p := range slice {
+		portValues[i] = types.Int32Value(p)
+	}
+	return types.ListValue(types.Int32Type, portValues)
 }

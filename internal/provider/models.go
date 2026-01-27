@@ -515,3 +515,16 @@ type BlackoutWindowList struct {
 	NextPage        types.String     `tfsdk:"next_page"`
 	BlackoutWindows []BlackoutWindow `tfsdk:"blackout_windows"`
 }
+
+type EgressRule struct {
+	ID          types.String `tfsdk:"id"`
+	ClusterID   types.String `tfsdk:"cluster_id"`
+	Name        types.String `tfsdk:"name"`
+	Description types.String `tfsdk:"description"`
+	Type        types.String `tfsdk:"type"`
+	Destination types.String `tfsdk:"destination"`
+	Ports       types.List   `tfsdk:"ports"`
+	State       types.String `tfsdk:"state"`
+	CrlManaged  types.Bool   `tfsdk:"crl_managed"`
+	CreatedAt   types.String `tfsdk:"created_at"`
+}

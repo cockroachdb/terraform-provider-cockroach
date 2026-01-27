@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added new `cockroach_egress_rule` resource for managing egress perimeter controls
+  on CockroachDB Cloud Advanced clusters. This allows restricting outbound traffic
+  to a defined set of external destinations using FQDN or CIDR rules with optional
+  port restrictions.
+
 ### Fixed
 
 - Added retry logic for cloud provider IAM eventual consistency issues when enabling

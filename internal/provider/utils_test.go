@@ -17,10 +17,12 @@
 package provider
 
 import (
+	"context"
 	"net/http"
 	"testing"
 	"time"
 
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -118,5 +120,64 @@ func TestIAMRetryHelper_CheckRetryableCloudError(t *testing.T) {
 			"Expected error message to mention cloud IAM error persisted")
 		require.Contains(t, err2.Error(), "permanent permission issue",
 			"Expected error message to mention permanent permission issue")
+	})
+}
+
+// TestInt32ListToSlice tests the int32ListToSlice utility function.
+func TestInt32ListToSlice(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("converts list with values", func(t *testing.T) {
+		// Create a types.List with Int32 values
+		listValue, diags := types.ListValueFrom(ctx, types.Int32Type, []types.Int32{
+			types.Int32Value(443),
+			types.Int32Value(8080),
+			types.Int32Value(9000),
+		})
+		require.False(t, diags.HasError(), "Failed to create list value")
+
+		result, resultDiags := int32ListToSlice(ctx, listValue)
+		require.False(t, resultDiags.HasError(), "int32ListToSlice returned errors")
+		require.Equal(t, []int32{443, 8080, 9000}, result)
+	})
+
+	t.Run("handles empty list", func(t *testing.T) {
+		emptyList, diags := types.ListValueFrom(ctx, types.Int32Type, []types.Int32{})
+		require.False(t, diags.HasError(), "Failed to create empty list")
+
+		result, resultDiags := int32ListToSlice(ctx, emptyList)
+		require.False(t, resultDiags.HasError(), "int32ListToSlice returned errors")
+		require.Equal(t, []int32{}, result)
+	})
+}
+
+// TestInt32SliceToList tests the int32SliceToList utility function.
+func TestInt32SliceToList(t *testing.T) {
+	ctx := context.Background()
+
+	t.Run("converts slice with values", func(t *testing.T) {
+		input := []int32{443, 8080, 9000}
+
+		result, diags := int32SliceToList(ctx, input)
+		require.False(t, diags.HasError(), "int32SliceToList returned errors")
+		require.False(t, result.IsNull(), "Expected non-null list")
+		require.False(t, result.IsUnknown(), "Expected known list")
+
+		// Verify the values by converting back
+		var elements []types.Int32
+		diags = result.ElementsAs(ctx, &elements, false)
+		require.False(t, diags.HasError(), "Failed to extract elements")
+		require.Len(t, elements, 3)
+		require.Equal(t, int32(443), elements[0].ValueInt32())
+		require.Equal(t, int32(8080), elements[1].ValueInt32())
+		require.Equal(t, int32(9000), elements[2].ValueInt32())
+	})
+
+	t.Run("returns null list for empty slice", func(t *testing.T) {
+		input := []int32{}
+
+		result, diags := int32SliceToList(ctx, input)
+		require.False(t, diags.HasError(), "int32SliceToList returned errors")
+		require.True(t, result.IsNull(), "Expected null list for empty input")
 	})
 }

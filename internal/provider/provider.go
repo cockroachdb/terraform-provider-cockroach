@@ -157,6 +157,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewEgressPrivateEndpointDomainNamesResource,
 		NewBlackoutWindowResource,
 		NewEgressPerimeterResource,
+		NewEgressTrafficPolicyResource,
 	}
 }
 

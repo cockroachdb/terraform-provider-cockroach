@@ -528,3 +528,8 @@ type EgressRule struct {
 	CrlManaged  types.Bool   `tfsdk:"crl_managed"`
 	CreatedAt   types.String `tfsdk:"created_at"`
 }
+
+type EgressTrafficPolicy struct {
+	ID       types.String `tfsdk:"id"`
+	AllowAll types.Bool   `tfsdk:"allow_all"`
+}

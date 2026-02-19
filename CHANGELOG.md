@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added new `cockroach_egress_traffic_policy` resource for managing the egress
+  traffic policy on CockroachDB Cloud Advanced clusters. This allows explicitly
+  setting the cluster's outbound traffic policy to allow all or deny by default.
+
 - Added new `cockroach_egress_rule` resource for managing egress perimeter controls
   on CockroachDB Cloud Advanced clusters. This allows restricting outbound traffic
   to a defined set of external destinations using FQDN or CIDR rules with optional

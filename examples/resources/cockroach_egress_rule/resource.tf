@@ -1,3 +1,8 @@
+# Egress rules only take effect when the cluster's egress traffic policy is set
+# to deny-by-default. When you create egress rules, the policy is automatically
+# set to deny-by-default. Use cockroach_egress_traffic_policy to explicitly
+# manage the policy state.
+
 # Example: Allow egress to a specific FQDN on HTTPS port
 resource "cockroach_egress_rule" "my_egress_rule" {
   cluster_id  = cockroach_cluster.my_cluster.id

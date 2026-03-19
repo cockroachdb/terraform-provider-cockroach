@@ -161,7 +161,7 @@ func (d *clusterDataSource) Schema(
 					},
 					"disk_iops": schema.Int64Attribute{
 						Computed:    true,
-						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.",
+						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. This value reflects the actual provisioned IOPS, which may differ from the value specified during cluster creation or update. A value of zero indicates the cloud provider-specific default.",
 					},
 					"private_network_visibility": schema.BoolAttribute{
 						Computed:    true,

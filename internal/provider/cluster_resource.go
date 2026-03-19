@@ -284,7 +284,7 @@ func (r *clusterResource) Schema(
 							// returned but it causes a provider inconsistency.
 							int64validator.AtLeast(1),
 						},
-						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Omitting this attribute will result in the cloud provider-specific default.",
+						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Only configurable for AWS clusters during creation. For GCP and Azure clusters, this value is ignored and the cloud provider default is used. Omit this attribute to use the server-side default based on machine type and storage size. The provisioned value may differ from the requested value.",
 					},
 					"memory_gib": schema.Float64Attribute{
 						Computed:    true,

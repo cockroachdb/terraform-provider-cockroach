@@ -298,6 +298,9 @@ func (r *clusterResource) Schema(
 						Optional:            true,
 						Computed:            true,
 						MarkdownDescription: "Machine type identifier within the given cloud provider, e.g., m6.xlarge, n2-standard-4. This attribute requires a feature flag to be enabled. It is recommended to leave this empty and use `num_virtual_cpus` to control the machine type.",
+						PlanModifiers: []planmodifier.String{
+							SuppressMachineTypeDrift(),
+						},
 					},
 					"num_virtual_cpus": schema.Int64Attribute{
 						Optional:    true,
@@ -1418,6 +1421,8 @@ func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 // if available, is used to determine the sort order of the cluster's regions, as well as
 // special formatting of certain attribute values (e.g. "preview" for `cockroach_version`).
 // When reading a datasource or importing a resource, `plan` will be nil.
+// For Read calls, the previous state is passed as `plan` so that machine_type
+// drift can be detected and suppressed when the vCPU count is unchanged.
 func loadClusterToTerraformState(
 	ctx context.Context,
 	clusterObj *client.Cluster,
@@ -1530,6 +1535,35 @@ func loadClusterToTerraformState(
 			// plan, then we add it to the state. If it was null, we keep it
 			// as null.
 			state.DedicatedConfig.SupportsClusterVirtualization = plan.DedicatedConfig.SupportsClusterVirtualization
+
+			// If the plan (or previous state during Read) had a
+			// machine_type that differs from the API response but has
+			// the same vCPU count (e.g., m6i→m7g), preserve
+			// the previous value. A warning is emitted so users know
+			// the server converted the type.
+			if IsKnown(plan.DedicatedConfig.MachineType) {
+				planMT := plan.DedicatedConfig.MachineType.ValueString()
+				apiMT := clusterObj.Config.Dedicated.MachineType
+				if planMT != apiMT {
+					planVCPUs, planOk := extractVCPUCount(clusterObj.CloudProvider, planMT)
+					apiVCPUs, apiOk := extractVCPUCount(clusterObj.CloudProvider, apiMT)
+					if planOk && apiOk && planVCPUs == apiVCPUs {
+						state.DedicatedConfig.MachineType = plan.DedicatedConfig.MachineType
+						allDiags.AddWarning(
+							"Machine type converted by server",
+							fmt.Sprintf(
+								"The server is running machine_type %q instead of %q "+
+									"(same vCPU count: %d). Update your configuration "+
+									"to use %q to remove this warning.",
+								apiMT, planMT, planVCPUs, apiMT,
+							),
+						)
+					}
+					// If either machine type couldn't be parsed, fall through
+					// and let the API value remain in state. This ensures
+					// unrecognized formats surface as normal Terraform drift.
+				}
+			}
 		}
 	}
 

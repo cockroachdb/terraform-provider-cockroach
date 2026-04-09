@@ -1994,6 +1994,224 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	testDedicatedClusterResource(t, clusterName, true, scaleStep)
 }
 
+// TestIntegrationDedicatedClusterMachineTypeMigration validates that when the
+// server converts instance families with the same vCPU count, the provider
+// preserves the user's configured value in state rather than showing drift.
+func TestIntegrationDedicatedClusterMachineTypeMigration(t *testing.T) {
+	// The API returns a different instance family than what the user configured.
+	migratedCluster := client.Cluster{
+		Id:               uuid.Nil.String(),
+		Name:             "test-cluster",
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				MachineType:    "m7g.xlarge",
+				NumVirtualCpus: 4,
+				StorageGib:     15,
+				MemoryGib:      8,
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name:      "us-east-1",
+				NodeCount: 1,
+			},
+		},
+	}
+
+	t.Run("drift suppressed when vCPU count matches", func(t *testing.T) {
+		clusterName := fmt.Sprintf("%s-dedicated-mt-%s", tfTestPrefix, GenerateRandomString(3))
+		clusterID := migratedCluster.Id
+		migratedCluster.Name = clusterName
+		if os.Getenv(CockroachAPIKey) == "" {
+			os.Setenv(CockroachAPIKey, "fake")
+		}
+
+		ctrl := gomock.NewController(t)
+		s := mock_client.NewMockService(ctrl)
+		defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+			return s
+		})()
+
+		const resourceName = "cockroach_cluster.test"
+
+		s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+			Return(&migratedCluster, nil, nil)
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+			Return(initialBackupConfig, httpOk, nil).AnyTimes()
+		s.EXPECT().GetCluster(gomock.Any(), clusterID).
+			Return(&migratedCluster, httpOk, nil).AnyTimes()
+		s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
+			Return(&migratedCluster, httpOk, nil)
+
+		// Deletion
+		s.EXPECT().DeleteCluster(gomock.Any(), clusterID).
+			Return(nil, httpOk, nil)
+
+		configWithMachineType := func(machineType string) string {
+			return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "AWS"
+    cockroach_version = "%s"
+    dedicated = {
+        machine_type = "%s"
+        storage_gib  = 15
+    }
+    regions = [{
+        name       = "us-east-1"
+        node_count = 1
+    }]
+}
+`, clusterName, minSupportedClusterMajorVersion, machineType)
+		}
+
+		resource.Test(t, resource.TestCase{
+			IsUnitTest:               true,
+			PreCheck:                 func() { testAccPreCheck(t) },
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+			Steps: []resource.TestStep{
+				{
+					PreConfig: func() {
+						traceMessageStep("create with m6i.xlarge, server returns m7g.xlarge")
+					},
+					Config: configWithMachineType("m6i.xlarge"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "dedicated.machine_type", "m6i.xlarge"),
+						resource.TestCheckResourceAttr(resourceName, "dedicated.num_virtual_cpus", "4"),
+					),
+				},
+				{
+					PreConfig: func() {
+						traceMessageStep("re-apply same config, no changes expected")
+					},
+					Config: configWithMachineType("m6i.xlarge"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "dedicated.machine_type", "m6i.xlarge"),
+					),
+				},
+				{
+					PreConfig: func() {
+						traceMessageStep("user updates config to m7g.xlarge")
+					},
+					Config: configWithMachineType("m7g.xlarge"),
+					Check: resource.ComposeTestCheckFunc(
+						resource.TestCheckResourceAttr(resourceName, "dedicated.machine_type", "m7g.xlarge"),
+						resource.TestCheckResourceAttr(resourceName, "dedicated.num_virtual_cpus", "4"),
+					),
+				},
+			},
+		})
+
+		// Verify the warning diagnostic directly. The terraform test framework
+		// doesn't expose warnings, so we call loadClusterToTerraformState
+		// to check the content.
+		ctx := context.Background()
+		plan := &CockroachCluster{
+			DedicatedConfig: &DedicatedClusterConfig{
+				MachineType: types.StringValue("m6i.xlarge"),
+			},
+		}
+		var state CockroachCluster
+		diags := loadClusterToTerraformState(ctx, &migratedCluster, nil, &state, plan)
+
+		require.False(t, diags.HasError(), "expected no errors, got: %v", diags.Errors())
+		require.True(t, diags.WarningsCount() > 0, "expected a warning diagnostic for machine type drift")
+
+		found := false
+		for _, d := range diags {
+			if d.Summary() == "Machine type converted by server" {
+				found = true
+				require.Contains(t, d.Detail(), "m7g.xlarge")
+				require.Contains(t, d.Detail(), "m6i.xlarge")
+				require.Contains(t, d.Detail(), "same vCPU count: 4")
+				break
+			}
+		}
+		require.True(t, found, "expected warning with summary 'Machine type converted by server'")
+		require.Equal(t, "m6i.xlarge", state.DedicatedConfig.MachineType.ValueString())
+	})
+
+	t.Run("drift not suppressed when vCPU counts differ", func(t *testing.T) {
+		clusterName := fmt.Sprintf("%s-dedicated-mt-err-%s", tfTestPrefix, GenerateRandomString(3))
+		clusterID := migratedCluster.Id
+		if os.Getenv(CockroachAPIKey) == "" {
+			os.Setenv(CockroachAPIKey, "fake")
+		}
+
+		ctrl := gomock.NewController(t)
+		s := mock_client.NewMockService(ctrl)
+		defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+			return s
+		})()
+
+		// Server returns a different vCPU count than configured.
+		differentVCPUCluster := client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: minSupportedClusterPatchVersion,
+			Plan:             client.PLANTYPE_ADVANCED,
+			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			Config: client.ClusterConfig{
+				Dedicated: &client.DedicatedHardwareConfig{
+					MachineType:    "m7g.2xlarge",
+					NumVirtualCpus: 8,
+					StorageGib:     15,
+					MemoryGib:      16,
+				},
+			},
+			Regions: []client.Region{
+				{
+					Name:      "us-east-1",
+					NodeCount: 1,
+				},
+			},
+		}
+
+		s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+			Return(&differentVCPUCluster, nil, nil)
+		s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+			Return(initialBackupConfig, httpOk, nil).AnyTimes()
+		s.EXPECT().GetCluster(gomock.Any(), clusterID).
+			Return(&differentVCPUCluster, httpOk, nil).AnyTimes()
+		s.EXPECT().DeleteCluster(gomock.Any(), clusterID).
+			Return(nil, httpOk, nil)
+
+		resource.Test(t, resource.TestCase{
+			IsUnitTest:               true,
+			PreCheck:                 func() { testAccPreCheck(t) },
+			ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+			Steps: []resource.TestStep{
+				{
+					PreConfig: func() {
+						traceMessageStep("create with m6i.xlarge, server returns m7g.2xlarge (different vCPUs)")
+					},
+					Config: fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "AWS"
+    cockroach_version = "%s"
+    dedicated = {
+        machine_type = "m6i.xlarge"
+        storage_gib  = 15
+    }
+    regions = [{
+        name       = "us-east-1"
+        node_count = 1
+    }]
+}
+`, clusterName, minSupportedClusterMajorVersion),
+					ExpectError: regexp.MustCompile(`Provider produced inconsistent result after apply`),
+				},
+			},
+		})
+	})
+}
+
 // TestAccDedicatedAWSClusterS3VpcEndpointId is an acceptance test that creates
 // a real AWS Advanced cluster and verifies that s3_vpc_endpoint_id is populated.
 func TestAccDedicatedAWSClusterS3VpcEndpointId(t *testing.T) {

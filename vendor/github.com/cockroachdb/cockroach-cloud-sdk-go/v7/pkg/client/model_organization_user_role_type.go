@@ -36,6 +36,9 @@ const (
 	ORGANIZATIONUSERROLETYPE_CLUSTER_CREATOR         OrganizationUserRoleType = "CLUSTER_CREATOR"
 	ORGANIZATIONUSERROLETYPE_FOLDER_ADMIN            OrganizationUserRoleType = "FOLDER_ADMIN"
 	ORGANIZATIONUSERROLETYPE_FOLDER_MOVER            OrganizationUserRoleType = "FOLDER_MOVER"
+	ORGANIZATIONUSERROLETYPE_METRICS_VIEWER          OrganizationUserRoleType = "METRICS_VIEWER"
+	ORGANIZATIONUSERROLETYPE_CLUSTER_MONITOR         OrganizationUserRoleType = "CLUSTER_MONITOR"
+	ORGANIZATIONUSERROLETYPE_BILLING_VIEWER          OrganizationUserRoleType = "BILLING_VIEWER"
 )
 
 // All allowed values of OrganizationUserRoleType enum.
@@ -49,6 +52,9 @@ var AllowedOrganizationUserRoleTypeEnumValues = []OrganizationUserRoleType{
 	"CLUSTER_CREATOR",
 	"FOLDER_ADMIN",
 	"FOLDER_MOVER",
+	"METRICS_VIEWER",
+	"CLUSTER_MONITOR",
+	"BILLING_VIEWER",
 }
 
 // NewOrganizationUserRoleTypeFromValue returns a pointer to a valid OrganizationUserRoleType

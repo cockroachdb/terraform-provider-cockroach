@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Updated cockroach-cloud-sdk-go from v6 to v7.1.0.
+
 ## [1.18.0] - 2026-03-20
 
 ### Added

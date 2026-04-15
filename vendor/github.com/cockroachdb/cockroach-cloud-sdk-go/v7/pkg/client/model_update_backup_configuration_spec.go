@@ -22,7 +22,7 @@ package client
 type UpdateBackupConfigurationSpec struct {
 	// Indicates whether backups are enabled.
 	Enabled *bool `json:"enabled,omitempty"`
-	// How frequently in minutes that backups are taken, which will determine the [RPO](https://www.cockroachlabs.com/docs/stable/disaster-recovery-overview#resilience-strategy) of the cluster.  Valid values are [5, 10, 15, 30, 60, 240, 1440].
+	// How frequently in minutes that backups are taken, which will determine the [RPO](https://www.cockroachlabs.com/docs/stable/disaster-recovery-overview) of the cluster.  Valid values are [5, 10, 15, 30, 60, 240, 1440].
 	FrequencyMinutes *int32 `json:"frequency_minutes,omitempty"`
 	// The number of days to retain backups for. Can only be set once, further changes require opening a support ticket. Valid values are [2, 7, 30, 90, 365].
 	RetentionDays *int32 `json:"retention_days,omitempty"`

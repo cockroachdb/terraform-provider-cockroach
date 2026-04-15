@@ -20,7 +20,7 @@ package client
 
 // DedicatedHardwareCreateSpecification struct for DedicatedHardwareCreateSpecification.
 type DedicatedHardwareCreateSpecification struct {
-	// disk_iops is the number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default. Only available for AWS clusters.
+	// disk_iops is the number of disk I/O operations per second that are permitted on each node in an AWS cluster. Set to zero or omit this field to use the cloud provider-specific default based on machine type and storage size. The value returned in the response may differ from the requested value. For GCP and Azure clusters, this value is ignored and the cloud provider default is used.
 	DiskIops    *int32                            `json:"disk_iops,omitempty"`
 	MachineSpec DedicatedMachineTypeSpecification `json:"machine_spec"`
 	// storage_gib is the number of storage GiB per node in the cluster. Zero indicates default to the lowest storage GiB available given machine specs.

@@ -113,6 +113,10 @@ var regionSchema = schema.NestedAttributeObject{
 			Computed:    true,
 			Description: "Set to true to mark this region as the primary for a serverless cluster. Exactly one region must be primary. Dedicated clusters expect to have no primary region.",
 		},
+		"s3_vpc_endpoint_id": schema.StringAttribute{
+			Computed:    true,
+			Description: "The ID of the AWS S3 VPC gateway endpoint for this region. Used to configure S3 bucket policies that restrict access to traffic from this VPC endpoint. Only populated for Advanced clusters on AWS.",
+		},
 	},
 }
 
@@ -1615,6 +1619,7 @@ func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
 				PrivateEndpointDns: types.StringValue(x.PrivateEndpointDns),
 				NodeCount:          types.Int64Value(int64(x.NodeCount)),
 				Primary:            types.BoolValue(x.GetPrimary()),
+				S3VpcEndpointId:    types.StringValue(x.GetS3VpcEndpointId()),
 			}
 			regions = append(regions, rg)
 		}

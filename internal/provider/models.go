@@ -39,6 +39,7 @@ type Region struct {
 	PrivateEndpointDns types.String `tfsdk:"private_endpoint_dns"`
 	NodeCount          types.Int64  `tfsdk:"node_count"`
 	Primary            types.Bool   `tfsdk:"primary"`
+	S3VpcEndpointId    types.String `tfsdk:"s3_vpc_endpoint_id"`
 }
 
 type DedicatedClusterConfig struct {

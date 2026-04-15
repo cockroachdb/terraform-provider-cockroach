@@ -209,6 +209,10 @@ func (d *clusterDataSource) Schema(
 							Computed:    true,
 							Description: "Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.",
 						},
+						"s3_vpc_endpoint_id": schema.StringAttribute{
+							Computed:    true,
+							Description: "The ID of the AWS S3 VPC gateway endpoint for this region. Used to configure S3 bucket policies that restrict access to traffic from this VPC endpoint. Only populated for Advanced clusters on AWS.",
+						},
 					},
 				},
 			},

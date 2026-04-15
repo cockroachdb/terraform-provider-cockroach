@@ -22,7 +22,7 @@ package client
 type BackupConfiguration struct {
 	// Indicates whether backups are enabled.
 	Enabled bool `json:"enabled"`
-	// How frequently in minutes that backups are taken, which will determine the [RPO](https://www.cockroachlabs.com/docs/stable/disaster-recovery-overview#resilience-strategy) of the cluster.
+	// How frequently in minutes that backups are taken, which will determine the [RPO](https://www.cockroachlabs.com/docs/stable/disaster-recovery-overview) of the cluster.
 	FrequencyMinutes int32 `json:"frequency_minutes"`
 	// The number of days backups are retained for.
 	RetentionDays int32 `json:"retention_days"`

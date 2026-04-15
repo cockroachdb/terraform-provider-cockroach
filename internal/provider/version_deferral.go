@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -188,7 +188,7 @@ func NewVersionDeferralResource() resource.Resource {
 func (r *versionDeferralResource) setVersionDeferral(
 	ctx context.Context, state *tfsdk.State, diags *diag.Diagnostics, versionDeferral ClusterVersionDeferral,
 ) {
-	clientVersionDeferral := client.NewClusterVersionDeferralWithDefaults()
+	clientVersionDeferral := client.NewClusterVersionDeferralUpdateWithDefaults()
 	clientVersionDeferral.DeferralPolicy = client.ClusterVersionDeferralPolicyType(versionDeferral.DeferralPolicy.ValueString())
 	traceAPICall("SetClusterVersionDeferral")
 	serverVersionDeferral, _, err := r.provider.service.SetClusterVersionDeferral(ctx, versionDeferral.ID.ValueString(), clientVersionDeferral)

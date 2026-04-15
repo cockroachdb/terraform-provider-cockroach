@@ -446,7 +446,7 @@ type Service interface {
 	// Get the version upgrade deferral policy for a cluster.
 	GetClusterVersionDeferral(ctx _context.Context, clusterId string) (*ClusterVersionDeferral, *_nethttp.Response, error)
 	// Set the version upgrade deferral policy for a cluster
-	SetClusterVersionDeferral(ctx _context.Context, clusterId string, clusterVersionDeferral *ClusterVersionDeferral) (*ClusterVersionDeferral, *_nethttp.Response, error)
+	SetClusterVersionDeferral(ctx _context.Context, clusterId string, clusterVersionDeferralUpdate *ClusterVersionDeferralUpdate) (*ClusterVersionDeferral, *_nethttp.Response, error)
 }
 
 // Service for the Cockroach DB Cloud API
@@ -2333,6 +2333,12 @@ func (a *ServiceImpl) GetInvoice(
 type ListInvoicesOptions struct {
 	// Filters the response to only include invoices with the specified status. This will be sent as a query parameter on the GET request. If not specified, both Finalized and Draft invoices will be included.
 	Status *string
+
+	// start_time filters the response to invoices whose billing period started at or after this time (inclusive). Defaults to organization creation time if omitted.
+	StartTime *time.Time
+
+	// end_time filters the response to invoices whose billing period ended at or before this time (exclusive). Defaults to current time if omitted.
+	EndTime *time.Time
 }
 
 // ListInvoices executes the request.
@@ -2357,6 +2363,12 @@ func (a *ServiceImpl) ListInvoices(
 
 	if options.Status != nil {
 		localVarQueryParams.Add("status", parameterToString(*options.Status, ""))
+	}
+	if options.StartTime != nil {
+		localVarQueryParams.Add("start_time", parameterToString(*options.StartTime, ""))
+	}
+	if options.EndTime != nil {
+		localVarQueryParams.Add("end_time", parameterToString(*options.EndTime, ""))
 	}
 	// Determine the Content-Type header.
 	localVarHTTPContentTypes := []string{}
@@ -4884,6 +4896,9 @@ type ListClustersOptions struct {
 
 	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
 	PaginationSortOrder *string
+
+	//  - NAME: Sort by cluster name. This is the default unless otherwise specified.  - CREATED_AT: Sort by cluster created_at.  - DELETED_AT: Sort by cluster deleted_at. Active clusters will be sorted by created_at.
+	PaginationSortBy *string
 }
 
 // ListClusters executes the request.
@@ -4920,6 +4935,9 @@ func (a *ServiceImpl) ListClusters(
 	}
 	if options.PaginationSortOrder != nil {
 		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	if options.PaginationSortBy != nil {
+		localVarQueryParams.Add("pagination.sort_by", parameterToString(*options.PaginationSortBy, ""))
 	}
 	// Determine the Content-Type header.
 	localVarHTTPContentTypes := []string{}
@@ -20446,7 +20464,7 @@ func (a *ServiceImpl) GetClusterVersionDeferral(
 
 // SetClusterVersionDeferral executes the request.
 func (a *ServiceImpl) SetClusterVersionDeferral(
-	ctx _context.Context, clusterId string, clusterVersionDeferral *ClusterVersionDeferral,
+	ctx _context.Context, clusterId string, clusterVersionDeferralUpdate *ClusterVersionDeferralUpdate,
 ) (*ClusterVersionDeferral, *_nethttp.Response, error) {
 	var (
 		localVarHTTPMethod   = _nethttp.MethodPut
@@ -20464,8 +20482,8 @@ func (a *ServiceImpl) SetClusterVersionDeferral(
 	localVarHeaderParams := make(map[string]string)
 	localVarQueryParams := _neturl.Values{}
 	localVarFormParams := _neturl.Values{}
-	if clusterVersionDeferral == nil {
-		return nil, nil, reportError("clusterVersionDeferral is required and must be specified")
+	if clusterVersionDeferralUpdate == nil {
+		return nil, nil, reportError("clusterVersionDeferralUpdate is required and must be specified")
 	}
 
 	// Determine the Content-Type header.
@@ -20486,7 +20504,7 @@ func (a *ServiceImpl) SetClusterVersionDeferral(
 		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
 	}
 	// Body params.
-	localVarPostBody = clusterVersionDeferral
+	localVarPostBody = clusterVersionDeferralUpdate
 	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
 	if err != nil {
 		return nil, nil, err

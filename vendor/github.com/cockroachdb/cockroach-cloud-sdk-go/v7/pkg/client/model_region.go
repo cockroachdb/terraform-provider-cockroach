@@ -29,6 +29,8 @@ type Region struct {
 	Primary *bool `json:"primary,omitempty"`
 	// private_endpoint_dns is the DNS name of the cluster which is used to connect to the cluster with GCP Private Service Connect.
 	PrivateEndpointDns string `json:"private_endpoint_dns"`
+	// Preview: s3_vpc_endpoint_id is the ID of the AWS S3 VPC gateway endpoint associated with this cluster region. This can be used to configure S3 bucket policies that restrict access to traffic from this VPC endpoint. Only populated for Advanced clusters on AWS.
+	S3VpcEndpointId *string `json:"s3_vpc_endpoint_id,omitempty"`
 	// sql_dns is the DNS name of SQL interface of the cluster. It is used to connect to the cluster with IP allowlisting.
 	SqlDns string `json:"sql_dns"`
 	// ui_dns is the DNS name used when connecting to the DB Console for the cluster.
@@ -130,6 +132,20 @@ func (o *Region) GetPrivateEndpointDns() string {
 // SetPrivateEndpointDns sets field value.
 func (o *Region) SetPrivateEndpointDns(v string) {
 	o.PrivateEndpointDns = v
+}
+
+// GetS3VpcEndpointId returns the S3VpcEndpointId field value if set, zero value otherwise.
+func (o *Region) GetS3VpcEndpointId() string {
+	if o == nil || o.S3VpcEndpointId == nil {
+		var ret string
+		return ret
+	}
+	return *o.S3VpcEndpointId
+}
+
+// SetS3VpcEndpointId gets a reference to the given string and assigns it to the S3VpcEndpointId field.
+func (o *Region) SetS3VpcEndpointId(v string) {
+	o.S3VpcEndpointId = &v
 }
 
 // GetSqlDns returns the SqlDns field value.

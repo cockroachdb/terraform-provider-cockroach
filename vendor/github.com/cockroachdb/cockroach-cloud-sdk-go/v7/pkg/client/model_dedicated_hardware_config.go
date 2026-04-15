@@ -20,7 +20,7 @@ package client
 
 // DedicatedHardwareConfig struct for DedicatedHardwareConfig.
 type DedicatedHardwareConfig struct {
-	// disk_iops is the number of disk I/O operations per second that are permitted on each node in the cluster. Zero indicates the cloud provider-specific default.
+	// disk_iops is the number of disk I/O operations per second that are permitted on each node in the cluster. This value reflects the actual provisioned IOPS, which may differ from the value specified during cluster creation or update. Only AWS clusters support user-specified IOPS; for GCP and Azure clusters, IOPS is determined by the cloud provider based on disk size. A value of zero indicates the cloud provider-specific default.
 	DiskIops int32 `json:"disk_iops"`
 	// machine_type is the machine type identifier within the given cloud provider, ex. m5.xlarge, n2-standard-4.
 	MachineType string `json:"machine_type"`

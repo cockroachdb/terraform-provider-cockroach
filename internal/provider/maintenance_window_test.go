@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"

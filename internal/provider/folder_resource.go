@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework/diag"

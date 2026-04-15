@@ -24,10 +24,11 @@ import (
 
 // Organization struct for Organization.
 type Organization struct {
-	CreatedAt time.Time `json:"created_at"`
-	Id        string    `json:"id"`
-	Label     string    `json:"label"`
-	Name      string    `json:"name"`
+	CockroachCloudServicePrincipals *CockroachCloudServicePrincipals `json:"cockroach_cloud_service_principals,omitempty"`
+	CreatedAt                       time.Time                        `json:"created_at"`
+	Id                              string                           `json:"id"`
+	Label                           string                           `json:"label"`
+	Name                            string                           `json:"name"`
 }
 
 // NewOrganization instantiates a new Organization object.
@@ -49,6 +50,20 @@ func NewOrganization(createdAt time.Time, id string, label string, name string) 
 func NewOrganizationWithDefaults() *Organization {
 	p := Organization{}
 	return &p
+}
+
+// GetCockroachCloudServicePrincipals returns the CockroachCloudServicePrincipals field value if set, zero value otherwise.
+func (o *Organization) GetCockroachCloudServicePrincipals() CockroachCloudServicePrincipals {
+	if o == nil || o.CockroachCloudServicePrincipals == nil {
+		var ret CockroachCloudServicePrincipals
+		return ret
+	}
+	return *o.CockroachCloudServicePrincipals
+}
+
+// SetCockroachCloudServicePrincipals gets a reference to the given CockroachCloudServicePrincipals and assigns it to the CockroachCloudServicePrincipals field.
+func (o *Organization) SetCockroachCloudServicePrincipals(v CockroachCloudServicePrincipals) {
+	o.CockroachCloudServicePrincipals = &v
 }
 
 // GetCreatedAt returns the CreatedAt field value.

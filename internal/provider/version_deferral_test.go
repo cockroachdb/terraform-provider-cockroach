@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v6/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -80,7 +80,7 @@ func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clust
 	// Set up policy transitions using InOrder to ensure sequential execution
 	var calls []*gomock.Call
 	for i := 0; i < len(policies); i++ {
-		currentPolicy := &client.ClusterVersionDeferral{
+		currentPolicy := &client.ClusterVersionDeferralUpdate{
 			DeferralPolicy: policyTypeMap[policies[i]],
 		}
 		currentPolicyPostApply := &client.ClusterVersionDeferral{
@@ -106,11 +106,14 @@ func setupMockExpectationsForPolicyTransitions(s *mock_client.MockService, clust
 
 	// Delete expectations
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Times(1)
-	lastPolicy := &client.ClusterVersionDeferral{
+	lastPolicyReq := &client.ClusterVersionDeferralUpdate{
 		DeferralPolicy: policyTypeMap[policies[len(policies)-1]],
 	}
-	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, lastPolicy).
-		Return(lastPolicy, nil, nil).
+	lastPolicyResp := &client.ClusterVersionDeferral{
+		DeferralPolicy: policyTypeMap[policies[len(policies)-1]],
+	}
+	s.EXPECT().SetClusterVersionDeferral(gomock.Any(), clusterID, lastPolicyReq).
+		Return(lastPolicyResp, nil, nil).
 		Times(1)
 }
 

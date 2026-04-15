@@ -31,6 +31,7 @@ const (
 	AUDITLOGSOURCE_CLI      AuditLogSource = "AUDIT_LOG_SOURCE_CLI"
 	AUDITLOGSOURCE_UI       AuditLogSource = "AUDIT_LOG_SOURCE_UI"
 	AUDITLOGSOURCE_INTERNAL AuditLogSource = "AUDIT_LOG_SOURCE_INTERNAL"
+	AUDITLOGSOURCE_MCP      AuditLogSource = "AUDIT_LOG_SOURCE_MCP"
 )
 
 // All allowed values of AuditLogSource enum.
@@ -39,6 +40,7 @@ var AllowedAuditLogSourceEnumValues = []AuditLogSource{
 	"AUDIT_LOG_SOURCE_CLI",
 	"AUDIT_LOG_SOURCE_UI",
 	"AUDIT_LOG_SOURCE_INTERNAL",
+	"AUDIT_LOG_SOURCE_MCP",
 }
 
 // NewAuditLogSourceFromValue returns a pointer to a valid AuditLogSource

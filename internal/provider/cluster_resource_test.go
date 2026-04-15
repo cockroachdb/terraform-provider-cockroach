@@ -1994,6 +1994,136 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 	testDedicatedClusterResource(t, clusterName, true, scaleStep)
 }
 
+// TestAccDedicatedAWSClusterS3VpcEndpointId is an acceptance test that creates
+// a real AWS Advanced cluster and verifies that s3_vpc_endpoint_id is populated.
+func TestAccDedicatedAWSClusterS3VpcEndpointId(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-aws-vpce-%s", tfTestPrefix, GenerateRandomString(3))
+
+	cfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  plan           = "ADVANCED"
+  dedicated = {
+    storage_gib      = 35
+    num_virtual_cpus = 4
+  }
+  regions = [{
+    name       = "us-east-1"
+    node_count = 3
+  }]
+}
+
+data "cockroach_cluster" "test" {
+  id = cockroach_cluster.test.id
+}
+`, clusterName)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists("cockroach_cluster.test"),
+					resource.TestMatchResourceAttr("cockroach_cluster.test", "regions.0.s3_vpc_endpoint_id", regexp.MustCompile(`^vpce-`)),
+					resource.TestMatchResourceAttr("data.cockroach_cluster.test", "regions.0.s3_vpc_endpoint_id", regexp.MustCompile(`^vpce-`)),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedAWSClusterS3VpcEndpointId validates that
+// s3_vpc_endpoint_id is populated for AWS Advanced clusters and
+// accessible on both the resource and data source.
+func TestIntegrationDedicatedAWSClusterS3VpcEndpointId(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-aws-vpce-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				NumVirtualCpus: 4,
+				StorageGib:     35,
+				MemoryGib:      16,
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name:            "us-east-1",
+				SqlDns:          "test.aws-us-east-1.crdb.io",
+				UiDns:           "admin-test.aws-us-east-1.crdb.io",
+				InternalDns:     "internal-test.aws-us-east-1.crdb.io",
+				NodeCount:       3,
+				S3VpcEndpointId: ptr("vpce-0abc123def456"),
+			},
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).
+		Return(&cluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	cfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  plan           = "ADVANCED"
+  dedicated = {
+    storage_gib     = 35
+    num_virtual_cpus = 4
+  }
+  regions = [{
+    name       = "us-east-1"
+    node_count = 3
+  }]
+}
+
+data "cockroach_cluster" "test" {
+  id = cockroach_cluster.test.id
+}
+`, clusterName)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.s3_vpc_endpoint_id", "vpce-0abc123def456"),
+					resource.TestCheckResourceAttr("data.cockroach_cluster.test", "regions.0.s3_vpc_endpoint_id", "vpce-0abc123def456"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "cloud_provider", "AWS"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "plan", "ADVANCED"),
+				),
+			},
+		},
+	})
+}
+
 // TestIntegrationDedicatedClusterBYOC validates that BYOC details are passed in
 // the create request and are reflected in state.
 func TestIntegrationDedicatedClusterBYOC(t *testing.T) {
@@ -2241,7 +2371,11 @@ func testCheckCockroachClusterExists(resourceName string) resource.TestCheckFunc
 }
 
 func getTestDedicatedClusterResourceConfig(
-	name, version string, finalize bool, vcpus int, deleteProtectionEnabled *bool, privateEndpointServicesEnabled bool,
+	name, version string,
+	finalize bool,
+	vcpus int,
+	deleteProtectionEnabled *bool,
+	privateEndpointServicesEnabled bool,
 ) string {
 	var deleteProtectionConfig string
 	if deleteProtectionEnabled != nil {
@@ -2433,6 +2567,61 @@ func TestSortRegionsByPlan(t *testing.T) {
 		}
 		// We really just want to make sure it doesn't panic here.
 		sortRegionsByPlan(&regions, plan)
+	})
+}
+
+func TestGetManagedRegionsS3VpcEndpointId(t *testing.T) {
+	t.Run("AWS cluster with s3_vpc_endpoint_id", func(t *testing.T) {
+		vpceid := "vpce-0abc123def456"
+		regions := []client.Region{
+			{
+				Name:               "us-east-1",
+				SqlDns:             "test.aws-us-east-1.crdb.io",
+				UiDns:              "admin-test.aws-us-east-1.crdb.io",
+				InternalDns:        "internal-test.aws-us-east-1.crdb.io",
+				PrivateEndpointDns: "",
+				NodeCount:          3,
+				S3VpcEndpointId:    &vpceid,
+			},
+		}
+		plan := []Region{
+			{Name: types.StringValue("us-east-1")},
+		}
+		result := getManagedRegions(&regions, plan)
+		require.Len(t, result, 1)
+		require.Equal(t, "vpce-0abc123def456", result[0].S3VpcEndpointId.ValueString())
+	})
+
+	t.Run("GCP cluster without s3_vpc_endpoint_id", func(t *testing.T) {
+		regions := []client.Region{
+			{
+				Name:               "us-central1",
+				SqlDns:             "test.gcp-us-central1.crdb.io",
+				UiDns:              "admin-test.gcp-us-central1.crdb.io",
+				PrivateEndpointDns: "private-test.crdb.io",
+				NodeCount:          3,
+			},
+		}
+		plan := []Region{
+			{Name: types.StringValue("us-central1")},
+		}
+		result := getManagedRegions(&regions, plan)
+		require.Len(t, result, 1)
+		require.Equal(t, "", result[0].S3VpcEndpointId.ValueString())
+	})
+
+	t.Run("Data source import with no plan", func(t *testing.T) {
+		vpceid := "vpce-0def456abc789"
+		regions := []client.Region{
+			{
+				Name:            "us-west-2",
+				NodeCount:       3,
+				S3VpcEndpointId: &vpceid,
+			},
+		}
+		result := getManagedRegions(&regions, nil)
+		require.Len(t, result, 1)
+		require.Equal(t, "vpce-0def456abc789", result[0].S3VpcEndpointId.ValueString())
 	})
 }
 

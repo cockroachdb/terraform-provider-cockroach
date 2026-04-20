@@ -59,37 +59,6 @@ func TestIntegrationRoleGrantsResource(t *testing.T) {
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
 		return s
 	})()
-	listResponse := client.ListRoleGrantsResponse{
-		Grants: &[]client.UserRoleGrants{
-			{
-				UserId: userId,
-				Roles: []client.BuiltInRole{
-					{
-						Name: client.ORGANIZATIONUSERROLETYPE_CLUSTER_ADMIN,
-						Resource: client.Resource{
-							Id:   nil,
-							Type: client.RESOURCETYPETYPE_ORGANIZATION,
-						},
-					},
-					{
-						Name: client.ORGANIZATIONUSERROLETYPE_ORG_ADMIN,
-						Resource: client.Resource{
-							Id:   nil,
-							Type: client.RESOURCETYPETYPE_ORGANIZATION,
-						},
-					},
-					{
-						Name: client.ORGANIZATIONUSERROLETYPE_ORG_MEMBER,
-						Resource: client.Resource{
-							Id:   nil,
-							Type: client.RESOURCETYPETYPE_ORGANIZATION,
-						},
-					},
-				},
-			},
-		},
-		Pagination: nil,
-	}
 
 	restrictedGetResponse := client.GetAllRolesForUserResponse{
 		Roles: &[]client.BuiltInRole{
@@ -131,18 +100,21 @@ func TestIntegrationRoleGrantsResource(t *testing.T) {
 
 	s.EXPECT().CreateServiceAccount(gomock.Any(), gomock.Any()).
 		Return(&serviceAccount, nil, nil)
+	// Create calls GetAllRolesForUser to check preexisting roles, then
+	// SetRolesForUser. After that, Read (via refresh plan and import)
+	// also calls GetAllRolesForUser directly instead of ListRoleGrants.
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userId).
 		Return(&restrictedGetResponse, nil, nil)
 	s.EXPECT().SetRolesForUser(gomock.Any(), userId, gomock.Any()).
-		Return(nil, nil, nil)
+		Return(&permissionedGetResponse, nil, nil)
+	// Called by: testRoleMembership checks (x3), step 1 refresh plan Read
+	// (x1), and step 2 import Read (x1) = 5 total.
 	s.EXPECT().GetAllRolesForUser(gomock.Any(), userId).
-		Return(&permissionedGetResponse, nil, nil).Times(3)
+		Return(&permissionedGetResponse, nil, nil).Times(5)
 	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
 		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-	s.EXPECT().ListRoleGrants(gomock.Any(), gomock.Any()).
-		Return(&listResponse, nil, nil).Times(2)
 	s.EXPECT().SetRolesForUser(gomock.Any(), userId, &client.CockroachCloudSetRolesForUserRequest{}).
-		Return(nil, nil, nil)
+		Return(&restrictedGetResponse, nil, nil)
 	s.EXPECT().DeleteServiceAccount(gomock.Any(), gomock.Any()).
 		Return(nil, nil, nil)
 
@@ -178,9 +150,7 @@ func testRoleResource(t *testing.T, useMock bool) {
 	})
 }
 
-func testRoleMembership(
-	resourceName, roleName string, hasRole bool,
-) resource.TestCheckFunc {
+func testRoleMembership(resourceName, roleName string, hasRole bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p := testAccProvider.(*provider)
 		p.service = NewService(cl)

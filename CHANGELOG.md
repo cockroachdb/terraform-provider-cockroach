@@ -11,6 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `s3_vpc_endpoint_id` computed attribute to cluster regions, exposing the AWS S3 VPC gateway endpoint ID for configuring S3 bucket policies. Only populated for Advanced clusters on AWS.
 
+### Fixed
+
+- Fixed `cockroach_user_role_grants` resource drift on refresh after creation. The Create function now uses the API response to populate state, matching the Update function's behavior.
+- Fixed `cockroach_user_role_grants` Read to use a direct user lookup instead of paginated full-org scan, preventing state removal on large orgs.
+
 ## [1.19.0] - 2026-04-15
 
 ### Changed

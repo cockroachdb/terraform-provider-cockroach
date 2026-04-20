@@ -29,8 +29,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-const roleGrantPaginationLimit = 100
-
 type userRoleGrantsResource struct {
 	provider *provider
 }
@@ -139,7 +137,7 @@ func (r *userRoleGrantsResource) Create(
 	setRoleRequest.SetRoles(roles)
 
 	traceAPICall("SetRolesForUser")
-	_, _, err = r.provider.service.SetRolesForUser(ctx, roleGrantSpec.UserId.ValueString(), &setRoleRequest)
+	apiResp, _, err := r.provider.service.SetRolesForUser(ctx, roleGrantSpec.UserId.ValueString(), &setRoleRequest)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error setting roles for user",
@@ -148,6 +146,7 @@ func (r *userRoleGrantsResource) Create(
 		return
 	}
 
+	loadRolesToTerraformState(roleGrantSpec.UserId.ValueString(), apiResp, &roleGrantSpec)
 	roleGrantSpec.ID = roleGrantSpec.UserId
 	diags = resp.State.Set(ctx, roleGrantSpec)
 	resp.Diagnostics.Append(diags...)
@@ -168,51 +167,34 @@ func (r *userRoleGrantsResource) Read(
 		return
 	}
 
-	// Since the state may have come from an import, we need to retrieve
-	// the actual user list and make sure this one is in there.
-	var page string
-	limit := int32(roleGrantPaginationLimit)
-
-	for {
-		options := &client.ListRoleGrantsOptions{
-			PaginationPage:  &page,
-			PaginationLimit: &limit,
-		}
-		traceAPICall("ListRoleGrants")
-		apiResp, _, err := r.provider.service.ListRoleGrants(ctx, options)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error listing user roles",
-				fmt.Sprintf("Unexpected error retrieving user roles: %s", formatAPIErrorMessage(err)),
-			)
-			return
-		}
-
-		for _, grant := range apiResp.GetGrants() {
-			if grant.GetUserId() == state.UserId.ValueString() {
-				loadListRolesToTerraformState(state.UserId.ValueString(), &grant, &state)
-				state.ID = state.UserId
-				diags = resp.State.Set(ctx, state)
-				resp.Diagnostics.Append(diags...)
-				return
-			}
-		}
-
-		pagination := apiResp.GetPagination()
-		if pagination.NextPage != nil && *pagination.NextPage != "" {
-			page = *pagination.NextPage
-		} else {
-			break
-		}
+	// Look up the user's roles directly by user ID.
+	traceAPICall("GetAllRolesForUser")
+	apiResp, _, err := r.provider.service.GetAllRolesForUser(ctx, state.UserId.ValueString())
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error getting user roles",
+			fmt.Sprintf("Unexpected error retrieving roles for user: %s", formatAPIErrorMessage(err)),
+		)
+		return
 	}
-	resp.Diagnostics.AddWarning(
-		"Couldn't find user.",
-		fmt.Sprintf(
-			"Could not find user with ID '%v'. Removing from state.",
-			state.UserId.ValueString(),
-		),
-	)
-	resp.State.RemoveResource(ctx)
+
+	roles := apiResp.GetRoles()
+	if len(roles) == 0 {
+		resp.Diagnostics.AddWarning(
+			"Couldn't find user.",
+			fmt.Sprintf(
+				"Could not find any roles for user with ID '%v'. Removing from state.",
+				state.UserId.ValueString(),
+			),
+		)
+		resp.State.RemoveResource(ctx)
+		return
+	}
+
+	loadRolesToTerraformState(state.UserId.ValueString(), apiResp, &state)
+	state.ID = state.UserId
+	diags = resp.State.Set(ctx, state)
+	resp.Diagnostics.Append(diags...)
 }
 
 func (r *userRoleGrantsResource) Update(

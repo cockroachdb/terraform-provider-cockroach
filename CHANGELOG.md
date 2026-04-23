@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.20.0] - 2026-04-22
+
 ### Added
 
 - Added `s3_vpc_endpoint_id` computed attribute to cluster regions, exposing the AWS S3 VPC gateway endpoint ID for configuring S3 bucket policies. Only populated for Advanced clusters on AWS.

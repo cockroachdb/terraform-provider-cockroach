@@ -28,3 +28,11 @@ jobs:
         run: make testacc
         env:
           COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+          CLEANUP_TRACKING_FILE: ${{ runner.temp }}/created-clusters.txt
+
+      - name: Cleanup orphaned test clusters
+        if: always()
+        run: bash scripts/cleanup-test-clusters.sh
+        env:
+          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
+          CLEANUP_TRACKING_FILE: ${{ runner.temp }}/created-clusters.txt

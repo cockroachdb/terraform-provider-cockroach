@@ -113,7 +113,7 @@ func (p *provider) Configure(
 	cfg.HTTPClient = httpClient.StandardClient()
 
 	cl := client.NewClient(cfg)
-	p.service = NewService(cl)
+	p.service = newTrackingService(NewService(cl))
 	resp.ResourceData = p
 	resp.DataSourceData = p
 

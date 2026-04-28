@@ -51,3 +51,6 @@ test:
 
 testacc:
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m -parallel 100
+
+cleanup-test-clusters:
+	bash scripts/cleanup-test-clusters.sh

@@ -263,6 +263,13 @@ func (r *clusterResource) Schema(
 						MarkdownDescription: "Dictates the behavior of CockroachDB major version upgrades. Manual upgrades are not supported on CockroachDB Basic. Manual or automatic upgrades are supported on CockroachDB Standard. If you omit the field, it defaults to `AUTOMATIC`. Allowed values are:" +
 							formatEnumMarkdownList(AllowedUpgradeTypeTypeEnumValueStrings),
 					},
+					"with_empty_ip_allowlist": schema.BoolAttribute{
+						Optional: true,
+						PlanModifiers: []planmodifier.Bool{
+							boolplanmodifier.UseStateForUnknown(),
+						},
+						Description: "Set to true to create the cluster with no default entries to the IP allowlist, blocking inbound connections until entries are added manually. This field is not used after cluster creation; to add new allowlist entries, configure your cluster as normal.",
+					},
 				},
 			},
 			"dedicated": schema.SingleNestedAttribute{
@@ -596,6 +603,10 @@ func (r *clusterResource) Create(
 			} else {
 				serverless.SetUpgradeType(*upgradeType)
 			}
+		}
+
+		if plan.ServerlessConfig.WithEmptyIpAllowlist.ValueBool() {
+			serverless.SetWithEmptyIpAllowlist(true)
 		}
 
 		if IsKnown(plan.CockroachVersion) {
@@ -961,6 +972,14 @@ func (r *clusterResource) ModifyPlan(
 			resp.Diagnostics.AddError(
 				"Cannot update whether a cluster supports cluster virtualization",
 				"Changing the supports_cluster_virtualization field of a cluster is not allowed. Please explicitly destroy this cluster before changing this value.")
+		}
+		if serverless := plan.ServerlessConfig; serverless != nil &&
+			state.ServerlessConfig != nil &&
+			serverless.WithEmptyIpAllowlist.ValueBool() &&
+			!state.ServerlessConfig.WithEmptyIpAllowlist.ValueBool() {
+			resp.Diagnostics.AddError(
+				"Cannot update with_empty_ip_allowlist",
+				"The with_empty_ip_allowlist field can only be set during cluster creation. It cannot be enabled on an existing cluster.")
 		}
 	}
 
@@ -1513,6 +1532,10 @@ func loadClusterToTerraformState(
 				// the plan requested.
 				serverlessConfig.UsageLimits = &UsageLimits{}
 			}
+		}
+
+		if plan != nil && plan.ServerlessConfig != nil {
+			serverlessConfig.WithEmptyIpAllowlist = plan.ServerlessConfig.WithEmptyIpAllowlist
 		}
 
 		state.ServerlessConfig = serverlessConfig

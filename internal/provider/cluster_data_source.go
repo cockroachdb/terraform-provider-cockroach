@@ -138,6 +138,10 @@ func (d *clusterDataSource) Schema(
 						Computed:    true,
 						Description: "Dictates the behavior of CockroachDB major version upgrades.",
 					},
+					"with_empty_ip_allowlist": schema.BoolAttribute{
+						Computed:    true,
+						Description: "This field is set to null for internal reasons and can be safely ignored.",
+					},
 				},
 			},
 			"dedicated": schema.SingleNestedAttribute{

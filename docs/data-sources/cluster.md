@@ -134,6 +134,7 @@ Read-Only:
 - `spend_limit` (Number, Deprecated) Spend limit in US cents.
 - `upgrade_type` (String) Dictates the behavior of CockroachDB major version upgrades.
 - `usage_limits` (Attributes) (see [below for nested schema](#nestedatt--serverless--usage_limits))
+- `with_empty_ip_allowlist` (Boolean) This field is set to null for internal reasons and can be safely ignored.
 
 <a id="nestedatt--serverless--usage_limits"></a>
 ### Nested Schema for `serverless.usage_limits`

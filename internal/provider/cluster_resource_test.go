@@ -166,6 +166,44 @@ func TestAccServerlessUpgradeType(t *testing.T) {
 	})
 }
 
+// TestAccServerlessWithEmptyIpAllowlist is an acceptance test focused only on
+// testing with_empty_ip_allowlist. It will be skipped if TF_ACC isn't set.
+func TestAccServerlessWithEmptyIpAllowlist(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{
+					withEmptyIpAllowlist: ptr(true),
+				}).Config,
+				Check: resource.TestCheckResourceAttr(
+					serverlessResourceName, "serverless.with_empty_ip_allowlist", "true",
+				),
+			},
+			{
+				Config: serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{}).Config,
+				Check: resource.TestCheckResourceAttr(
+					serverlessResourceName, "serverless.with_empty_ip_allowlist", "true",
+				),
+			},
+			{
+				Config:  " ",
+				Destroy: true,
+			},
+			{
+				Config: serverlessClusterStep(clusterName, client.PLANTYPE_BASIC, slsConfig{}).Config,
+				Check: resource.TestCheckNoResourceAttr(
+					serverlessResourceName, "serverless.with_empty_ip_allowlist",
+				),
+			},
+		},
+	})
+}
+
 // Shared Test objects
 var initialBackupConfig = &client.BackupConfiguration{
 	Enabled:          true,
@@ -1347,6 +1385,45 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				}
 			},
 		},
+		{
+			name: "serverless cluster with empty ip allowlist",
+			createStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(true),
+				})
+			},
+			validateCreate: func(req *client.CreateClusterRequest) error {
+				serverless := req.Spec.Serverless
+				if serverless == nil || serverless.WithEmptyIpAllowlist == nil || !*serverless.WithEmptyIpAllowlist {
+					return fmt.Errorf("expected with_empty_ip_allowlist to be true in create request")
+				}
+				return nil
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					requestUnitLimit:     ptr(int64(1_000_000)),
+					storageMibLimit:      ptr(int64(1024)),
+					withEmptyIpAllowlist: ptr(true),
+				})
+			},
+			finalCluster:      singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+			ignoreImportPaths: []string{"serverless.with_empty_ip_allowlist"},
+		},
+		{
+			name: "attempt to add with_empty_ip_allowlist after creation",
+			createStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{})
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				step := serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(true),
+				})
+				step.ExpectError = regexp.MustCompile("Cannot update with_empty_ip_allowlist")
+				return step
+			},
+		},
 	}
 
 	for _, c := range cases {
@@ -1484,11 +1561,12 @@ func provisionedSingleRegionClusterStep(
 }
 
 type slsConfig struct {
-	vcpus            *int
-	requestUnitLimit *int64
-	storageMibLimit  *int64
-	upgradeType      *client.UpgradeTypeType
-	version          *string
+	vcpus                *int
+	requestUnitLimit     *int64
+	storageMibLimit      *int64
+	upgradeType          *client.UpgradeTypeType
+	version              *string
+	withEmptyIpAllowlist *bool
 }
 
 func serverlessClusterStep(
@@ -1562,6 +1640,15 @@ func serverlessClusterStep(
 		)
 	}
 
+	var withEmptyIpAllowlistConfig string
+	if config.withEmptyIpAllowlist != nil {
+		withEmptyIpAllowlistConfig = fmt.Sprintf("with_empty_ip_allowlist = %t", *config.withEmptyIpAllowlist)
+		testCheckFuncs = append(
+			testCheckFuncs,
+			resource.TestCheckResourceAttr(serverlessResourceName, "serverless.with_empty_ip_allowlist", strconv.FormatBool(*config.withEmptyIpAllowlist)),
+		)
+	}
+
 	var versionConfig string
 	if config.version != nil {
 
@@ -1613,6 +1700,7 @@ func serverlessClusterStep(
 				serverless = {
 					%s
 					%s
+					%s
 				}
 				regions = [{
 					name = "us-central1"
@@ -1623,7 +1711,7 @@ func serverlessClusterStep(
 			data "cockroach_cluster" "test" {
 				id = cockroach_cluster.test.id
 			}
-			`, clusterName, planConfig, usageLimitsConfig, upgradeTypeConfig, versionConfig),
+			`, clusterName, planConfig, usageLimitsConfig, upgradeTypeConfig, withEmptyIpAllowlistConfig, versionConfig),
 		Check: resource.ComposeTestCheckFunc(testCheckFuncs...),
 	}
 }

@@ -67,3 +67,27 @@ resource "cockroach_cluster" "basic" {
     "cost-center" = "mkt-1234"
   }
 }
+
+resource "cockroach_cluster" "basic_locked_down" {
+  name           = "cockroach-basic-restricted"
+  cloud_provider = "GCP"
+  plan           = "BASIC"
+  serverless = {
+    with_empty_ip_allowlist = true
+  }
+  regions = [
+    {
+      name = "us-east1"
+    }
+  ]
+  delete_protection = false
+}
+
+resource "cockroach_allow_list" "home" {
+  name       = "home"
+  cidr_ip    = "123.123.1.1"
+  cidr_mask  = 32
+  ui         = true
+  sql        = true
+  cluster_id = cockroach_cluster.basic_locked_down.id
+}

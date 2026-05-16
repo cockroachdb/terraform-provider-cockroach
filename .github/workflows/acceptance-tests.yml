@@ -1,5 +1,9 @@
 name: Manually Run Acceptance Tests
 on: workflow_dispatch
+
+permissions:
+  contents: read
+
 jobs:
   acceptance-test:
     name: acceptance-test

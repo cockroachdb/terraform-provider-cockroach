@@ -184,26 +184,15 @@ func TestRecordClusterCreationAndDeletion_ConcurrentMixed(t *testing.T) {
 	}
 }
 
-func TestNewTrackingService_DisabledWhenNoEnvVar(t *testing.T) {
-	t.Setenv(clusterTrackingEnvVar, "")
-	inner := NewService(nil)
-	svc := newTrackingService(inner)
-	if _, ok := svc.(*trackingService); ok {
-		t.Error("Expected unwrapped service when tracking is disabled")
-	}
-}
-
-func TestNewTrackingService_EnabledWhenEnvVarSet(t *testing.T) {
+func TestNewTrackingService_WrapsInner(t *testing.T) {
 	dir := t.TempDir()
 	filePath := filepath.Join(dir, "tracking.txt")
-	t.Setenv(clusterTrackingEnvVar, filePath)
-	trackingInitialized = false
 
 	inner := NewService(nil)
-	svc := newTrackingService(inner)
+	svc := newTrackingService(inner, filePath)
 	ts, ok := svc.(*trackingService)
 	if !ok {
-		t.Fatal("Expected trackingService wrapper when tracking is enabled")
+		t.Fatal("Expected trackingService wrapper")
 	}
 	if ts.filePath != filePath {
 		t.Errorf("Expected filePath %q, got %q", filePath, ts.filePath)

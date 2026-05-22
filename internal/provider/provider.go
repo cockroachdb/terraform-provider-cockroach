@@ -113,7 +113,11 @@ func (p *provider) Configure(
 	cfg.HTTPClient = httpClient.StandardClient()
 
 	cl := client.NewClient(cfg)
-	p.service = newTrackingService(NewService(cl))
+	svc := NewService(cl)
+	if filePath := os.Getenv(clusterTrackingEnvVar); filePath != "" {
+		svc = newTrackingService(svc, filePath)
+	}
+	p.service = svc
 	resp.ResourceData = p
 	resp.DataSourceData = p
 

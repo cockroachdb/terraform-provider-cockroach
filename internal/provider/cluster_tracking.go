@@ -32,30 +32,18 @@ import (
 const clusterTrackingEnvVar = "CLEANUP_TRACKING_FILE"
 
 var (
-	trackingMu          sync.Mutex
-	trackingInitialized bool
+	trackingMu      sync.Mutex
+	trackingLogOnce sync.Once
 )
 
-func getTrackingFilePath() string {
-	return os.Getenv(clusterTrackingEnvVar)
-}
-
-// newTrackingService wraps a client.Service to track cluster creation and
-// deletion in a file. Returns the original service unwrapped if tracking
-// is not enabled (CLEANUP_TRACKING_FILE not set).
-func newTrackingService(inner client.Service) client.Service {
-	filePath := getTrackingFilePath()
-	if filePath == "" {
-		return inner
-	}
-
-	trackingMu.Lock()
-	if !trackingInitialized {
+// newTrackingService wraps a client.Service to record cluster creation and
+// deletion to filePath. Intended for CI use only; provider.go gates
+// construction on the CLEANUP_TRACKING_FILE env var so this wrapper is
+// never instantiated when customers run the provider.
+func newTrackingService(inner client.Service, filePath string) client.Service {
+	trackingLogOnce.Do(func() {
 		fmt.Fprintf(os.Stderr, "[cluster-tracking] Tracking enabled: file=%s\n", filePath)
-		trackingInitialized = true
-	}
-	trackingMu.Unlock()
-
+	})
 	return &trackingService{Service: inner, filePath: filePath}
 }
 

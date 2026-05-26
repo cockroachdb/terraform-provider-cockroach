@@ -265,6 +265,7 @@ func (r *clusterResource) Schema(
 					},
 					"with_empty_ip_allowlist": schema.BoolAttribute{
 						Optional: true,
+						Computed: true,
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},
@@ -1534,7 +1535,10 @@ func loadClusterToTerraformState(
 			}
 		}
 
-		if plan != nil && plan.ServerlessConfig != nil {
+		// The API doesn't return with_empty_ip_allowlist, so we preserve it from the plan.
+		// Guard with IsKnown: on initial create without the attribute, the Computed+UseStateForUnknown
+		// combo produces an unknown plan value that must not leak into state.
+		if plan != nil && plan.ServerlessConfig != nil && IsKnown(plan.ServerlessConfig.WithEmptyIpAllowlist) {
 			serverlessConfig.WithEmptyIpAllowlist = plan.ServerlessConfig.WithEmptyIpAllowlist
 		}
 

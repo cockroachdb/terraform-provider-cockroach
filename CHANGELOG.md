@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-05-28
+
 ### Added
 
 - Added `with_empty_ip_allowlist` option to the `serverless` block on `cockroach_cluster`. Set to `true` to create a serverless cluster with no default IP allowlist entries, requiring explicit allowlist configuration. This is a create-only field and cannot be changed after cluster creation.

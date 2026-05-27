@@ -89,7 +89,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	trueBool := true
 	minLevel, _ := client.NewLogLevelTypeFromValue("WARNING")
 	createdGroups := []client.LogExportGroup{
-		{LogName: "sql", Channels: []string{"SQL_SCHEMA", "SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
+		{LogName: "sql", Channels: []string{"SQL_SCHEMA", "SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool, EnableSendingQueue: &trueBool},
 	}
 	omittedChannels := []string{"SQL_PERF"}
 	enabledStatus, _ := client.NewLogExportStatusFromValue("ENABLED")
@@ -109,8 +109,8 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 
 	falseBool := false
 	updatedGroups := []client.LogExportGroup{
-		{LogName: "sql", Channels: []string{"SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool},
-		{LogName: "devops", Channels: []string{"OPS", "HEALTH", "STORAGE"}, MinLevel: minLevel, Redact: &falseBool},
+		{LogName: "sql", Channels: []string{"SQL_EXEC"}, MinLevel: minLevel, Redact: &trueBool, EnableSendingQueue: &falseBool},
+		{LogName: "devops", Channels: []string{"OPS", "HEALTH", "STORAGE"}, MinLevel: minLevel, Redact: &falseBool, EnableSendingQueue: &trueBool},
 	}
 	updatedOChannels := []string{"SQL_SCHEMA"}
 	updatedExternalID := "test-external-id"
@@ -204,6 +204,7 @@ func testLogExportConfigResource(t *testing.T, clusterName string, useMock bool)
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "redact", "true"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.#", "1"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.channels.#", "2"),
+					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.enable_sending_queue", "true"),
 					resource.TestCheckNoResourceAttr(logExportConfigResourceName, "aws_external_id"),
 				),
 			},
@@ -214,6 +215,8 @@ func testLogExportConfigResource(t *testing.T, clusterName string, useMock bool)
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "redact", "false"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.#", "2"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.channels.#", "1"),
+					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.0.enable_sending_queue", "false"),
+					resource.TestCheckResourceAttr(logExportConfigResourceName, "groups.1.enable_sending_queue", "true"),
 					resource.TestCheckResourceAttr(logExportConfigResourceName, "aws_external_id", "test-external-id"),
 				),
 			},
@@ -279,10 +282,11 @@ resource "cockroach_log_export_config" "test" {
   region         = "us-east-1"
   groups = [
     {
-      log_name  = "sql",
-      channels  = ["SQL_SCHEMA", "SQL_EXEC"],
-      min_level = "WARNING",
-      redact    = true
+      log_name             = "sql",
+      channels             = ["SQL_SCHEMA", "SQL_EXEC"],
+      min_level            = "WARNING",
+      redact               = true,
+      enable_sending_queue = true
     }
   ]
   omitted_channels = ["SQL_PERF"]
@@ -315,16 +319,18 @@ resource "cockroach_log_export_config" "test" {
   aws_external_id = "test-external-id"
   groups = [
     {
-      log_name  = "sql",
-      channels  = ["SQL_EXEC"],
-      min_level = "WARNING",
-      redact : true
+      log_name             = "sql",
+      channels             = ["SQL_EXEC"],
+      min_level            = "WARNING",
+      redact               = true,
+      enable_sending_queue = false
     },
     {
-      log_name  = "devops",
-      channels  = ["OPS", "HEALTH", "STORAGE"],
-      min_level = "WARNING",
-      redact    = false
+      log_name             = "devops",
+      channels             = ["OPS", "HEALTH", "STORAGE"],
+      min_level            = "WARNING",
+      redact               = false,
+      enable_sending_queue = true
     }
   ]
   omitted_channels = ["SQL_SCHEMA"]

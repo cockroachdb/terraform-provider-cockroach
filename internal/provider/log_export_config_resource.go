@@ -83,6 +83,10 @@ var logExportAttributes = map[string]schema.Attribute{
 					Optional:            true,
 					MarkdownDescription: "Governs whether this log group should aggregate redacted logs if unset.",
 				},
+				"enable_sending_queue": schema.BoolAttribute{
+					Optional:            true,
+					MarkdownDescription: "Enables the sending queue for logs in this group. Only one group can have enable_sending_queue enabled.",
+				},
 			},
 		},
 	},
@@ -311,11 +315,18 @@ func loadLogExportIntoTerraformState(
 			} else {
 				groupMinLevel = types.StringValue(string(apiGroup.GetMinLevel()))
 			}
+			var groupEnableSendingQueue types.Bool
+			if apiGroup.EnableSendingQueue == nil {
+				groupEnableSendingQueue = types.BoolNull()
+			} else {
+				groupEnableSendingQueue = types.BoolValue(apiGroup.GetEnableSendingQueue())
+			}
 			groups[group_idx] = LogExportGroup{
-				LogName:  types.StringValue(apiGroup.GetLogName()),
-				Channels: channels,
-				MinLevel: groupMinLevel,
-				Redact:   groupRedact,
+				LogName:            types.StringValue(apiGroup.GetLogName()),
+				Channels:           channels,
+				MinLevel:           groupMinLevel,
+				Redact:             groupRedact,
+				EnableSendingQueue: groupEnableSendingQueue,
 			}
 		}
 	}
@@ -495,6 +506,10 @@ func logExportGroupToClientGroup(group LogExportGroup) (*client.LogExportGroup, 
 
 	if IsKnown(group.Redact) {
 		clientGroup.SetRedact(group.Redact.ValueBool())
+	}
+
+	if IsKnown(group.EnableSendingQueue) {
+		clientGroup.SetEnableSendingQueue(group.EnableSendingQueue.ValueBool())
 	}
 
 	if !IsKnown(group.MinLevel) {

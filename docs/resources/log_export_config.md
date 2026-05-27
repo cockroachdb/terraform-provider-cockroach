@@ -36,7 +36,8 @@ resource "cockroach_log_export_config" "example" {
     {
       log_name : "sql",
       channels : ["SQL_SCHEMA", "SQL_EXEC"],
-      redact : false
+      redact : false,
+      enable_sending_queue : true
     },
     {
       log_name : "devops",
@@ -86,6 +87,7 @@ Required:
 
 Optional:
 
+- `enable_sending_queue` (Boolean) Enables the sending queue for logs in this group. Only one group can have enable_sending_queue enabled.
 - `min_level` (String) The minimum log level to filter to this log group.
 - `redact` (Boolean) Governs whether this log group should aggregate redacted logs if unset.
 

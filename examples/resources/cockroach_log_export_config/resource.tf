@@ -21,7 +21,8 @@ resource "cockroach_log_export_config" "example" {
     {
       log_name : "sql",
       channels : ["SQL_SCHEMA", "SQL_EXEC"],
-      redact : false
+      redact : false,
+      enable_sending_queue : true
     },
     {
       log_name : "devops",

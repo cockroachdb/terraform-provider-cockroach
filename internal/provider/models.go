@@ -278,10 +278,11 @@ type PersonUser struct {
 }
 
 type LogExportGroup struct {
-	LogName  types.String   `tfsdk:"log_name"`
-	Channels []types.String `tfsdk:"channels"`
-	MinLevel types.String   `tfsdk:"min_level"`
-	Redact   types.Bool     `tfsdk:"redact"`
+	LogName            types.String   `tfsdk:"log_name"`
+	Channels           []types.String `tfsdk:"channels"`
+	MinLevel           types.String   `tfsdk:"min_level"`
+	Redact             types.Bool     `tfsdk:"redact"`
+	EnableSendingQueue types.Bool     `tfsdk:"enable_sending_queue"`
 }
 
 type ClusterLogExport struct {

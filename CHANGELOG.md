@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed `with_empty_ip_allowlist` validation allowing the attribute to be changed from `true` to `false` after cluster creation.
+
 ## [1.21.1] - 2026-05-29
 
 ### Fixed

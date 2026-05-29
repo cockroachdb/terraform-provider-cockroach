@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.21.1] - 2026-05-29
+
+### Fixed
+
+- Fixed `with_empty_ip_allowlist` losing state when removed from configuration after cluster creation.
+- Re-released v1.21.0 due to corrupted registry checksums caused by a post-release tag move.
+
 ## [1.21.0] - 2026-05-28
 
 ### Added

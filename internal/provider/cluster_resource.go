@@ -976,11 +976,10 @@ func (r *clusterResource) ModifyPlan(
 		}
 		if serverless := plan.ServerlessConfig; serverless != nil &&
 			state.ServerlessConfig != nil &&
-			serverless.WithEmptyIpAllowlist.ValueBool() &&
-			!state.ServerlessConfig.WithEmptyIpAllowlist.ValueBool() {
+			serverless.WithEmptyIpAllowlist.ValueBool() != state.ServerlessConfig.WithEmptyIpAllowlist.ValueBool() {
 			resp.Diagnostics.AddError(
 				"Cannot update with_empty_ip_allowlist",
-				"The with_empty_ip_allowlist field can only be set during cluster creation. It cannot be enabled on an existing cluster.")
+				"The with_empty_ip_allowlist field can only be set during cluster creation. It cannot be changed after cluster creation.")
 		}
 	}
 

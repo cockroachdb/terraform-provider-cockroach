@@ -1424,6 +1424,58 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				return step
 			},
 		},
+		{
+			name: "attempt to change with_empty_ip_allowlist from true to false",
+			createStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(true),
+				})
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				step := serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(false),
+				})
+				step.ExpectError = regexp.MustCompile("Cannot update with_empty_ip_allowlist")
+				return step
+			},
+		},
+		{
+			name: "attempt to change with_empty_ip_allowlist from false to true",
+			createStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(false),
+				})
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				step := serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(true),
+				})
+				step.ExpectError = regexp.MustCompile("Cannot update with_empty_ip_allowlist")
+				return step
+			},
+		},
+		{
+			// Include a usage limit change so that an update is triggered;
+			// removing with_empty_ip_allowlist alone produces no diff because
+			// UseStateForUnknown preserves the state value.
+			name: "remove with_empty_ip_allowlist after creation",
+			createStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					withEmptyIpAllowlist: ptr(true),
+				})
+			},
+			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
+			updateStep: func() resource.TestStep {
+				return serverlessClusterStep(clusterName, "BASIC", slsConfig{
+					requestUnitLimit: ptr(int64(1_000_000)),
+					storageMibLimit:  ptr(int64(1024)),
+				})
+			},
+			finalCluster:      singleRegionClusterWithLimits("BASIC", 1_000_000, 1024),
+			ignoreImportPaths: []string{"serverless.with_empty_ip_allowlist"},
+		},
 	}
 
 	for _, c := range cases {

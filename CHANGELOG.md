@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `cockroach_provisioned_user` resource for managing CockroachDB Cloud console users via the SCIM 2.0 user endpoints. This is the same surface an identity provider uses for SSO autoprovisioning, so terraform can pre-create user records before first login or otherwise own the user lifecycle directly.
+
 ## [1.21.1] - 2026-05-29
 
 ### Fixed

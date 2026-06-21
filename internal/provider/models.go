@@ -386,6 +386,34 @@ type ServiceAccount struct {
 	CreatorName types.String `tfsdk:"creator_name"`
 }
 
+// ProvisionedUser models a CockroachDB Cloud console user managed through the
+// SCIM v2 user endpoints. It is the same record that an IdP autoprovisions
+// when a user first logs in via SSO; this resource lets terraform pre-create
+// or otherwise own that record directly.
+type ProvisionedUser struct {
+	ID            types.String           `tfsdk:"id"`
+	UserName      types.String           `tfsdk:"user_name"`
+	DisplayName   types.String           `tfsdk:"display_name"`
+	ExternalID    types.String           `tfsdk:"external_id"`
+	Active        types.Bool             `tfsdk:"active"`
+	Emails        []ProvisionedUserEmail `tfsdk:"emails"`
+	Name          *ProvisionedUserName   `tfsdk:"name"`
+	CreatedAt     types.String           `tfsdk:"created_at"`
+	LastUpdatedAt types.String           `tfsdk:"last_updated_at"`
+}
+
+type ProvisionedUserEmail struct {
+	Value   types.String `tfsdk:"value"`
+	Display types.String `tfsdk:"display"`
+	Primary types.Bool   `tfsdk:"primary"`
+	Type    types.String `tfsdk:"type"`
+}
+
+type ProvisionedUserName struct {
+	GivenName  types.String `tfsdk:"given_name"`
+	FamilyName types.String `tfsdk:"family_name"`
+}
+
 type APIKey struct {
 	ID               types.String `tfsdk:"id"`
 	Name             types.String `tfsdk:"name"`

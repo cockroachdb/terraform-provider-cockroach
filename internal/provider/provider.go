@@ -155,6 +155,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewFolderResource,
 		NewJWTIssuerResource,
 		NewServiceAccountResource,
+		NewProvisionedUserResource,
 		NewAPIKeyResource,
 		NewRestoreResource,
 		NewEgressPrivateEndpointResource,

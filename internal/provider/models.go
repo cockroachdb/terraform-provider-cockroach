@@ -38,6 +38,8 @@ type Region struct {
 	InternalDns        types.String `tfsdk:"internal_dns"`
 	PrivateEndpointDns types.String `tfsdk:"private_endpoint_dns"`
 	NodeCount          types.Int64  `tfsdk:"node_count"`
+	NumVirtualCpus     types.Int64  `tfsdk:"num_virtual_cpus"`
+	MachineType        types.String `tfsdk:"machine_type"`
 	Primary            types.Bool   `tfsdk:"primary"`
 	S3VpcEndpointId    types.String `tfsdk:"s3_vpc_endpoint_id"`
 }
@@ -207,10 +209,25 @@ type CMEKRegion struct {
 }
 
 type ClusterCMEK struct {
-	ID                types.String `tfsdk:"id"`
-	Status            types.String `tfsdk:"status"`
-	Regions           []CMEKRegion `tfsdk:"regions"`
-	AdditionalRegions []Region     `tfsdk:"additional_regions"`
+	ID                types.String           `tfsdk:"id"`
+	Status            types.String           `tfsdk:"status"`
+	Regions           []CMEKRegion           `tfsdk:"regions"`
+	AdditionalRegions []CMEKAdditionalRegion `tfsdk:"additional_regions"`
+}
+
+// CMEKAdditionalRegion mirrors Region for the cockroach_cmek resource's
+// additional_regions, minus the per-region machine type fields
+// (num_virtual_cpus/machine_type), which are managed on the cockroach_cluster
+// resource and have no meaning here.
+type CMEKAdditionalRegion struct {
+	Name               types.String `tfsdk:"name"`
+	SqlDns             types.String `tfsdk:"sql_dns"`
+	UiDns              types.String `tfsdk:"ui_dns"`
+	InternalDns        types.String `tfsdk:"internal_dns"`
+	PrivateEndpointDns types.String `tfsdk:"private_endpoint_dns"`
+	NodeCount          types.Int64  `tfsdk:"node_count"`
+	Primary            types.Bool   `tfsdk:"primary"`
+	S3VpcEndpointId    types.String `tfsdk:"s3_vpc_endpoint_id"`
 }
 
 type ClusterCert struct {

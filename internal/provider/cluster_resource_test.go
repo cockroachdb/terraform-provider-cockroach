@@ -33,6 +33,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	framework_resource "github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -53,6 +54,11 @@ const (
 	serverlessDataSourceName = "data.cockroach_cluster.test"
 
 	defaultPlanType = ""
+
+	// CockroachHeterogeneousEnabled gates acceptance tests for per-region
+	// (heterogeneous) machine types, which require a limited-access feature flag on
+	// the test organization.
+	CockroachHeterogeneousEnabled string = "COCKROACH_HETEROGENEOUS_ENABLED"
 )
 
 var httpOk = &http.Response{Status: http.StatusText(http.StatusOK)}
@@ -2540,6 +2546,1133 @@ data "cockroach_cluster" "test" {
 	})
 }
 
+// skipUnlessHeterogeneousEnabled skips heterogeneous machine type acceptance tests
+// unless COCKROACH_HETEROGENEOUS_ENABLED is set, since the feature is limited-access
+// and only usable in a flag-enabled organization.
+func skipUnlessHeterogeneousEnabled(t *testing.T) {
+	if os.Getenv(CockroachHeterogeneousEnabled) == "" {
+		t.Skip("COCKROACH_HETEROGENEOUS_ENABLED is not set; skipping heterogeneous machine type acceptance test")
+	}
+}
+
+// TestAccDedicatedClusterHeterogeneous creates a heterogeneous Advanced cluster
+// (per-region num_virtual_cpus) against the real API and verifies the values
+// round-trip with no drift on re-plan.
+func TestAccDedicatedClusterHeterogeneous(t *testing.T) {
+	skipUnlessHeterogeneousEnabled(t)
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-hetero-%s", tfTestPrefix, GenerateRandomString(3))
+
+	cfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  plan           = "ADVANCED"
+  dedicated = {
+    storage_gib = 15
+  }
+  regions = [
+    { name = "us-central1", node_count = 3, num_virtual_cpus = 4 },
+    { name = "us-east1", node_count = 3, num_virtual_cpus = 8 },
+    { name = "us-west1", node_count = 3, num_virtual_cpus = 8 },
+  ]
+}
+
+data "cockroach_cluster" "test" {
+  id = cockroach_cluster.test.id
+}
+`, clusterName)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists("cockroach_cluster.test"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.num_virtual_cpus", "8"),
+					// machine_type is derived and populated from the API even though
+					// the user configured only num_virtual_cpus.
+					resource.TestCheckResourceAttrSet("cockroach_cluster.test", "regions.0.machine_type"),
+					resource.TestCheckResourceAttr("data.cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+				),
+			},
+		},
+	})
+}
+
+// TestAccDedicatedClusterHomogeneousToHeterogeneous creates a homogeneous Advanced
+// cluster and then switches it to per-region (heterogeneous) sizing, exercising the
+// real resize path where the cluster-wide num_virtual_cpus/machine_type aggregates
+// shift.
+func TestAccDedicatedClusterHomogeneousToHeterogeneous(t *testing.T) {
+	skipUnlessHeterogeneousEnabled(t)
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-homo2het-%s", tfTestPrefix, GenerateRandomString(3))
+
+	homogeneousCfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  plan           = "ADVANCED"
+  dedicated = {
+    storage_gib      = 15
+    num_virtual_cpus = 4
+  }
+  regions = [
+    { name = "us-central1", node_count = 3 },
+    { name = "us-east1", node_count = 3 },
+    { name = "us-west1", node_count = 3 },
+  ]
+}
+`, clusterName)
+
+	heterogeneousCfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  plan           = "ADVANCED"
+  dedicated = {
+    storage_gib = 15
+  }
+  regions = [
+    { name = "us-central1", node_count = 3, num_virtual_cpus = 4 },
+    { name = "us-east1", node_count = 3, num_virtual_cpus = 8 },
+    { name = "us-west1", node_count = 3, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: homogeneousCfg,
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists("cockroach_cluster.test"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "3"),
+				),
+			},
+			{
+				Config: heterogeneousCfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.num_virtual_cpus", "8"),
+					resource.TestCheckResourceAttrSet("cockroach_cluster.test", "regions.1.machine_type"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterPerRegionMachineType validates that a
+// heterogeneous Advanced cluster sends per-region machine specs
+// (region_machine_specs) in the create request and omits the cluster-wide
+// hardware.machine_spec, and that the per-region values round-trip into state.
+func TestIntegrationDedicatedClusterPerRegionMachineType(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-dedicated-hetero-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	// The API echoes a machine_type per region (as a real heterogeneous cluster
+	// does), even though the user only configured num_virtual_cpus.
+	mtSmall := "m6i.xlarge"
+	mtLarge := "m6i.2xlarge"
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{
+				NumVirtualCpus: 4,
+				StorageGib:     15,
+				MemoryGib:      8,
+			},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+			{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+			ded := req.Spec.Dedicated
+			if ded == nil {
+				return nil, nil, fmt.Errorf("missing dedicated spec")
+			}
+			if ded.RegionMachineSpecs == nil {
+				return nil, nil, fmt.Errorf("expected region_machine_specs to be set")
+			}
+			specs := *ded.RegionMachineSpecs
+			if specs["us-east-1"].NumVirtualCpus == nil || *specs["us-east-1"].NumVirtualCpus != 4 {
+				return nil, nil, fmt.Errorf("unexpected us-east-1 spec: %+v", specs["us-east-1"])
+			}
+			if specs["us-west-2"].NumVirtualCpus == nil || *specs["us-west-2"].NumVirtualCpus != 8 {
+				return nil, nil, fmt.Errorf("unexpected us-west-2 spec: %+v", specs["us-west-2"])
+			}
+			if len(specs) != 3 {
+				return nil, nil, fmt.Errorf("expected 3 region specs, got %d", len(specs))
+			}
+			if ded.Hardware.MachineSpec != nil {
+				return nil, nil, fmt.Errorf("expected hardware.machine_spec to be nil in heterogeneous mode")
+			}
+			return &cluster, httpOk, nil
+		},
+	)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = {
+    storage_gib = 15
+  }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4 },
+    { name = "us-east-2", node_count = 1, num_virtual_cpus = 8 },
+    { name = "us-west-2", node_count = 1, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.num_virtual_cpus", "8"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.2.num_virtual_cpus", "8"),
+					// machine_type is populated from the API even though the user
+					// only set num_virtual_cpus, mirroring the cluster-wide path.
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.machine_type", "m6i.xlarge"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.machine_type", "m6i.2xlarge"),
+				),
+			},
+			{
+				// Re-applying the identical config must produce an empty plan. This
+				// guards against the per-region machine_type showing a perpetual
+				// "(known after apply)" for num_virtual_cpus users.
+				Config:   cfg,
+				PlanOnly: true,
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterHeterogeneousToHomogeneous switches a
+// heterogeneous Advanced cluster back to cluster-wide (homogeneous) sizing and
+// asserts the resulting update request.
+func TestIntegrationDedicatedClusterHeterogeneousToHomogeneous(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-het2homo-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	mtSmall := "m6i.xlarge"
+	mtLarge := "m6i.2xlarge"
+
+	// Heterogeneous starting point: per-region specs, with the API reporting a
+	// cluster-wide aggregate (the most common per-region value) in Config.Dedicated.
+	heteroCluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{NumVirtualCpus: 8, StorageGib: 15, MemoryGib: 16},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+			{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+		},
+	}
+
+	// After switching to cluster-wide 8 vCPU sizing the whole cluster is uniform.
+	homoCluster := heteroCluster
+	homoCluster.Config.Dedicated = &client.DedicatedHardwareConfig{NumVirtualCpus: 8, StorageGib: 15, MemoryGib: 16}
+	homoCluster.Regions = []client.Region{
+		{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+		{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+		{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+	}
+
+	// current tracks what GetCluster returns; UpdateCluster flips it to homogeneous.
+	current := heteroCluster
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&heteroCluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		DoAndReturn(func(context.Context, string) (*client.Cluster, *http.Response, error) {
+			c := current
+			return &c, httpOk, nil
+		}).AnyTimes()
+
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).
+		DoAndReturn(func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			ded := spec.Dedicated
+			if ded == nil {
+				return nil, nil, fmt.Errorf("expected a dedicated update spec")
+			}
+			// The switch-back must not carry forward per-region specs from state.
+			if ded.RegionMachineSpecs != nil {
+				return nil, nil, fmt.Errorf("expected no region_machine_specs when switching to homogeneous, got %+v", *ded.RegionMachineSpecs)
+			}
+			if ded.Hardware == nil || ded.Hardware.MachineSpec == nil {
+				return nil, nil, fmt.Errorf("expected a cluster-wide hardware.machine_spec")
+			}
+			ms := ded.Hardware.MachineSpec
+			if ms.NumVirtualCpus == nil || *ms.NumVirtualCpus != 8 {
+				return nil, nil, fmt.Errorf("expected cluster-wide machine_spec of 8 vCPUs, got %+v", *ms)
+			}
+			current = homoCluster
+			return &homoCluster, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	heteroCfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = {
+    storage_gib = 15
+  }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4 },
+    { name = "us-east-2", node_count = 1, num_virtual_cpus = 8 },
+    { name = "us-west-2", node_count = 1, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	homoCfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = {
+    storage_gib      = 15
+    num_virtual_cpus = 8
+  }
+  regions = [
+    { name = "us-east-1", node_count = 1 },
+    { name = "us-east-2", node_count = 1 },
+    { name = "us-west-2", node_count = 1 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: heteroCfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.num_virtual_cpus", "8"),
+				),
+			},
+			{
+				Config: homoCfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "8"),
+					// The per-region machine fields must clear on the switch-back.
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterPerRegionUnknownValue verifies that the
+// all-or-none validation does not fire falsely when a per-region machine value is
+// an unresolved reference at plan time (unknown, not null). Here one region's
+// num_virtual_cpus comes from a terraform_data output, which is unknown until
+// apply.
+func TestIntegrationDedicatedClusterPerRegionUnknownValue(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-hetero-unknown-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 8},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &vcpu4},
+			{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8},
+			{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8},
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).
+		Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	// terraform_data.cpus.output is unknown at plan time (the resource doesn't
+	// exist yet), so regions[1].num_virtual_cpus is unknown during validation.
+	cfg := fmt.Sprintf(`
+resource "terraform_data" "cpus" {
+  input = 8
+}
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4 },
+    { name = "us-east-2", node_count = 1, num_virtual_cpus = terraform_data.cpus.output },
+    { name = "us-west-2", node_count = 1, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.num_virtual_cpus", "8"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterPerRegionMachineTypeValidation validates the
+// mutual-exclusivity and all-or-none rules for per-region machine types. These
+// fail during plan/validation, before any API call.
+func TestIntegrationDedicatedClusterPerRegionMachineTypeValidation(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	clusterName := fmt.Sprintf("%s-hetero-val-%s", tfTestPrefix, GenerateRandomString(3))
+
+	cases := []struct {
+		name        string
+		config      string
+		expectError *regexp.Regexp
+	}{
+		{
+			name: "both num_virtual_cpus and machine_type in a region",
+			config: fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4, machine_type = "m6i.xlarge" },
+  ]
+}
+`, clusterName),
+			expectError: regexp.MustCompile(`mutually exclusive within a region`),
+		},
+		{
+			name: "mixing cluster-wide and per-region",
+			config: fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  dedicated = { storage_gib = 15, num_virtual_cpus = 4 }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4 },
+  ]
+}
+`, clusterName),
+			expectError: regexp.MustCompile(`not both`),
+		},
+		{
+			name: "partial per-region violates all-or-none",
+			config: fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4 },
+    { name = "us-east-2", node_count = 1, num_virtual_cpus = 8 },
+    { name = "us-west-2", node_count = 1 },
+  ]
+}
+`, clusterName),
+			expectError: regexp.MustCompile(`every region must`),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.expectError,
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestIntegrationDedicatedClusterPerRegionToClusterWide is a regression test for
+// the case where a heterogeneous cluster is switched back to cluster-wide sizing.
+// Plan modifiers carry the prior per-region values forward into the plan even
+// after the user removes them from config, so the switch must be decided from
+// config: the update must send the cluster-wide hardware.machine_spec (not stale
+// region_machine_specs), and the post-apply read must not resurrect per-region
+// values (which would cause an "inconsistent result after apply" error).
+func TestIntegrationDedicatedClusterPerRegionToClusterWide(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-hetero-switch-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	heteroCluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 8},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &vcpu4},
+			{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8},
+			{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8},
+		},
+	}
+	// After the switch, the cluster is homogeneous at 8 vCPUs. The API still
+	// reports per-region num_virtual_cpus (all equal), which must NOT leak into
+	// state because the user is no longer managing them per region.
+	homoCluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{NumVirtualCpus: 8, StorageGib: 15, MemoryGib: 16},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &vcpu8},
+			{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8},
+			{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8},
+		},
+	}
+	current := &heteroCluster
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&heteroCluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			ded := spec.Dedicated
+			if ded == nil || ded.Hardware == nil {
+				return nil, nil, fmt.Errorf("missing dedicated/hardware in update")
+			}
+			if ded.RegionMachineSpecs != nil {
+				return nil, nil, fmt.Errorf("expected region_machine_specs to be nil when switching to cluster-wide, got %+v", *ded.RegionMachineSpecs)
+			}
+			if ded.Hardware.MachineSpec == nil || ded.Hardware.MachineSpec.NumVirtualCpus == nil || *ded.Hardware.MachineSpec.NumVirtualCpus != 8 {
+				return nil, nil, fmt.Errorf("expected cluster-wide machine_spec num_virtual_cpus=8, got %+v", ded.Hardware.MachineSpec)
+			}
+			current = &homoCluster
+			return &homoCluster, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	heteroCfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = 4 },
+    { name = "us-east-2", node_count = 1, num_virtual_cpus = 8 },
+    { name = "us-west-2", node_count = 1, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	homoCfg := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15, num_virtual_cpus = 8 }
+  regions = [
+    { name = "us-east-1", node_count = 1 },
+    { name = "us-east-2", node_count = 1 },
+    { name = "us-west-2", node_count = 1 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: heteroCfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+				),
+			},
+			{
+				Config: homoCfg,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "8"),
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterPerRegionResize is the regression test for the
+// resize inconsistency: changing one region's num_virtual_cpus must not leave a
+// stale machine_type in the plan (carried by SuppressMachineTypeDrift) that the
+// resize invalidates, which would produce "Provider produced inconsistent result
+// after apply".
+func TestIntegrationDedicatedClusterPerRegionResize(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-hetero-resize-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	mtSmall := "m6i.xlarge"
+	mtLarge := "m6i.2xlarge"
+	baseCluster := func(eastVCPUs int32, eastMT string) client.Cluster {
+		e := eastVCPUs
+		return client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: minSupportedClusterPatchVersion,
+			Plan:             client.PLANTYPE_ADVANCED,
+			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			Config: client.ClusterConfig{
+				Dedicated: &client.DedicatedHardwareConfig{NumVirtualCpus: eastVCPUs, StorageGib: 15, MemoryGib: 8},
+			},
+			Regions: []client.Region{
+				{Name: "us-east-1", NodeCount: 1, NumVirtualCpus: &e, MachineType: &eastMT},
+				{Name: "us-east-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+				{Name: "us-west-2", NodeCount: 1, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			},
+		}
+	}
+	hetero := baseCluster(vcpu4, mtSmall)
+	resized := baseCluster(vcpu8, mtLarge)
+	// The resize changes the cluster-wide derived memory too.
+	resized.Config.Dedicated.MemoryGib = 16
+	current := &hetero
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&hetero, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			ded := spec.Dedicated
+			if ded == nil || ded.RegionMachineSpecs == nil {
+				return nil, nil, fmt.Errorf("expected region_machine_specs on resize")
+			}
+			specs := *ded.RegionMachineSpecs
+			if specs["us-east-1"].NumVirtualCpus == nil || *specs["us-east-1"].NumVirtualCpus != 8 {
+				return nil, nil, fmt.Errorf("expected us-east-1 resized to 8 vCPUs, got %+v", specs["us-east-1"])
+			}
+			current = &resized
+			return &resized, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(eastVCPUs int) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = 1, num_virtual_cpus = %d },
+    { name = "us-east-2", node_count = 1, num_virtual_cpus = 8 },
+    { name = "us-west-2", node_count = 1, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion, eastVCPUs)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg(4),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.machine_type", "m6i.xlarge"),
+				),
+			},
+			{
+				// Resize us-east-1 4 -> 8. Must apply cleanly (no inconsistent
+				// result) and land the new machine_type in state.
+				Config: cfg(8),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "8"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.machine_type", "m6i.2xlarge"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterPerRegionRemove is the regression test for the
+// region-removal path: the CC API reports the cluster-wide num_virtual_cpus/
+// machine_type as the most common per-region value, so removing a region can shift
+// that aggregate. ModifyPlan must treat a removal as a resize and mark the
+// cluster-wide derived fields unknown, or apply fails with "inconsistent result
+// after apply". Starts at 4 regions so the removal leaves 3 (never a 2-region
+// cluster).
+func TestIntegrationDedicatedClusterPerRegionRemove(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-hetero-remove-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	mtSmall := "m6i.xlarge"
+	mtLarge := "m6i.2xlarge"
+	// Initial cluster: two 8-vCPU and two 4-vCPU regions; the API reports the
+	// cluster-wide aggregate as 8 / m6i.2xlarge / 16 GiB.
+	base := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{MachineType: mtLarge, NumVirtualCpus: 8, StorageGib: 15, MemoryGib: 16},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-1", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			{Name: "us-east-2", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			{Name: "us-west-1", NodeCount: 3, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+			{Name: "us-west-2", NodeCount: 3, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+		},
+	}
+	// After removing us-east-1 (an 8-vCPU region), the plurality flips to 4, so the
+	// API's reported cluster-wide aggregate shifts to 4 / m6i.xlarge / 8 GiB.
+	afterRemoval := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: minSupportedClusterPatchVersion,
+		Plan:             client.PLANTYPE_ADVANCED,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Config: client.ClusterConfig{
+			Dedicated: &client.DedicatedHardwareConfig{MachineType: mtSmall, NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 8},
+		},
+		Regions: []client.Region{
+			{Name: "us-east-2", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			{Name: "us-west-1", NodeCount: 3, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+			{Name: "us-west-2", NodeCount: 3, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+		},
+	}
+	current := &base
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&base, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			ded := spec.Dedicated
+			if ded == nil || ded.RegionNodes == nil {
+				return nil, nil, fmt.Errorf("expected region_nodes on region removal")
+			}
+			if _, ok := (*ded.RegionNodes)["us-east-1"]; ok {
+				return nil, nil, fmt.Errorf("expected region_nodes to omit the removed region us-east-1, got %v", *ded.RegionNodes)
+			}
+			current = &afterRemoval
+			return &afterRemoval, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	fourRegions := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = 3, num_virtual_cpus = 8 },
+    { name = "us-east-2", node_count = 3, num_virtual_cpus = 8 },
+    { name = "us-west-1", node_count = 3, num_virtual_cpus = 4 },
+    { name = "us-west-2", node_count = 3, num_virtual_cpus = 4 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+	threeRegions := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-2", node_count = 3, num_virtual_cpus = 8 },
+    { name = "us-west-1", node_count = 3, num_virtual_cpus = 4 },
+    { name = "us-west-2", node_count = 3, num_virtual_cpus = 4 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fourRegions,
+				Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "4"),
+			},
+			{
+				// Removing us-east-1 shifts the cluster-wide aggregate; the apply
+				// must succeed (no inconsistent result) and land 3 regions.
+				Config: threeRegions,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "3"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "8"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterClusterWideResize guards the same inconsistency
+// on the cluster-wide path: a num_virtual_cpus resize must recompute the
+// cluster-wide machine_type rather than carry the stale value forward.
+func TestIntegrationDedicatedClusterClusterWideResize(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-homo-resize-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	homo := func(vcpus int32, mt string) client.Cluster {
+		return client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: minSupportedClusterPatchVersion,
+			Plan:             client.PLANTYPE_ADVANCED,
+			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			Config: client.ClusterConfig{
+				Dedicated: &client.DedicatedHardwareConfig{MachineType: mt, NumVirtualCpus: vcpus, StorageGib: 15, MemoryGib: 8},
+			},
+			Regions: []client.Region{{Name: "us-east-1", NodeCount: 1}},
+		}
+	}
+	small := homo(4, "m6i.xlarge")
+	large := homo(8, "m6i.2xlarge")
+	large.Config.Dedicated.MemoryGib = 16
+	current := &small
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&small, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			ded := spec.Dedicated
+			if ded == nil || ded.Hardware == nil || ded.Hardware.MachineSpec == nil {
+				return nil, nil, fmt.Errorf("expected cluster-wide machine_spec on resize")
+			}
+			if ded.Hardware.MachineSpec.NumVirtualCpus == nil || *ded.Hardware.MachineSpec.NumVirtualCpus != 8 {
+				return nil, nil, fmt.Errorf("expected cluster-wide resize to 8 vCPUs, got %+v", ded.Hardware.MachineSpec)
+			}
+			current = &large
+			return &large, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(vcpus int) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15, num_virtual_cpus = %d }
+  regions = [{ name = "us-east-1", node_count = 1 }]
+}
+`, clusterName, minSupportedClusterMajorVersion, vcpus)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg(4),
+				Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.machine_type", "m6i.xlarge"),
+			},
+			{
+				Config: cfg(8),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.num_virtual_cpus", "8"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.machine_type", "m6i.2xlarge"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationDedicatedClusterHeterogeneousWithCMEKRegion verifies that when a
+// region managed by a separate resource (e.g. CMEK) is present on the cluster but
+// not in this resource's config, an update sends region_machine_specs covering only
+// the config regions while region_nodes includes the externally-managed region. The
+// API contract (SDK: "unnamed regions retain their current machine type") makes the
+// partial map safe.
+func TestIntegrationDedicatedClusterHeterogeneousWithCMEKRegion(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-hetero-cmek-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	mtSmall := "m6i.xlarge"
+	mtLarge := "m6i.2xlarge"
+	// The cluster has three config-managed regions plus us-central-1, which is
+	// managed externally (CMEK) and never appears in this resource's config.
+	mkCluster := func(eastNodes int32) client.Cluster {
+		e := eastNodes
+		return client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: minSupportedClusterPatchVersion,
+			Plan:             client.PLANTYPE_ADVANCED,
+			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			Config: client.ClusterConfig{
+				Dedicated: &client.DedicatedHardwareConfig{NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 8},
+			},
+			Regions: []client.Region{
+				{Name: "us-east-1", NodeCount: e, NumVirtualCpus: &vcpu4, MachineType: &mtSmall},
+				{Name: "us-east-2", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+				{Name: "us-west-2", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+				{Name: "us-central-1", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtLarge},
+			},
+		}
+	}
+	base := mkCluster(3)
+	resized := mkCluster(4)
+	current := &base
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&base, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			ded := spec.Dedicated
+			if ded == nil || ded.RegionNodes == nil || ded.RegionMachineSpecs == nil {
+				return nil, nil, fmt.Errorf("expected region_nodes and region_machine_specs to be set")
+			}
+			nodes := *ded.RegionNodes
+			specs := *ded.RegionMachineSpecs
+			if _, ok := nodes["us-central-1"]; !ok {
+				return nil, nil, fmt.Errorf("expected region_nodes to include the CMEK region us-central-1, got %v", nodes)
+			}
+			if _, ok := specs["us-central-1"]; ok {
+				return nil, nil, fmt.Errorf("expected region_machine_specs to omit the CMEK region us-central-1, got %v", specs)
+			}
+			if len(specs) != 3 {
+				return nil, nil, fmt.Errorf("expected 3 region_machine_specs (config regions only), got %d", len(specs))
+			}
+			current = &resized
+			return &resized, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(eastNodes int) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15 }
+  regions = [
+    { name = "us-east-1", node_count = %d, num_virtual_cpus = 4 },
+    { name = "us-east-2", node_count = 3, num_virtual_cpus = 8 },
+    { name = "us-west-2", node_count = 3, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName, minSupportedClusterMajorVersion, eastNodes)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg(3),
+				Check: resource.ComposeTestCheckFunc(
+					// The externally-managed region is filtered out of this
+					// resource's state.
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "3"),
+				),
+			},
+			{
+				// Change us-east-1 node_count to force a region update; the CMEK
+				// region flows into region_nodes but not region_machine_specs.
+				Config: cfg(4),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.node_count", "4"),
+				),
+			},
+		},
+	})
+}
+
 func testDedicatedClusterResource(
 	t *testing.T, clusterName string, useMock bool, additionalSteps ...resource.TestStep,
 ) {
@@ -2893,7 +4026,8 @@ func TestGetManagedRegionsS3VpcEndpointId(t *testing.T) {
 		plan := []Region{
 			{Name: types.StringValue("us-east-1")},
 		}
-		result := getManagedRegions(&regions, plan)
+		var diags diag.Diagnostics
+		result := getManagedRegions(&regions, plan, client.CLOUDPROVIDERTYPE_AWS, &diags)
 		require.Len(t, result, 1)
 		require.Equal(t, "vpce-0abc123def456", result[0].S3VpcEndpointId.ValueString())
 	})
@@ -2911,7 +4045,8 @@ func TestGetManagedRegionsS3VpcEndpointId(t *testing.T) {
 		plan := []Region{
 			{Name: types.StringValue("us-central1")},
 		}
-		result := getManagedRegions(&regions, plan)
+		var diags diag.Diagnostics
+		result := getManagedRegions(&regions, plan, client.CLOUDPROVIDERTYPE_GCP, &diags)
 		require.Len(t, result, 1)
 		require.Equal(t, "", result[0].S3VpcEndpointId.ValueString())
 	})
@@ -2925,9 +4060,288 @@ func TestGetManagedRegionsS3VpcEndpointId(t *testing.T) {
 				S3VpcEndpointId: &vpceid,
 			},
 		}
-		result := getManagedRegions(&regions, nil)
+		var diags diag.Diagnostics
+		result := getManagedRegions(&regions, nil, client.CLOUDPROVIDERTYPE_AWS, &diags)
 		require.Len(t, result, 1)
 		require.Equal(t, "vpce-0def456abc789", result[0].S3VpcEndpointId.ValueString())
+	})
+}
+
+func TestBuildRegionMachineSpecs(t *testing.T) {
+	t.Run("no per-region specs returns false", func(t *testing.T) {
+		regions := []Region{
+			{Name: types.StringValue("us-east-1")},
+			{Name: types.StringValue("us-east-2")},
+			{Name: types.StringValue("us-west-2")},
+		}
+		specs, ok := buildRegionMachineSpecs(regions)
+		require.False(t, ok)
+		require.Empty(t, specs)
+	})
+
+	t.Run("num_virtual_cpus per region", func(t *testing.T) {
+		regions := []Region{
+			{Name: types.StringValue("us-east-1"), NumVirtualCpus: types.Int64Value(4)},
+			{Name: types.StringValue("us-east-2"), NumVirtualCpus: types.Int64Value(8)},
+			{Name: types.StringValue("us-west-2"), NumVirtualCpus: types.Int64Value(8)},
+		}
+		specs, ok := buildRegionMachineSpecs(regions)
+		require.True(t, ok)
+		require.Len(t, specs, 3)
+		require.Equal(t, int32(4), *specs["us-east-1"].NumVirtualCpus)
+		require.Nil(t, specs["us-east-1"].MachineType)
+		require.Equal(t, int32(8), *specs["us-west-2"].NumVirtualCpus)
+	})
+
+	t.Run("machine_type per region", func(t *testing.T) {
+		regions := []Region{
+			{Name: types.StringValue("us-east-1"), MachineType: types.StringValue("m6i.xlarge")},
+			{Name: types.StringValue("us-east-2"), MachineType: types.StringValue("m6i.2xlarge")},
+			{Name: types.StringValue("us-west-2"), MachineType: types.StringValue("m6i.2xlarge")},
+		}
+		specs, ok := buildRegionMachineSpecs(regions)
+		require.True(t, ok)
+		require.Len(t, specs, 3)
+		require.Equal(t, "m6i.xlarge", *specs["us-east-1"].MachineType)
+		require.Nil(t, specs["us-east-1"].NumVirtualCpus)
+	})
+}
+
+func TestGetManagedRegionsMachineType(t *testing.T) {
+	vcpu4 := int32(4)
+	vcpu8 := int32(8)
+	mtEast := "m6i.xlarge"
+	mtWest := "m6i.2xlarge"
+	apiRegions := func() []client.Region {
+		return []client.Region{
+			{Name: "us-east-1", NodeCount: 3, NumVirtualCpus: &vcpu4, MachineType: &mtEast},
+			{Name: "us-east-2", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtWest},
+			{Name: "us-west-2", NodeCount: 3, NumVirtualCpus: &vcpu8, MachineType: &mtWest},
+		}
+	}
+
+	t.Run("num_virtual_cpus user gets machine_type populated from API", func(t *testing.T) {
+		// The recommended path: user sets only num_virtual_cpus per region. Both
+		// fields must be populated from the API (mirroring the cluster-wide path)
+		// so machine_type isn't left null (which would show perpetual drift).
+		plan := []Region{
+			{Name: types.StringValue("us-east-1"), NumVirtualCpus: types.Int64Value(4)},
+			{Name: types.StringValue("us-east-2"), NumVirtualCpus: types.Int64Value(8)},
+			{Name: types.StringValue("us-west-2"), NumVirtualCpus: types.Int64Value(8)},
+		}
+		var diags diag.Diagnostics
+		regions := apiRegions()
+		result := getManagedRegions(&regions, plan, client.CLOUDPROVIDERTYPE_AWS, &diags)
+		require.Len(t, result, 3)
+		require.Equal(t, int64(4), result[0].NumVirtualCpus.ValueInt64())
+		require.Equal(t, "m6i.xlarge", result[0].MachineType.ValueString())
+		require.Equal(t, int64(8), result[1].NumVirtualCpus.ValueInt64())
+		require.Equal(t, "m6i.2xlarge", result[1].MachineType.ValueString())
+	})
+
+	t.Run("falls back to plan value when API omits a field", func(t *testing.T) {
+		// The server echoes nil for a per-region field the user set (e.g. on a
+		// feature-flag/older-server edge). State must keep the planned value so we
+		// don't produce an "inconsistent result after apply".
+		regions := []client.Region{
+			{Name: "us-east-1", NodeCount: 3}, // NumVirtualCpus/MachineType nil
+		}
+		plan := []Region{
+			{Name: types.StringValue("us-east-1"), NumVirtualCpus: types.Int64Value(4)},
+		}
+		var diags diag.Diagnostics
+		result := getManagedRegions(&regions, plan, client.CLOUDPROVIDERTYPE_AWS, &diags)
+		require.Len(t, result, 1)
+		require.Equal(t, int64(4), result[0].NumVirtualCpus.ValueInt64())
+		require.True(t, result[0].MachineType.IsNull())
+	})
+
+	t.Run("null when plan does not use per-region (homogeneous)", func(t *testing.T) {
+		plan := []Region{
+			{Name: types.StringValue("us-east-1")},
+			{Name: types.StringValue("us-east-2")},
+			{Name: types.StringValue("us-west-2")},
+		}
+		var diags diag.Diagnostics
+		regions := apiRegions()
+		result := getManagedRegions(&regions, plan, client.CLOUDPROVIDERTYPE_AWS, &diags)
+		require.Len(t, result, 3)
+		require.True(t, result[0].NumVirtualCpus.IsNull())
+		require.True(t, result[0].MachineType.IsNull())
+	})
+
+	t.Run("datasource/import populates from API", func(t *testing.T) {
+		var diags diag.Diagnostics
+		regions := apiRegions()
+		result := getManagedRegions(&regions, nil, client.CLOUDPROVIDERTYPE_AWS, &diags)
+		require.Len(t, result, 3)
+		require.Equal(t, int64(4), result[0].NumVirtualCpus.ValueInt64())
+		require.Equal(t, "m6i.xlarge", result[0].MachineType.ValueString())
+	})
+
+	t.Run("machine_type drift suppressed when vCPU count matches", func(t *testing.T) {
+		converted := "m7g.xlarge" // same 4 vCPUs as configured m6i.xlarge
+		regions := []client.Region{
+			{Name: "us-east-1", NodeCount: 3, NumVirtualCpus: &vcpu4, MachineType: &converted},
+		}
+		plan := []Region{
+			{Name: types.StringValue("us-east-1"), MachineType: types.StringValue("m6i.xlarge")},
+		}
+		var diags diag.Diagnostics
+		result := getManagedRegions(&regions, plan, client.CLOUDPROVIDERTYPE_AWS, &diags)
+		require.Len(t, result, 1)
+		require.Equal(t, "m6i.xlarge", result[0].MachineType.ValueString())
+		require.True(t, diags.WarningsCount() > 0)
+	})
+}
+
+func TestResolveMachinePlan(t *testing.T) {
+	v4 := types.Int64Value(4)
+	v8 := types.Int64Value(8)
+	mtA := types.StringValue("m6i.xlarge")
+	mtB := types.StringValue("m6i.2xlarge")
+	nullI := types.Int64Null()
+	nullS := types.StringNull()
+
+	t.Run("num_virtual_cpus drives, unchanged -> machine_type from state", func(t *testing.T) {
+		outV, outM, rz := resolveMachinePlan(v4, nullS, v4, mtA, true)
+		require.Equal(t, v4, outV)
+		require.Equal(t, mtA, outM)
+		require.False(t, rz)
+	})
+
+	t.Run("num_virtual_cpus drives, changed -> machine_type unknown", func(t *testing.T) {
+		outV, outM, rz := resolveMachinePlan(v8, nullS, v4, mtA, true)
+		require.Equal(t, v8, outV)
+		require.True(t, outM.IsUnknown())
+		require.True(t, rz)
+	})
+
+	t.Run("num_virtual_cpus drives, unchanged -> machine_type taken by name", func(t *testing.T) {
+		// The state machine_type comes from the same-named region, so a reordered
+		// list resolves to the correct value (mtB here), not a neighbor's.
+		outV, outM, rz := resolveMachinePlan(v8, nullS, v8, mtB, true)
+		require.Equal(t, v8, outV)
+		require.Equal(t, mtB, outM)
+		require.False(t, rz)
+	})
+
+	t.Run("machine_type drives, unchanged -> num_virtual_cpus from state", func(t *testing.T) {
+		outV, outM, rz := resolveMachinePlan(nullI, mtA, v4, mtA, true)
+		require.Equal(t, v4, outV)
+		require.Equal(t, mtA, outM)
+		require.False(t, rz)
+	})
+
+	t.Run("machine_type drives, changed -> num_virtual_cpus unknown", func(t *testing.T) {
+		outV, outM, rz := resolveMachinePlan(nullI, mtB, v4, mtA, true)
+		require.True(t, outV.IsUnknown())
+		require.Equal(t, mtB, outM)
+		require.True(t, rz)
+	})
+
+	t.Run("new region (no state) -> sibling unknown", func(t *testing.T) {
+		outV, outM, rz := resolveMachinePlan(v4, nullS, nullI, nullS, false)
+		require.Equal(t, v4, outV)
+		require.True(t, outM.IsUnknown())
+		require.True(t, rz)
+	})
+
+	t.Run("neither set in config -> keep state", func(t *testing.T) {
+		outV, outM, rz := resolveMachinePlan(nullI, nullS, v4, mtA, true)
+		require.Equal(t, v4, outV)
+		require.Equal(t, mtA, outM)
+		require.False(t, rz)
+	})
+}
+
+func TestCoordinateDedicatedMachinePlan(t *testing.T) {
+	v4 := types.Int64Value(4)
+	v8 := types.Int64Value(8)
+	mtSmall := types.StringValue("m6i.xlarge")
+	mtLarge := types.StringValue("m6i.2xlarge")
+	nullI := types.Int64Null()
+	nullS := types.StringNull()
+
+	region := func(name string, vcpus types.Int64, mt types.String) Region {
+		return Region{Name: types.StringValue(name), NumVirtualCpus: vcpus, MachineType: mt}
+	}
+	ded := func(vcpus types.Int64, mt types.String, mem float64) *DedicatedClusterConfig {
+		return &DedicatedClusterConfig{NumVirtualCpus: vcpus, MachineType: mt, MemoryGib: types.Float64Value(mem)}
+	}
+
+	t.Run("homogeneous resize recomputes machine_type and memory", func(t *testing.T) {
+		config := &CockroachCluster{DedicatedConfig: ded(v8, nullS, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
+		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
+		plan := &CockroachCluster{DedicatedConfig: ded(v8, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
+
+		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.Equal(t, int64(8), plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
+		require.True(t, plan.DedicatedConfig.MachineType.IsUnknown())
+		require.True(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
+	})
+
+	t.Run("homogeneous no-op leaves the plan untouched", func(t *testing.T) {
+		config := &CockroachCluster{DedicatedConfig: ded(v4, nullS, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
+		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
+		plan := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
+
+		require.False(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.Equal(t, mtSmall, plan.DedicatedConfig.MachineType)
+		require.Equal(t, float64(8), plan.DedicatedConfig.MemoryGib.ValueFloat64())
+	})
+
+	t.Run("heterogeneous per-region resize recomputes sibling and aggregates", func(t *testing.T) {
+		config := &CockroachCluster{DedicatedConfig: ded(nullI, nullS, 8), Regions: []Region{region("us-east-1", v8, nullS), region("us-east-2", v8, nullS)}}
+		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
+		plan := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v8, mtSmall), region("us-east-2", v8, mtLarge)}}
+
+		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, plan.Regions[0].MachineType.IsUnknown()) // resized region's sibling
+		require.Equal(t, mtLarge, plan.Regions[1].MachineType)   // unchanged region kept
+		require.True(t, plan.DedicatedConfig.NumVirtualCpus.IsUnknown())
+		require.True(t, plan.DedicatedConfig.MachineType.IsUnknown())
+		require.True(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
+	})
+
+	t.Run("heterogeneous reorder corrects machine_type by name", func(t *testing.T) {
+		// Same region set, reordered. The index-wise plan modifiers carried the
+		// neighbor's machine_type; coordination must correct each by name and NOT
+		// treat this as a resize.
+		config := &CockroachCluster{DedicatedConfig: ded(nullI, nullS, 8), Regions: []Region{region("us-east-2", v8, nullS), region("us-east-1", v4, nullS)}}
+		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
+		plan := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-2", v8, mtSmall), region("us-east-1", v4, mtLarge)}}
+
+		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.Equal(t, mtLarge, plan.Regions[0].MachineType)       // us-east-2 corrected
+		require.Equal(t, mtSmall, plan.Regions[1].MachineType)       // us-east-1 corrected
+		require.False(t, plan.DedicatedConfig.MemoryGib.IsUnknown()) // not a resize
+	})
+
+	t.Run("heterogeneous removal recomputes cluster-wide aggregates", func(t *testing.T) {
+		config := &CockroachCluster{DedicatedConfig: ded(nullI, nullS, 8), Regions: []Region{region("us-east-2", v8, nullS), region("us-west-2", v4, nullS)}}
+		state := &CockroachCluster{DedicatedConfig: ded(v8, mtLarge, 16), Regions: []Region{region("us-east-1", v8, mtLarge), region("us-east-2", v8, mtLarge), region("us-west-2", v4, mtSmall)}}
+		plan := &CockroachCluster{DedicatedConfig: ded(v8, mtLarge, 16), Regions: []Region{region("us-east-2", v8, mtLarge), region("us-west-2", v4, mtSmall)}}
+
+		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, plan.DedicatedConfig.NumVirtualCpus.IsUnknown())
+		require.True(t, plan.DedicatedConfig.MachineType.IsUnknown())
+		require.True(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
+	})
+
+	t.Run("switch heterogeneous to cluster-wide clears per-region fields", func(t *testing.T) {
+		config := &CockroachCluster{DedicatedConfig: ded(v8, nullS, 8), Regions: []Region{region("us-east-1", nullI, nullS), region("us-east-2", nullI, nullS)}}
+		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
+		plan := &CockroachCluster{DedicatedConfig: ded(v8, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
+
+		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, plan.Regions[0].NumVirtualCpus.IsNull())
+		require.True(t, plan.Regions[0].MachineType.IsNull())
+		require.True(t, plan.Regions[1].NumVirtualCpus.IsNull())
+		require.True(t, plan.Regions[1].MachineType.IsNull())
+		require.Equal(t, int64(8), plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
+		require.True(t, plan.DedicatedConfig.MachineType.IsUnknown())
+		require.True(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
 	})
 }
 

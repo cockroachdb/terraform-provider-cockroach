@@ -34,6 +34,22 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
 
+// cmekRegionSchema is the cluster resource's regionSchema without the per-region
+// machine type fields (num_virtual_cpus/machine_type). Those are managed on the
+// cockroach_cluster resource; the CMEK resource neither sends nor reads them, so
+// exposing them on additional_regions would be misleading. Derived from
+// regionSchema so the remaining shared fields stay in sync.
+var cmekRegionSchema = func() schema.NestedAttributeObject {
+	attrs := make(map[string]schema.Attribute, len(regionSchema.Attributes))
+	for name, attr := range regionSchema.Attributes {
+		if name == "num_virtual_cpus" || name == "machine_type" {
+			continue
+		}
+		attrs[name] = attr
+	}
+	return schema.NestedAttributeObject{Attributes: attrs}
+}()
+
 var cmekAttributes = map[string]schema.Attribute{
 	"id": schema.StringAttribute{
 		Required:            true,
@@ -100,7 +116,7 @@ var cmekAttributes = map[string]schema.Attribute{
 		},
 	},
 	"additional_regions": schema.ListNestedAttribute{
-		NestedObject:        regionSchema,
+		NestedObject:        cmekRegionSchema,
 		Optional:            true,
 		MarkdownDescription: "Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead.",
 	},
@@ -136,6 +152,47 @@ func (r *cmekResource) Configure(
 		resp.Diagnostics.AddError("Internal provider error",
 			fmt.Sprintf("Error in Configure: expected %T but got %T", provider{}, req.ProviderData))
 	}
+}
+
+// cmekRegionsToRegions adapts the CMEK additional_regions model to the shared
+// []Region type used by getManagedRegions/reconcileRegionUpdate.
+func cmekRegionsToRegions(regions []CMEKAdditionalRegion) []Region {
+	out := make([]Region, len(regions))
+	for i, r := range regions {
+		out[i] = Region{
+			Name:               r.Name,
+			SqlDns:             r.SqlDns,
+			UiDns:              r.UiDns,
+			InternalDns:        r.InternalDns,
+			PrivateEndpointDns: r.PrivateEndpointDns,
+			NodeCount:          r.NodeCount,
+			Primary:            r.Primary,
+			S3VpcEndpointId:    r.S3VpcEndpointId,
+		}
+	}
+	return out
+}
+
+// regionsToCMEKRegions is the inverse of cmekRegionsToRegions, dropping the
+// per-region machine type fields that the CMEK resource does not manage.
+func regionsToCMEKRegions(regions []Region) []CMEKAdditionalRegion {
+	if regions == nil {
+		return nil
+	}
+	out := make([]CMEKAdditionalRegion, len(regions))
+	for i, r := range regions {
+		out[i] = CMEKAdditionalRegion{
+			Name:               r.Name,
+			SqlDns:             r.SqlDns,
+			UiDns:              r.UiDns,
+			InternalDns:        r.InternalDns,
+			PrivateEndpointDns: r.PrivateEndpointDns,
+			NodeCount:          r.NodeCount,
+			Primary:            r.Primary,
+			S3VpcEndpointId:    r.S3VpcEndpointId,
+		}
+	}
+	return out
 }
 
 func (r *cmekResource) Create(
@@ -271,7 +328,7 @@ func (r *cmekResource) Update(
 		}
 	}
 
-	regionNodes, diags := reconcileRegionUpdate(ctx, state.AdditionalRegions, plan.AdditionalRegions, state.ID.ValueString(), r.provider.service)
+	regionNodes, diags := reconcileRegionUpdate(ctx, cmekRegionsToRegions(state.AdditionalRegions), cmekRegionsToRegions(plan.AdditionalRegions), state.ID.ValueString(), r.provider.service)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -325,7 +382,7 @@ func (r *cmekResource) Update(
 			)
 			return
 		}
-		state.AdditionalRegions = getManagedRegions(&cluster.Regions, plan.AdditionalRegions)
+		state.AdditionalRegions = regionsToCMEKRegions(getManagedRegions(&cluster.Regions, cmekRegionsToRegions(plan.AdditionalRegions), cluster.CloudProvider, &resp.Diagnostics))
 	}
 
 	if len(updateRegions) != 0 {

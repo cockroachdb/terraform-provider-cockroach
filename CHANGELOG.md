@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `num_virtual_cpus` and `machine_type` attributes to the `regions` block on
+  `cockroach_cluster`, enabling heterogeneous Advanced clusters whose regions use
+  different machine types. These are mutually exclusive with the cluster-wide
+  `dedicated.num_virtual_cpus`/`dedicated.machine_type` and with each other within a
+  region, and must be set on every region when used. Requires a feature flag to be
+  enabled on your organization.
+
 ### Changed
 
 - Bumped version of cockroach-cloud-sdk-go from v7 to v8.

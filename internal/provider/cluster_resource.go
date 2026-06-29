@@ -108,6 +108,22 @@ var regionSchema = schema.NestedAttributeObject{
 			},
 			Description: "Number of nodes in the region. Valid for Advanced clusters only.",
 		},
+		"num_virtual_cpus": schema.Int64Attribute{
+			Optional: true,
+			Computed: true,
+			PlanModifiers: []planmodifier.Int64{
+				int64planmodifier.UseStateForUnknown(),
+			},
+			MarkdownDescription: "Number of virtual CPUs per node in this region. Set this (or `machine_type`) on every region to create a heterogeneous Advanced cluster whose regions use different machine types. Mutually exclusive with the cluster-wide `dedicated.num_virtual_cpus`/`dedicated.machine_type` and with `machine_type` on the same region. Requires a feature flag to be enabled; valid for Advanced clusters only.",
+		},
+		"machine_type": schema.StringAttribute{
+			Optional: true,
+			Computed: true,
+			PlanModifiers: []planmodifier.String{
+				SuppressMachineTypeDrift(),
+			},
+			MarkdownDescription: "Machine type identifier per node in this region, e.g., m6.xlarge, n2-standard-4. Set this (or `num_virtual_cpus`) on every region to create a heterogeneous Advanced cluster. Mutually exclusive with the cluster-wide `dedicated.num_virtual_cpus`/`dedicated.machine_type` and with `num_virtual_cpus` on the same region. This attribute requires a feature flag to be enabled; it is recommended to use `num_virtual_cpus` instead. Valid for Advanced clusters only.",
+		},
 		"primary": schema.BoolAttribute{
 			Optional:    true,
 			Computed:    true,
@@ -311,9 +327,12 @@ func (r *clusterResource) Schema(
 						},
 					},
 					"num_virtual_cpus": schema.Int64Attribute{
-						Optional:    true,
-						Computed:    true,
-						Description: "Number of virtual CPUs per node in the cluster.",
+						Optional: true,
+						Computed: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Description: "Number of virtual CPUs per node in the cluster. Mutually exclusive with per-region `regions[].num_virtual_cpus`/`machine_type`.",
 					},
 					"private_network_visibility": schema.BoolAttribute{
 						Optional:            true,
@@ -519,7 +538,39 @@ func (r *clusterResource) ValidateConfig(
 			if IsKnown(region.NodeCount) {
 				resp.Diagnostics.AddAttributeError(path.Root("regions").AtListIndex(i), "Invalid Attribute", "node_count is supported for ADVANCED clusters only.")
 			}
+			if IsKnown(region.NumVirtualCpus) || IsKnown(region.MachineType) {
+				resp.Diagnostics.AddAttributeError(path.Root("regions").AtListIndex(i), "Invalid Attribute", "Per-region num_virtual_cpus and machine_type are supported for ADVANCED clusters only.")
+			}
 		}
+		return
+	}
+
+	// The cluster-wide dedicated.num_virtual_cpus/machine_type and
+	// the per-region regions[].num_virtual_cpus/machine_type are
+	// mutually exclusive.
+	clusterHasMachineType := cluster.DedicatedConfig != nil &&
+		(!cluster.DedicatedConfig.NumVirtualCpus.IsNull() || !cluster.DedicatedConfig.MachineType.IsNull())
+
+	anyRegionHasMachineType := false
+	allRegionsHaveMachineType := true
+	for i, region := range cluster.Regions {
+		if !region.NumVirtualCpus.IsNull() && !region.MachineType.IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("regions").AtListIndex(i), "Invalid Attribute Combination",
+				"num_virtual_cpus and machine_type are mutually exclusive within a region.")
+		}
+
+		curHasMachineType := hasRegionMachineType(region)
+		anyRegionHasMachineType = anyRegionHasMachineType || curHasMachineType
+		allRegionsHaveMachineType = allRegionsHaveMachineType && curHasMachineType
+	}
+
+	if anyRegionHasMachineType && clusterHasMachineType {
+		resp.Diagnostics.AddError("Invalid Attribute Combination",
+			"Specify machine types either cluster-wide via dedicated.num_virtual_cpus/machine_type or per-region via regions[].num_virtual_cpus/machine_type, not both.")
+	}
+	if anyRegionHasMachineType && !allRegionsHaveMachineType {
+		resp.Diagnostics.AddError("Invalid Attribute Combination",
+			"When any region specifies num_virtual_cpus or machine_type, every region must specify one.")
 	}
 }
 
@@ -555,6 +606,12 @@ func (r *clusterResource) Create(
 	var plan CockroachCluster
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	var config CockroachCluster
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -642,34 +699,31 @@ func (r *clusterResource) Create(
 			}
 			dedicated.RegionNodes = regionNodes
 		}
-		if cfg := plan.DedicatedConfig; cfg != nil {
-			hardware := client.DedicatedHardwareCreateSpecification{}
-			machineSpec := client.DedicatedMachineTypeSpecification{}
-			if IsKnown(cfg.NumVirtualCpus) {
-				cpus := int32(cfg.NumVirtualCpus.ValueInt64())
-				machineSpec.NumVirtualCpus = &cpus
-			} else if IsKnown(cfg.MachineType) {
-				machineType := cfg.MachineType.ValueString()
-				machineSpec.MachineType = &machineType
-			}
+		hardware := client.DedicatedHardwareCreateSpecification{}
+		if regionSpecs, ok := buildRegionMachineSpecs(config.Regions); ok {
+			dedicated.RegionMachineSpecs = &regionSpecs
+		} else {
+			machineSpec := buildClusterWideMachineSpec(config.DedicatedConfig, plan.DedicatedConfig)
 			hardware.MachineSpec = &machineSpec
-			if IsKnown(cfg.StorageGib) {
-				hardware.StorageGib = int32(cfg.StorageGib.ValueInt64())
-			}
-			if IsKnown(cfg.DiskIops) {
-				diskiops := int32(cfg.DiskIops.ValueInt64())
-				hardware.DiskIops = &diskiops
-			}
-			dedicated.Hardware = hardware
-			if cfg.PrivateNetworkVisibility.ValueBool() {
-				visibilityPrivate := client.NETWORKVISIBILITYTYPE_PRIVATE
-				dedicated.NetworkVisibility = &visibilityPrivate
-			}
-			if cfg.CidrRange.ValueString() != "" {
-				dedicated.CidrRange = ptr(cfg.CidrRange.ValueString())
-			}
-			dedicated.SupportsClusterVirtualization = ptr(cfg.SupportsClusterVirtualization.ValueBool())
 		}
+
+		cfg := plan.DedicatedConfig
+		if IsKnown(cfg.StorageGib) {
+			hardware.StorageGib = int32(cfg.StorageGib.ValueInt64())
+		}
+		if IsKnown(cfg.DiskIops) {
+			diskiops := int32(cfg.DiskIops.ValueInt64())
+			hardware.DiskIops = &diskiops
+		}
+		dedicated.Hardware = hardware
+		if cfg.PrivateNetworkVisibility.ValueBool() {
+			visibilityPrivate := client.NETWORKVISIBILITYTYPE_PRIVATE
+			dedicated.NetworkVisibility = &visibilityPrivate
+		}
+		if cfg.CidrRange.ValueString() != "" {
+			dedicated.CidrRange = ptr(cfg.CidrRange.ValueString())
+		}
+		dedicated.SupportsClusterVirtualization = ptr(cfg.SupportsClusterVirtualization.ValueBool())
 		clusterSpec.SetDedicated(dedicated)
 	}
 
@@ -931,6 +985,13 @@ func (r *clusterResource) ModifyPlan(
 		return
 	}
 
+	var config *CockroachCluster
+	diags = req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	if plan != nil {
 		if plan.Name != state.Name {
 			resp.Diagnostics.AddError("Cannot update cluster name",
@@ -981,6 +1042,12 @@ func (r *clusterResource) ModifyPlan(
 			resp.Diagnostics.AddError(
 				"Cannot update with_empty_ip_allowlist",
 				"The with_empty_ip_allowlist field can only be set during cluster creation. It cannot be enabled on an existing cluster.")
+		}
+
+		// Coordinate the dedicated machine plan so per-field plan modifiers don't
+		// leave stale-but-known values that a resize/add/remove would invalidate.
+		if coordinateDedicatedMachinePlan(config, plan, state) {
+			resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 		}
 	}
 
@@ -1041,6 +1108,13 @@ func (r *clusterResource) Update(
 	var state CockroachCluster
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Machine-type mode is decided from config, not plan; see buildRegionMachineSpecs.
+	var config CockroachCluster
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1191,15 +1265,13 @@ func (r *clusterResource) Update(
 			diskiops := int32(plan.DedicatedConfig.DiskIops.ValueInt64())
 			dedicated.Hardware.DiskIops = &diskiops
 		}
-		machineSpec := client.DedicatedMachineTypeSpecification{}
-		if IsKnown(plan.DedicatedConfig.MachineType) {
-			machineType := plan.DedicatedConfig.MachineType.ValueString()
-			machineSpec.MachineType = &machineType
-		} else if IsKnown(plan.DedicatedConfig.NumVirtualCpus) {
-			cpus := int32(plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
-			machineSpec.NumVirtualCpus = &cpus
+
+		if regionSpecs, ok := buildRegionMachineSpecs(config.Regions); ok {
+			dedicated.RegionMachineSpecs = &regionSpecs
+		} else {
+			machineSpec := buildClusterWideMachineSpec(config.DedicatedConfig, plan.DedicatedConfig)
+			dedicated.Hardware.MachineSpec = &machineSpec
 		}
-		dedicated.Hardware.MachineSpec = &machineSpec
 
 		clusterReq.SetDedicated(*dedicated)
 	}
@@ -1485,11 +1557,12 @@ func loadClusterToTerraformState(
 	} else {
 		state.CustomerCloudAccount = nil
 	}
+	var allDiags diag.Diagnostics
 	var planRegions []Region
 	if plan != nil {
 		planRegions = plan.Regions
 	}
-	state.Regions = getManagedRegions(&clusterObj.Regions, planRegions)
+	state.Regions = getManagedRegions(&clusterObj.Regions, planRegions, clusterObj.CloudProvider, &allDiags)
 	state.UpgradeStatus = types.StringValue(string(clusterObj.UpgradeStatus))
 
 	if clusterObj.ParentId == nil {
@@ -1498,7 +1571,6 @@ func loadClusterToTerraformState(
 		state.ParentId = types.StringValue(*clusterObj.ParentId)
 	}
 
-	var allDiags diag.Diagnostics
 	labels, diags := types.MapValueFrom(ctx, types.StringType, clusterObj.Labels)
 	state.Labels = labels
 	allDiags.Append(diags...)
@@ -1567,29 +1639,17 @@ func loadClusterToTerraformState(
 			// machine_type that differs from the API response but has
 			// the same vCPU count (e.g., m6i→m7g), preserve
 			// the previous value. A warning is emitted so users know
-			// the server converted the type.
+			// the server converted the type. If either machine type
+			// couldn't be parsed, the API value remains in state so
+			// unrecognized formats surface as normal Terraform drift.
 			if IsKnown(plan.DedicatedConfig.MachineType) {
-				planMT := plan.DedicatedConfig.MachineType.ValueString()
-				apiMT := clusterObj.Config.Dedicated.MachineType
-				if planMT != apiMT {
-					planVCPUs, planOk := extractVCPUCount(clusterObj.CloudProvider, planMT)
-					apiVCPUs, apiOk := extractVCPUCount(clusterObj.CloudProvider, apiMT)
-					if planOk && apiOk && planVCPUs == apiVCPUs {
-						state.DedicatedConfig.MachineType = plan.DedicatedConfig.MachineType
-						allDiags.AddWarning(
-							"Machine type converted by server",
-							fmt.Sprintf(
-								"The server is running machine_type %q instead of %q "+
-									"(same vCPU count: %d). Update your configuration "+
-									"to use %q to remove this warning.",
-								apiMT, planMT, planVCPUs, apiMT,
-							),
-						)
-					}
-					// If either machine type couldn't be parsed, fall through
-					// and let the API value remain in state. This ensures
-					// unrecognized formats surface as normal Terraform drift.
-				}
+				state.DedicatedConfig.MachineType = suppressMachineTypeDrift(
+					plan.DedicatedConfig.MachineType,
+					clusterObj.Config.Dedicated.MachineType,
+					"", // cluster-wide
+					clusterObj.CloudProvider,
+					&allDiags,
+				)
 			}
 		}
 	}
@@ -1656,36 +1716,328 @@ func providerBackupConfigToClientBackupConfig(
 	return backupUpdateRequest, diags
 }
 
-// Due to the cyclic dependency issues of CMEK, there may be additional
-// regions that are managed by another resource (i.e. cockroach_cmek) that
-// we can safely omit from the state.
-func getManagedRegions(apiRegions *[]client.Region, plan []Region) []Region {
+// hasRegionMachineType reports whether a region specifies a per-region
+// machine type.
+func hasRegionMachineType(r Region) bool {
+	return !r.NumVirtualCpus.IsNull() || !r.MachineType.IsNull()
+}
+
+// isHeterogeneous reports whether any region specifies a per-region machine type.
+func isHeterogeneous(regions []Region) bool {
+	for _, r := range regions {
+		if hasRegionMachineType(r) {
+			return true
+		}
+	}
+	return false
+}
+
+// resolveMachinePlan computes the planned (num_virtual_cpus, machine_type) for a
+// homogeneous cluster's dedicated block or a single heterogeneous region.
+//
+// The user-driven field (the one set in config) is authoritative. The computed
+// sibling is taken from the prior state — matched BY NAME by the caller, so it is
+// correct even when the region list is reordered (e.g. a region is removed and the
+// remaining regions shift index, which would otherwise let the field-scoped plan
+// modifiers carry a different region's value forward). The sibling is set unknown
+// (recomputed from the API) when the driver changed vs state or there is no prior
+// state (a new region). It returns changed=true when a value was set unknown, i.e.
+// a resize/recompute is happening.
+func resolveMachinePlan(
+	configVCPUs types.Int64, configMT types.String,
+	stateVCPUs types.Int64, stateMT types.String, hasState bool,
+) (types.Int64, types.String, bool) {
+	switch {
+	case !configVCPUs.IsNull() && configMT.IsNull():
+		// num_virtual_cpus drives, machine_type is computed.
+		if hasState && IsKnown(configVCPUs) && configVCPUs.Equal(stateVCPUs) {
+			return configVCPUs, stateMT, false
+		}
+		return configVCPUs, types.StringUnknown(), true
+	case !configMT.IsNull() && configVCPUs.IsNull():
+		// machine_type drives, num_virtual_cpus is computed.
+		if hasState && IsKnown(configMT) && configMT.Equal(stateMT) {
+			return stateVCPUs, configMT, false
+		}
+		return types.Int64Unknown(), configMT, true
+	default:
+		// Neither set in config (rely on computed values) — keep the prior state.
+		return stateVCPUs, stateMT, false
+	}
+}
+
+// coordinateDedicatedMachinePlan shapes the dedicated machine plan in a single
+// region-diff-aware pass so the field-scoped plan modifiers
+// (SuppressMachineTypeDrift / UseStateForUnknown) don't leave a stale-but-known
+// value that a resize, region addition, or region removal would invalidate at
+// apply time ("inconsistent result after apply"). It decides the mode from CONFIG
+// (the plan can carry modifier-populated values that don't reflect intent) and
+// mutates plan in place, returning whether anything changed.
+//
+// The per-region sibling-coordination rule lives in resolveMachinePlan; this
+// function orchestrates it across all regions plus the cluster-wide block and the
+// derived computed fields. It must be called with a non-nil state (an update).
+func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool {
+	if config == nil || plan == nil || plan.DedicatedConfig == nil {
+		return false
+	}
+
+	changed := false
+	// resizing tracks whether a machine-spec change is happening (a sibling was
+	// recomputed, or a region was added/removed). When it is, the cluster-wide
+	// derived computed fields must be recomputed too.
+	resizing := false
+	heterogeneous := isHeterogeneous(config.Regions)
+
+	stateByName := make(map[string]Region, len(state.Regions))
+	for _, r := range state.Regions {
+		stateByName[r.Name.ValueString()] = r
+	}
+	configByName := make(map[string]Region, len(config.Regions))
+	for _, r := range config.Regions {
+		configByName[r.Name.ValueString()] = r
+	}
+
+	// Per-region pass. Homogeneous clusters must not carry per-region machine
+	// values (clear them); heterogeneous clusters resolve each region BY NAME so
+	// the computed sibling comes from the same-named state region (correct even
+	// when the list is reordered) and is set unknown on a resize.
+	for i := range plan.Regions {
+		var newVCPUs types.Int64
+		var newMT types.String
+		if !heterogeneous {
+			newVCPUs, newMT = types.Int64Null(), types.StringNull()
+		} else {
+			regionConfig, ok := configByName[plan.Regions[i].Name.ValueString()]
+			if !ok {
+				continue
+			}
+			regionState, hasState := stateByName[plan.Regions[i].Name.ValueString()]
+			var stateVCPUs types.Int64
+			var stateMT types.String
+			if hasState {
+				stateVCPUs, stateMT = regionState.NumVirtualCpus, regionState.MachineType
+			}
+			var regionChanged bool
+			newVCPUs, newMT, regionChanged = resolveMachinePlan(regionConfig.NumVirtualCpus, regionConfig.MachineType, stateVCPUs, stateMT, hasState)
+			resizing = resizing || regionChanged
+		}
+		if !newVCPUs.Equal(plan.Regions[i].NumVirtualCpus) {
+			plan.Regions[i].NumVirtualCpus = newVCPUs
+			changed = true
+		}
+		if !newMT.Equal(plan.Regions[i].MachineType) {
+			plan.Regions[i].MachineType = newMT
+			changed = true
+		}
+	}
+
+	// A removed region (in state, absent from config) can shift a heterogeneous
+	// cluster's cluster-wide aggregates (the API reports the most common per-region
+	// value), so treat a removal as a resize. Additions are already handled above:
+	// a new region has no state, so resolveMachinePlan sets resizing.
+	if heterogeneous {
+		for name := range stateByName {
+			if _, ok := configByName[name]; !ok {
+				resizing = true
+				break
+			}
+		}
+	}
+
+	// Cluster-wide pass (homogeneous only; heterogeneous cluster-wide fields are
+	// derived aggregates handled by the resizing block below).
+	if !heterogeneous && state.DedicatedConfig != nil {
+		newVCPUs, newMT, clusterChanged := resolveMachinePlan(
+			config.DedicatedConfig.NumVirtualCpus, config.DedicatedConfig.MachineType,
+			state.DedicatedConfig.NumVirtualCpus, state.DedicatedConfig.MachineType, true,
+		)
+		if !newVCPUs.Equal(plan.DedicatedConfig.NumVirtualCpus) {
+			plan.DedicatedConfig.NumVirtualCpus = newVCPUs
+			changed = true
+		}
+		if !newMT.Equal(plan.DedicatedConfig.MachineType) {
+			plan.DedicatedConfig.MachineType = newMT
+			changed = true
+		}
+		resizing = resizing || clusterChanged
+	}
+
+	if resizing {
+		// memory_gib is derived from the machine type and changes on resize.
+		plan.DedicatedConfig.MemoryGib = types.Float64Unknown()
+		if heterogeneous {
+			// The cluster-wide num_virtual_cpus/machine_type are derived aggregates
+			// for a heterogeneous cluster and may shift when any region changes.
+			plan.DedicatedConfig.NumVirtualCpus = types.Int64Unknown()
+			plan.DedicatedConfig.MachineType = types.StringUnknown()
+		}
+		changed = true
+	}
+	return changed
+}
+
+// machineSpecFrom builds a DedicatedMachineTypeSpecification from a
+// (num_virtual_cpus, machine_type) pair, preferring num_virtual_cpus (the
+// recommended field) when both are known. Returns an empty spec when neither is
+// known.
+func machineSpecFrom(numVCPUs types.Int64, machineType types.String) client.DedicatedMachineTypeSpecification {
+	spec := client.DedicatedMachineTypeSpecification{}
+	switch {
+	case IsKnown(numVCPUs):
+		cpus := int32(numVCPUs.ValueInt64())
+		spec.NumVirtualCpus = &cpus
+	case IsKnown(machineType):
+		mt := machineType.ValueString()
+		spec.MachineType = &mt
+	}
+	return spec
+}
+
+// buildRegionMachineSpecs builds the per-region machine type map for a
+// heterogeneous Advanced cluster. It returns the map and true when at least one
+// region specifies num_virtual_cpus or machine_type (validated all-or-none in
+// ValidateConfig); otherwise it returns false and the caller should fall back to
+// the cluster-wide hardware.machine_spec path.
+//
+// Callers must pass the regions from the raw CONFIG, not the plan. Plan modifiers
+// (UseStateForUnknown/SuppressMachineTypeDrift) carry prior per-region values
+// forward into the plan even after the user removes them from config; using the
+// plan would make a switch back to cluster-wide sizing silently send stale
+// per-region specs instead.
+func buildRegionMachineSpecs(regions []Region) (map[string]client.DedicatedMachineTypeSpecification, bool) {
+	specs := make(map[string]client.DedicatedMachineTypeSpecification, len(regions))
+	found := false
+	for _, region := range regions {
+		if !hasRegionMachineType(region) {
+			continue
+		}
+		specs[region.Name.ValueString()] = machineSpecFrom(region.NumVirtualCpus, region.MachineType)
+		found = true
+	}
+	return specs, found
+}
+
+// buildClusterWideMachineSpec builds the cluster-wide machine type spec for a
+// homogeneous Advanced cluster. It prefers what the user set in config so an
+// explicit num_virtual_cpus/machine_type change is honored, and falls back to the
+// plan's carried-forward value (e.g. SuppressMachineTypeDrift) when config
+// specifies neither, so the current machine type is still sent. At create time
+// config == plan, so this matches the create path as well.
+func buildClusterWideMachineSpec(config, plan *DedicatedClusterConfig) client.DedicatedMachineTypeSpecification {
+	if config != nil && (IsKnown(config.NumVirtualCpus) || IsKnown(config.MachineType)) {
+		return machineSpecFrom(config.NumVirtualCpus, config.MachineType)
+	}
+	if plan != nil {
+		return machineSpecFrom(plan.NumVirtualCpus, plan.MachineType)
+	}
+	return client.DedicatedMachineTypeSpecification{}
+}
+
+func getManagedRegions(
+	apiRegions *[]client.Region,
+	plan []Region,
+	cloudProvider client.CloudProviderType,
+	diags *diag.Diagnostics,
+) []Region {
 	if apiRegions == nil {
 		return nil
 	}
 	regions := make([]Region, 0, len(*apiRegions))
 	sortRegionsByPlan(apiRegions, plan)
-	planRegions := make(map[string]bool, len(plan))
-	for _, region := range plan {
-		planRegions[region.Name.ValueString()] = true
+	planRegions := make(map[string]*Region, len(plan))
+	for i := range plan {
+		planRegions[plan[i].Name.ValueString()] = &plan[i]
 	}
 	isDatasourceOrImport := len(plan) == 0
 	for _, x := range *apiRegions {
-		if isDatasourceOrImport || planRegions[x.Name] {
-			rg := Region{
-				Name:               types.StringValue(x.Name),
-				SqlDns:             types.StringValue(x.SqlDns),
-				UiDns:              types.StringValue(x.UiDns),
-				InternalDns:        types.StringValue(x.InternalDns),
-				PrivateEndpointDns: types.StringValue(x.PrivateEndpointDns),
-				NodeCount:          types.Int64Value(int64(x.NodeCount)),
-				Primary:            types.BoolValue(x.GetPrimary()),
-				S3VpcEndpointId:    types.StringValue(x.GetS3VpcEndpointId()),
-			}
-			regions = append(regions, rg)
+		planRegion, managed := planRegions[x.Name]
+		if !isDatasourceOrImport && !managed {
+			continue
 		}
+		rg := Region{
+			Name:               types.StringValue(x.Name),
+			SqlDns:             types.StringValue(x.SqlDns),
+			UiDns:              types.StringValue(x.UiDns),
+			InternalDns:        types.StringValue(x.InternalDns),
+			PrivateEndpointDns: types.StringValue(x.PrivateEndpointDns),
+			NodeCount:          types.Int64Value(int64(x.NodeCount)),
+			NumVirtualCpus:     types.Int64Null(),
+			MachineType:        types.StringNull(),
+			Primary:            types.BoolValue(x.GetPrimary()),
+			S3VpcEndpointId:    types.StringValue(x.GetS3VpcEndpointId()),
+		}
+
+		// Per-region machine types are only surfaced when the user manages them
+		// per region (heterogeneous cluster) or when importing / reading a data
+		// source. For homogeneous clusters the machine type lives in the
+		// cluster-wide dedicated block, so these fields stay null to avoid drift.
+		if isDatasourceOrImport {
+			if x.NumVirtualCpus != nil {
+				rg.NumVirtualCpus = types.Int64Value(int64(*x.NumVirtualCpus))
+			}
+			if x.MachineType != nil {
+				rg.MachineType = types.StringValue(*x.MachineType)
+			}
+		} else if IsKnown(planRegion.NumVirtualCpus) || IsKnown(planRegion.MachineType) {
+			// The user manages this region per-region. Populate BOTH fields from
+			// the API (mirroring the cluster-wide path) so the recommended
+			// num_virtual_cpus-only path doesn't leave machine_type null, which
+			// would show a perpetual "(known after apply)". When the server omits
+			// a field, fall back to the planned value so state matches the plan
+			// and we don't produce an inconsistent result after apply.
+			if x.NumVirtualCpus != nil {
+				rg.NumVirtualCpus = types.Int64Value(int64(*x.NumVirtualCpus))
+			} else if IsKnown(planRegion.NumVirtualCpus) {
+				rg.NumVirtualCpus = planRegion.NumVirtualCpus
+			}
+			if x.MachineType != nil {
+				rg.MachineType = suppressMachineTypeDrift(
+					planRegion.MachineType, *x.MachineType, x.Name, cloudProvider, diags)
+			} else if IsKnown(planRegion.MachineType) {
+				rg.MachineType = planRegion.MachineType
+			}
+		}
+
+		regions = append(regions, rg)
 	}
 	return regions
+}
+
+// suppressMachineTypeDrift handles server-side machine type conversions: when the
+// server has converted the instance family to one with the same vCPU count (e.g.
+// m6i→m7g), the plan value is preserved and a warning is emitted; otherwise the API
+// value is returned so genuine changes surface as normal drift. Passing a
+// regionName produces a per-region warning; an empty regionName produces the
+// cluster-wide warning.
+func suppressMachineTypeDrift(
+	planMachineType types.String,
+	apiMachineType string,
+	regionName string,
+	cloudProvider client.CloudProviderType,
+	diags *diag.Diagnostics,
+) types.String {
+	planMT := planMachineType.ValueString()
+	if planMT == apiMachineType {
+		return types.StringValue(apiMachineType)
+	}
+	planVCPUs, planOk := extractVCPUCount(cloudProvider, planMT)
+	apiVCPUs, apiOk := extractVCPUCount(cloudProvider, apiMachineType)
+	if planOk && apiOk && planVCPUs == apiVCPUs {
+		if diags != nil {
+			detail := fmt.Sprintf(
+				"The server is running machine_type %q instead of %q (same vCPU count: %d). "+
+					"Update your configuration to use %q to remove this warning.",
+				apiMachineType, planMT, planVCPUs, apiMachineType,
+			)
+			if regionName != "" {
+				detail = fmt.Sprintf("[Region %s]: %s", regionName, detail)
+			}
+			diags.AddWarning("Machine type converted by server", detail)
+		}
+		return planMachineType
+	}
+	return types.StringValue(apiMachineType)
 }
 
 func waitForClusterReadyFunc(

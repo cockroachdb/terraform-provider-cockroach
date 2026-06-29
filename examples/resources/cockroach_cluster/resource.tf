@@ -24,6 +24,36 @@ resource "cockroach_cluster" "advanced" {
   }
 }
 
+# A heterogeneous Advanced cluster: each region uses a different machine size.
+# Per-region num_virtual_cpus/machine_type are mutually exclusive with the
+# cluster-wide dedicated.num_virtual_cpus/machine_type, and must be set on every
+# region. This requires a feature flag to be enabled on your organization.
+resource "cockroach_cluster" "advanced_heterogeneous" {
+  name           = "cockroach-advanced-heterogeneous"
+  cloud_provider = "GCP"
+  plan           = "ADVANCED"
+  dedicated = {
+    storage_gib = 15
+  }
+  regions = [
+    {
+      name             = "us-central1"
+      node_count       = 3
+      num_virtual_cpus = 4
+    },
+    {
+      name             = "us-east1"
+      node_count       = 3
+      num_virtual_cpus = 8
+    },
+    {
+      name             = "us-west1"
+      node_count       = 3
+      num_virtual_cpus = 8
+    }
+  ]
+}
+
 resource "cockroach_cluster" "standard" {
   name           = "cockroach-standard"
   cloud_provider = "GCP"

@@ -209,6 +209,14 @@ func (d *clusterDataSource) Schema(
 							Computed:    true,
 							Description: "Number of nodes in the region. Will always be 0 for serverless clusters.",
 						},
+						"num_virtual_cpus": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Number of virtual CPUs per node in this region. May differ across regions in a heterogeneous Advanced cluster. Only populated for Advanced clusters.",
+						},
+						"machine_type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Machine type identifier per node in this region, e.g., m6.xlarge, n2-standard-4. May differ across regions in a heterogeneous Advanced cluster. Only populated for Advanced clusters.",
+						},
 						"primary": schema.BoolAttribute{
 							Computed:    true,
 							Description: "Denotes whether this is the primary region in a serverless cluster. Dedicated clusters don't have a primary region.",
@@ -350,7 +358,9 @@ func (d *clusterDataSource) Read(
 	// The concept of a plan doesn't apply to data sources.
 	// Using a nil plan means we won't try to re-sort the region list.
 	var newState CockroachCluster
-	loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)
+	resp.Diagnostics.Append(
+		loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)...,
+	)
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 }

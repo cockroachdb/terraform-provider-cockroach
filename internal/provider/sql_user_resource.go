@@ -25,7 +25,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -150,7 +150,7 @@ func (r *sqlUserResource) Create(
 		return
 	}
 
-	var sqlUserRequest client.CreateSQLUserRequest
+	var sqlUserRequest client.CreateSQLUserBody
 	sqlUserRequest.Name = sqlUserSpec.Name.ValueString()
 	if sqlUserSpec.Password.IsNull() {
 		sqlUserRequest.Password, err = generateRandomPassword()
@@ -274,7 +274,7 @@ func (r *sqlUserResource) Update(
 			)
 		}
 	} else {
-		updateReq := client.UpdateSQLUserPasswordRequest{Password: plan.Password.ValueString()}
+		updateReq := client.UpdateSQLUserPasswordBody{Password: plan.Password.ValueString()}
 		traceAPICall("UpdateSQLUserPassword")
 		_, _, err := r.provider.service.UpdateSQLUserPassword(ctx, plan.ClusterId.ValueString(), plan.Name.ValueString(), &updateReq)
 		if err != nil {

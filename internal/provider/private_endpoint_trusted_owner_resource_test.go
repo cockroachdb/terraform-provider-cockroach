@@ -23,7 +23,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -90,7 +90,7 @@ func TestIntegrationPrivateEndpointTrustedOwnerResource(t *testing.T) {
 	s.EXPECT().AddPrivateEndpointTrustedOwner(
 		gomock.Any(),
 		cluster.Id,
-		&client.AddPrivateEndpointTrustedOwnerRequest{
+		&client.AddPrivateEndpointTrustedOwnerBody{
 			Type:            client.PRIVATEENDPOINTTRUSTEDOWNERTYPETYPE_AWS_ACCOUNT_ID,
 			ExternalOwnerId: trustedOwner.ExternalOwnerId,
 		},

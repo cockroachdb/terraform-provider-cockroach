@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -221,7 +221,7 @@ func (r *jwtIssuerResource) Update(
 	apiResp, _, err := r.provider.service.UpdateJWTIssuer(
 		ctx,
 		plan.ID.ValueString(),
-		&client.UpdateJWTIssuerRequest{
+		&client.UpdateJWTIssuerBody{
 			Audience:    plan.Audience.ValueStringPointer(),
 			Claim:       plan.Claim.ValueStringPointer(),
 			IdentityMap: identityMapFromTerraformState(plan.IdentityMap),

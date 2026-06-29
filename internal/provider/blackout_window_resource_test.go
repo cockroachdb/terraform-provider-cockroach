@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -110,7 +110,7 @@ func TestIntegrationBlackoutWindowResource(t *testing.T) {
 		Return(standardCluster, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), standardClusterID).
 		Return(initialBackupConfig, httpOk, nil)
-	s.EXPECT().CreateBlackoutWindow(gomock.Any(), standardClusterID, &client.CreateBlackoutWindowRequest{
+	s.EXPECT().CreateBlackoutWindow(gomock.Any(), standardClusterID, &client.CreateBlackoutWindowBody{
 		StartTime: initialStart,
 		EndTime:   initialEnd,
 	}).
@@ -135,7 +135,7 @@ func TestIntegrationBlackoutWindowResource(t *testing.T) {
 	s.EXPECT().SetMaintenanceWindow(gomock.Any(), advancedClusterID, createdMaintenanceWindowInfo).
 		Return(createdMaintenanceWindowInfo, nil, nil)
 	s.EXPECT().
-		CreateBlackoutWindow(gomock.Any(), advancedClusterID, &client.CreateBlackoutWindowRequest{
+		CreateBlackoutWindow(gomock.Any(), advancedClusterID, &client.CreateBlackoutWindowBody{
 			StartTime: initialStart,
 			EndTime:   initialEnd,
 		}).
@@ -175,7 +175,7 @@ func TestIntegrationBlackoutWindowResource(t *testing.T) {
 		Return(createdWindow, nil, nil)
 
 	s.EXPECT().
-		UpdateBlackoutWindow(gomock.Any(), advancedClusterID, createdWindow.Id, &client.UpdateBlackoutWindowRequest{
+		UpdateBlackoutWindow(gomock.Any(), advancedClusterID, createdWindow.Id, &client.UpdateBlackoutWindowBody{
 			StartTime: &updatedStart,
 			EndTime:   &updatedEnd,
 		}).

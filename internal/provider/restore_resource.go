@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -192,7 +192,7 @@ func (r *restoreResource) Create(
 		return
 	}
 
-	createRestoreReq := &client.CockroachCloudCreateRestoreRequest{
+	createRestoreReq := &client.CreateRestoreBody{
 		Type: client.RestoreTypeType(plan.Type.ValueString()),
 	}
 

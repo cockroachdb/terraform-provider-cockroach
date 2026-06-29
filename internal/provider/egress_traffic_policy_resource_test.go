@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -72,7 +72,7 @@ func TestIntegrationEgressTrafficPolicyResource(t *testing.T) {
 
 	// Mock SetEgressTrafficPolicy to update state
 	f.mock.EXPECT().SetEgressTrafficPolicy(gomock.Any(), f.clusterID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, clusterID string, req *client.SetEgressTrafficPolicyRequest) (*http.Response, error) {
+		DoAndReturn(func(ctx context.Context, clusterID string, req *client.SetEgressTrafficPolicyBody) (*http.Response, error) {
 			currentAllowAll = req.AllowAll
 			return &http.Response{StatusCode: http.StatusOK}, nil
 		}).Times(4)

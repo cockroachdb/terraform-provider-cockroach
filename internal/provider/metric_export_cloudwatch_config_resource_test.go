@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -113,7 +113,7 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnableCloudWatchMetricExport(gomock.Any(), clusterID,
-		&client.EnableCloudWatchMetricExportRequest{
+		&client.EnableCloudWatchMetricExportBody{
 			RoleArn:      arn,
 			LogGroupName: &logGroupName,
 			ExternalId:   nil,
@@ -130,7 +130,7 @@ func TestIntegrationMetricExportCloudWatchConfigResource(t *testing.T) {
 	s.EXPECT().GetCloudWatchMetricExportInfo(gomock.Any(), clusterID).
 		Return(createdCloudWatchClusterInfo, nil, nil)
 	s.EXPECT().EnableCloudWatchMetricExport(gomock.Any(), clusterID,
-		&client.EnableCloudWatchMetricExportRequest{
+		&client.EnableCloudWatchMetricExportBody{
 			RoleArn:      arn,
 			LogGroupName: &logGroupName,
 			TargetRegion: &updatedRegion,

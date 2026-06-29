@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -95,7 +95,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 	s.EXPECT().CreateDatabase(
 		gomock.Any(),
 		clusterID,
-		&client.CreateDatabaseRequest{Name: databaseName},
+		&client.CreateDatabaseBody{Name: databaseName},
 	).Return(&database, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ListDatabasesResponse{Databases: []client.Database{database}}, nil, nil).
@@ -107,7 +107,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 		Times(2)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ListDatabasesResponse{Databases: []client.Database{database}}, nil, nil)
-	s.EXPECT().EditDatabase(gomock.Any(), clusterID, databaseName, &client.UpdateDatabaseRequest1{NewName: newDatabaseName}).
+	s.EXPECT().EditDatabase(gomock.Any(), clusterID, databaseName, &client.EditDatabaseBody{NewName: newDatabaseName}).
 		Return(&updatedDatabase, nil, nil)
 	s.EXPECT().ListDatabases(gomock.Any(), clusterID, gomock.Any()).
 		Return(&client.ListDatabasesResponse{Databases: []client.Database{updatedDatabase}}, nil, nil).

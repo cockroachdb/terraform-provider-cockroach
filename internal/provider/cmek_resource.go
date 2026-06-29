@@ -23,7 +23,7 @@ import (
 	"reflect"
 	"sort"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -161,7 +161,7 @@ func (r *cmekResource) Create(
 		return
 	}
 
-	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekSpec := client.NewEnableCMEKSpecBodyWithDefaults()
 	regionSpecs := make([]client.CMEKRegionSpecification, 0, len(plan.Regions))
 	for _, region := range plan.Regions {
 		regionSpecs = append(regionSpecs, cmekRegionToClientSpec(region))
@@ -284,7 +284,7 @@ func (r *cmekResource) Update(
 			return
 		}
 		traceAPICall("UpdateCMEKStatus")
-		if _, _, err := r.provider.service.UpdateCMEKStatus(ctx, plan.ID.ValueString(), &client.UpdateCMEKStatusRequest{
+		if _, _, err := r.provider.service.UpdateCMEKStatus(ctx, plan.ID.ValueString(), &client.UpdateCMEKStatusBody{
 			Action: client.CMEKCUSTOMERACTION_REVOKE,
 		}); err != nil {
 			resp.Diagnostics.AddError("Error revoking CMEK",
@@ -333,7 +333,7 @@ func (r *cmekResource) Update(
 		_, _, err := r.provider.service.UpdateCMEKSpec(
 			ctx,
 			plan.ID.ValueString(),
-			&client.CMEKClusterSpecification{RegionSpecs: updateRegions},
+			&client.UpdateCMEKSpecBody{RegionSpecs: updateRegions},
 		)
 		if err != nil {
 			resp.Diagnostics.AddError("Error updating CMEK specification", formatAPIErrorMessage(err))
@@ -450,7 +450,7 @@ func retryEnableCMEKSpec(
 	cl client.Service,
 	clusterID string,
 	cluster *client.Cluster,
-	cmekSpec *client.CMEKClusterSpecification,
+	cmekSpec *client.EnableCMEKSpecBody,
 	cmekObj *client.CMEKClusterInfo,
 ) retry.RetryFunc {
 	iamHelper := newIAMRetryHelper()

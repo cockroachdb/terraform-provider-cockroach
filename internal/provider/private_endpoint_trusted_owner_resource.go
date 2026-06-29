@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -117,7 +117,7 @@ func (r *privateEndpointTrustedOwnerResource) Create(
 		return
 	}
 
-	addReq := client.NewAddPrivateEndpointTrustedOwnerRequest(
+	addReq := client.NewAddPrivateEndpointTrustedOwnerBody(
 		plan.ExternalOwnerID.ValueString(),
 		client.PrivateEndpointTrustedOwnerTypeType(plan.Type.ValueString()),
 	)

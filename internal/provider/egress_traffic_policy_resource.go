@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -251,7 +251,7 @@ func setEgressTrafficPolicyRetryFunc(
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
 		traceAPICall("SetEgressTrafficPolicy")
-		httpResp, err := cl.SetEgressTrafficPolicy(ctx, clusterID, &client.SetEgressTrafficPolicyRequest{AllowAll: allowAll})
+		httpResp, err := cl.SetEgressTrafficPolicy(ctx, clusterID, &client.SetEgressTrafficPolicyBody{AllowAll: allowAll})
 		if err != nil {
 			apiErrMsg := formatAPIErrorMessage(err)
 			if httpResp != nil {

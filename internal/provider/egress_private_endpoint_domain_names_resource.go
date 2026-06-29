@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -379,7 +379,7 @@ func updateEgressPrivateEndpointFunc(
 	domainNames []string,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
-		req := client.UpdateEgressPrivateEndpointRequest{
+		req := client.UpdateEgressPrivateEndpointBody{
 			DomainNames: domainNames,
 		}
 

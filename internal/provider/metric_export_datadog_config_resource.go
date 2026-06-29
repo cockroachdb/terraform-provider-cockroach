@@ -24,7 +24,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -141,7 +141,7 @@ func (r *metricExportDatadogConfigResource) Create(
 	apiObj := &client.DatadogMetricExportInfo{}
 	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service, clusterID, cluster,
-		client.NewEnableDatadogMetricExportRequest(plan.ApiKey.ValueString(), *site),
+		client.NewEnableDatadogMetricExportBody(plan.ApiKey.ValueString(), *site),
 		apiObj,
 	))
 	if err != nil {
@@ -175,7 +175,7 @@ func retryEnableDatadogMetricExport(
 	cl client.Service,
 	clusterID string,
 	cluster *client.Cluster,
-	apiRequest *client.EnableDatadogMetricExportRequest,
+	apiRequest *client.EnableDatadogMetricExportBody,
 	apiObj *client.DatadogMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
@@ -355,7 +355,7 @@ func (r *metricExportDatadogConfigResource) Update(
 	apiObj := &client.DatadogMetricExportInfo{}
 	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service, clusterID, cluster,
-		client.NewEnableDatadogMetricExportRequest(plan.ApiKey.ValueString(), *site),
+		client.NewEnableDatadogMetricExportBody(plan.ApiKey.ValueString(), *site),
 		apiObj,
 	))
 	if err != nil {

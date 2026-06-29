@@ -22,7 +22,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -156,7 +156,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			s.EXPECT().AddPrivateEndpointConnection(
 				gomock.Any(),
 				clusterID,
-				&client.AddPrivateEndpointConnectionRequest{EndpointId: endpointID}).
+				&client.AddPrivateEndpointConnectionBody{EndpointId: endpointID}).
 				Return(&connection, nil, nil)
 			s.EXPECT().ListPrivateEndpointConnections(gomock.Any(), clusterID).
 				Return(connections, nil, nil).

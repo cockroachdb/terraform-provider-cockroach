@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -148,7 +148,7 @@ func (r *privateEndpointConnectionResource) Create(
 		return
 	}
 
-	addRequest := client.AddPrivateEndpointConnectionRequest{
+	addRequest := client.AddPrivateEndpointConnectionBody{
 		EndpointId: plan.EndpointID.ValueString(),
 	}
 

@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"regexp"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
@@ -124,7 +124,7 @@ func (r *databaseResource) Create(
 		return
 	}
 
-	var databaseRequest client.CreateDatabaseRequest
+	var databaseRequest client.CreateDatabaseBody
 	databaseRequest.Name = databaseSpec.Name.ValueString()
 
 	traceAPICall("CreateDatabase")
@@ -237,7 +237,7 @@ func (r *databaseResource) Update(
 		return
 	}
 
-	updateReq := client.UpdateDatabaseRequest1{
+	updateReq := client.EditDatabaseBody{
 		NewName: plan.Name.ValueString(),
 	}
 	clusterID := plan.ClusterId.ValueString()

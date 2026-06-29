@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -74,7 +74,7 @@ func TestIntegrationClusterRestoreResource(t *testing.T) {
 		RetentionDays:    30,
 	}
 
-	createRestoreReq := &client.CockroachCloudCreateRestoreRequest{
+	createRestoreReq := &client.CreateRestoreBody{
 		Type:            client.RESTORETYPETYPE_CLUSTER,
 		SourceClusterId: &clusterID,
 	}
@@ -181,7 +181,7 @@ func TestIntegrationDatabaseRestoreResource(t *testing.T) {
 		RetentionDays:    30,
 	}
 
-	createRestoreReq := &client.CockroachCloudCreateRestoreRequest{
+	createRestoreReq := &client.CreateRestoreBody{
 		Type:            client.RESTORETYPETYPE_DATABASE,
 		SourceClusterId: &clusterID,
 		Objects:         &[]client.RestoreItem{dbRestoreItem("test_db")},
@@ -303,7 +303,7 @@ func TestIntegrationTableRestoreResource(t *testing.T) {
 	restoreItems = append(restoreItems, tablesRestoreItem("test_db", "public", []string{"table1", "table2"})...)
 	restoreItems = append(restoreItems, tablesRestoreItem("test_db2", "public", []string{"table3"})...)
 
-	createRestoreReq := &client.CockroachCloudCreateRestoreRequest{
+	createRestoreReq := &client.CreateRestoreBody{
 		Type:            client.RESTORETYPETYPE_TABLE,
 		SourceClusterId: &clusterID,
 		Objects:         &restoreItems,

@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -594,7 +594,7 @@ func TestRetryFuncBehavior(t *testing.T) {
 				defer ctrl.Finish()
 				mockService := mock_client.NewMockService(ctrl)
 				clusterID := uuid.New().String()
-				addReq := &client.AddEgressRuleRequest{Name: "test", Description: "test", Type: "FQDN", Destination: "example.com"}
+				addReq := &client.AddEgressRuleBody{Name: "test", Description: "test", Type: "FQDN", Destination: "example.com"}
 
 				mockService.EXPECT().AddEgressRule(gomock.Any(), clusterID, addReq).
 					Return(nil, &http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
@@ -630,7 +630,7 @@ func TestRetryFuncBehavior(t *testing.T) {
 				defer ctrl.Finish()
 				mockService := mock_client.NewMockService(ctrl)
 				clusterID, ruleID := uuid.New().String(), uuid.New().String()
-				editReq := &client.EditEgressRuleRequest{}
+				editReq := &client.EditEgressRuleBody{}
 
 				mockService.EXPECT().EditEgressRule(gomock.Any(), clusterID, ruleID, editReq).
 					Return(nil, &http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
@@ -759,7 +759,7 @@ func (f *egressRuleTestFixture) setupReplacementMocks(originalRule, replacementR
 		AnyTimes()
 
 	f.mock.EXPECT().AddEgressRule(gomock.Any(), f.clusterID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, cID string, req *client.AddEgressRuleRequest) (*client.AddEgressRuleResponse, *http.Response, error) {
+		DoAndReturn(func(ctx context.Context, cID string, req *client.AddEgressRuleBody) (*client.AddEgressRuleResponse, *http.Response, error) {
 			if atomic.LoadInt32(&originalDeleted) == 1 {
 				atomic.StoreInt32(&replacementCreated, 1)
 				replacementRule.Id = replacementRuleID
@@ -920,7 +920,7 @@ func (f *egressRuleTestFixture) setupUpdateMocks(originalRule, updatedRule clien
 		AnyTimes()
 
 	f.mock.EXPECT().EditEgressRule(gomock.Any(), f.clusterID, f.ruleID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, cID, rID string, req *client.EditEgressRuleRequest) (*client.EditEgressRuleResponse, *http.Response, error) {
+		DoAndReturn(func(ctx context.Context, cID, rID string, req *client.EditEgressRuleBody) (*client.EditEgressRuleResponse, *http.Response, error) {
 			atomic.StoreInt32(&state, 1)
 			return &client.EditEgressRuleResponse{Rule: &updatedRule}, nil, nil
 		})

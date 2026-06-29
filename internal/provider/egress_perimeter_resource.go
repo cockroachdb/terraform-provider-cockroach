@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -198,7 +198,7 @@ func (r *egressPerimeterResource) Create(
 	}
 
 	// Build the request
-	addReq := client.AddEgressRuleRequest{
+	addReq := client.AddEgressRuleBody{
 		Name:        plan.Name.ValueString(),
 		Description: plan.Description.ValueString(),
 		Type:        plan.Type.ValueString(),
@@ -323,7 +323,7 @@ func (r *egressPerimeterResource) Update(
 	ruleType := plan.Type.ValueString()
 	destination := plan.Destination.ValueString()
 
-	editReq := client.EditEgressRuleRequest{
+	editReq := client.EditEgressRuleBody{
 		Description: &description,
 		Type:        &ruleType,
 		Destination: &destination,
@@ -533,7 +533,7 @@ func setEgressTrafficPolicyFunc(
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
 		traceAPICall("SetEgressTrafficPolicy")
-		httpResp, err := cl.SetEgressTrafficPolicy(ctx, clusterID, &client.SetEgressTrafficPolicyRequest{AllowAll: false})
+		httpResp, err := cl.SetEgressTrafficPolicy(ctx, clusterID, &client.SetEgressTrafficPolicyBody{AllowAll: false})
 		if err != nil {
 			return handleEgressRetryError(httpResp, formatAPIErrorMessage(err), "setting egress traffic policy")
 		}
@@ -546,7 +546,7 @@ func createEgressRuleFunc(
 	ctx context.Context,
 	cl client.Service,
 	clusterID string,
-	addReq *client.AddEgressRuleRequest,
+	addReq *client.AddEgressRuleBody,
 	createdRule *client.EgressRule,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
@@ -566,7 +566,7 @@ func updateEgressRuleFunc(
 	cl client.Service,
 	clusterID string,
 	ruleID string,
-	editReq *client.EditEgressRuleRequest,
+	editReq *client.EditEgressRuleBody,
 	updatedRule *client.EgressRule,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {

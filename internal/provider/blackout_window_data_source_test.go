@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -129,19 +129,19 @@ func TestIntegrationBlackoutWindowDataSource(t *testing.T) {
 	s.EXPECT().SetMaintenanceWindow(gomock.Any(), clusterID, createdMaintenanceWindowInfo).
 		Return(createdMaintenanceWindowInfo, nil, nil)
 	s.EXPECT().
-		CreateBlackoutWindow(gomock.Any(), clusterID, &client.CreateBlackoutWindowRequest{
+		CreateBlackoutWindow(gomock.Any(), clusterID, &client.CreateBlackoutWindowBody{
 			StartTime: firstStart,
 			EndTime:   firstEnd,
 		}).
 		Return(firstBlackoutWindow, nil, nil)
 	s.EXPECT().
-		CreateBlackoutWindow(gomock.Any(), clusterID, &client.CreateBlackoutWindowRequest{
+		CreateBlackoutWindow(gomock.Any(), clusterID, &client.CreateBlackoutWindowBody{
 			StartTime: secondStart,
 			EndTime:   secondEnd,
 		}).
 		Return(secondBlackoutWindow, nil, nil)
 	s.EXPECT().
-		CreateBlackoutWindow(gomock.Any(), clusterID, &client.CreateBlackoutWindowRequest{
+		CreateBlackoutWindow(gomock.Any(), clusterID, &client.CreateBlackoutWindowBody{
 			StartTime: thirdStart,
 			EndTime:   thirdEnd,
 		}).

@@ -26,7 +26,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 )
 
 const clusterTrackingEnvVar = "CLEANUP_TRACKING_FILE"

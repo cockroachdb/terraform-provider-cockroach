@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -363,7 +363,7 @@ func createEgressPrivateEndpointFunc(
 	createdEndpoint *client.EgressPrivateEndpoint,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
-		createReq := client.CreateEgressPrivateEndpointRequest{
+		createReq := client.CreateEgressPrivateEndpointBody{
 			Region:                  region,
 			TargetServiceIdentifier: targetServiceIdentifier,
 			TargetServiceType:       targetServiceType,

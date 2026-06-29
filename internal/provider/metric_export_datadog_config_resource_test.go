@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -110,7 +110,7 @@ func TestIntegrationMetricExportDatadogConfigResource(t *testing.T) {
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnableDatadogMetricExport(gomock.Any(), clusterID,
-		&client.EnableDatadogMetricExportRequest{
+		&client.EnableDatadogMetricExportBody{
 			ApiKey: apiKey,
 			Site:   site,
 		}).
@@ -126,7 +126,7 @@ func TestIntegrationMetricExportDatadogConfigResource(t *testing.T) {
 	s.EXPECT().GetDatadogMetricExportInfo(gomock.Any(), clusterID).
 		Return(createdDatadogClusterInfo, nil, nil)
 	s.EXPECT().EnableDatadogMetricExport(gomock.Any(), clusterID,
-		&client.EnableDatadogMetricExportRequest{
+		&client.EnableDatadogMetricExportBody{
 			ApiKey: updatedApiKey,
 			Site:   site,
 		}).

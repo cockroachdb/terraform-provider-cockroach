@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Bumped version of cockroach-cloud-sdk-go from v7 to v8.
+
 ## [1.21.1] - 2026-05-29
 
 ### Fixed
@@ -62,9 +66,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.17.0] - 2025-12-04
 
 ### Added
-- Added new fields to `restore` resource and `restores` data source: `backup_end_time`, 
-`client_error_code`, `client_error_message`, `completed_at`, `crdb_job_id`, 
-`source_cluster_name`, `destination_cluster_name`, `objects`, `restore_opts` 
+- Added new fields to `restore` resource and `restores` data source: `backup_end_time`,
+`client_error_code`, `client_error_message`, `completed_at`, `crdb_job_id`,
+`source_cluster_name`, `destination_cluster_name`, `objects`, `restore_opts`
 - Added `SkipMissingViews` as a new restore option (`RestoreOpts`)
 
 ## [1.16.0] - 2025-10-30
@@ -79,9 +83,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added support for configurable 30, 60, or 90 day patch upgrade deferrals in
   `cockroach_version_deferral` resource.
 
-- Added support for creating blackout windows via the 
+- Added support for creating blackout windows via the
   `cockroach_blackout_window` resource.
-  
+
 - Added `cockroach_blackout_windows` data source for listing blackout windows
   for a cluster
 

@@ -20,7 +20,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -133,7 +133,7 @@ func (r *userRoleGrantsResource) Create(
 		}
 		roles = append(roles, *apiRole)
 	}
-	var setRoleRequest client.CockroachCloudSetRolesForUserRequest
+	var setRoleRequest client.SetRolesForUserBody
 	setRoleRequest.SetRoles(roles)
 
 	traceAPICall("SetRolesForUser")
@@ -228,7 +228,7 @@ func (r *userRoleGrantsResource) Update(
 		}
 		roles = append(roles, *apiRole)
 	}
-	var setRoleRequest client.CockroachCloudSetRolesForUserRequest
+	var setRoleRequest client.SetRolesForUserBody
 	setRoleRequest.SetRoles(roles)
 
 	traceAPICall("SetRolesForUser")
@@ -256,7 +256,7 @@ func (r *userRoleGrantsResource) Delete(
 		return
 	}
 
-	emptyRoleRequest := &client.CockroachCloudSetRolesForUserRequest{}
+	emptyRoleRequest := &client.SetRolesForUserBody{}
 	traceAPICall("SetRolesForUser")
 	_, _, err := r.provider.service.SetRolesForUser(ctx, state.UserId.ValueString(), emptyRoleRequest)
 	if err != nil {

@@ -23,7 +23,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -204,7 +204,7 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
-	logExportRequest := client.NewEnableLogExportRequestWithDefaults()
+	logExportRequest := client.NewEnableLogExportBodyWithDefaults()
 	if err = loadPlanIntoEnableLogExportRequest(plan, logExportRequest); err != nil {
 		resp.Diagnostics.AddError(
 			"Error preparing log export config",
@@ -247,7 +247,7 @@ func retryEnableLogExport(
 	cl client.Service,
 	clusterID string,
 	cluster *client.Cluster,
-	logExportRequest *client.EnableLogExportRequest,
+	logExportRequest *client.EnableLogExportBody,
 	apiLogExportObj *client.LogExportClusterInfo,
 ) retry.RetryFunc {
 	iamHelper := newIAMRetryHelper()
@@ -444,7 +444,7 @@ func (r *logExportConfigResource) Update(
 		return
 	}
 
-	logExportRequest := client.NewEnableLogExportRequestWithDefaults()
+	logExportRequest := client.NewEnableLogExportBodyWithDefaults()
 	if err := loadPlanIntoEnableLogExportRequest(plan, logExportRequest); err != nil {
 		resp.Diagnostics.AddError(
 			"Error preparing log export config update",
@@ -511,7 +511,7 @@ func logExportGroupToClientGroup(group LogExportGroup) (*client.LogExportGroup, 
 }
 
 func loadPlanIntoEnableLogExportRequest(
-	plan ClusterLogExport, req *client.EnableLogExportRequest,
+	plan ClusterLogExport, req *client.EnableLogExportBody,
 ) error {
 	if plan.Groups != nil {
 		logExportGroups := make([]client.LogExportGroup, len(*plan.Groups))

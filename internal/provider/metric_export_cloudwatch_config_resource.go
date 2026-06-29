@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -143,7 +143,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 		return
 	}
 
-	apiRequest := client.NewEnableCloudWatchMetricExportRequest(plan.RoleArn.ValueString())
+	apiRequest := client.NewEnableCloudWatchMetricExportBody(plan.RoleArn.ValueString())
 	if IsKnown(plan.TargetRegion) {
 		apiRequest.SetTargetRegion(plan.TargetRegion.ValueString())
 	}
@@ -186,7 +186,7 @@ func retryEnableCloudWatchMetricExport(
 	cl client.Service,
 	clusterID string,
 	cluster *client.Cluster,
-	apiRequest *client.EnableCloudWatchMetricExportRequest,
+	apiRequest *client.EnableCloudWatchMetricExportBody,
 	apiObj *client.CloudWatchMetricExportInfo,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
@@ -367,7 +367,7 @@ func (r *metricExportCloudWatchConfigResource) Update(
 		return
 	}
 
-	apiRequest := client.NewEnableCloudWatchMetricExportRequest(plan.RoleArn.ValueString())
+	apiRequest := client.NewEnableCloudWatchMetricExportBody(plan.RoleArn.ValueString())
 	if IsKnown(plan.TargetRegion) {
 		apiRequest.SetTargetRegion(plan.TargetRegion.ValueString())
 	}

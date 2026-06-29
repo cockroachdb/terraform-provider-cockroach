@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -96,12 +96,12 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 	s.EXPECT().CreateSQLUser(
 		gomock.Any(),
 		clusterID,
-		&client.CreateSQLUserRequest{Name: sqlUserNameWithPass, Password: sqlPassword},
+		&client.CreateSQLUserBody{Name: sqlUserNameWithPass, Password: sqlPassword},
 	).Return(&userWithPass, nil, nil)
 	s.EXPECT().CreateSQLUser(
 		gomock.Any(),
 		clusterID,
-		&client.CreateSQLUserRequest{Name: sqlUserNameNoPass, Password: testPassword},
+		&client.CreateSQLUserBody{Name: sqlUserNameNoPass, Password: testPassword},
 	).Return(&userNoPass, nil, nil)
 	s.EXPECT().ListSQLUsers(gomock.Any(), clusterID, gomock.Any()).Times(5).Return(
 		&client.ListSQLUsersResponse{Users: []client.SQLUser{userWithPass, userNoPass}}, nil, nil)

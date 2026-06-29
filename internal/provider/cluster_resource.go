@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -652,7 +652,7 @@ func (r *clusterResource) Create(
 				machineType := cfg.MachineType.ValueString()
 				machineSpec.MachineType = &machineType
 			}
-			hardware.MachineSpec = machineSpec
+			hardware.MachineSpec = &machineSpec
 			if IsKnown(cfg.StorageGib) {
 				hardware.StorageGib = int32(cfg.StorageGib.ValueInt64())
 			}

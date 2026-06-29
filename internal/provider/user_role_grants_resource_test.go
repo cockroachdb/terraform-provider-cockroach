@@ -23,7 +23,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -113,7 +113,7 @@ func TestIntegrationRoleGrantsResource(t *testing.T) {
 		Return(&permissionedGetResponse, nil, nil).Times(5)
 	s.EXPECT().GetServiceAccount(gomock.Any(), serviceAccount.Id).
 		Return(&serviceAccount, &http.Response{Status: http.StatusText(http.StatusOK)}, nil)
-	s.EXPECT().SetRolesForUser(gomock.Any(), userId, &client.CockroachCloudSetRolesForUserRequest{}).
+	s.EXPECT().SetRolesForUser(gomock.Any(), userId, &client.SetRolesForUserBody{}).
 		Return(&restrictedGetResponse, nil, nil)
 	s.EXPECT().DeleteServiceAccount(gomock.Any(), gomock.Any()).
 		Return(nil, nil, nil)

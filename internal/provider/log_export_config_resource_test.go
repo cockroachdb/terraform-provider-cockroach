@@ -25,7 +25,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -143,7 +143,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
-		&client.EnableLogExportRequest{
+		&client.EnableLogExportBody{
 			Groups:          &createdGroups,
 			AuthPrincipal:   authPrincipal,
 			LogName:         logName,
@@ -164,7 +164,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	s.EXPECT().GetLogExportInfo(gomock.Any(), clusterID).
 		Return(createdLogExportClusterInfo, nil, nil)
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
-		&client.EnableLogExportRequest{
+		&client.EnableLogExportBody{
 			AuthPrincipal:   authPrincipal,
 			Type:            *configType,
 			LogName:         logName,
@@ -344,7 +344,7 @@ func TestRetryEnableLogExport_Success(t *testing.T) {
 	s := mock_client.NewMockService(ctrl)
 	clusterID := uuid.Nil.String()
 	cluster := &client.Cluster{}
-	logExportRequest := client.NewEnableLogExportRequestWithDefaults()
+	logExportRequest := client.NewEnableLogExportBodyWithDefaults()
 	apiLogExportObj := &client.LogExportClusterInfo{}
 
 	expectedResponse := &client.LogExportClusterInfo{
@@ -370,7 +370,7 @@ func TestRetryEnableLogExport_ServiceUnavailable(t *testing.T) {
 	s := mock_client.NewMockService(ctrl)
 	clusterID := uuid.Nil.String()
 	cluster := &client.Cluster{State: client.CLUSTERSTATETYPE_CREATED}
-	logExportRequest := client.NewEnableLogExportRequestWithDefaults()
+	logExportRequest := client.NewEnableLogExportBodyWithDefaults()
 	apiLogExportObj := &client.LogExportClusterInfo{}
 
 	// First call returns 503, which should trigger a cluster check and retry

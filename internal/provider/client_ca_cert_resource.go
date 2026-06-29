@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -107,7 +107,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// Generate API request from plan
-	setClientCACertReq := client.NewSetClientCACertRequest(plan.X509PemCert.ValueString())
+	setClientCACertReq := client.NewSetClientCACertBody(plan.X509PemCert.ValueString())
 
 	traceAPICall("SetClientCACert")
 	certInfo, _, err := r.provider.service.SetClientCACert(ctx, plan.ID.ValueString(), setClientCACertReq)
@@ -189,7 +189,7 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 	} else {
 		newCert := plan.X509PemCert.ValueString()
-		updateReq := client.UpdateClientCACertRequest{X509PemCert: &newCert}
+		updateReq := client.UpdateClientCACertBody{X509PemCert: &newCert}
 		traceAPICall("UpdateClientCACert")
 		certInfo, _, err := r.provider.service.UpdateClientCACert(ctx, plan.ID.ValueString(), &updateReq)
 		if err != nil {

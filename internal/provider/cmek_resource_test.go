@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -104,7 +104,7 @@ func TestIntegrationCMEKResource(t *testing.T) {
 	}
 
 	usCentral1 := "us-central-1"
-	cmekCreateSpec := &client.CMEKClusterSpecification{
+	cmekCreateSpec := &client.EnableCMEKSpecBody{
 		RegionSpecs: []client.CMEKRegionSpecification{
 			{
 				Region:  &usCentral1,
@@ -353,7 +353,7 @@ func TestRetryEnableCMEKSpec_Success(t *testing.T) {
 
 	s := mock_client.NewMockService(ctrl)
 	clusterID := uuid.Nil.String()
-	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekSpec := client.NewEnableCMEKSpecBodyWithDefaults()
 	cmekObj := &client.CMEKClusterInfo{}
 	cluster := &client.Cluster{}
 
@@ -378,7 +378,7 @@ func TestRetryEnableCMEKSpec_ServiceUnavailable(t *testing.T) {
 	s := mock_client.NewMockService(ctrl)
 	clusterID := uuid.Nil.String()
 	cluster := &client.Cluster{State: client.CLUSTERSTATETYPE_CREATED}
-	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekSpec := client.NewEnableCMEKSpecBodyWithDefaults()
 	cmekObj := &client.CMEKClusterInfo{}
 
 	// First call returns 503, which should trigger a cluster check and retry
@@ -404,7 +404,7 @@ func TestRetryEnableCMEKSpec_IAMRetryable(t *testing.T) {
 	s := mock_client.NewMockService(ctrl)
 	clusterID := uuid.Nil.String()
 	cluster := &client.Cluster{State: client.CLUSTERSTATETYPE_CREATED}
-	cmekSpec := client.NewCMEKClusterSpecificationWithDefaults()
+	cmekSpec := client.NewEnableCMEKSpecBodyWithDefaults()
 	cmekObj := &client.CMEKClusterInfo{}
 
 	// Return 403 Forbidden, which indicates IAM permission not yet propagated

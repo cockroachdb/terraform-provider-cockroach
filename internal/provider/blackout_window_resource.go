@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v7/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -117,7 +117,7 @@ func (r *blackoutWindowResource) Create(ctx context.Context, req resource.Create
 	}
 
 	traceAPICall("CreateBlackoutWindow")
-	createReq := &client.CreateBlackoutWindowRequest{
+	createReq := &client.CreateBlackoutWindowBody{
 		StartTime: startTime,
 		EndTime:   endTime,
 	}
@@ -195,7 +195,7 @@ func (r *blackoutWindowResource) Update(ctx context.Context, req resource.Update
 		return
 	}
 
-	updateReq := &client.UpdateBlackoutWindowRequest{}
+	updateReq := &client.UpdateBlackoutWindowBody{}
 	// If no fields are changing, we do a no-op.
 	needsUpdate := false
 

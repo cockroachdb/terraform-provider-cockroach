@@ -99,10 +99,12 @@ type CustomerCloudAccount struct {
 }
 
 type SQLUser struct {
-	ClusterId types.String `tfsdk:"cluster_id"`
-	Name      types.String `tfsdk:"name"`
-	Password  types.String `tfsdk:"password"`
-	ID        types.String `tfsdk:"id"`
+	ClusterId         types.String `tfsdk:"cluster_id"`
+	Name              types.String `tfsdk:"name"`
+	Password          types.String `tfsdk:"password"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.Int64  `tfsdk:"password_wo_version"`
+	ID                types.String `tfsdk:"id"`
 }
 
 type APIErrorMessage struct {

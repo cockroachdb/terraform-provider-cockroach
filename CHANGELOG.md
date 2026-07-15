@@ -7,9 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added write-only `password_wo` and `password_wo_version` attributes to the `cockroach_sql_user` resource (requires Terraform CLI 1.11+). The password is sent on create and rotation but never persisted in Terraform state. Rotate by changing `password_wo` and incrementing `password_wo_version`.
+
 ### Changed
 
 - Bumped version of cockroach-cloud-sdk-go from v7 to v8.
+
+### Deprecated
+
+- Deprecated the `password` attribute on `cockroach_sql_user`; it persists the cleartext password in Terraform state. Migrate to `password_wo`. `password` will be removed in a future major release.
 
 ## [1.21.1] - 2026-05-29
 

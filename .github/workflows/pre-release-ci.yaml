@@ -1,4 +1,9 @@
-name: pre-release-ci
+# This workflow is triggered by pushing a "v*" tag (i.e. v1.16.0) and runs the
+# full acceptance test suite against the live CockroachDB Cloud API. It gates
+# the release workflow (release.yml): there is no automated gate, so the
+# release workflow must not be dispatched until this workflow has passed on
+# the tag being released. See RELEASE.md for the full release process.
+name: pre-release-ci (acceptance tests, gates release)
 on:
   push:
     tags:

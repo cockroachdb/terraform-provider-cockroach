@@ -5,6 +5,9 @@ on:
       - 'main'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
 
   # pre job run golangci-lint

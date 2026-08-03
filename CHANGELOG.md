@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed `labels` on `cockroach_cluster` and `cockroach_folder` failing validation
+  when a label value is not known at plan time, such as
+  `labels = { environment = var.environment }`. Unknown values are now skipped
+  during validation and checked once they resolve. Label keys and known values
+  continue to be validated as before.
+
 - Setting `private_network_visibility = false` on a `MISSION_CRITICAL` cluster is
   now rejected during planning. Those clusters are always private, so the
   configuration previously created the cluster and then failed the apply with

@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"maps"
 	"net/http"
 	"os"
 	"regexp"
@@ -4822,6 +4823,126 @@ func getTestClusterWithLabels(
 		}] %s%s
 	}
 	`, folderName, clusterName, labelsString, parentString)
+}
+
+// TestIntegrationClusterWithUnknownLabelValues is an integration test focused
+// only on testing labels whose values aren't known when Terraform validates the
+// configuration. The other label tests build their configuration from quoted
+// string literals, so every value they produce is already known.
+func TestIntegrationClusterWithUnknownLabelValues(t *testing.T) {
+	clusterID := uuid.Nil.String()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	// environment and cost_center are unknown during validation. team is a
+	// literal, so it's known on the pass that defers the other two.
+	labels := map[string]string{
+		"environment": "test",
+		"cost_center": "12345",
+		"team":        "console",
+	}
+
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Plan:             "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: "us-central1",
+			},
+		},
+		Labels: labels,
+	}
+
+	// Validate CreateCluster receives the resolved label values, rather than only
+	// that validation let the plan through.
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+			if sentLabels := req.Spec.GetLabels(); !maps.Equal(sentLabels, labels) {
+				return nil, nil, fmt.Errorf("unexpected labels in create request: %v", sentLabels)
+			}
+			return &cluster, httpOk, nil
+		},
+	)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				PreConfig: func() {
+					traceMessageStep("create cluster with a label value from an input variable")
+				},
+				Config: getTestClusterWithUnknownLabels(
+					clusterName, labels["environment"], labels["cost_center"], labels["team"],
+				),
+				Check: testCheckLabels(serverlessResourceName, labels),
+			},
+		},
+	})
+}
+
+// getTestClusterWithUnknownLabels returns a cluster configuration with two
+// label values that Terraform leaves unknown while it validates the
+// configuration, one from an input variable and one from a resource that
+// doesn't exist yet.
+func getTestClusterWithUnknownLabels(clusterName, environment, costCenter, team string) string {
+	return fmt.Sprintf(`
+	variable "environment" {
+		type    = string
+		default = "%s"
+	}
+
+	# terraform_data.cost_center.output is unknown at plan time because the
+	# resource does not exist yet.
+	resource "terraform_data" "cost_center" {
+		input = "%s"
+	}
+
+	resource "cockroach_cluster" "test" {
+		name           = "%s"
+		cloud_provider = "GCP"
+		plan = "STANDARD"
+		serverless = {
+			usage_limits = {
+				provisioned_virtual_cpus = 2
+			}
+		}
+		regions = [{
+			name = "us-central1"
+		}]
+		labels = {
+			environment = var.environment
+			cost_center = terraform_data.cost_center.output
+			team        = "%s"
+		}
+	}
+	`, environment, costCenter, clusterName, team)
 }
 
 // TestIntegrationClusterExternalStateChange tests that the cluster resource

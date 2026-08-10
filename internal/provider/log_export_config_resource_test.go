@@ -25,7 +25,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -145,7 +145,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
 		&client.EnableLogExportBody{
 			Groups:          &createdGroups,
-			AuthPrincipal:   authPrincipal,
+			AuthPrincipal:   &authPrincipal,
 			LogName:         logName,
 			Redact:          &trueBool,
 			Type:            *configType,
@@ -165,7 +165,7 @@ func TestIntegrationLogExportConfigResource(t *testing.T) {
 		Return(createdLogExportClusterInfo, nil, nil)
 	s.EXPECT().EnableLogExport(gomock.Any(), clusterID,
 		&client.EnableLogExportBody{
-			AuthPrincipal:   authPrincipal,
+			AuthPrincipal:   &authPrincipal,
 			Type:            *configType,
 			LogName:         logName,
 			Redact:          &falseBool,

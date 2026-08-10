@@ -24,6 +24,7 @@ import (
 	_ioutil "io/ioutil"
 	_nethttp "net/http"
 	_neturl "net/url"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -343,18 +344,29 @@ type Service interface {
 	// RoleManagement
 	//
 
-	// Add a role to a user or service account
+	// Add a role to a user, service account, or group
 	AddUserToRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
-	// Get all Role Grants for a user
+	// Get all role grants for a user, service account, or group
 	GetAllRolesForUser(ctx _context.Context, userId string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
 	// Search person users by email address
 	GetPersonUsersByEmail(ctx _context.Context, email *string) (*GetPersonUsersByEmailResponse, *_nethttp.Response, error)
 	// List all RoleGrants
 	ListRoleGrants(ctx _context.Context, options *ListRoleGrantsOptions) (*ListRoleGrantsResponse, *_nethttp.Response, error)
-	// Remove a role from a user or service account
+	// Remove a role from a user, service account, or group
 	RemoveUserFromRole(ctx _context.Context, userId string, resourceType string, resourceId string, roleName string) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
-	// Replace the roles for a user or service account with exactly those provided
+	// Replace the roles for a user, service account, or group with exactly those provided
 	SetRolesForUser(ctx _context.Context, userId string, setRolesForUserBody *SetRolesForUserBody) (*GetAllRolesForUserResponse, *_nethttp.Response, error)
+
+	//
+	// RuntimeScanning
+	//
+
+	// Disable runtime scanning on a cluster.
+	DisableClusterRuntimeScanning(ctx _context.Context, clusterId string) (*RuntimeScanningInfo, *_nethttp.Response, error)
+	// Enable runtime scanning on a cluster.
+	EnableClusterRuntimeScanning(ctx _context.Context, clusterId string, enableClusterRuntimeScanningBody *EnableClusterRuntimeScanningBody) (*RuntimeScanningInfo, *_nethttp.Response, error)
+	// Get the runtime scanning status of a cluster.
+	GetClusterRuntimeScanning(ctx _context.Context, clusterId string) (*RuntimeScanningInfo, *_nethttp.Response, error)
 
 	//
 	// SCIM
@@ -15558,6 +15570,410 @@ func (a *ServiceImpl) SetRolesForUser(
 	return &localVarReturnValue, localVarHTTPResponse, nil
 }
 
+// DisableClusterRuntimeScanning executes the request.
+func (a *ServiceImpl) DisableClusterRuntimeScanning(
+	ctx _context.Context, clusterId string,
+) (*RuntimeScanningInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodDelete
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/runtime-scanning"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue RuntimeScanningInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// EnableClusterRuntimeScanning executes the request.
+func (a *ServiceImpl) EnableClusterRuntimeScanning(
+	ctx _context.Context, clusterId string, enableClusterRuntimeScanningBody *EnableClusterRuntimeScanningBody,
+) (*RuntimeScanningInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodPost
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/runtime-scanning"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+	if enableClusterRuntimeScanningBody == nil {
+		return nil, nil, reportError("enableClusterRuntimeScanningBody is required and must be specified")
+	}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{"application/json"}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	// Body params.
+	localVarPostBody = enableClusterRuntimeScanningBody
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue RuntimeScanningInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
+// GetClusterRuntimeScanning executes the request.
+func (a *ServiceImpl) GetClusterRuntimeScanning(
+	ctx _context.Context, clusterId string,
+) (*RuntimeScanningInfo, *_nethttp.Response, error) {
+	var (
+		localVarHTTPMethod   = _nethttp.MethodGet
+		localVarPostBody     interface{}
+		localVarFormFileName string
+		localVarFileName     string
+		localVarFileBytes    []byte
+	)
+
+	localBasePath := a.client.cfg.ServerURL
+
+	localVarPath := localBasePath + "/api/v1/clusters/{cluster_id}/runtime-scanning"
+	localVarPath = strings.Replace(localVarPath, "{"+"cluster_id"+"}", _neturl.PathEscape(parameterToString(clusterId, "")), -1)
+
+	localVarHeaderParams := make(map[string]string)
+	localVarQueryParams := _neturl.Values{}
+	localVarFormParams := _neturl.Values{}
+
+	// Determine the Content-Type header.
+	localVarHTTPContentTypes := []string{}
+
+	// Set Content-Type header.
+	localVarHTTPContentType := selectHeaderContentType(localVarHTTPContentTypes)
+	if localVarHTTPContentType != "" {
+		localVarHeaderParams["Content-Type"] = localVarHTTPContentType
+	}
+
+	// Determine the Accept header.
+	localVarHTTPHeaderAccepts := []string{"application/json"}
+
+	// Set Accept header.
+	localVarHTTPHeaderAccept := selectHeaderAccept(localVarHTTPHeaderAccepts)
+	if localVarHTTPHeaderAccept != "" {
+		localVarHeaderParams["Accept"] = localVarHTTPHeaderAccept
+	}
+	req, err := a.client.prepareRequest(ctx, localVarPath, localVarHTTPMethod, localVarPostBody, localVarHeaderParams, localVarQueryParams, localVarFormParams, localVarFormFileName, localVarFileName, localVarFileBytes)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	localVarHTTPResponse, err := a.client.callAPI(req)
+	if err != nil || localVarHTTPResponse == nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	localVarBody, err := _ioutil.ReadAll(localVarHTTPResponse.Body)
+	localVarHTTPResponse.Body.Close()
+	localVarHTTPResponse.Body = _ioutil.NopCloser(bytes.NewBuffer(localVarBody))
+	if err != nil {
+		return nil, localVarHTTPResponse, err
+	}
+
+	if localVarHTTPResponse.StatusCode >= 300 {
+		newErr := Error{
+			body:  localVarBody,
+			error: localVarHTTPResponse.Status,
+		}
+		if localVarHTTPResponse.StatusCode == 400 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 401 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 403 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 404 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		if localVarHTTPResponse.StatusCode == 500 {
+			var v interface{}
+			err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+			if err != nil {
+				newErr.error = err.Error()
+				return nil, localVarHTTPResponse, newErr
+			}
+			newErr.model = v
+			return nil, localVarHTTPResponse, newErr
+		}
+		var v Status
+		err = a.client.decode(&v, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+		if err != nil {
+			newErr.error = err.Error()
+			return nil, localVarHTTPResponse, newErr
+		}
+		newErr.model = v
+		return nil, localVarHTTPResponse, newErr
+	}
+
+	var localVarReturnValue RuntimeScanningInfo
+	err = a.client.decode(&localVarReturnValue, localVarBody, localVarHTTPResponse.Header.Get("Content-Type"))
+	if err != nil {
+		newErr := Error{
+			body:  localVarBody,
+			error: err.Error(),
+		}
+		return &localVarReturnValue, localVarHTTPResponse, newErr
+	}
+
+	return &localVarReturnValue, localVarHTTPResponse, nil
+}
+
 // CreateGroup executes the request.
 func (a *ServiceImpl) CreateGroup(
 	ctx _context.Context, createGroupRequest *CreateGroupRequest,
@@ -20045,6 +20461,12 @@ type ListServiceAccountsOptions struct {
 
 	//  - ASC: Sort in ascending order. This is the default unless otherwise specified.  - DESC: Sort in descending order.
 	PaginationSortOrder *string
+
+	// Optional case-insensitive filter for service account name.
+	ServiceAccountName *string
+
+	// If specified, only service accounts holding at least one of these roles (either directly or via a group) are returned.   - FOLDER_ADMIN: Preview: A folder admin role.  - FOLDER_MOVER: Preview: A folder mover role.
+	Roles *[]string
 }
 
 // ListServiceAccounts executes the request.
@@ -20078,6 +20500,20 @@ func (a *ServiceImpl) ListServiceAccounts(
 	}
 	if options.PaginationSortOrder != nil {
 		localVarQueryParams.Add("pagination.sort_order", parameterToString(*options.PaginationSortOrder, ""))
+	}
+	if options.ServiceAccountName != nil {
+		localVarQueryParams.Add("service_account_name", parameterToString(*options.ServiceAccountName, ""))
+	}
+	if options.Roles != nil {
+		t := *options.Roles
+		if reflect.TypeOf(t).Kind() == reflect.Slice {
+			s := reflect.ValueOf(t)
+			for i := 0; i < s.Len(); i++ {
+				localVarQueryParams.Add("roles", parameterToString(s.Index(i), "multi"))
+			}
+		} else {
+			localVarQueryParams.Add("roles", parameterToString(t, "multi"))
+		}
 	}
 	// Determine the Content-Type header.
 	localVarHTTPContentTypes := []string{}

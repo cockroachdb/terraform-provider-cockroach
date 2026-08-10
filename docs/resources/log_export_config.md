@@ -61,6 +61,8 @@ resource "cockroach_log_export_config" "example" {
   * AWS_CLOUDWATCH
   * GCP_CLOUD_LOGGING
   * AZURE_LOG_ANALYTICS
+  * AZURE_LOG_ANALYTICS_V2
+  * OTLP_HTTP
 
 ### Optional
 

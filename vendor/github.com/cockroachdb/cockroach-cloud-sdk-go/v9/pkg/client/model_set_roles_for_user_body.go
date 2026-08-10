@@ -18,33 +18,32 @@
 
 package client
 
-// UserRoleGrants struct for UserRoleGrants.
-type UserRoleGrants struct {
-	Roles  []BuiltInRole `json:"roles"`
-	UserId string        `json:"user_id"`
+// SetRolesForUserBody struct for SetRolesForUserBody.
+type SetRolesForUserBody struct {
+	// roles is the complete set of roles for the user, service account, or group.
+	Roles []BuiltInRole `json:"roles"`
 }
 
-// NewUserRoleGrants instantiates a new UserRoleGrants object.
+// NewSetRolesForUserBody instantiates a new SetRolesForUserBody object.
 // This constructor will assign default values to properties that have it defined,
 // and makes sure properties required by API are set, but the set of arguments
 // will change when the set of required properties is changed
-func NewUserRoleGrants(roles []BuiltInRole, userId string) *UserRoleGrants {
-	p := UserRoleGrants{}
+func NewSetRolesForUserBody(roles []BuiltInRole) *SetRolesForUserBody {
+	p := SetRolesForUserBody{}
 	p.Roles = roles
-	p.UserId = userId
 	return &p
 }
 
-// NewUserRoleGrantsWithDefaults instantiates a new UserRoleGrants object.
+// NewSetRolesForUserBodyWithDefaults instantiates a new SetRolesForUserBody object.
 // This constructor will only assign default values to properties that have it defined,
 // but it doesn't guarantee that properties required by API are set
-func NewUserRoleGrantsWithDefaults() *UserRoleGrants {
-	p := UserRoleGrants{}
+func NewSetRolesForUserBodyWithDefaults() *SetRolesForUserBody {
+	p := SetRolesForUserBody{}
 	return &p
 }
 
 // GetRoles returns the Roles field value.
-func (o *UserRoleGrants) GetRoles() []BuiltInRole {
+func (o *SetRolesForUserBody) GetRoles() []BuiltInRole {
 	if o == nil {
 		var ret []BuiltInRole
 		return ret
@@ -54,21 +53,6 @@ func (o *UserRoleGrants) GetRoles() []BuiltInRole {
 }
 
 // SetRoles sets field value.
-func (o *UserRoleGrants) SetRoles(v []BuiltInRole) {
+func (o *SetRolesForUserBody) SetRoles(v []BuiltInRole) {
 	o.Roles = v
-}
-
-// GetUserId returns the UserId field value.
-func (o *UserRoleGrants) GetUserId() string {
-	if o == nil {
-		var ret string
-		return ret
-	}
-
-	return o.UserId
-}
-
-// SetUserId sets field value.
-func (o *UserRoleGrants) SetUserId(v string) {
-	o.UserId = v
 }

@@ -22,14 +22,16 @@ import (
 	"fmt"
 )
 
-// LogExportType LogExportType encodes the cloud selection that we're exporting to along with the cloud logging platform.  Currently, each cloud has a single logging platform.
+// LogExportType LogExportType identifies the destination used for exported logs. Cloud-native destinations use their provider's logging service, while OTLP_HTTP sends logs to a customer-configured OTLP/HTTP endpoint.   - AZURE_LOG_ANALYTICS: AZURE_LOG_ANALYTICS is the legacy Azure export path via the HTTP Data Collector API (retiring 2026-09-14). Deprecated: use AZURE_LOG_ANALYTICS_V2 instead.  - AZURE_LOG_ANALYTICS_V2: AZURE_LOG_ANALYTICS_V2 exports to Azure Monitor via the Logs Ingestion API and DCR-based ingestion, replacing the deprecated AZURE_LOG_ANALYTICS path that uses the HTTP Data Collector API (retiring 2026-09-14). V2 authenticates with a tenant/client/secret + DCR endpoint and rule, whereas the legacy type uses a workspace ID + shared key.
 type LogExportType string
 
 // List of LogExportType.
 const (
-	LOGEXPORTTYPE_AWS_CLOUDWATCH      LogExportType = "AWS_CLOUDWATCH"
-	LOGEXPORTTYPE_GCP_CLOUD_LOGGING   LogExportType = "GCP_CLOUD_LOGGING"
-	LOGEXPORTTYPE_AZURE_LOG_ANALYTICS LogExportType = "AZURE_LOG_ANALYTICS"
+	LOGEXPORTTYPE_AWS_CLOUDWATCH         LogExportType = "AWS_CLOUDWATCH"
+	LOGEXPORTTYPE_GCP_CLOUD_LOGGING      LogExportType = "GCP_CLOUD_LOGGING"
+	LOGEXPORTTYPE_AZURE_LOG_ANALYTICS    LogExportType = "AZURE_LOG_ANALYTICS"
+	LOGEXPORTTYPE_AZURE_LOG_ANALYTICS_V2 LogExportType = "AZURE_LOG_ANALYTICS_V2"
+	LOGEXPORTTYPE_OTLP_HTTP              LogExportType = "OTLP_HTTP"
 )
 
 // All allowed values of LogExportType enum.
@@ -37,6 +39,8 @@ var AllowedLogExportTypeEnumValues = []LogExportType{
 	"AWS_CLOUDWATCH",
 	"GCP_CLOUD_LOGGING",
 	"AZURE_LOG_ANALYTICS",
+	"AZURE_LOG_ANALYTICS_V2",
+	"OTLP_HTTP",
 }
 
 // NewLogExportTypeFromValue returns a pointer to a valid LogExportType

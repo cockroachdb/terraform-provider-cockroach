@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v8/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"

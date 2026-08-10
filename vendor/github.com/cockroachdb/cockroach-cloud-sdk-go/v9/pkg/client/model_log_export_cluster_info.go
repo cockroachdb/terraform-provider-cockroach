@@ -24,12 +24,15 @@ import (
 
 // LogExportClusterInfo LogExportClusterInfo contains a package of information that fully describes both the intended state of the log export configuration for a specific cluster but also some metadata around its deployment status, any error messages, and some timestamps..
 type LogExportClusterInfo struct {
-	ClusterId   *string                        `json:"cluster_id,omitempty"`
-	CreatedAt   *time.Time                     `json:"created_at,omitempty"`
-	Spec        *LogExportClusterSpecification `json:"spec,omitempty"`
-	Status      *LogExportStatus               `json:"status,omitempty"`
-	UpdatedAt   *time.Time                     `json:"updated_at,omitempty"`
-	UserMessage *string                        `json:"user_message,omitempty"`
+	ClusterId      *string                  `json:"cluster_id,omitempty"`
+	CreatedAt      *time.Time               `json:"created_at,omitempty"`
+	DeliveryStatus *LogExportDeliveryStatus `json:"delivery_status,omitempty"`
+	// Descriptive error message when delivery_status is DELIVERY_UNHEALTHY. Only populated for OTLP_HTTP sinks.
+	DeliveryStatusMessage *string                        `json:"delivery_status_message,omitempty"`
+	Spec                  *LogExportClusterSpecification `json:"spec,omitempty"`
+	Status                *LogExportStatus               `json:"status,omitempty"`
+	UpdatedAt             *time.Time                     `json:"updated_at,omitempty"`
+	UserMessage           *string                        `json:"user_message,omitempty"`
 }
 
 // NewLogExportClusterInfo instantiates a new LogExportClusterInfo object.
@@ -67,6 +70,34 @@ func (o *LogExportClusterInfo) GetCreatedAt() time.Time {
 // SetCreatedAt gets a reference to the given time.Time and assigns it to the CreatedAt field.
 func (o *LogExportClusterInfo) SetCreatedAt(v time.Time) {
 	o.CreatedAt = &v
+}
+
+// GetDeliveryStatus returns the DeliveryStatus field value if set, zero value otherwise.
+func (o *LogExportClusterInfo) GetDeliveryStatus() LogExportDeliveryStatus {
+	if o == nil || o.DeliveryStatus == nil {
+		var ret LogExportDeliveryStatus
+		return ret
+	}
+	return *o.DeliveryStatus
+}
+
+// SetDeliveryStatus gets a reference to the given LogExportDeliveryStatus and assigns it to the DeliveryStatus field.
+func (o *LogExportClusterInfo) SetDeliveryStatus(v LogExportDeliveryStatus) {
+	o.DeliveryStatus = &v
+}
+
+// GetDeliveryStatusMessage returns the DeliveryStatusMessage field value if set, zero value otherwise.
+func (o *LogExportClusterInfo) GetDeliveryStatusMessage() string {
+	if o == nil || o.DeliveryStatusMessage == nil {
+		var ret string
+		return ret
+	}
+	return *o.DeliveryStatusMessage
+}
+
+// SetDeliveryStatusMessage gets a reference to the given string and assigns it to the DeliveryStatusMessage field.
+func (o *LogExportClusterInfo) SetDeliveryStatusMessage(v string) {
+	o.DeliveryStatusMessage = &v
 }
 
 // GetSpec returns the Spec field value if set, zero value otherwise.

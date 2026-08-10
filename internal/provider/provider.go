@@ -152,6 +152,7 @@ func (p *provider) Resources(_ context.Context) []func() resource.Resource {
 		NewUserRoleGrantResource,
 		NewMaintenanceWindowResource,
 		NewVersionDeferralResource,
+		NewClusterRuntimeScanningResource,
 		NewFolderResource,
 		NewJWTIssuerResource,
 		NewServiceAccountResource,

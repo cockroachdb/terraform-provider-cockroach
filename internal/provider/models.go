@@ -339,6 +339,12 @@ type ClusterVersionDeferral struct {
 	DeferredUntil  types.String `tfsdk:"deferred_until"`
 }
 
+type ClusterRuntimeScanning struct {
+	ID        types.String `tfsdk:"id"`
+	ClusterID types.String `tfsdk:"cluster_id"`
+	Type      types.String `tfsdk:"type"`
+}
+
 type ClusterBackupConfiguration struct {
 	ID               types.String `tfsdk:"id"`
 	Enabled          types.Bool   `tfsdk:"enabled"`

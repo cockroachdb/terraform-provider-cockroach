@@ -42,7 +42,7 @@ resource "cockroach_client_ca_cert" "prod" {
 ### Required
 
 - `id` (String) Cluster ID.
-- `x509_pem_cert` (String) X509 certificate in PEM format.
+- `x509_pem_cert` (String) X509 certificate in PEM format. This value is a PEM bundle and may contain multiple concatenated CA certificates. To rotate the CA cert without downtime, see [Rotating client CA certs](../guides/rotating-client-ca-certs).
 
 ### Read-Only
 

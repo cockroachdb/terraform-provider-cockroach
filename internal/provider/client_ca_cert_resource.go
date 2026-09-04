@@ -52,7 +52,7 @@ func (r *clientCACertResource) Schema(_ context.Context, _ resource.SchemaReques
 			},
 			"x509_pem_cert": schema.StringAttribute{
 				Required:            true,
-				MarkdownDescription: "X509 certificate in PEM format.",
+				MarkdownDescription: "X509 certificate in PEM format. This value is a PEM bundle and may contain multiple concatenated CA certificates. To rotate the CA cert without downtime, see [Rotating client CA certs](../guides/rotating-client-ca-certs).",
 			},
 			"status": schema.StringAttribute{
 				MarkdownDescription: "Status of client CA certs on a cluster.",

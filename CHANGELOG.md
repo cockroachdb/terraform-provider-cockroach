@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- API requests now report the provider and Terraform CLI versions in the
+  `User-Agent` header (for example `terraform-provider-cockroach/1.22.0
+  terraform/1.9.5`) and set the `Cc-Client: terraform` header.
+
 - Bumped version of cockroach-cloud-sdk-go from v8 to v9.
 
 ### Fixed

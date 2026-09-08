@@ -26,6 +26,7 @@ import (
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/stretchr/testify/require"
 )
 
 var testAccProvider tf_provider.Provider
@@ -35,7 +36,7 @@ func init() {
 	apiKey := os.Getenv(CockroachAPIKey)
 	apiJWT := os.Getenv(CockroachAPIJWT)
 
-	cfg := getClientConfiguration(apiKey, apiJWT)
+	cfg := getClientConfiguration(apiKey, apiJWT, "test", "")
 
 	cl = client.NewClient(cfg)
 	testAccProvider = New("test")()
@@ -57,6 +58,22 @@ func testAccPreCheck(t *testing.T) {
 			CockroachAPIJWT,
 		)
 	}
+}
+
+func TestUserAgent(t *testing.T) {
+	require.Equal(t,
+		"terraform-provider-cockroach/1.22.0 terraform/1.9.5",
+		userAgent("1.22.0", "1.9.5"),
+	)
+	require.Equal(t,
+		"terraform-provider-cockroach/dev",
+		userAgent("dev", ""),
+	)
+}
+
+func TestClientConfigurationSetsCcClientHeader(t *testing.T) {
+	cfg := getClientConfiguration("key", "", "1.22.0", "1.9.5")
+	require.Equal(t, "terraform", cfg.DefaultHeader["Cc-Client"])
 }
 
 func GenerateRandomString(n int) string {

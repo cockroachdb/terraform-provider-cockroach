@@ -218,6 +218,10 @@ github.com/hashicorp/terraform-plugin-framework/schema/validator
 github.com/hashicorp/terraform-plugin-framework/tfsdk
 github.com/hashicorp/terraform-plugin-framework/types
 github.com/hashicorp/terraform-plugin-framework/types/basetypes
+# github.com/hashicorp/terraform-plugin-framework-timeouts v0.5.0
+## explicit; go 1.22.0
+github.com/hashicorp/terraform-plugin-framework-timeouts/internal/validators
+github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts
 # github.com/hashicorp/terraform-plugin-framework-validators v0.18.0
 ## explicit; go 1.23.0
 github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator

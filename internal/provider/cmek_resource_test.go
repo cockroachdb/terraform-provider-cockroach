@@ -22,6 +22,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
@@ -41,12 +42,23 @@ func TestAccCMEKResource(t *testing.T) {
 		"or import a permanent test fixture.")
 	t.Parallel()
 	clusterName := fmt.Sprintf("%s-cmek-%s", tfTestPrefix, GenerateRandomString(4))
-	testCMEKResource(t, clusterName, false)
+	testCMEKResource(t, clusterName, false, false)
 }
 
 // TestIntegrationCMEKResource attempts to create, check, and destroy
 // a cluster, but uses a mocked API service.
 func TestIntegrationCMEKResource(t *testing.T) {
+	testIntegrationCMEKResource(t, false)
+}
+
+// TestIntegrationCMEKWithTimeouts verifies that a configured `timeouts` block on
+// cockroach_cmek is accepted and round-trips into state. Timeouts are config-only
+// so they don't change any API calls; the default (no block) is covered above.
+func TestIntegrationCMEKWithTimeouts(t *testing.T) {
+	testIntegrationCMEKResource(t, true)
+}
+
+func testIntegrationCMEKResource(t *testing.T, includeTimeouts bool) {
 	clusterName := fmt.Sprintf("%s-cmek-%s", tfTestPrefix, GenerateRandomString(4))
 	clusterID := uuid.Nil.String()
 	if os.Getenv(CockroachAPIKey) == "" {
@@ -199,7 +211,14 @@ func TestIntegrationCMEKResource(t *testing.T) {
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().EnableCMEKSpec(gomock.Any(), clusterID, cmekCreateSpec).
-		Return(initialCMEKInfo, nil, nil)
+		DoAndReturn(func(ctx context.Context, _ string, _ *client.EnableCMEKSpecBody) (*client.CMEKClusterInfo, *http.Response, error) {
+			// The end-to-end deadline is opt-in: EnableCMEKSpec's context carries
+			// a deadline only when timeouts.create is explicitly configured.
+			if _, hasDeadline := ctx.Deadline(); hasDeadline != includeTimeouts {
+				t.Errorf("EnableCMEKSpec ctx deadline present=%v, want %v", hasDeadline, includeTimeouts)
+			}
+			return initialCMEKInfo, nil, nil
+		})
 	s.EXPECT().GetCMEKClusterInfo(gomock.Any(), clusterID).
 		Return(initialCMEKInfo, nil, nil).
 		Times(2)
@@ -222,14 +241,38 @@ func TestIntegrationCMEKResource(t *testing.T) {
 	// Delete
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
-	testCMEKResource(t, clusterName, true)
+	testCMEKResource(t, clusterName, true, includeTimeouts)
 }
 
-func testCMEKResource(t *testing.T, clusterName string, useMock bool) {
+func testCMEKResource(t *testing.T, clusterName string, useMock, includeTimeouts bool) {
 	var (
 		clusterResourceName = "cockroach_cluster.test"
 		cmekResourceName    = "cockroach_cmek.test"
 	)
+
+	createChecks := []resource.TestCheckFunc{
+		testCheckCockroachClusterExists(clusterResourceName),
+	}
+	updateChecks := []resource.TestCheckFunc{
+		// The original region should only show up under the cluster resource,
+		// and the two additional regions should only show up under the CMEK resource.
+		resource.TestCheckResourceAttr(clusterResourceName, "regions.#", "1"),
+		resource.TestCheckResourceAttr(cmekResourceName, "additional_regions.#", "2"),
+		resource.TestCheckResourceAttr(cmekResourceName, "regions.#", "3"),
+	}
+	var importStateVerifyIgnore []string
+	if includeTimeouts {
+		createChecks = append(createChecks,
+			resource.TestCheckResourceAttr(cmekResourceName, "timeouts.create", "3h"),
+			resource.TestCheckResourceAttr(cmekResourceName, "timeouts.update", "4h"),
+		)
+		updateChecks = append(updateChecks,
+			resource.TestCheckResourceAttr(cmekResourceName, "timeouts.create", "3h"),
+			resource.TestCheckResourceAttr(cmekResourceName, "timeouts.update", "4h"),
+		)
+		// timeouts is config-only, so an imported resource won't have it.
+		importStateVerifyIgnore = []string{"timeouts"}
+	}
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               useMock,
@@ -237,32 +280,35 @@ func testCMEKResource(t *testing.T, clusterName string, useMock bool) {
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: getTestCMEKResourceCreateConfig(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckCockroachClusterExists(clusterResourceName),
-				),
+				Config: getTestCMEKResourceCreateConfig(clusterName, includeTimeouts),
+				Check:  resource.ComposeTestCheckFunc(createChecks...),
 			},
 			{
 				// Test import functionality here, because an imported CMEK resource won't have additional_regions.
-				ResourceName:      cmekResourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            cmekResourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: importStateVerifyIgnore,
 			},
 			{
-				Config: getTestCMEKResourceUpdateConfig(clusterName),
-				Check: resource.ComposeTestCheckFunc(
-					// The original region should only show up under the cluster resource,
-					// and the two additional regions should only show up under the CMEK resource.
-					resource.TestCheckResourceAttr(clusterResourceName, "regions.#", "1"),
-					resource.TestCheckResourceAttr(cmekResourceName, "additional_regions.#", "2"),
-					resource.TestCheckResourceAttr(cmekResourceName, "regions.#", "3"),
-				),
+				Config: getTestCMEKResourceUpdateConfig(clusterName, includeTimeouts),
+				Check:  resource.ComposeTestCheckFunc(updateChecks...),
 			},
 		},
 	})
 }
 
-func getTestCMEKResourceCreateConfig(name string) string {
+func cmekTimeoutsBlock(includeTimeouts bool) string {
+	if !includeTimeouts {
+		return ""
+	}
+	return `timeouts {
+		create = "3h"
+		update = "4h"
+	}`
+}
+
+func getTestCMEKResourceCreateConfig(name string, includeTimeouts bool) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
@@ -287,11 +333,12 @@ resource "cockroach_cmek" "test" {
 			uri: "aws-kms-key-arn"
 		}
 	}]
+	%s
 }
-`, name)
+`, name, cmekTimeoutsBlock(includeTimeouts))
 }
 
-func getTestCMEKResourceUpdateConfig(name string) string {
+func getTestCMEKResourceUpdateConfig(name string, includeTimeouts bool) string {
 	return fmt.Sprintf(`
 resource "cockroach_cluster" "test" {
   name           = "%s"
@@ -344,8 +391,67 @@ resource "cockroach_cmek" "test" {
 			node_count: 3
 		}
 	]
+	%s
 }
-`, name)
+`, name, cmekTimeoutsBlock(includeTimeouts))
+}
+
+// TestIntegrationCMEKTimeoutsBelowDefault verifies that timeout values shorter
+// than the default budget (2h for both create and update) are rejected during
+// validation, before any API call.
+func TestIntegrationCMEKTimeoutsBelowDefault(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+	clusterName := fmt.Sprintf("%s-cmek-%s", tfTestPrefix, GenerateRandomString(4))
+	config := func(createTimeout, updateTimeout string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  dedicated = {
+    storage_gib = 35
+    num_virtual_cpus = 4
+  }
+  regions = [{
+    name = "us-central-1"
+    node_count: 3
+  }]
+}
+
+resource "cockroach_cmek" "test" {
+	id = cockroach_cluster.test.id
+	regions = [{
+		region: "us-central-1"
+		key: {
+			auth_principal: "aws-auth-principal-arn"
+			type: "AWS_KMS"
+			uri: "aws-kms-key-arn"
+		}
+	}]
+	timeouts {
+		create = "%s"
+		update = "%s"
+	}
+}
+`, clusterName, createTimeout, updateTimeout)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config("1h", "2h"),
+				ExpectError: regexp.MustCompile(`must be at least 2h`),
+			},
+			{
+				Config:      config("2h", "90m"),
+				ExpectError: regexp.MustCompile(`must be at least 2h`),
+			},
+		},
+	})
 }
 
 // TestRetryEnableCMEKSpec_Success tests that successful API calls return nil
@@ -365,7 +471,7 @@ func TestRetryEnableCMEKSpec_Success(t *testing.T) {
 		Return(expectedResponse, &http.Response{StatusCode: http.StatusOK}, nil)
 
 	ctx := context.Background()
-	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, cmekSpec, cmekObj)
+	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, clusterUpdateTimeout, cmekSpec, cmekObj)
 	result := retryFunc()
 
 	require.Nil(t, result, "Expected nil for successful call")
@@ -390,7 +496,7 @@ func TestRetryEnableCMEKSpec_ServiceUnavailable(t *testing.T) {
 		Return(&client.Cluster{Id: clusterID, State: client.CLUSTERSTATETYPE_CREATED}, nil, nil)
 
 	ctx := context.Background()
-	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, cmekSpec, cmekObj)
+	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, clusterUpdateTimeout, cmekSpec, cmekObj)
 	result := retryFunc()
 
 	require.NotNil(t, result, "Expected retryable error")
@@ -414,7 +520,7 @@ func TestRetryEnableCMEKSpec_IAMRetryable(t *testing.T) {
 		Return(nil, &http.Response{StatusCode: http.StatusForbidden}, errors.New("access denied"))
 
 	ctx := context.Background()
-	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, cmekSpec, cmekObj)
+	retryFunc := retryEnableCMEKSpec(ctx, s, clusterID, cluster, clusterUpdateTimeout, cmekSpec, cmekObj)
 	result := retryFunc()
 
 	require.NotNil(t, result, "Expected retryable error for IAM error")

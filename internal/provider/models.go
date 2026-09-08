@@ -26,9 +26,13 @@ const (
 	CockroachAPIKey     string = "COCKROACH_API_KEY"
 	CockroachAPIJWT     string = "COCKROACH_API_JWT"
 	APIServerURLKey     string = "COCKROACH_SERVER"
-	UserAgent           string = "terraform-provider-cockroach"
+	UserAgentProduct    string = "terraform-provider-cockroach"
 	CockroachVanityName string = "COCKROACH_VANITY_NAME"
 	CockroachUsername   string = "COCKROACH_USERNAME"
+
+	// CcClientHeader identifies the calling client to the CC API usage log.
+	CcClientHeader string = "Cc-Client"
+	CcClientValue  string = "terraform"
 )
 
 type Region struct {

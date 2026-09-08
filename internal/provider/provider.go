@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 	"os"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
@@ -91,7 +92,7 @@ func (p *provider) Configure(
 		return
 	}
 
-	cfg := getClientConfiguration(apiKey, apiJWT)
+	cfg := getClientConfiguration(apiKey, apiJWT, p.version, req.TerraformVersion)
 
 	logLevel := os.Getenv("TF_LOG")
 	if logLevel == "DEBUG" || logLevel == "TRACE" {
@@ -215,7 +216,17 @@ func New(version string) func() tf_provider.Provider {
 	}
 }
 
-func getClientConfiguration(apiKey, apiJWT string) *client.Configuration {
+// userAgent identifies the provider and, when Terraform reports it, the CLI
+// running it. Example: terraform-provider-cockroach/1.22.0 terraform/1.9.5
+func userAgent(providerVersion, terraformVersion string) string {
+	ua := fmt.Sprintf("%s/%s", UserAgentProduct, providerVersion)
+	if terraformVersion != "" {
+		ua = fmt.Sprintf("%s terraform/%s", ua, terraformVersion)
+	}
+	return ua
+}
+
+func getClientConfiguration(apiKey, apiJWT, providerVersion, terraformVersion string) *client.Configuration {
 	// If the API key is provided, use it, else use the JWT for auth.
 	apiToken := apiKey
 	if apiToken == "" {
@@ -234,7 +245,8 @@ func getClientConfiguration(apiKey, apiJWT string) *client.Configuration {
 	if server := os.Getenv(APIServerURLKey); server != "" {
 		cfg.ServerURL = server
 	}
-	cfg.UserAgent = UserAgent
+	cfg.UserAgent = userAgent(providerVersion, terraformVersion)
+	cfg.AddDefaultHeader(CcClientHeader, CcClientValue)
 
 	return cfg
 }

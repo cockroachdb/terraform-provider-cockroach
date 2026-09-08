@@ -215,6 +215,7 @@ resource "cockroach_cluster" "continuum_mission_critical" {
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
 - `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 ### Read-Only
 
@@ -336,6 +337,16 @@ Optional:
 - `provisioned_virtual_cpus` (Number) Maximum number of vCPUs that the cluster can use.
 - `request_unit_limit` (Number) Maximum number of Request Units that the cluster can consume during the month.
 - `storage_mib_limit` (Number) Maximum amount of storage (in MiB) that the cluster can have at any time during the month.
+
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) Must be at least 1h. When set, it bounds the entire operation.
+- `update` (String) Must be at least 2h. When set, it bounds the entire operation.
 
 ## Import
 

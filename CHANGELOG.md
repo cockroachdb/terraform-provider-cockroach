@@ -23,6 +23,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Fixed a panic in the `cockroach_cmek` resource when the API returned more
+  regions than Terraform state/plan tracked (e.g. after an out-of-band region
+  addition). Read/plan/apply/destroy on the affected workspace no longer crash;
+  regions are now matched by name, and a nil key URI is handled safely. A region
+  that has CMEK enabled but is absent from `regions` is surfaced as drift on read
+  (so a subsequent plan shows the difference) and blocks `apply` with an
+  actionable error until it is added to the configuration.
+
 - Reduced `cockroach_cluster` plan noise: `account_id`, `parent_id`,
   `delete_protection`, `dedicated.memory_gib`, `dedicated.disk_iops`, and the
   `regions` block's `ui_dns`, `private_endpoint_dns`, and `s3_vpc_endpoint_id` are

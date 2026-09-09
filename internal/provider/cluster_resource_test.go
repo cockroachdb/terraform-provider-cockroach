@@ -3993,8 +3993,14 @@ func TestSortRegionsByPlan(t *testing.T) {
 			{Name: types.StringValue("us-west2")},
 			{Name: types.StringValue("us-central1")},
 		}
-		// We really just want to make sure it doesn't panic here.
 		sortRegionsByPlan(&regions, plan)
+		// Planned regions come first in plan order; the plan-absent region
+		// (us-east1) sorts to the end rather than colliding at ordinal 0.
+		got := []string{}
+		for _, r := range regions {
+			got = append(got, r.Name)
+		}
+		require.Equal(t, []string{"us-west2", "us-central1", "us-east1"}, got)
 	})
 
 	t.Run("More regions in plan than cluster", func(t *testing.T) {

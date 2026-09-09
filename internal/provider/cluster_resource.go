@@ -1524,20 +1524,24 @@ func isDowngrade(fromMajorVersion, toMajorVersion string) (bool, error) {
 	return toYear < fromYear || (toYear == fromYear && toOrdinal < fromOrdinal), nil
 }
 
-// Since the API response will always sort regions by name, we need to
-// resort the list, so it matches up with the plan. If the response and
-// plan regions don't match up, the sort won't work right, but we can
-// ignore it. Terraform will handle it.
+// sortRegionsByPlan reorders the API's (name-sorted) regions to match plan
+// order. Regions absent from the plan sort to the end.
 func sortRegionsByPlan(regions *[]client.Region, plan []Region) {
 	if regions == nil || plan == nil {
 		return
 	}
-	regionOrdinals := make(map[string]int, len(*regions))
+	regionOrdinals := make(map[string]int, len(plan))
 	for i, region := range plan {
 		regionOrdinals[region.Name.ValueString()] = i
 	}
-	sort.Slice(*regions, func(i, j int) bool {
-		return regionOrdinals[(*regions)[i].Name] < regionOrdinals[(*regions)[j].Name]
+	ordinalFor := func(name string) int {
+		if o, ok := regionOrdinals[name]; ok {
+			return o
+		}
+		return len(plan)
+	}
+	sort.SliceStable(*regions, func(i, j int) bool {
+		return ordinalFor((*regions)[i].Name) < ordinalFor((*regions)[j].Name)
 	})
 }
 

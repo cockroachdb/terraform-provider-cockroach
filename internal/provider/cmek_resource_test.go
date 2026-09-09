@@ -28,6 +28,8 @@ import (
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/stretchr/testify/require"
 )
@@ -417,4 +419,313 @@ func TestRetryEnableCMEKSpec_IAMRetryable(t *testing.T) {
 
 	require.NotNil(t, result, "Expected retryable error for IAM error")
 	require.True(t, result.Retryable, "Expected retryable error for 403, got non-retryable: %v", result.Err)
+}
+
+// Region-count drift (the original panic): Create/Update fails closed, Read
+// surfaces the extra regions as drift.
+func TestLoadCMEKToTerraformState_APIReturnsMoreRegionsThanPlan(t *testing.T) {
+	uri1 := "aws-kms-key-arn-1"
+	uri2 := "aws-kms-key-arn-2"
+	uri3 := "aws-kms-key-arn-3"
+	newCMEKObj := func() *client.CMEKClusterInfo {
+		return &client.CMEKClusterInfo{
+			Status: func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+			RegionInfos: &[]client.CMEKRegionInfo{
+				cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uri1)),
+				cmekRegionInfo("us-east-2", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uri2)),
+				cmekRegionInfo("us-west-2", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uri3)),
+			},
+		}
+	}
+
+	t.Run("Create/Update fails closed with per-region errors", func(t *testing.T) {
+		plan := &ClusterCMEK{
+			ID:      types.StringValue("cluster-id"),
+			Regions: []CMEKRegion{planRegion("us-east-1", uri1)},
+		}
+		state := &ClusterCMEK{}
+
+		var diags diag.Diagnostics
+		require.NotPanics(t, func() {
+			loadCMEKToTerraformState(newCMEKObj(), state, plan, &diags, true)
+		})
+		require.True(t, diags.HasError())
+		require.Equal(t, 2, diags.ErrorsCount())
+		details := diags.Errors()[0].Detail() + diags.Errors()[1].Detail()
+		require.Contains(t, details, "us-east-2")
+		require.Contains(t, details, "us-west-2")
+	})
+
+	t.Run("Read surfaces out-of-band regions as drift", func(t *testing.T) {
+		// On Read, plan == state, tracking only us-east-1.
+		planAndState := &ClusterCMEK{
+			ID:      types.StringValue("cluster-id"),
+			Regions: []CMEKRegion{planRegion("us-east-1", uri1)},
+		}
+
+		var diags diag.Diagnostics
+		require.NotPanics(t, func() {
+			loadCMEKToTerraformState(newCMEKObj(), planAndState, planAndState, &diags, false)
+		})
+		require.False(t, diags.HasError())
+		require.Len(t, planAndState.Regions, 3)
+		require.Equal(t, "us-east-1", planAndState.Regions[0].Region.ValueString())
+		require.Equal(t, uri1, planAndState.Regions[0].Key.URI.ValueString())
+		require.Equal(t, uri2, planAndState.Regions[1].Key.URI.ValueString())
+		require.Equal(t, uri3, planAndState.Regions[2].Key.URI.ValueString())
+	})
+}
+
+// A planned URI matching no server key (e.g. key rotated out of band) falls
+// back to the real enabled key rather than blank metadata.
+func TestLoadCMEKToTerraformState_PlannedURIMatchesNoKey(t *testing.T) {
+	oldURI := "aws-kms-key-arn-old"
+	newURI := "aws-kms-key-arn-new"
+	cmekObj := &client.CMEKClusterInfo{
+		Status: func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+		RegionInfos: &[]client.CMEKRegionInfo{
+			cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &newURI)),
+		},
+	}
+	planAndState := &ClusterCMEK{
+		ID:      types.StringValue("cluster-id"),
+		Regions: []CMEKRegion{planRegion("us-east-1", oldURI)},
+	}
+
+	var diags diag.Diagnostics
+	loadCMEKToTerraformState(cmekObj, planAndState, planAndState, &diags, false)
+	require.False(t, diags.HasError())
+	require.Len(t, planAndState.Regions, 1)
+	require.Equal(t, newURI, planAndState.Regions[0].Key.URI.ValueString())
+	require.Equal(t, string(client.CMEKSTATUS_ENABLED), planAndState.Regions[0].Key.Status.ValueString())
+}
+
+// A key spec with a nil URI must not be dereferenced.
+func TestLoadCMEKToTerraformState_NilKeyURI(t *testing.T) {
+	uri := "aws-kms-key-arn"
+	cmekObj := &client.CMEKClusterInfo{
+		Status: func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+		RegionInfos: &[]client.CMEKRegionInfo{
+			cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED,
+				cmekKeyInfo(client.CMEKSTATUS_DISABLED, nil),
+				cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uri),
+			),
+		},
+	}
+	plan := &ClusterCMEK{
+		ID:      types.StringValue("cluster-id"),
+		Regions: []CMEKRegion{planRegion("us-east-1", uri)},
+	}
+	state := &ClusterCMEK{}
+
+	var diags diag.Diagnostics
+	require.NotPanics(t, func() {
+		loadCMEKToTerraformState(cmekObj, state, plan, &diags, true)
+	})
+	require.False(t, diags.HasError())
+	require.Len(t, state.Regions, 1)
+	require.Equal(t, uri, state.Regions[0].Key.URI.ValueString())
+}
+
+// When plan order differs from API order, each region is paired with its own
+// key by name (no cross-region mis-pairing).
+func TestLoadCMEKToTerraformState_OrderMismatchSameLength(t *testing.T) {
+	uriA := "aws-kms-key-arn-a"
+	uriB := "aws-kms-key-arn-b"
+	cmekObj := &client.CMEKClusterInfo{
+		Status: func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+		RegionInfos: &[]client.CMEKRegionInfo{
+			cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uriA)),
+			cmekRegionInfo("us-west-2", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uriB)),
+		},
+	}
+	plan := &ClusterCMEK{
+		ID: types.StringValue("cluster-id"),
+		Regions: []CMEKRegion{
+			planRegion("us-west-2", uriB),
+			planRegion("us-east-1", uriA),
+		},
+	}
+	state := &ClusterCMEK{}
+
+	var diags diag.Diagnostics
+	loadCMEKToTerraformState(cmekObj, state, plan, &diags, true)
+	require.False(t, diags.HasError())
+	require.Len(t, state.Regions, 2)
+	require.Equal(t, "us-west-2", state.Regions[0].Region.ValueString())
+	require.Equal(t, uriB, state.Regions[0].Key.URI.ValueString())
+	require.Equal(t, "us-east-1", state.Regions[1].Region.ValueString())
+	require.Equal(t, uriA, state.Regions[1].Key.URI.ValueString())
+}
+
+// Same region count as the plan, but a name mismatch (plan lists a region the
+// server doesn't have; the server has one the plan doesn't). With DISTINCT
+// per-region keys this proves matching is by name, not slice index: the real
+// server region must get ITS OWN key, never the bogus plan slot's URI (the
+// defect-c mis-pairing).
+func TestLoadCMEKToTerraformState_SameCountNameMismatchNoMispairing(t *testing.T) {
+	uriEast := "aws-kms-key-arn-east"
+	uriWest := "aws-kms-key-arn-west"
+	uriBogus := "aws-kms-key-arn-bogus"
+	// Server (name-sorted) with distinct keys per region.
+	cmekObj := &client.CMEKClusterInfo{
+		Status: func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+		RegionInfos: &[]client.CMEKRegionInfo{
+			cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uriEast)),
+			cmekRegionInfo("us-west-2", client.CMEKSTATUS_ENABLED, cmekKeyInfo(client.CMEKSTATUS_ENABLED, &uriWest)),
+		},
+	}
+	// Plan/state: same count (2), but "bogus-region" replaces "us-west-2".
+	planAndState := &ClusterCMEK{
+		ID: types.StringValue("cluster-id"),
+		Regions: []CMEKRegion{
+			planRegion("us-east-1", uriEast),
+			planRegion("bogus-region", uriBogus),
+		},
+	}
+
+	var diags diag.Diagnostics
+	require.NotPanics(t, func() {
+		loadCMEKToTerraformState(cmekObj, planAndState, planAndState, &diags, false)
+	})
+	require.False(t, diags.HasError())
+	require.Len(t, planAndState.Regions, 2)
+
+	byRegion := map[string]string{}
+	for _, r := range planAndState.Regions {
+		byRegion[r.Region.ValueString()] = r.Key.URI.ValueString()
+	}
+	// us-east-1 keeps its own key; us-west-2 (drift) gets ITS OWN key, not the
+	// bogus plan slot's URI; bogus-region (not on server) is dropped.
+	require.Equal(t, uriEast, byRegion["us-east-1"])
+	require.Equal(t, uriWest, byRegion["us-west-2"])
+	require.NotContains(t, byRegion, "bogus-region")
+	require.NotEqual(t, uriBogus, byRegion["us-west-2"])
+}
+
+// A CMEK response that omits region_infos entirely must not panic (nil deref):
+// sortCMEKRegionsByPlan dereferences RegionInfos, and the loader iterates it.
+func TestLoadCMEKToTerraformState_NilRegionInfos(t *testing.T) {
+	cmekObj := &client.CMEKClusterInfo{
+		Status:      func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+		RegionInfos: nil,
+	}
+	plan := &ClusterCMEK{
+		ID:      types.StringValue("cluster-id"),
+		Regions: []CMEKRegion{planRegion("us-east-1", "some-uri")},
+	}
+	state := &ClusterCMEK{}
+
+	var diags diag.Diagnostics
+	require.NotPanics(t, func() {
+		sortCMEKRegionsByPlan(cmekObj, plan)
+		loadCMEKToTerraformState(cmekObj, state, plan, &diags, true)
+	})
+	require.False(t, diags.HasError())
+	require.Empty(t, state.Regions)
+}
+
+// Import path: an empty plan falls back to each region's first ENABLED key.
+func TestLoadCMEKToTerraformState_ImportEmptyPlan(t *testing.T) {
+	disabledURI := "disabled-uri"
+	enabledURI := "enabled-uri"
+	secondURI := "second-enabled-uri"
+	cmekObj := &client.CMEKClusterInfo{
+		Status: func() *client.CMEKStatus { s := client.CMEKSTATUS_ENABLED; return &s }(),
+		RegionInfos: &[]client.CMEKRegionInfo{
+			cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED,
+				cmekKeyInfo(client.CMEKSTATUS_DISABLED, &disabledURI),
+				cmekKeyInfo(client.CMEKSTATUS_ENABLED, &enabledURI),
+			),
+			cmekRegionInfo("us-west-2", client.CMEKSTATUS_ENABLED,
+				cmekKeyInfo(client.CMEKSTATUS_ENABLED, &secondURI),
+			),
+		},
+	}
+	plan := &ClusterCMEK{ID: types.StringValue("cluster-id")}
+	state := &ClusterCMEK{}
+
+	var diags diag.Diagnostics
+	loadCMEKToTerraformState(cmekObj, state, plan, &diags, true)
+	require.False(t, diags.HasError())
+	require.Len(t, state.Regions, 2)
+	require.Equal(t, enabledURI, state.Regions[0].Key.URI.ValueString())
+	require.Equal(t, secondURI, state.Regions[1].Key.URI.ValueString())
+}
+
+// Plan-absent regions sort to the end (not ordinal 0).
+func TestSortCMEKRegionsByPlan_UnknownRegionsSortLast(t *testing.T) {
+	cmekObj := &client.CMEKClusterInfo{
+		RegionInfos: &[]client.CMEKRegionInfo{
+			cmekRegionInfo("us-west-2", client.CMEKSTATUS_ENABLED),
+			cmekRegionInfo("us-east-1", client.CMEKSTATUS_ENABLED),
+			cmekRegionInfo("us-east-2", client.CMEKSTATUS_ENABLED),
+		},
+	}
+	plan := &ClusterCMEK{
+		Regions: []CMEKRegion{
+			planRegion("us-east-1", "u1"),
+			planRegion("us-east-2", "u2"),
+		},
+	}
+
+	sortCMEKRegionsByPlan(cmekObj, plan)
+	got := []string{}
+	for _, r := range *cmekObj.RegionInfos {
+		got = append(got, r.GetRegion())
+	}
+	require.Equal(t, []string{"us-east-1", "us-east-2", "us-west-2"}, got)
+}
+
+// Update's preflight: a region in state but not the plan is undeclared drift,
+// which must be caught before any mutating API call.
+func TestUndeclaredCMEKRegions(t *testing.T) {
+	t.Run("state region absent from plan is flagged", func(t *testing.T) {
+		state := &ClusterCMEK{Regions: []CMEKRegion{
+			planRegion("us-east-1", "u1"),
+			planRegion("us-east-2", "u2"),
+		}}
+		plan := &ClusterCMEK{Regions: []CMEKRegion{planRegion("us-east-1", "u1")}}
+		require.Equal(t, []string{"us-east-2"}, undeclaredCMEKRegions(state, plan))
+	})
+
+	t.Run("no drift when state is a subset of plan", func(t *testing.T) {
+		state := &ClusterCMEK{Regions: []CMEKRegion{planRegion("us-east-1", "u1")}}
+		plan := &ClusterCMEK{Regions: []CMEKRegion{
+			planRegion("us-east-1", "u1"),
+			planRegion("us-east-2", "u2"),
+		}}
+		require.Empty(t, undeclaredCMEKRegions(state, plan))
+	})
+}
+
+func cmekKeyInfo(status client.CMEKStatus, uri *string) client.CMEKKeyInfo {
+	keyType := client.CMEKKeyType("AWS_KMS")
+	principal := "aws-auth-principal-arn"
+	return client.CMEKKeyInfo{
+		Status: &status,
+		Spec: &client.CMEKKeySpecification{
+			Type:          &keyType,
+			Uri:           uri,
+			AuthPrincipal: &principal,
+		},
+	}
+}
+
+func cmekRegionInfo(region string, status client.CMEKStatus, keys ...client.CMEKKeyInfo) client.CMEKRegionInfo {
+	r, s := region, status
+	return client.CMEKRegionInfo{
+		Region:   &r,
+		Status:   &s,
+		KeyInfos: &keys,
+	}
+}
+
+func planRegion(region, uri string) CMEKRegion {
+	return CMEKRegion{
+		Region: types.StringValue(region),
+		Key: CMEKKey{
+			URI: types.StringValue(uri),
+		},
+	}
 }

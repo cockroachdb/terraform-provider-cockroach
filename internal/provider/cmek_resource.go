@@ -24,6 +24,7 @@ import (
 	"sort"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -250,7 +251,10 @@ func (r *cmekResource) Create(
 	}
 
 	var state ClusterCMEK
-	loadCMEKToTerraformState(cmekObj, &state, &plan)
+	loadCMEKToTerraformState(cmekObj, &state, &plan, &resp.Diagnostics, true)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -287,9 +291,12 @@ func (r *cmekResource) Read(
 		return
 	}
 
-	// We actually want to use the current state as the plan here,
-	// since we're trying to see if it changed.
-	loadCMEKToTerraformState(cmekObj, &cmek, &cmek)
+	// Use current state as the plan to detect changes. Read must not fail
+	// closed on drift (no config to reconcile against), so pass false.
+	loadCMEKToTerraformState(cmekObj, &cmek, &cmek, &resp.Diagnostics, false)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	diags = resp.State.Set(ctx, cmek)
 	resp.Diagnostics.Append(diags...)
 }
@@ -309,6 +316,21 @@ func (r *cmekResource) Update(
 	var state ClusterCMEK
 	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Preflight: CMEK can't be removed from a region, so any region in the
+	// refreshed state but absent from the config is undeclared drift. Fail
+	// before any mutating call so a partial update can't be left behind.
+	for _, region := range undeclaredCMEKRegions(&state, &plan) {
+		resp.Diagnostics.AddError(
+			"CMEK enabled on an undeclared region",
+			fmt.Sprintf("Region %q has CMEK enabled but is not present in `regions`. "+
+				"CMEK cannot be removed from a region; add it to your configuration to continue.",
+				region),
+		)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -409,7 +431,10 @@ func (r *cmekResource) Update(
 		return
 	}
 
-	loadCMEKToTerraformState(&clusterInfo, &state, &plan)
+	loadCMEKToTerraformState(&clusterInfo, &state, &plan, &resp.Diagnostics, true)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -427,40 +452,68 @@ func (r *cmekResource) ImportState(
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-// Since the API response will always sort regions by name, we need to
-// resort the list, so it matches up with the plan. If the response and
-// plan regions don't match up, the sort won't work right, but we can
-// ignore it. Terraform will handle it.
+// sortCMEKRegionsByPlan reorders the API's (name-sorted) regions to match plan
+// order so the list-typed `regions` attribute doesn't show a spurious diff.
+// Regions absent from the plan sort to the end.
 func sortCMEKRegionsByPlan(cmekObj *client.CMEKClusterInfo, plan *ClusterCMEK) {
-	if cmekObj == nil || plan == nil {
+	// RegionInfos is dereferenced below; guard against a response that omits it.
+	if cmekObj == nil || cmekObj.RegionInfos == nil || plan == nil {
 		return
 	}
-	regionOrdinals := make(map[string]int, len(cmekObj.GetRegionInfos()))
+	regionOrdinals := make(map[string]int, len(plan.Regions))
 	for i, region := range plan.Regions {
 		regionOrdinals[region.Region.ValueString()] = i
 	}
-	sort.Slice(*cmekObj.RegionInfos, func(i, j int) bool {
-		return regionOrdinals[cmekObj.GetRegionInfos()[i].GetRegion()] < regionOrdinals[cmekObj.GetRegionInfos()[j].GetRegion()]
+	ordinalFor := func(name string) int {
+		if o, ok := regionOrdinals[name]; ok {
+			return o
+		}
+		return len(plan.Regions)
+	}
+	sort.SliceStable(*cmekObj.RegionInfos, func(i, j int) bool {
+		return ordinalFor(cmekObj.GetRegionInfos()[i].GetRegion()) < ordinalFor(cmekObj.GetRegionInfos()[j].GetRegion())
 	})
 }
 
+// loadCMEKToTerraformState translates the API's CMEK view into Terraform state,
+// matching regions to the plan by name (never by slice index, which panicked
+// when the API returned more regions than the plan tracked).
+//
+// errorOnUndeclaredRegion: Create/Update pass true to fail closed on a region
+// the config doesn't declare; Read passes false so drift surfaces on plan
+// instead of blocking the refresh.
 func loadCMEKToTerraformState(
 	cmekObj *client.CMEKClusterInfo, state *ClusterCMEK, plan *ClusterCMEK,
+	diags *diag.Diagnostics, errorOnUndeclaredRegion bool,
 ) {
 	sortCMEKRegionsByPlan(cmekObj, plan)
+	var plannedURIs map[string]string
+	if plan != nil {
+		plannedURIs = make(map[string]string, len(plan.Regions))
+		for _, pr := range plan.Regions {
+			plannedURIs[pr.Region.ValueString()] = pr.Key.URI.ValueString()
+		}
+	}
 	var rgs []CMEKRegion
-	for i, region := range cmekObj.GetRegionInfos() {
-		var keyInfo client.CMEKKeyInfo
-		// If we have a plan, find the key that matches the plan URI.
-		// If there's no plan (i.e. import), use the first key that's enabled.
-		for _, key := range region.GetKeyInfos() {
-			if plan != nil && len(plan.Regions) > 0 {
-				if *key.GetSpec().Uri == plan.Regions[i].Key.URI.ValueString() {
-					keyInfo = key
-					break
-				}
-			} else {
-				if key.GetStatus() == client.CMEKSTATUS_ENABLED {
+	for _, region := range cmekObj.GetRegionInfos() {
+		plannedURI, hasPlannedURI := plannedURIs[region.GetRegion()]
+		if len(plannedURIs) > 0 && !hasPlannedURI && errorOnUndeclaredRegion {
+			// Region has CMEK enabled server-side but isn't in the config.
+			// CMEK can't be removed, so fail closed.
+			diags.AddError(
+				"CMEK enabled on an undeclared region",
+				fmt.Sprintf("Region %q has CMEK enabled but is not present in `regions`. "+
+					"CMEK cannot be removed from a region; add it to your configuration to continue.",
+					region.GetRegion()),
+			)
+			continue
+		}
+		// Prefer the key matching the planned URI; otherwise fall back to the
+		// first enabled key so state reflects a real key, not blank metadata.
+		keyInfo := firstEnabledCMEKKey(region)
+		if hasPlannedURI {
+			for _, key := range region.GetKeyInfos() {
+				if spec := key.GetSpec(); spec.Uri != nil && *spec.Uri == plannedURI {
 					keyInfo = key
 					break
 				}
@@ -483,7 +536,9 @@ func loadCMEKToTerraformState(
 	}
 
 	state.Regions = rgs
-	state.ID = plan.ID
+	if plan != nil {
+		state.ID = plan.ID
+	}
 	state.Status = types.StringValue(string(cmekObj.GetStatus()))
 }
 
@@ -581,4 +636,32 @@ func waitForCMEKReadyFunc(
 
 func NewCMEKResource() resource.Resource {
 	return &cmekResource{}
+}
+
+// undeclaredCMEKRegions returns region names present in state but absent from
+// the plan. CMEK can't be removed from a region, so these represent drift that
+// must be added to the config before an update can proceed.
+func undeclaredCMEKRegions(state, plan *ClusterCMEK) []string {
+	planned := make(map[string]struct{}, len(plan.Regions))
+	for _, region := range plan.Regions {
+		planned[region.Region.ValueString()] = struct{}{}
+	}
+	var out []string
+	for _, region := range state.Regions {
+		if _, ok := planned[region.Region.ValueString()]; !ok {
+			out = append(out, region.Region.ValueString())
+		}
+	}
+	return out
+}
+
+// firstEnabledCMEKKey returns the region's first ENABLED key, or a zero-value
+// key if it has none. Used as the fallback when there is no planned URI to match.
+func firstEnabledCMEKKey(region client.CMEKRegionInfo) client.CMEKKeyInfo {
+	for _, key := range region.GetKeyInfos() {
+		if key.GetStatus() == client.CMEKSTATUS_ENABLED {
+			return key
+		}
+	}
+	return client.CMEKKeyInfo{}
 }

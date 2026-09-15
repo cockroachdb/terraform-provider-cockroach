@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -66,7 +66,7 @@ func TestIntegrationClusterRestoreResource(t *testing.T) {
 			},
 		},
 		CloudProvider: client.CLOUDPROVIDERTYPE_GCP,
-		Plan:          client.PLANTYPE_STANDARD,
+		Plan:          ptr(client.PLANTYPE_STANDARD),
 	}
 	backupConfig := &client.BackupConfiguration{
 		Enabled:          true,
@@ -173,7 +173,7 @@ func TestIntegrationDatabaseRestoreResource(t *testing.T) {
 		CidrRange:        "172.28.0.0/16",
 		CloudProvider:    client.CLOUDPROVIDERTYPE_GCP,
 		CockroachVersion: "v25.2",
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 	}
 	backupConfig := &client.BackupConfiguration{
 		Enabled:          true,
@@ -291,7 +291,7 @@ func TestIntegrationTableRestoreResource(t *testing.T) {
 		CidrRange:        "172.28.0.0/16",
 		CloudProvider:    client.CLOUDPROVIDERTYPE_GCP,
 		CockroachVersion: "v25.2",
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 	}
 	backupConfig := &client.BackupConfiguration{
 		Enabled:          true,

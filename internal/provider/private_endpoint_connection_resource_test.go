@@ -22,7 +22,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -90,7 +90,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            clusterID,
-				Plan:          "ADVANCED",
+				Plan:          ptr(client.PLANTYPE_ADVANCED),
 				CloudProvider: "AWS",
 				Config: client.ClusterConfig{
 					Dedicated: &client.DedicatedHardwareConfig{
@@ -112,7 +112,7 @@ func TestIntegrationPrivateEndpointConnectionResource(t *testing.T) {
 			client.Cluster{
 				Name:          clusterName,
 				Id:            uuid.Nil.String(),
-				Plan:          "STANDARD",
+				Plan:          ptr(client.PLANTYPE_STANDARD),
 				CloudProvider: "AWS",
 				State:         "CREATED",
 				Config: client.ClusterConfig{

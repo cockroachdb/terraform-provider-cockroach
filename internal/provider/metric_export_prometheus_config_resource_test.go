@@ -9,7 +9,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -42,7 +42,7 @@ func TestIntegrationMetricExportPrometheusConfigResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
-		Plan:             "DEDICATED",
+		Plan:             ptr(client.PlanType("DEDICATED")),
 		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{

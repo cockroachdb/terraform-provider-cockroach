@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -310,7 +310,7 @@ func testGetStandardCluster(clusterID string, clusterName string) *client.Cluste
 		Name:          clusterName,
 		CloudProvider: "GCP",
 		State:         "CREATED",
-		Plan:          "STANDARD",
+		Plan:          ptr(client.PLANTYPE_STANDARD),
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				UsageLimits: &client.UsageLimits{

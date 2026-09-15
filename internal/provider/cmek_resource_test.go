@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -63,7 +63,7 @@ func TestIntegrationCMEKResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v22.2.0",
-		Plan:             "ADVANCED",
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    "AWS",
 		State:            "CREATED",
 		Config: client.ClusterConfig{

@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
@@ -298,12 +298,15 @@ func makeRestoreItem(database string, schema string, tables []string) RestoreIte
 //
 // Example:
 // Input (from API):
-//   [{Database: "db1", Schema: "public", Table: "orders"},
-//    {Database: "db1", Schema: "public", Table: "users"},
-//    {Database: "db2", Schema: "private", Table: "settings"}]
+//
+//	[{Database: "db1", Schema: "public", Table: "orders"},
+//	 {Database: "db1", Schema: "public", Table: "users"},
+//	 {Database: "db2", Schema: "private", Table: "settings"}]
+//
 // Output (to Terraform):
-//   [{Database: "db1", Schema: "public", Tables: ["orders", "users"]},
-//    {Database: "db2", Schema: "private", Tables: ["settings"]}]
+//
+//	[{Database: "db1", Schema: "public", Tables: ["orders", "users"]},
+//	 {Database: "db2", Schema: "private", Tables: ["settings"]}]
 func convertObjectsToTerraform(objects *[]client.RestoreItem) []RestoreItem {
 	if objects == nil || len(*objects) == 0 {
 		return nil

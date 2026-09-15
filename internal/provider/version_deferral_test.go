@@ -20,7 +20,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -156,7 +156,7 @@ func getClusterInfo(clusterID string, clusterName string) *client.Cluster {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: "v25.2.6",
-		Plan:             "ADVANCED",
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{

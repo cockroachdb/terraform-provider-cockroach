@@ -62,7 +62,7 @@ func TestIntegrationClusterRestoreResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name: testRegion,
 			},
 		},
 		CloudProvider: client.CLOUDPROVIDERTYPE_GCP,
@@ -166,7 +166,7 @@ func TestIntegrationDatabaseRestoreResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-central1",
+				Name:      testRegion,
 				NodeCount: 1,
 			},
 		},
@@ -284,7 +284,7 @@ func TestIntegrationTableRestoreResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-central1",
+				Name:      testRegion,
 				NodeCount: 1,
 			},
 		},
@@ -431,7 +431,7 @@ resource "cockroach_cluster" "test_cluster" {
 		upgrade_type = "AUTOMATIC"
 	}
 	regions = [{
-		name: "us-central1"
+		name: "`+testRegion+`"
 	}]
 	backup_config = {
 		enabled           = true
@@ -454,7 +454,7 @@ resource "cockroach_cluster" "test_cluster" {
 		cidr_range = "172.28.0.0/16"
 	}
 	regions = [{
-		name: "us-central1"
+		name: "`+testRegion+`"
 		node_count: 1
 	}]
 }

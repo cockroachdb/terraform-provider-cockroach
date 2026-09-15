@@ -17,13 +17,34 @@
 package provider
 
 import (
+	"cmp"
 	"context"
+	"fmt"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/stretchr/testify/require"
+)
+
+// Regions used by tests that create GCP clusters. Avoid us-central1 and
+// us-west2, which run short on capacity for test clusters.
+var (
+	// testRegion is the default region for a test cluster. Works for every
+	// plan, so serverless tests should use this one.
+	testRegion = cmp.Or(os.Getenv("COCKROACH_TEST_REGION"), "us-east1")
+
+	// testSecondRegion is for tests needing a second region. Advanced only. GCP
+	// serverless runs in few regions, and the ones left after excluding
+	// testRegion are all far from it.
+	testSecondRegion = cmp.Or(os.Getenv("COCKROACH_TEST_SECOND_REGION"), "us-east4")
+
+	// testThirdRegion is for tests needing a third region. Advanced only, for
+	// the same reason as testSecondRegion.
+	testThirdRegion = cmp.Or(os.Getenv("COCKROACH_TEST_THIRD_REGION"), "us-west1")
 )
 
 // TestIsRetryableCloudError tests that isRetryableCloudError correctly identifies
@@ -180,4 +201,58 @@ func TestInt32SliceToList(t *testing.T) {
 		require.False(t, diags.HasError(), "int32SliceToList returned errors")
 		require.True(t, result.IsNull(), "Expected null list for empty input")
 	})
+}
+
+func testGetStandardCluster(clusterID string, clusterName string) *client.Cluster {
+	return &client.Cluster{
+		Id:            clusterID,
+		Name:          clusterName,
+		CloudProvider: "GCP",
+		State:         "CREATED",
+		Plan:          ptr(client.PLANTYPE_STANDARD),
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				UpgradeType: "AUTOMATIC",
+			},
+		},
+		Regions: []client.Region{
+			{
+				Name: testRegion,
+			},
+		},
+	}
+}
+
+// testGetStandardClusterConfig returns the HCL configuration for a standard cluster for testing purposes.
+// If frequent backup is false, the default backup configuration will be used.
+func testGetStandardClusterConfig(clusterName string, frequentBackup bool) string {
+	var backupConfig string
+	if frequentBackup {
+		backupConfig = `
+	backup_config = {
+		enabled           = true
+		frequency_minutes = 5
+		retention_days    = 30
+	}`
+	}
+
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test_cluster" {
+	name           = "%s"
+	cloud_provider = "GCP"
+	plan           = "STANDARD"
+	serverless = {
+		usage_limits = {
+			provisioned_virtual_cpus = 2
+		}
+		upgrade_type = "AUTOMATIC"
+	}
+	regions = [{
+		name: "`+testRegion+`"
+	}]
+	%s
+}`, clusterName, backupConfig)
 }

@@ -304,60 +304,6 @@ func parseFlexibleTime(timeStr string) (time.Time, error) {
 	return time.Time{}, errors.New("time string must be in RFC3339 or YYYY-MM-DD format")
 }
 
-func testGetStandardCluster(clusterID string, clusterName string) *client.Cluster {
-	return &client.Cluster{
-		Id:            clusterID,
-		Name:          clusterName,
-		CloudProvider: "GCP",
-		State:         "CREATED",
-		Plan:          ptr(client.PLANTYPE_STANDARD),
-		Config: client.ClusterConfig{
-			Serverless: &client.ServerlessClusterConfig{
-				UsageLimits: &client.UsageLimits{
-					ProvisionedVirtualCpus: ptr(int64(2)),
-				},
-				UpgradeType: "AUTOMATIC",
-			},
-		},
-		Regions: []client.Region{
-			{
-				Name: "us-central1",
-			},
-		},
-	}
-}
-
-// testGetStandardClusterConfig returns the HCL configuration for a standard cluster for testing purposes.
-// If frequent backup is false, the default backup configuration will be used.
-func testGetStandardClusterConfig(clusterName string, frequentBackup bool) string {
-	var backupConfig string
-	if frequentBackup {
-		backupConfig = `
-	backup_config = {
-		enabled           = true
-		frequency_minutes = 5
-		retention_days    = 30
-	}`
-	}
-
-	return fmt.Sprintf(`
-resource "cockroach_cluster" "test_cluster" {
-	name           = "%s"
-	cloud_provider = "GCP"
-	plan           = "STANDARD"
-	serverless = {
-		usage_limits = {
-			provisioned_virtual_cpus = 2
-		}
-		upgrade_type = "AUTOMATIC"
-	}
-	regions = [{
-		name: "us-central1"
-	}]
-	%s
-}`, clusterName, backupConfig)
-}
-
 func waitForBackupReadyFunc(
 	ctx context.Context, clusterID string, cl client.Service,
 ) retry.RetryFunc {

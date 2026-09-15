@@ -69,7 +69,7 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:    "us-central1",
+				Name:    testRegion,
 				Primary: ptr(true),
 			},
 		},
@@ -217,7 +217,7 @@ resource "cockroach_cluster" "test" {
 		}
 	}
 	regions = [{
-		name = "us-central1"
+		name = "`+testRegion+`"
 	}]
 }
 

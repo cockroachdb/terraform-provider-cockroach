@@ -74,7 +74,7 @@ func TestIntegrationClientCACertResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-west2",
+				Name:      testRegion,
 				NodeCount: 1,
 			},
 		},
@@ -197,7 +197,7 @@ resource "cockroach_cluster" "test" {
 		num_virtual_cpus = 4
 	}
 	regions = [{
-		name = "us-west2"
+		name = "`+testRegion+`"
 		node_count: 1
 	}]
 }

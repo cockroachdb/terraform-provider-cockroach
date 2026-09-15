@@ -126,12 +126,12 @@ func TestIntegrationSqlUserResource(t *testing.T) {
 // config validators (Conflicting / RequiredTogether) and the LengthBetween
 // validators on `password` / `password_wo`.
 func TestIntegrationSqlUserResource_PlanTimeValidation(t *testing.T) {
-	const clusterBlock = `
+	clusterBlock := `
 resource "cockroach_cluster" "serverless" {
   name           = "%s"
   cloud_provider = "GCP"
   serverless     = {}
-  regions        = [{ name = "us-central1" }]
+  regions        = [{ name = "` + testRegion + `" }]
 }
 `
 	longPw := strings.Repeat("a", 501)
@@ -704,7 +704,7 @@ func setupSqlUserMockEnv(
 			RoutingId: "routing-id", UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 		}},
 		State:   "CREATED",
-		Regions: []client.Region{{Name: "us-central1"}},
+		Regions: []client.Region{{Name: testRegion}},
 	}
 
 	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil).Times(1)
@@ -726,7 +726,7 @@ resource "cockroach_cluster" "serverless" {
   name           = "%s"
   cloud_provider = "GCP"
   serverless     = {}
-  regions        = [{ name = "us-central1" }]
+  regions        = [{ name = "`+testRegion+`" }]
 }
 `, clusterName)
 }

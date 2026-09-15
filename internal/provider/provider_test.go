@@ -17,6 +17,7 @@
 package provider
 
 import (
+	"context"
 	cryptorand "crypto/rand"
 	"math/big"
 	"os"
@@ -26,6 +27,7 @@ import (
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/stretchr/testify/require"
 )
 
@@ -57,6 +59,46 @@ func testAccPreCheck(t *testing.T) {
 			CockroachAPIKey,
 			CockroachAPIJWT,
 		)
+	}
+}
+
+func testAccContinuumPreCheck(t *testing.T) {
+	if os.Getenv(cockroachContinuumAPIKey) == "" {
+		t.Skipf("%s must be set to run Continuum acceptance tests", cockroachContinuumAPIKey)
+	}
+}
+
+// continuumProvider authenticates against a Continuum-enabled org using a fixed
+// API key. Each continuumProviderFactories call builds its own instance, so a
+// parallel Continuum test can't leak its credential into a sibling test's
+// provider the way sharing testAccProtoV6ProviderFactories would.
+type continuumProvider struct {
+	*provider
+	apiKey string
+}
+
+func (p *continuumProvider) Configure(
+	ctx context.Context, req tf_provider.ConfigureRequest, resp *tf_provider.ConfigureResponse,
+) {
+	// Inject the key into the config rather than the HCL so it never lands in
+	// the config file the test framework writes to disk.
+	var attrs map[string]tftypes.Value
+	if err := req.Config.Raw.As(&attrs); err != nil {
+		resp.Diagnostics.AddError("continuum test provider", err.Error())
+		return
+	}
+	attrs["apikey"] = tftypes.NewValue(tftypes.String, p.apiKey)
+	req.Config.Raw = tftypes.NewValue(req.Config.Raw.Type(), attrs)
+	p.provider.Configure(ctx, req, resp)
+}
+
+func continuumProviderFactories() map[string]func() (tfprotov6.ProviderServer, error) {
+	p := &continuumProvider{
+		provider: New("test")().(*provider),
+		apiKey:   os.Getenv(cockroachContinuumAPIKey),
+	}
+	return map[string]func() (tfprotov6.ProviderServer, error){
+		"cockroach": providerserver.NewProtocol6WithError(p),
 	}
 }
 

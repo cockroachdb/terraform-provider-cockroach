@@ -64,6 +64,11 @@ const (
 	// (heterogeneous) machine types, which require a limited-access feature flag on
 	// the test organization.
 	CockroachHeterogeneousEnabled string = "COCKROACH_HETEROGENEOUS_ENABLED"
+
+	// cockroachContinuumAPIKey holds an API key for a Cockroach Continuum-enabled
+	// organization. Continuum acceptance tests authenticate with it instead of
+	// COCKROACH_API_KEY, and are skipped when it is unset.
+	cockroachContinuumAPIKey string = "COCKROACH_CONTINUUM_API_KEY"
 )
 
 var httpOk = &http.Response{Status: http.StatusText(http.StatusOK)}
@@ -6547,6 +6552,157 @@ resource "cockroach_cluster" "test" {
 			{
 				Config:      config("1h", "1h"),
 				ExpectError: regexp.MustCompile(`must be at least 2h`),
+			},
+		},
+	})
+}
+
+// continuumStandardConfig builds a STANDARD edition (serverless) cluster plus a
+// data source that reads it back. The provisioned vCPU limit is parameterized so
+// an update step can change it in place.
+func continuumStandardConfig(clusterName string, provisionedVCPUs int) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    edition        = "STANDARD"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = %d
+        }
+    }
+    regions = [{ name = "`+testRegion+`" }]
+}
+
+data "cockroach_cluster" "test" {
+    id = cockroach_cluster.test.id
+}
+`, clusterName, provisionedVCPUs)
+}
+
+// continuumMissionCriticalConfig builds a MISSION_CRITICAL edition (dedicated)
+// cluster plus a data source that reads it back. Storage is parameterized so an
+// update step can change it in place.
+func continuumMissionCriticalConfig(clusterName string, storageGib int) string {
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    dedicated = {
+        num_virtual_cpus = 4
+        storage_gib      = %d
+    }
+    regions = [{
+        name       = "`+testRegion+`"
+        node_count = 3
+    }]
+}
+
+data "cockroach_cluster" "test" {
+    id = cockroach_cluster.test.id
+}
+`, clusterName, storageGib)
+}
+
+// TestAccStandardEditionClusterResource creates, reads, updates, imports, and
+// destroys a real STANDARD edition (serverless) cluster in a Cockroach Continuum
+// organization. It is skipped unless TF_ACC and COCKROACH_CONTINUUM_API_KEY are
+// set. This is the Continuum edition counterpart to
+// TestAccServerlessClusterResource, which only exercises the legacy plan flow.
+func TestAccStandardEditionClusterResource(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-std-edition-%s", tfTestPrefix, GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccContinuumPreCheck(t) },
+		ProtoV6ProviderFactories: continuumProviderFactories(),
+		Steps: []resource.TestStep{
+			// Create with edition STANDARD and verify it round-trips into state
+			// (and through the data source) with plan left null.
+			{
+				Config: continuumStandardConfig(clusterName, 2),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessResourceName, "name", clusterName),
+					resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", "2"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+				),
+			},
+			// In-place update: raise the provisioned vCPU usage limit.
+			{
+				Config: continuumStandardConfig(clusterName, 4),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", "4"),
+				),
+			},
+			// Import and verify the round trip, including that edition survives.
+			{
+				ResourceName:      serverlessResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				// On import, serverless regions come back with machine_type=""
+				// and num_virtual_cpus=0 (zero values), while the managed state
+				// leaves them null, so ImportStateVerify would flag a diff.
+				ImportStateVerifyIgnore: []string{
+					"regions.0.machine_type",
+					"regions.0.num_virtual_cpus",
+				},
+			},
+		},
+	})
+}
+
+// TestAccMissionCriticalEditionClusterResource creates, reads, updates, imports,
+// and destroys a real MISSION_CRITICAL edition (dedicated) cluster in a Cockroach
+// Continuum organization. It is skipped unless TF_ACC and
+// COCKROACH_CONTINUUM_API_KEY are set. This is the Continuum edition counterpart
+// to TestAccDedicatedClusterResource, which only exercises the legacy plan flow.
+func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-mc-edition-%s", tfTestPrefix, GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccContinuumPreCheck(t) },
+		ProtoV6ProviderFactories: continuumProviderFactories(),
+		Steps: []resource.TestStep{
+			// Create with edition MISSION_CRITICAL and verify it round-trips into
+			// state (and through the data source) with plan left null.
+			{
+				Config: continuumMissionCriticalConfig(clusterName, 15),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessResourceName, "name", clusterName),
+					resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "dedicated.storage_gib", "15"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+				),
+			},
+			// In-place update: grow dedicated storage.
+			{
+				Config: continuumMissionCriticalConfig(clusterName, 30),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "dedicated.storage_gib", "30"),
+				),
+			},
+			// Import and verify the round trip, including that edition survives.
+			{
+				ResourceName:      serverlessResourceName,
+				ImportState:       true,
+				ImportStateVerify: true,
+				// Per-region sizing is server-computed on import; the config sizes
+				// the cluster cluster-wide, so there's nothing to compare against.
+				ImportStateVerifyIgnore: []string{
+					"regions.0.num_virtual_cpus",
+					"regions.0.machine_type",
+				},
 			},
 		},
 	})

@@ -156,6 +156,17 @@ Note that `us-east4` and `us-west1` are only available to Advanced clusters, so 
 `testThirdRegion` can't be used in a Basic or Standard config. GCP serverless is limited to a short list of regions;
 `GET /api/v1/clusters/available-regions?provider=GCP&serverless=true` returns the current one.
 
+A few acceptance tests (`TestAccStandardEditionClusterResource`,
+`TestAccMissionCriticalEditionClusterResource`) create real `edition`
+(STANDARD / MISSION_CRITICAL) clusters, which are only accepted by an organization that has Cockroach Continuum
+enabled. These tests read `COCKROACH_CONTINUUM_API_KEY` and authenticate with it through a dedicated provider factory
+(`continuumProviderFactories` in `internal/provider/provider_test.go`) rather than the `COCKROACH_API_KEY` the rest of
+the suite uses, so the Continuum org stays isolated even when tests run in parallel. The tests skip cleanly when the key
+is unset. The key belongs to the `Cloud API Terraform Testing - Continuum` org (ID
+`959e7472-db19-469f-bb9e-0cdf25ee25e9`, label `org-3bsq8`); like `COCKROACH_API_KEY`, its service account needs the Org
+Admin, Billing Coordinator, Cluster Admin, and Folder Admin roles. CI passes it from the `COCKROACH_CONTINUUM_API_KEY`
+secret.
+
 ## Releasing
 
 The release process is documented in [RELEASE.md](RELEASE.md).

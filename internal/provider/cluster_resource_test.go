@@ -5663,3 +5663,153 @@ func TestIntegrationClusterEditionImmutable(t *testing.T) {
 		},
 	})
 }
+
+// continuumStandardConfig builds a STANDARD edition (serverless) cluster config
+// plus a data source that reads it back, targeting a Continuum org. The
+// provisioned vCPU limit is parameterized so an update step can change it in
+// place.
+func continuumStandardConfig(clusterName string, provisionedVCPUs int) string {
+	return continuumProviderBlock() + fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    edition        = "STANDARD"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = %d
+        }
+    }
+    regions = [{ name = "us-central1" }]
+}
+
+data "cockroach_cluster" "test" {
+    id = cockroach_cluster.test.id
+}
+`, clusterName, provisionedVCPUs)
+}
+
+// continuumMissionCriticalConfig builds a MISSION_CRITICAL edition (dedicated)
+// cluster config plus a data source that reads it back, targeting a Continuum
+// org. node_count and storage_gib are parameterized so an update step can change
+// them in place.
+func continuumMissionCriticalConfig(clusterName string, nodeCount, storageGib int) string {
+	return continuumProviderBlock() + fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    dedicated = {
+        num_virtual_cpus = 4
+        storage_gib      = %d
+    }
+    regions = [{
+        name       = "us-central1"
+        node_count = %d
+    }]
+}
+
+data "cockroach_cluster" "test" {
+    id = cockroach_cluster.test.id
+}
+`, clusterName, storageGib, nodeCount)
+}
+
+// TestAccStandardEditionClusterResource creates, reads, updates, and destroys a
+// real STANDARD edition (serverless) cluster in a Cockroach Continuum
+// organization. It is skipped unless TF_ACC and COCKROACH_CONTINUUM_API_KEY are
+// set. This is the Continuum edition counterpart to
+// TestAccServerlessClusterResource, which only exercises the legacy plan flow.
+func TestAccStandardEditionClusterResource(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-std-edition-%s", tfTestPrefix, GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t); testAccContinuumPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with edition STANDARD and verify it round-trips into state
+			// (and through the data source) with plan left null.
+			{
+				Config: continuumStandardConfig(clusterName, 2),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists(serverlessResourceName),
+					resource.TestCheckResourceAttr(serverlessResourceName, "name", clusterName),
+					resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", "2"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+				),
+			},
+			// In-place update: raise the provisioned vCPU usage limit.
+			{
+				Config: continuumStandardConfig(clusterName, 4),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", "4"),
+				),
+			},
+			// Import the cluster to confirm it can be brought under management.
+			// ImportStateVerify is off to match the existing dedicated acceptance
+			// test, which avoids brittle attribute-by-attribute comparison.
+			{
+				ResourceName:      serverlessResourceName,
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}
+
+// TestAccMissionCriticalEditionClusterResource creates, reads, updates, and
+// destroys a real MISSION_CRITICAL edition (dedicated) cluster in a Cockroach
+// Continuum organization. It is skipped unless TF_ACC and
+// COCKROACH_CONTINUUM_API_KEY are set. This is the Continuum edition counterpart
+// to TestAccDedicatedClusterResource, which only exercises the legacy plan flow.
+func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
+	t.Parallel()
+	const (
+		resourceName   = "cockroach_cluster.test"
+		dataSourceName = "data.cockroach_cluster.test"
+	)
+	clusterName := fmt.Sprintf("%s-mc-edition-%s", tfTestPrefix, GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t); testAccContinuumPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			// Create with edition MISSION_CRITICAL and verify it round-trips into
+			// state (and through the data source) with plan left null.
+			{
+				Config: continuumMissionCriticalConfig(clusterName, 1, 15),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists(resourceName),
+					resource.TestCheckResourceAttr(resourceName, "name", clusterName),
+					resource.TestCheckResourceAttr(resourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(resourceName, "plan"),
+					resource.TestCheckResourceAttr(resourceName, "dedicated.storage_gib", "15"),
+					resource.TestCheckResourceAttr(dataSourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(dataSourceName, "plan"),
+				),
+			},
+			// In-place update: grow dedicated storage.
+			{
+				Config: continuumMissionCriticalConfig(clusterName, 1, 30),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(resourceName, "plan"),
+					resource.TestCheckResourceAttr(resourceName, "dedicated.storage_gib", "30"),
+				),
+			},
+			// Import the cluster to confirm it can be brought under management.
+			// ImportStateVerify is off to match the existing dedicated acceptance
+			// test, which avoids brittle attribute-by-attribute comparison.
+			{
+				ResourceName:      resourceName,
+				ImportState:       true,
+				ImportStateVerify: false,
+			},
+		},
+	})
+}

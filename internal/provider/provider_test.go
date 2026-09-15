@@ -18,6 +18,7 @@ package provider
 
 import (
 	cryptorand "crypto/rand"
+	"fmt"
 	"math/big"
 	"os"
 	"testing"
@@ -58,6 +59,36 @@ func testAccPreCheck(t *testing.T) {
 			CockroachAPIJWT,
 		)
 	}
+}
+
+// CockroachContinuumAPIKey holds an API key for a Cockroach Continuum-enabled
+// organization. Continuum acceptance tests inject it into the provider block so
+// they target a Continuum org while the rest of the suite keeps using
+// COCKROACH_API_KEY. Tests are skipped when it is unset.
+const CockroachContinuumAPIKey string = "COCKROACH_CONTINUUM_API_KEY"
+
+// testAccContinuumPreCheck skips a test unless a Continuum-enabled org key is
+// configured. Auth for these tests comes from the provider block (which
+// overrides the env var), not the default COCKROACH_API_KEY, so the rest of the
+// suite is unaffected.
+func testAccContinuumPreCheck(t *testing.T) {
+	if os.Getenv(CockroachContinuumAPIKey) == "" {
+		t.Skipf("%s must be set to run Continuum acceptance tests", CockroachContinuumAPIKey)
+	}
+}
+
+// continuumProviderBlock emits a provider block whose API key targets a
+// Cockroach Continuum-enabled organization. Continuum acceptance tests prepend
+// it so they authenticate against a Continuum org: the block's apikey overrides
+// the COCKROACH_API_KEY env var the rest of the suite uses (see provider
+// Configure). The key is only read when the test runs, which is gated by
+// testAccContinuumPreCheck.
+func continuumProviderBlock() string {
+	return fmt.Sprintf(`
+provider "cockroach" {
+    apikey = "%s"
+}
+`, os.Getenv(CockroachContinuumAPIKey))
 }
 
 func TestUserAgent(t *testing.T) {

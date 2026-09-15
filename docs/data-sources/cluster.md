@@ -38,6 +38,9 @@ data "cockroach_cluster" "cockroach" {
 - `customer_cloud_account` (Attributes) Cloud-specific details required to host the cluster in your own cloud account. Returned value is one of: `aws`, `gcp`, or `azure`. This feature is available in [Private Preview](https://www.cockroachlabs.com/docs/stable/cockroachdb-feature-availability). Contact your Cockroach Labs account team to enable this feature. (see [below for nested schema](#nestedatt--customer_cloud_account))
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
+- `edition` (String) Denotes the cluster's edition. Set on clusters in Cockroach Continuum organizations, which report an `edition` instead of a `plan`. Allowed values are:
+  * STANDARD
+  * MISSION_CRITICAL
 - `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
 - `id` (String) The ID of this resource.
 - `labels` (Map of String) Map of key-value pairs used to organize and categorize resources.

@@ -138,6 +138,7 @@ type CockroachCluster struct {
 	CockroachVersion     types.String             `tfsdk:"cockroach_version"`
 	FullVersion          types.String             `tfsdk:"full_version"`
 	Plan                 types.String             `tfsdk:"plan"`
+	Edition              types.String             `tfsdk:"edition"`
 	State                types.String             `tfsdk:"state"`
 	CreatorId            types.String             `tfsdk:"creator_id"`
 	OperationStatus      types.String             `tfsdk:"operation_status"`

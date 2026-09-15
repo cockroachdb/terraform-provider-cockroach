@@ -121,3 +121,53 @@ resource "cockroach_allow_list" "home" {
   sql        = true
   cluster_id = cockroach_cluster.basic_locked_down.id
 }
+
+# Clusters in Cockroach Continuum organizations set an edition instead of a
+# plan. STANDARD clusters are serverless and MISSION_CRITICAL clusters are
+# dedicated.
+resource "cockroach_cluster" "continuum_standard" {
+  name           = "cockroach-continuum-standard"
+  cloud_provider = "GCP"
+  edition        = "STANDARD"
+  serverless = {
+    usage_limits = {
+      provisioned_virtual_cpus = 2
+    }
+    upgrade_type = "AUTOMATIC"
+  }
+  regions = [
+    {
+      name = "us-east1"
+    }
+  ]
+  backup_config = {
+    enabled           = true
+    frequency_minutes = 60
+    retention_days    = 30
+  }
+  labels = {
+    environment   = "production",
+    "cost-center" = "hr-1234"
+  }
+}
+
+resource "cockroach_cluster" "continuum_mission_critical" {
+  name           = "cockroach-continuum-mission-critical"
+  cloud_provider = "GCP"
+  edition        = "MISSION_CRITICAL"
+  dedicated = {
+    storage_gib      = 15
+    num_virtual_cpus = 4
+  }
+  regions = [
+    {
+      name       = "us-central1"
+      node_count = 3
+    }
+  ]
+  delete_protection = true
+  labels = {
+    environment   = "production",
+    "cost-center" = "mkt-1234"
+  }
+}

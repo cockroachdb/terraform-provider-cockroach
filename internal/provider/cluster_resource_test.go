@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -5311,6 +5312,353 @@ resource "cockroach_cluster" "test" {
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.disk_iops", "3000"),
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.storage_gib", "100"),
 				),
+			},
+		},
+	})
+}
+
+// TestLoadClusterToTerraformStateEditionPlanExclusivity verifies that the read
+// path reports exactly one of plan or edition, keeping the other null so the
+// unreported axis does not produce a perpetual diff.
+func TestLoadClusterToTerraformStateEditionPlanExclusivity(t *testing.T) {
+	ctx := context.Background()
+	base := client.Cluster{
+		Id:               uuid.Must(uuid.NewRandom()).String(),
+		Name:             "exclusivity-test",
+		CockroachVersion: minSupportedClusterPatchVersion,
+		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+		State:            client.CLUSTERSTATETYPE_CREATED,
+	}
+
+	t.Run("edition set reports edition, nulls plan", func(t *testing.T) {
+		edition := client.EDITIONTYPE_STANDARD
+		cluster := base
+		cluster.Edition = &edition
+
+		var state CockroachCluster
+		diags := loadClusterToTerraformState(ctx, &cluster, nil, &state, nil)
+		require.False(t, diags.HasError(), "unexpected errors: %v", diags.Errors())
+		require.Equal(t, string(client.EDITIONTYPE_STANDARD), state.Edition.ValueString())
+		require.True(t, state.Plan.IsNull(), "plan should be null when edition is reported")
+	})
+
+	t.Run("no edition reports plan, nulls edition", func(t *testing.T) {
+		cluster := base
+		cluster.Plan = ptr(client.PLANTYPE_ADVANCED)
+
+		var state CockroachCluster
+		diags := loadClusterToTerraformState(ctx, &cluster, nil, &state, nil)
+		require.False(t, diags.HasError(), "unexpected errors: %v", diags.Errors())
+		require.Equal(t, string(client.PLANTYPE_ADVANCED), state.Plan.ValueString())
+		require.True(t, state.Edition.IsNull(), "edition should be null when plan is reported")
+	})
+}
+
+// editionClusterConfig builds a config whose shape matches the edition:
+// Mission Critical is dedicated hardware, Standard is serverless. Pairing them
+// the other way is refused before the request is sent.
+func editionClusterConfig(clusterName string, edition client.EditionType) string {
+	if edition == client.EDITIONTYPE_MISSION_CRITICAL {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    edition        = "%s"
+    dedicated = {
+        machine_type = "n2-standard-2"
+        storage_gib  = 15
+    }
+    regions = [{
+        name       = "us-central1"
+        node_count = 1
+    }]
+}
+`, clusterName, edition)
+	}
+	return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    edition        = "%s"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = 2
+        }
+    }
+    regions = [{ name = "us-central1" }]
+}
+`, clusterName, edition)
+}
+
+func editionCluster(clusterName string, edition client.EditionType) client.Cluster {
+	e := edition
+	cluster := client.Cluster{
+		Id:               uuid.Nil.String(),
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            client.CLUSTERSTATETYPE_CREATED,
+		Edition:          &e,
+		Regions:          []client.Region{{Name: "us-central1"}},
+	}
+	if edition == client.EDITIONTYPE_MISSION_CRITICAL {
+		cluster.Config.Dedicated = &client.DedicatedHardwareConfig{
+			MachineType:    "n2-standard-2",
+			NumVirtualCpus: 2,
+			StorageGib:     15,
+			MemoryGib:      8,
+		}
+		cluster.Regions[0].NodeCount = 1
+		return cluster
+	}
+	cluster.Config.Serverless = &client.ServerlessClusterConfig{
+		UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+		UsageLimits: &client.UsageLimits{
+			ProvisionedVirtualCpus: ptr(int64(2)),
+		},
+		RoutingId: "routing-id",
+	}
+	return cluster
+}
+
+// TestIntegrationClusterEditionShapeValidation verifies that an edition paired
+// with the wrong cluster shape is rejected at plan time rather than reaching
+// the API.
+func TestIntegrationClusterEditionShapeValidation(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	for _, tc := range []struct {
+		name        string
+		config      string
+		expectError *regexp.Regexp
+	}{
+		{
+			name: "mission critical with serverless",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "edition-shape-mc"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = 2
+        }
+    }
+    regions = [{ name = "us-central1" }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)Mission Critical edition clusters run on dedicated hardware`),
+		},
+		{
+			name: "standard with dedicated",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "edition-shape-std"
+    cloud_provider = "GCP"
+    edition        = "STANDARD"
+    dedicated = {
+        machine_type = "n2-standard-2"
+        storage_gib  = 15
+    }
+    regions = [{
+        name       = "us-central1"
+        node_count = 1
+    }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)Standard edition clusters run on shared infrastructure`),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.expectError,
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestIntegrationClusterEditionNotEnabled verifies that the enrollment message
+// reports the enrollment-specific diagnostic, while any other create failure
+// falls through to the generic error.
+func TestIntegrationClusterEditionNotEnabled(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	for _, tc := range []struct {
+		name        string
+		apiMessage  string
+		expectError *regexp.Regexp
+	}{
+		{
+			name:        "enrollment",
+			apiMessage:  editionNotEnabledAPIMessage,
+			expectError: regexp.MustCompile(`(?s)Edition not enabled for this organization`),
+		},
+		{
+			name:        "unrelated permission error",
+			apiMessage:  "insufficient permissions to create a cluster",
+			expectError: regexp.MustCompile(`(?s)Error creating cluster`),
+		},
+		{
+			// Mentions editions but isn't the enrollment message, so it must not
+			// be reported as an enrollment problem.
+			name:        "edition shape mismatch",
+			apiMessage:  "invalid argument: Mission Critical edition clusters require dedicated hardware",
+			expectError: regexp.MustCompile(`(?s)Error creating cluster`),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			clusterName := fmt.Sprintf("%s-edition-err-%s", tfTestPrefix, GenerateRandomString(2))
+
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+
+			s.EXPECT().
+				CreateCluster(gomock.Any(), gomock.Any()).
+				Return(nil, &http.Response{StatusCode: http.StatusForbidden}, errors.New(tc.apiMessage)).
+				AnyTimes()
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      editionClusterConfig(clusterName, client.EDITIONTYPE_STANDARD),
+						ExpectError: tc.expectError,
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestAccClusterEditionNotEnabled pins the API message that Create matches on.
+// The acceptance organization is not on Continuum, so the create is rejected
+// and no cluster is billed. If the server reworded the message, Create would
+// fall through to the generic error and this test would fail.
+func TestAccClusterEditionNotEnabled(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-edition-noncont-%s", tfTestPrefix, GenerateRandomString(2))
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      editionClusterConfig(clusterName, client.EDITIONTYPE_STANDARD),
+				ExpectError: regexp.MustCompile(`(?s)Edition not enabled for this organization`),
+			},
+		},
+	})
+}
+
+// TestIntegrationClusterEditionRoundTrip verifies that creating a cluster with
+// an edition succeeds and the value round-trips into state for each edition,
+// with plan staying null.
+func TestIntegrationClusterEditionRoundTrip(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	for _, edition := range client.AllowedEditionTypeEnumValues {
+		t.Run(string(edition), func(t *testing.T) {
+			clusterName := fmt.Sprintf("%s-edition-%s", tfTestPrefix, GenerateRandomString(2))
+			cluster := editionCluster(clusterName, edition)
+
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+
+			s.EXPECT().
+				CreateCluster(gomock.Any(), gomock.Any()).
+				DoAndReturn(func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+					if req.Spec.Edition == nil || *req.Spec.Edition != edition {
+						return nil, nil, fmt.Errorf("expected edition %q in create request, got %v", edition, req.Spec.Edition)
+					}
+					if req.Spec.Plan != nil {
+						return nil, nil, fmt.Errorf("expected no plan in create request, got %v", *req.Spec.Plan)
+					}
+					return &cluster, httpOk, nil
+				})
+			s.EXPECT().GetCluster(gomock.Any(), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), cluster.Id).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+			s.EXPECT().DeleteCluster(gomock.Any(), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: editionClusterConfig(clusterName, edition),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(edition)),
+							resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
+						),
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestIntegrationClusterEditionImmutable verifies that changing edition on an
+// existing cluster is refused at plan time rather than silently replacing the
+// cluster, which would destroy its data.
+func TestIntegrationClusterEditionImmutable(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	clusterName := fmt.Sprintf("%s-edition-immutable-%s", tfTestPrefix, GenerateRandomString(2))
+	standardCluster := editionCluster(clusterName, client.EDITIONTYPE_STANDARD)
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&standardCluster, httpOk, nil)
+	s.EXPECT().GetCluster(gomock.Any(), standardCluster.Id).Return(&standardCluster, httpOk, nil).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), standardCluster.Id).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), standardCluster.Id).Return(&standardCluster, httpOk, nil).AnyTimes()
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: editionClusterConfig(clusterName, client.EDITIONTYPE_STANDARD),
+				Check:  resource.TestCheckResourceAttr(serverlessResourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
+			},
+			{
+				Config:      editionClusterConfig(clusterName, client.EDITIONTYPE_MISSION_CRITICAL),
+				ExpectError: regexp.MustCompile("Cannot update cluster edition"),
 			},
 		},
 	})

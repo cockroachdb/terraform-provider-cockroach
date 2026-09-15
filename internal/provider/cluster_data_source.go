@@ -56,6 +56,13 @@ func (d *clusterDataSource) Schema(
 				Computed:    true,
 				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
 			},
+			"edition": schema.StringAttribute{
+				Computed: true,
+				MarkdownDescription: "Denotes the cluster's edition. Set on clusters in Cockroach " +
+					"Continuum organizations, which report an `edition` instead of a `plan`. " +
+					"Allowed values are:" +
+					formatEnumMarkdownList(client.AllowedEditionTypeEnumValues),
+			},
 			"cloud_provider": schema.StringAttribute{
 				Computed: true,
 				MarkdownDescription: "Cloud provider used to host the cluster. Allowed values are:" +

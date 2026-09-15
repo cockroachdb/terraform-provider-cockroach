@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Destroying a `cockroach_physical_replication_stream` that is still replicating
+  now cancels the stream through the API instead of failing with "A PCR stream
+  must be completed to be removable". Cancelling stops replication without
+  promoting the standby cluster. An active stream blocks deletion of both the
+  primary and standby clusters, so the old behavior left them behind.
+
 ## [1.23.0] - 2026-09-15
 
 ### Added

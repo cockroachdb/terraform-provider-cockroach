@@ -3,12 +3,12 @@
 page_title: "cockroach_physical_replication_stream Resource - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  Physical replication stream.
+  Physical replication stream. Destroying a stream that has not failed over cancels it, which stops replication without promoting the standby cluster.
 ---
 
 # cockroach_physical_replication_stream (Resource)
 
-Physical replication stream.
+Physical replication stream. Destroying a stream that has not failed over cancels it, which stops replication without promoting the standby cluster.
 
 ## Example Usage
 

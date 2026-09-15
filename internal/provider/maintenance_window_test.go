@@ -114,7 +114,7 @@ func TestIntegrationMaintenanceWindowResource(t *testing.T) {
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), standardClusterID).
 		Return(initialBackupConfig, httpOk, nil).Times(2)
 	s.EXPECT().SetMaintenanceWindow(gomock.Any(), standardClusterID, createdMaintenanceWindowInfo).
-		Return(nil, nil, fmt.Errorf("maintenance windows are supported for advanced clusters only"))
+		Return(nil, nil, fmt.Errorf("maintenance windows are not supported for standard clusters"))
 
 	// Delete Standard Cluster
 	s.EXPECT().GetCluster(gomock.Any(), standardClusterID).
@@ -173,7 +173,7 @@ func testMaintenanceWindowResource(t *testing.T, clusterName string, useMock boo
 					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "offset_duration", "1010"),
 					resource.TestCheckResourceAttr(maintenanceWindowResourceName, "window_duration", "101010"),
 				),
-				ExpectError: regexp.MustCompile("maintenance windows are supported for advanced clusters only"),
+				ExpectError: regexp.MustCompile("maintenance windows are not supported for standard clusters"),
 			},
 			// Tear down the serverless cluster
 			{

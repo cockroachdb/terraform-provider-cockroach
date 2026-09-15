@@ -208,7 +208,7 @@ func pcrTestClusters(
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-central1",
+				Name:      testRegion,
 				NodeCount: 3,
 			},
 		},
@@ -228,7 +228,7 @@ func pcrTestClusters(
 		},
 		Regions: []client.Region{
 			{
-				Name:      "us-east1",
+				Name:      testSecondRegion,
 				NodeCount: 3,
 			},
 		},
@@ -282,7 +282,7 @@ resource "cockroach_cluster" "primary" {
         supports_cluster_virtualization = true
     }
     regions = [{
-        name = "us-central1"
+        name = "`+testRegion+`"
         node_count = 3
     }]
 }
@@ -297,7 +297,7 @@ resource "cockroach_cluster" "standby" {
         supports_cluster_virtualization = true
     }
     regions = [{
-        name = "us-east1"
+        name = "`+testSecondRegion+`"
         node_count = 3
     }]
 }
@@ -321,7 +321,7 @@ resource "cockroach_cluster" "primary" {
         supports_cluster_virtualization = true
     }
     regions = [{
-        name = "us-central1"
+        name = "`+testRegion+`"
 				node_count = 3
     }]
 }
@@ -336,7 +336,7 @@ resource "cockroach_cluster" "standby" {
         supports_cluster_virtualization = true
     }
     regions = [{
-        name = "us-east1"
+        name = "`+testSecondRegion+`"
 				node_count = 3
     }]
 }

@@ -68,7 +68,7 @@ func TestIntegrationClusterCertDataSource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name: testRegion,
 			},
 		},
 	}
@@ -116,7 +116,7 @@ resource "cockroach_cluster" "test" {
 	cloud_provider = "GCP"
 	serverless = {}
 	regions = [{
-		name = "us-central1"
+		name = "`+testRegion+`"
 	}]
 }
 

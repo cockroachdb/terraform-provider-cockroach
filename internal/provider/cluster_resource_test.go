@@ -280,7 +280,7 @@ func TestIntegrationClusterWithBackupConfig(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name: testRegion,
 			},
 		},
 	}
@@ -573,7 +573,7 @@ func TestIntegrationClusterWithParentID(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name: testRegion,
 			},
 		},
 		ParentId: ptr("root"),
@@ -765,7 +765,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			Regions: []client.Region{
 				{
-					Name: "us-central1",
+					Name: testRegion,
 				},
 			},
 		}
@@ -795,7 +795,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			Regions: []client.Region{
 				{
-					Name: "us-central1",
+					Name: testRegion,
 				},
 			},
 		}
@@ -820,7 +820,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			},
 			Regions: []client.Region{
 				{
-					Name: "us-central1",
+					Name: testRegion,
 				},
 			},
 		}
@@ -885,7 +885,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
                             name           = "%s"
                             cloud_provider = "GCP"
                             serverless = {}
-                            regions = [{ name = "us-central1" }]
+                            regions = [{ name = "`+testRegion+`" }]
                             customer_cloud_account = { gcp = { service_account_email = "sa@example.iam.gserviceaccount.com" } }
                         }
                     `, clusterName),
@@ -904,10 +904,10 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							serverless = {}
 							regions = [
 								{
-									name = "us-central1"
+									name = "`+testRegion+`"
 								},
 								{
-									name = "us-central1"
+									name = "`+testRegion+`"
 									node_count = 1
 								},
 							]
@@ -1154,7 +1154,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 								}
 							}
 							regions = [{
-								name = "us-central1"
+								name = "` + testRegion + `"
 							}]
 						}`,
 					ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
@@ -1176,7 +1176,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 								}
 							}
 							regions = [{
-								name = "us-central1"
+								name = "` + testRegion + `"
 							}]
 						}`,
 					ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
@@ -1205,7 +1205,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 							plan = "SERVERLESS"
 							serverless = {}
 							regions = [{
-								name = "us-central1"
+								name = "` + testRegion + `"
 							}]
 						}`,
 					ExpectError: regexp.MustCompile("Invalid Attribute Value Match"),
@@ -1385,7 +1385,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 				Plan:      ptr(client.PLANTYPE_ADVANCED),
 				State:     client.CLUSTERSTATETYPE_CREATED,
 				CidrRange: "172.28.0.0/16",
-				Regions:   []client.Region{{Name: "us-central1", NodeCount: 1}},
+				Regions:   []client.Region{{Name: testRegion, NodeCount: 1}},
 			},
 			updateStep: func() resource.TestStep {
 				config := serverlessClusterStep(clusterName, client.PLANTYPE_STANDARD, slsConfig{vcpus: ptr(6), version: ptr(latestClusterMajorVersion)}).Config
@@ -1713,7 +1713,7 @@ func serverlessClusterStep(
 					%s
 				}
 				regions = [{
-					name = "us-central1"
+					name = "`+testRegion+`"
 				}]
 				%s
 			}
@@ -1869,7 +1869,7 @@ func legacyServerlessClusterWithSpendLimitStep(
 					spend_limit = %d
 				}
 				regions = [{
-					name = "us-central1"
+					name = "`+testRegion+`"
 				}]
 			}
 
@@ -1946,7 +1946,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name:               "us-central1",
+				Name:               testRegion,
 				NodeCount:          1,
 				PrivateEndpointDns: "test-private-endpoint-dns.gcp-us-central1.crdb-test.io",
 			},
@@ -1990,7 +1990,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 
 	privateEndpointServices := client.PrivateEndpointServices{
 		Services: []client.PrivateEndpointService{
-			{RegionName: "us-central1", Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
+			{RegionName: testRegion, Status: client.PRIVATEENDPOINTSERVICESTATUSTYPE_AVAILABLE},
 		},
 	}
 	s.EXPECT().CreatePrivateEndpointServices(gomock.Any(), clusterID).
@@ -2576,9 +2576,9 @@ resource "cockroach_cluster" "test" {
     storage_gib = 15
   }
   regions = [
-    { name = "us-central1", node_count = 3, num_virtual_cpus = 4 },
-    { name = "us-east1", node_count = 3, num_virtual_cpus = 8 },
-    { name = "us-west1", node_count = 3, num_virtual_cpus = 8 },
+    { name = "`+testRegion+`", node_count = 3, num_virtual_cpus = 4 },
+    { name = "`+testSecondRegion+`", node_count = 3, num_virtual_cpus = 8 },
+    { name = "`+testThirdRegion+`", node_count = 3, num_virtual_cpus = 8 },
   ]
 }
 
@@ -2627,9 +2627,9 @@ resource "cockroach_cluster" "test" {
     num_virtual_cpus = 4
   }
   regions = [
-    { name = "us-central1", node_count = 3 },
-    { name = "us-east1", node_count = 3 },
-    { name = "us-west1", node_count = 3 },
+    { name = "`+testRegion+`", node_count = 3 },
+    { name = "`+testSecondRegion+`", node_count = 3 },
+    { name = "`+testThirdRegion+`", node_count = 3 },
   ]
 }
 `, clusterName)
@@ -2643,9 +2643,9 @@ resource "cockroach_cluster" "test" {
     storage_gib = 15
   }
   regions = [
-    { name = "us-central1", node_count = 3, num_virtual_cpus = 4 },
-    { name = "us-east1", node_count = 3, num_virtual_cpus = 8 },
-    { name = "us-west1", node_count = 3, num_virtual_cpus = 8 },
+    { name = "`+testRegion+`", node_count = 3, num_virtual_cpus = 4 },
+    { name = "`+testSecondRegion+`", node_count = 3, num_virtual_cpus = 8 },
+    { name = "`+testThirdRegion+`", node_count = 3, num_virtual_cpus = 8 },
   ]
 }
 `, clusterName)
@@ -3847,7 +3847,7 @@ resource "cockroach_cluster" "test" {
 	  supports_cluster_virtualization = true
     }
 	regions = [{
-		name: "us-central1"
+		name: "`+testRegion+`"
 		node_count: 1
 	}]
 	%s
@@ -3918,7 +3918,7 @@ func getTestClusterWithBackupConfig(clusterName string, config backupCreateConfi
 			}
 		}
 		regions = [{
-			name = "us-central1"
+			name = "`+testRegion+`"
 		}] %s
 	}
 	`, clusterName, backupConfigString)
@@ -3960,7 +3960,7 @@ func getTestClusterWithParentFolder(clusterName string, config parentIDTestConfi
 			}
 		}
 		regions = [{
-			name = "us-central1"
+			name = "`+testRegion+`"
 		}] %s
 	}
 	`, parentConfigString, clusterName, parentIDString)
@@ -4668,7 +4668,7 @@ func TestIntegrationClusterWithLabels(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name: testRegion,
 			},
 		},
 		Labels: labels,
@@ -4885,7 +4885,7 @@ func getTestClusterWithLabels(
 			}
 		}
 		regions = [{
-			name = "us-central1"
+			name = "`+testRegion+`"
 		}] %s%s
 	}
 	`, folderName, clusterName, labelsString, parentString)
@@ -4926,7 +4926,7 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 		},
 		Regions: []client.Region{
 			{
-				Name: "us-central1",
+				Name: testRegion,
 			},
 		},
 	}
@@ -4941,7 +4941,7 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 	updatedCluster := *initialCluster
 	updatedCluster.Regions = []client.Region{
 		{
-			Name: "us-east1",
+			Name: testSecondRegion,
 		},
 	}
 
@@ -4965,7 +4965,7 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				PreConfig: func() {
-					traceMessageStep("create cluster with us-central1 region")
+					traceMessageStep("create cluster with initial region")
 				},
 				Config: fmt.Sprintf(`
 					resource "cockroach_cluster" "test" {
@@ -4978,13 +4978,13 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 							}
 						}
 						regions = [{
-							name = "us-central1"
+							name = "`+testRegion+`"
 						}]
 					}
 				`, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "name", clusterName),
-					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.name", "us-central1"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.name", testRegion),
 				),
 			},
 			{
@@ -5002,14 +5002,14 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 							}
 						}
 						regions = [{
-							name = "us-east1"
+							name = "`+testSecondRegion+`"
 						}]
 					}
 				`, clusterName),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "name", clusterName),
 					// Verify the region was successfully updated.
-					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.name", "us-east1"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.name", testSecondRegion),
 				),
 			},
 		},
@@ -5249,7 +5249,7 @@ func TestIntegrationServerlessPlanTypeChangeAccountId(t *testing.T) {
 					UsageLimits: usageLimits,
 				},
 			},
-			Regions: []client.Region{{Name: "us-central1"}},
+			Regions: []client.Region{{Name: testRegion}},
 		}
 	}
 
@@ -5286,7 +5286,7 @@ resource "cockroach_cluster" "test" {
   cloud_provider = "GCP"
   %s
   serverless     = %s
-  regions        = [{ name = "us-central1" }]
+  regions        = [{ name = "`+testRegion+`" }]
 }
 `, clusterName, planAttr, serverless)
 	}
@@ -5483,7 +5483,7 @@ resource "cockroach_cluster" "test" {
         storage_gib  = 15
     }
     regions = [{
-        name       = "us-central1"
+        name       = "`+testRegion+`"
         node_count = 1
     }]
 }
@@ -5499,7 +5499,7 @@ resource "cockroach_cluster" "test" {
             provisioned_virtual_cpus = 2
         }
     }
-    regions = [{ name = "us-central1" }]
+    regions = [{ name = "`+testRegion+`" }]
 }
 `, clusterName, edition)
 }
@@ -5513,7 +5513,7 @@ func editionCluster(clusterName string, edition client.EditionType) client.Clust
 		CloudProvider:    "GCP",
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Edition:          &e,
-		Regions:          []client.Region{{Name: "us-central1"}},
+		Regions:          []client.Region{{Name: testRegion}},
 	}
 	if edition == client.EDITIONTYPE_MISSION_CRITICAL {
 		cluster.Config.Dedicated = &client.DedicatedHardwareConfig{
@@ -5560,7 +5560,7 @@ resource "cockroach_cluster" "test" {
             provisioned_virtual_cpus = 2
         }
     }
-    regions = [{ name = "us-central1" }]
+    regions = [{ name = "` + testRegion + `" }]
 }
 `,
 			expectError: regexp.MustCompile(`(?s)Mission Critical edition clusters run on dedicated hardware`),
@@ -5577,7 +5577,7 @@ resource "cockroach_cluster" "test" {
         storage_gib  = 15
     }
     regions = [{
-        name       = "us-central1"
+        name       = "` + testRegion + `"
         node_count = 1
     }]
 }

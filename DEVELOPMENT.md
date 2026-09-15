@@ -147,6 +147,15 @@ resource test.
 There are currently no permanent fixtures for acceptance tests to use. Each test needs to create the resources it
 depends on. Prefer using serverless clusters in tests when possible, since they're way quicker to create.
 
+Tests that create GCP clusters get their regions from `testRegion`, `testSecondRegion` and `testThirdRegion` in
+`internal/provider/utils_test.go`. The defaults are `us-east1`, `us-east4` and `us-west1`, and each can be overridden
+with the matching env var (`COCKROACH_TEST_REGION`, `COCKROACH_TEST_SECOND_REGION`, `COCKROACH_TEST_THIRD_REGION`) when
+a region runs short on capacity. New tests should use these instead of hardcoding a region.
+
+Note that `us-east4` and `us-west1` are only available to Advanced clusters, so `testSecondRegion` and
+`testThirdRegion` can't be used in a Basic or Standard config. GCP serverless is limited to a short list of regions;
+`GET /api/v1/clusters/available-regions?provider=GCP&serverless=true` returns the current one.
+
 ## Releasing
 
 The release process is documented in [RELEASE.md](RELEASE.md).

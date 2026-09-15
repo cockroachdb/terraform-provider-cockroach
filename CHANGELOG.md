@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   promoting the standby cluster. An active stream blocks deletion of both the
   primary and standby clusters, so the old behavior left them behind.
 
+### Fixed
+
+- Fixed `cockroach_cluster` failing an apply with "Provider produced inconsistent
+  result after apply" when a serverless cluster moves between the `BASIC` and
+  `STANDARD` plans. `account_id` differs per plan type, and `plan` itself is
+  affected when the configuration leaves it unset, so both are now marked unknown
+  at plan time when the plan type changes.
+
 ## [1.23.0] - 2026-09-15
 
 ### Added

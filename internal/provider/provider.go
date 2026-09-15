@@ -21,7 +21,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/hashicorp/go-retryablehttp"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	tf_provider "github.com/hashicorp/terraform-plugin-framework/provider"

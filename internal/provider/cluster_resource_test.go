@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
@@ -267,7 +267,7 @@ func TestIntegrationClusterWithBackupConfig(t *testing.T) {
 		CockroachVersion: latestClusterPatchVersion,
 		CloudProvider:    "GCP",
 		State:            "CREATED",
-		Plan:             "STANDARD",
+		Plan:             ptr(client.PLANTYPE_STANDARD),
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -560,7 +560,7 @@ func TestIntegrationClusterWithParentID(t *testing.T) {
 		CockroachVersion: latestClusterPatchVersion,
 		CloudProvider:    "GCP",
 		State:            "CREATED",
-		Plan:             "STANDARD",
+		Plan:             ptr(client.PLANTYPE_STANDARD),
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -755,7 +755,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			CockroachVersion: latestClusterPatchVersion,
 			CloudProvider:    "GCP",
 			State:            "CREATED",
-			Plan:             planType,
+			Plan:             ptr(planType),
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					RoutingId:   "routing-id",
@@ -781,7 +781,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			CockroachVersion: latestClusterPatchVersion,
 			CloudProvider:    "GCP",
 			State:            "CREATED",
-			Plan:             planType,
+			Plan:             ptr(planType),
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -807,7 +807,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			CockroachVersion: latestClusterPatchVersion,
 			CloudProvider:    "GCP",
 			State:            "CREATED",
-			Plan:             planType,
+			Plan:             ptr(planType),
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -839,7 +839,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			CockroachVersion: latestClusterPatchVersion,
 			CloudProvider:    "GCP",
 			State:            "CREATED",
-			Plan:             "STANDARD",
+			Plan:             ptr(client.PLANTYPE_STANDARD),
 			Config: client.ClusterConfig{
 				Serverless: &client.ServerlessClusterConfig{
 					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -1381,7 +1381,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 						StorageGib:     15,
 					},
 				},
-				Plan:      client.PLANTYPE_ADVANCED,
+				Plan:      ptr(client.PLANTYPE_ADVANCED),
 				State:     client.CLUSTERSTATETYPE_CREATED,
 				CidrRange: "172.28.0.0/16",
 				Regions:   []client.Region{{Name: "us-central1", NodeCount: 1}},
@@ -1932,7 +1932,7 @@ func TestIntegrationDedicatedClusterResource(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_GCP,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		UpgradeStatus:    client.CLUSTERUPGRADESTATUSTYPE_UPGRADE_AVAILABLE,
@@ -2100,7 +2100,7 @@ func TestIntegrationDedicatedClusterMachineTypeMigration(t *testing.T) {
 		Id:               uuid.Nil.String(),
 		Name:             "test-cluster",
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -2250,7 +2250,7 @@ resource "cockroach_cluster" "test" {
 			Id:               clusterID,
 			Name:             clusterName,
 			CockroachVersion: minSupportedClusterPatchVersion,
-			Plan:             client.PLANTYPE_ADVANCED,
+			Plan:             ptr(client.PLANTYPE_ADVANCED),
 			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 			State:            client.CLUSTERSTATETYPE_CREATED,
 			Config: client.ClusterConfig{
@@ -2372,7 +2372,7 @@ func TestIntegrationDedicatedAWSClusterS3VpcEndpointId(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -2460,7 +2460,7 @@ func TestIntegrationDedicatedClusterBYOC(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -2700,7 +2700,7 @@ func TestIntegrationDedicatedClusterPerRegionMachineType(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -2819,7 +2819,7 @@ func TestIntegrationDedicatedClusterHeterogeneousToHomogeneous(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -2955,7 +2955,7 @@ func TestIntegrationDedicatedClusterPerRegionUnknownValue(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -3118,7 +3118,7 @@ func TestIntegrationDedicatedClusterPerRegionToClusterWide(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -3137,7 +3137,7 @@ func TestIntegrationDedicatedClusterPerRegionToClusterWide(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -3253,7 +3253,7 @@ func TestIntegrationDedicatedClusterPerRegionResize(t *testing.T) {
 			Id:               clusterID,
 			Name:             clusterName,
 			CockroachVersion: minSupportedClusterPatchVersion,
-			Plan:             client.PLANTYPE_ADVANCED,
+			Plan:             ptr(client.PLANTYPE_ADVANCED),
 			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 			State:            client.CLUSTERSTATETYPE_CREATED,
 			Config: client.ClusterConfig{
@@ -3365,7 +3365,7 @@ func TestIntegrationDedicatedClusterPerRegionRemove(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -3384,7 +3384,7 @@ func TestIntegrationDedicatedClusterPerRegionRemove(t *testing.T) {
 		Id:               clusterID,
 		Name:             clusterName,
 		CockroachVersion: minSupportedClusterPatchVersion,
-		Plan:             client.PLANTYPE_ADVANCED,
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 		State:            client.CLUSTERSTATETYPE_CREATED,
 		Config: client.ClusterConfig{
@@ -3490,7 +3490,7 @@ func TestIntegrationDedicatedClusterClusterWideResize(t *testing.T) {
 			Id:               clusterID,
 			Name:             clusterName,
 			CockroachVersion: minSupportedClusterPatchVersion,
-			Plan:             client.PLANTYPE_ADVANCED,
+			Plan:             ptr(client.PLANTYPE_ADVANCED),
 			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 			State:            client.CLUSTERSTATETYPE_CREATED,
 			Config: client.ClusterConfig{
@@ -3588,7 +3588,7 @@ func TestIntegrationDedicatedClusterHeterogeneousWithCMEKRegion(t *testing.T) {
 			Id:               clusterID,
 			Name:             clusterName,
 			CockroachVersion: minSupportedClusterPatchVersion,
-			Plan:             client.PLANTYPE_ADVANCED,
+			Plan:             ptr(client.PLANTYPE_ADVANCED),
 			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 			State:            client.CLUSTERSTATETYPE_CREATED,
 			Config: client.ClusterConfig{
@@ -4655,7 +4655,7 @@ func TestIntegrationClusterWithLabels(t *testing.T) {
 		CockroachVersion: latestClusterPatchVersion,
 		CloudProvider:    "GCP",
 		State:            "CREATED",
-		Plan:             "STANDARD",
+		Plan:             ptr(client.PLANTYPE_STANDARD),
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -4701,7 +4701,7 @@ func TestIntegrationClusterWithLabels(t *testing.T) {
 	clusterWithNoLabels.Labels = map[string]string{}
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithNoLabels, httpOk, nil)
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
-		Plan:   &cluster.Plan,
+		Plan:   cluster.Plan,
 		Labels: &map[string]string{},
 		Serverless: &client.ServerlessClusterUpdateSpecification{
 			PrimaryRegion: &primaryRegion,
@@ -4716,7 +4716,7 @@ func TestIntegrationClusterWithLabels(t *testing.T) {
 
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil)
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
-		Plan:   &cluster.Plan,
+		Plan:   cluster.Plan,
 		Labels: &labels,
 		Serverless: &client.ServerlessClusterUpdateSpecification{
 			PrimaryRegion: &primaryRegion,
@@ -4737,7 +4737,7 @@ func TestIntegrationClusterWithLabels(t *testing.T) {
 	clusterWithUpdatedLabels.Labels = newLabels
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithUpdatedLabels, httpOk, nil)
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
-		Plan:   &cluster.Plan,
+		Plan:   cluster.Plan,
 		Labels: &newLabels,
 		Serverless: &client.ServerlessClusterUpdateSpecification{
 			PrimaryRegion: &primaryRegion,
@@ -4754,7 +4754,7 @@ func TestIntegrationClusterWithLabels(t *testing.T) {
 	clusterWithParent.ParentId = &folder.ResourceId
 	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&clusterWithParent, httpOk, nil)
 	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
-		Plan:   &cluster.Plan,
+		Plan:   cluster.Plan,
 		Labels: &newLabels,
 		Serverless: &client.ServerlessClusterUpdateSpecification{
 			PrimaryRegion: &primaryRegion,
@@ -4913,7 +4913,7 @@ func TestIntegrationClusterExternalStateChange(t *testing.T) {
 		CockroachVersion: latestClusterPatchVersion,
 		CloudProvider:    "GCP",
 		State:            client.CLUSTERSTATETYPE_CREATED,
-		Plan:             client.PLANTYPE_STANDARD,
+		Plan:             ptr(client.PLANTYPE_STANDARD),
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{
 				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
@@ -5128,7 +5128,7 @@ func TestIntegrationClusterLabelOnlyPlanNoise(t *testing.T) {
 			Id:               clusterID,
 			Name:             clusterName,
 			CockroachVersion: minSupportedClusterPatchVersion,
-			Plan:             client.PLANTYPE_ADVANCED,
+			Plan:             ptr(client.PLANTYPE_ADVANCED),
 			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 			State:            client.CLUSTERSTATETYPE_CREATED,
 			AccountId:        ptr("account-12345"),
@@ -5238,7 +5238,7 @@ func TestIntegrationDedicatedClusterStorageResizeDiskIops(t *testing.T) {
 			Id:               clusterID,
 			Name:             clusterName,
 			CockroachVersion: minSupportedClusterPatchVersion,
-			Plan:             client.PLANTYPE_ADVANCED,
+			Plan:             ptr(client.PLANTYPE_ADVANCED),
 			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
 			State:            client.CLUSTERSTATETYPE_CREATED,
 			Config: client.ClusterConfig{

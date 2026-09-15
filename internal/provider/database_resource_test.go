@@ -24,7 +24,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -62,7 +62,7 @@ func TestIntegrationDatabaseResource(t *testing.T) {
 	cluster := client.Cluster{
 		Name:          clusterName,
 		Id:            uuid.Nil.String(),
-		Plan:          "BASIC",
+		Plan:          ptr(client.PLANTYPE_BASIC),
 		CloudProvider: "GCP",
 		Config: client.ClusterConfig{
 			Serverless: &client.ServerlessClusterConfig{

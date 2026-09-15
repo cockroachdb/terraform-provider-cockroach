@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -699,7 +699,7 @@ func setupSqlUserMockEnv(
 
 	clusterID := uuid.Nil.String()
 	cluster := client.Cluster{
-		Name: clusterName, Id: clusterID, Plan: "BASIC", CloudProvider: "GCP",
+		Name: clusterName, Id: clusterID, Plan: ptr(client.PLANTYPE_BASIC), CloudProvider: "GCP",
 		Config: client.ClusterConfig{Serverless: &client.ServerlessClusterConfig{
 			RoutingId: "routing-id", UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
 		}},

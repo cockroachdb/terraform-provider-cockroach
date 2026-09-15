@@ -26,7 +26,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -1565,7 +1565,11 @@ func loadClusterToTerraformState(
 	planSpecifiesPreviewString := plan != nil && plan.CockroachVersion.ValueString() == clusterVersionPreview
 	state.CockroachVersion = types.StringValue(simplifyClusterVersion(clusterObj.CockroachVersion, planSpecifiesPreviewString))
 	state.FullVersion = types.StringValue(clusterObj.CockroachVersion)
-	state.Plan = types.StringValue(string(clusterObj.Plan))
+	if clusterObj.Plan == nil {
+		state.Plan = types.StringNull()
+	} else {
+		state.Plan = types.StringValue(string(*clusterObj.Plan))
+	}
 	if clusterObj.AccountId == nil {
 		state.AccountId = types.StringNull()
 	} else {

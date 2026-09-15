@@ -23,7 +23,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -59,7 +59,7 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 		Id:            clusterID,
 		Name:          clusterName,
 		State:         "CREATED",
-		Plan:          "ADVANCED",
+		Plan:          ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider: "AWS",
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
@@ -110,7 +110,7 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 
 			setupCluster: func() client.Cluster {
 				serverlessCluster := *defaultAWSCluster
-				serverlessCluster.Plan = "STANDARD"
+				serverlessCluster.Plan = ptr(client.PLANTYPE_STANDARD)
 				serverlessCluster.Config = client.ClusterConfig{
 					Serverless: &client.ServerlessClusterConfig{
 						RoutingId:   "routing-id",

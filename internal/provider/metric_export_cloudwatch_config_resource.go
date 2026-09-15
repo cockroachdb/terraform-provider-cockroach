@@ -23,7 +23,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -127,7 +127,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 		return
 	}
 
-	if cluster.Plan == client.PLANTYPE_BASIC {
+	if cluster.GetPlan() == client.PLANTYPE_BASIC {
 		resp.Diagnostics.AddError(
 			"Incompatible plan type",
 			"CloudWatch metric export services are not available on the Basic plan",

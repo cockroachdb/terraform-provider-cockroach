@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cockroachdb/cockroach-cloud-sdk-go/v9/pkg/client"
+	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -47,7 +47,7 @@ func TestIntegrationBlackoutWindowResource(t *testing.T) {
 		Id:               standardClusterID,
 		Name:             clusterName,
 		CockroachVersion: "v23.1.0",
-		Plan:             "STANDARD",
+		Plan:             ptr(client.PLANTYPE_STANDARD),
 		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{
@@ -67,7 +67,7 @@ func TestIntegrationBlackoutWindowResource(t *testing.T) {
 		Id:               advancedClusterID,
 		Name:             clusterName,
 		CockroachVersion: "v23.1.0",
-		Plan:             "ADVANCED",
+		Plan:             ptr(client.PLANTYPE_ADVANCED),
 		CloudProvider:    "GCP",
 		State:            "CREATED",
 		Config: client.ClusterConfig{

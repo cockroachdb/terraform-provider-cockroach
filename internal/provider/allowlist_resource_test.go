@@ -133,7 +133,7 @@ func TestIntegrationAllowlistEntryResource(t *testing.T) {
 					Dedicated: &client.DedicatedHardwareConfig{
 						StorageGib:     15,
 						MachineType:    "m5.large",
-						NumVirtualCpus: 2,
+						NumVirtualCpus: 4,
 					},
 				},
 				Plan:  ptr(client.PLANTYPE_ADVANCED),
@@ -518,7 +518,7 @@ resource "cockroach_cluster" "dedicated" {
     cloud_provider = "GCP"
     dedicated = {
         storage_gib = 15
-        num_virtual_cpus = 2
+        num_virtual_cpus = 4
     }
     regions = [{
         name: "us-east1"

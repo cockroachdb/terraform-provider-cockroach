@@ -64,7 +64,7 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 		Config: client.ClusterConfig{
 			Dedicated: &client.DedicatedHardwareConfig{
 				StorageGib:     15,
-				NumVirtualCpus: 2,
+				NumVirtualCpus: 4,
 			},
 		},
 		Regions: []client.Region{
@@ -312,7 +312,7 @@ resource "cockroach_cluster" "dedicated" {
     cloud_provider = "AWS"
     dedicated = {
         storage_gib = 15
-        num_virtual_cpus = 2
+        num_virtual_cpus = 4
     }
     regions = [{
         name: "%s"

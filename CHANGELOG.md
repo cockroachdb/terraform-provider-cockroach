@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.0] - 2026-09-15
+
 ### Added
 
 - Added an `edition` attribute to the `cockroach_cluster` resource and data source. Clusters in Cockroach Continuum organizations set an `edition`; clusters in organizations that are not on Continuum set a `plan` instead, so the two attributes cannot both be set. The edition must match the cluster's shape: `STANDARD` requires a `serverless` block and `MISSION_CRITICAL` requires a `dedicated` block. Changing the edition of an existing cluster is not currently supported and is refused at plan time.

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added an `edition` attribute to the `cockroach_cluster` resource and data source. Clusters in Cockroach Continuum organizations set an `edition`; clusters in organizations that are not on Continuum set a `plan` instead, so the two attributes cannot both be set. The edition must match the cluster's shape: `STANDARD` requires a `serverless` block and `MISSION_CRITICAL` requires a `dedicated` block. Changing the edition of an existing cluster is not currently supported and is refused at plan time.
+
 - Added write-only `password_wo` and `password_wo_version` attributes to the `cockroach_sql_user` resource (requires Terraform CLI 1.11+). The password is sent on create and rotation but never persisted in Terraform state. Rotate by changing `password_wo` and incrementing `password_wo_version`.
 
 - Added the `cockroach_cluster_runtime_scanning` resource to enable or disable per-cluster runtime scanning (HBTD, host-based threat detection) enforcement.

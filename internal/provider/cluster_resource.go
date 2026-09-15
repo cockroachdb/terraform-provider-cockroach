@@ -56,6 +56,10 @@ const (
 	clusterUpdateTimeout = time.Hour * 2
 
 	clusterVersionPreview = "preview"
+
+	// The message the API returns when a cluster create sets an edition in an
+	// organization that is not on Cockroach Continuum.
+	editionNotEnabledAPIMessage = "the requested edition is not enabled for this organization"
 )
 
 // iamPropagationTimeout is the max time to wait for IAM eventual consistency.
@@ -72,6 +76,14 @@ var AllowedUpgradeTypeTypeEnumValueStrings = func() []string {
 		strings = append(strings, string(client.AllowedUpgradeTypeTypeEnumValues[i]))
 	}
 	return strings
+}()
+
+var AllowedEditionTypeEnumValueStrings = func() []string {
+	var vals []string
+	for i := range client.AllowedEditionTypeEnumValues {
+		vals = append(vals, string(client.AllowedEditionTypeEnumValues[i]))
+	}
+	return vals
 }()
 
 var regionSchema = schema.NestedAttributeObject{
@@ -235,6 +247,23 @@ func (r *clusterResource) Schema(
 				},
 				Validators:  []validator.String{stringvalidator.OneOf("BASIC", "STANDARD", "ADVANCED")},
 				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
+			},
+			"edition": schema.StringAttribute{
+				Computed: true,
+				Optional: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf(AllowedEditionTypeEnumValueStrings...),
+				},
+				MarkdownDescription: "Denotes the cluster's edition. Clusters in Cockroach Continuum " +
+					"organizations set an `edition`; clusters in organizations that are not on " +
+					"Continuum set a `plan` instead, so `edition` and `plan` cannot both be set. " +
+					"`STANDARD` clusters require a `serverless` block and `MISSION_CRITICAL` clusters " +
+					"require a `dedicated` block. Changing the edition of an existing cluster is not " +
+					"currently supported. Allowed values are:" +
+					formatEnumMarkdownList(client.AllowedEditionTypeEnumValues),
 			},
 			"cloud_provider": schema.StringAttribute{
 				Required: true,
@@ -504,6 +533,12 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("dedicated"),
 			path.MatchRoot("serverless"),
 		),
+		// A cluster reports either a plan (legacy) or an edition (Continuum),
+		// never both.
+		resourcevalidator.Conflicting(
+			path.MatchRoot("plan"),
+			path.MatchRoot("edition"),
+		),
 		// BYOC is not supported on serverless clusters.
 		resourcevalidator.Conflicting(
 			path.MatchRoot("serverless"),
@@ -559,6 +594,23 @@ func (r *clusterResource) ValidateConfig(
 	resp.Diagnostics.Append(req.Config.Get(ctx, &cluster)...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Standard is serverless and Mission Critical is dedicated. The server is
+	// authoritative; this only moves the rejection from apply to plan.
+	if IsKnown(cluster.Edition) {
+		switch client.EditionType(cluster.Edition.ValueString()) {
+		case client.EDITIONTYPE_MISSION_CRITICAL:
+			if cluster.DedicatedConfig == nil {
+				resp.Diagnostics.AddAttributeError(path.Root("edition"), "Invalid Attribute Combination",
+					"Mission Critical edition clusters run on dedicated hardware and require a dedicated block.")
+			}
+		case client.EDITIONTYPE_STANDARD:
+			if cluster.DedicatedConfig != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("edition"), "Invalid Attribute Combination",
+					"Standard edition clusters run on shared infrastructure and require a serverless block, not dedicated.")
+			}
+		}
 	}
 
 	plan, err := derivePlanType(&cluster)
@@ -653,6 +705,10 @@ func (r *clusterResource) Create(
 
 	if IsKnown(plan.Plan) {
 		clusterSpec.SetPlan(client.PlanType(plan.Plan.ValueString()))
+	}
+
+	if IsKnown(plan.Edition) {
+		clusterSpec.SetEdition(client.EditionType(plan.Edition.ValueString()))
 	}
 
 	if plan.ServerlessConfig != nil {
@@ -838,6 +894,19 @@ func (r *clusterResource) Create(
 	traceAPICall("CreateCluster")
 	clusterObj, _, err := r.provider.service.CreateCluster(ctx, clusterReq)
 	if err != nil {
+		// Matched on the message rather than the status code, which is an
+		// implementation detail the API may change. If the message changes, this
+		// falls through to the generic error, which quotes it verbatim anyway.
+		apiMessage := formatAPIErrorMessage(err)
+		if IsKnown(plan.Edition) && apiMessage == editionNotEnabledAPIMessage {
+			resp.Diagnostics.AddError(
+				"Edition not enabled for this organization",
+				fmt.Sprintf("Could not create cluster: %v\n\nThe edition attribute is only accepted in Cockroach "+
+					"Continuum organizations. Organizations that are not on Continuum set a plan on every cluster "+
+					"instead.", apiMessage),
+			)
+			return
+		}
 		resp.Diagnostics.AddError(
 			"Error creating cluster",
 			fmt.Sprintf("Could not create cluster: %v", formatAPIErrorMessage(err)),
@@ -1035,6 +1104,11 @@ func (r *clusterResource) ModifyPlan(
 			resp.Diagnostics.AddError("Cannot update cluster cloud provider",
 				"To prevent accidental deletion of data, changing a cluster's cloud provider "+
 					"isn't allowed. Please explicitly destroy this cluster before changing its cloud provider.")
+		}
+		if IsKnown(plan.Edition) && plan.Edition != state.Edition {
+			resp.Diagnostics.AddError("Cannot update cluster edition",
+				"Changing the edition of an existing cluster isn't currently supported. Please "+
+					"explicitly destroy this cluster before changing its edition.")
 		}
 		// BYOC details are immutable after creation.
 		if !byocEqual(plan.CustomerCloudAccount, state.CustomerCloudAccount) {
@@ -1565,10 +1639,18 @@ func loadClusterToTerraformState(
 	planSpecifiesPreviewString := plan != nil && plan.CockroachVersion.ValueString() == clusterVersionPreview
 	state.CockroachVersion = types.StringValue(simplifyClusterVersion(clusterObj.CockroachVersion, planSpecifiesPreviewString))
 	state.FullVersion = types.StringValue(clusterObj.CockroachVersion)
-	if clusterObj.Plan == nil {
+	// A cluster reports either a plan or an edition, never both. Keep the
+	// unreported axis null so it does not produce a perpetual diff.
+	switch {
+	case clusterObj.Edition != nil:
+		state.Edition = types.StringValue(string(*clusterObj.Edition))
 		state.Plan = types.StringNull()
-	} else {
+	case clusterObj.Plan != nil:
+		state.Edition = types.StringNull()
 		state.Plan = types.StringValue(string(*clusterObj.Plan))
+	default:
+		state.Edition = types.StringNull()
+		state.Plan = types.StringNull()
 	}
 	if clusterObj.AccountId == nil {
 		state.AccountId = types.StringNull()

@@ -49,6 +49,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `delete_protection`, `dedicated.memory_gib`, `dedicated.disk_iops`, and the
   `regions` block's `ui_dns`, `private_endpoint_dns`, and `s3_vpc_endpoint_id` are
   no longer reported as "known after apply" on updates that don't change them.
+- A `cockroach_cluster` update that changes only `labels`, `delete_protection`,
+  `parent_id`, or `backup_config` now plans with nothing marked "known after
+  apply". Fields like `full_version`, `state`, and the `regions` block's
+  `primary` used to show up on every update. Clusters with an operation in
+  flight are unchanged.
 
 ## [1.22.0] - 2026-07-16
 

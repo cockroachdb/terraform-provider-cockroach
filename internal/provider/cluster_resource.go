@@ -47,6 +47,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 )
@@ -1155,7 +1156,13 @@ func (r *clusterResource) ModifyPlan(
 		// leave stale-but-known values that a resize/add/remove would invalidate.
 		if coordinateDedicatedMachinePlan(config, plan, state) {
 			resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 		}
+
+		// Last, because it reads the plan the steps above have finished writing.
+		resolveUnknownsForMetadataOnlyUpdate(ctx, state, req, resp)
 	}
 
 	if req.Plan.Raw.IsNull() {
@@ -2014,6 +2021,136 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 		}
 	}
 	return changed
+}
+
+// metadataOnlyAttributes are the attributes an update can change without
+// causing other attributes to change.
+var metadataOnlyAttributes = map[string]struct{}{
+	"labels":            {},
+	"delete_protection": {},
+	"parent_id":         {},
+	"backup_config":     {},
+}
+
+// resolveUnknownsForMetadataOnlyUpdate resolves the unknowns the attribute-level
+// modifiers left behind, using prior state, when the update only changes
+// cluster metadata.
+//
+// The framework marks every Computed attribute the user's configuration leaves
+// null as unknown. UseStateForUnknown fixes that per attribute, but it copies
+// state into the plan unconditionally, so it can only go on attributes that
+// never change on an update.
+//
+// Only unknowns are replaced, so this can quiet a plan but never hide a change
+// from one.
+func resolveUnknownsForMetadataOnlyUpdate(
+	ctx context.Context,
+	state *CockroachCluster,
+	req resource.ModifyPlanRequest,
+	resp *resource.ModifyPlanResponse,
+) {
+	planRaw, stateRaw, configRaw := resp.Plan.Raw, req.State.Raw, req.Config.Raw
+	// Only updates have both a prior state to copy from and a plan to copy into.
+	// A create has no state, a destroy has no plan, so there's nothing to do.
+	if planRaw.IsNull() || stateRaw.IsNull() || configRaw.IsNull() {
+		return
+	}
+
+	// Diff below requires both sides to have the same type.
+	if planRaw.Type() == nil || stateRaw.Type() == nil || !planRaw.Type().Is(stateRaw.Type()) {
+		return
+	}
+
+	// Only resolve unknowns for a cluster in the CREATED state. Anything else
+	// isn't settled, and the apply would return different values than the plan
+	// promised, failing with "inconsistent result after apply".
+	if state.State.ValueString() != string(client.CLUSTERSTATETYPE_CREATED) {
+		return
+	}
+
+	if opStatus := state.OperationStatus.ValueString(); IsKnown(state.OperationStatus) &&
+		opStatus != "" && opStatus != string(client.CLUSTERSTATUSTYPE_UNSPECIFIED) {
+		return
+	}
+
+	diffs, err := planRaw.Diff(stateRaw)
+	if err != nil {
+		// Can't prove the update is inert, so leave the plan alone.
+		tflog.Trace(ctx, "skipping metadata-only unknown resolution", map[string]any{"error": err.Error()})
+		return
+	}
+
+	// Check if the update changes more than metadata
+	for _, diff := range diffs {
+		// Ignore differences that exist only because the framework stamped "known
+		// after apply" on an attribute the user never set. An unknown the user
+		// did set is a real pending change and has to stay unknown.
+		if diff.Value1 != nil && !diff.Value1.IsKnown() && configIsNullAt(configRaw, diff.Path) {
+			continue
+		}
+		if !isMetadataOnlyPath(diff.Path) {
+			return
+		}
+	}
+
+	resolved, err := tftypes.Transform(planRaw, func(
+		attrPath *tftypes.AttributePath, val tftypes.Value,
+	) (tftypes.Value, error) {
+		if val.IsKnown() {
+			return val, nil
+		}
+		// A config-driven unknown is the user's edit.
+		if !configIsNullAt(configRaw, attrPath) {
+			return val, nil
+		}
+		stateValI, _, err := tftypes.WalkAttributePath(stateRaw, attrPath)
+		if err != nil {
+			// Nothing in state to copy, so leave it unknown.
+			return val, nil
+		}
+		stateVal, ok := stateValI.(tftypes.Value)
+		if !ok || stateVal.Type() == nil || !stateVal.Type().UsableAs(val.Type()) {
+			return val, nil
+		}
+		return stateVal, nil
+	})
+	if err != nil {
+		tflog.Trace(ctx, "skipping metadata-only unknown resolution", map[string]any{"error": err.Error()})
+		return
+	}
+
+	resp.Plan.Raw = resolved
+}
+
+// configIsNullAt reports whether the config holds an explicit null at path,
+// which is how a Computed attribute the user never set shows up. Paths that
+// don't resolve report non-null so callers leave the plan alone.
+func configIsNullAt(configRaw tftypes.Value, attrPath *tftypes.AttributePath) bool {
+	valI, remaining, err := tftypes.WalkAttributePath(configRaw, attrPath)
+	if err != nil || (remaining != nil && len(remaining.Steps()) > 0) {
+		return false
+	}
+	val, ok := valI.(tftypes.Value)
+	if !ok {
+		return false
+	}
+	return val.IsNull()
+}
+
+// isMetadataOnlyPath reports whether path is rooted at a metadata-only
+// attribute. Only the first step matters, since a diff nested under labels is
+// still a labels change.
+func isMetadataOnlyPath(attrPath *tftypes.AttributePath) bool {
+	steps := attrPath.Steps()
+	if len(steps) == 0 {
+		return false
+	}
+	name, ok := steps[0].(tftypes.AttributeName)
+	if !ok {
+		return false
+	}
+	_, ok = metadataOnlyAttributes[string(name)]
+	return ok
 }
 
 // machineSpecFrom builds a DedicatedMachineTypeSpecification from a

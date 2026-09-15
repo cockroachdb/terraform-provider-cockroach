@@ -24,6 +24,7 @@ import (
 	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"testing"
@@ -5195,10 +5196,13 @@ resource "cockroach_cluster" "test" {
 		tfjsonpath.New("regions").AtSliceIndex(1).AtMapKey("private_endpoint_dns"),
 		tfjsonpath.New("regions").AtSliceIndex(1).AtMapKey("s3_vpc_endpoint_id"),
 	}
-	quietChecks := make([]plancheck.PlanCheck, 0, len(quietPaths))
+	quietChecks := make([]plancheck.PlanCheck, 0, len(quietPaths)+1)
 	for _, p := range quietPaths {
 		quietChecks = append(quietChecks, plancheck.ExpectKnownValue("cockroach_cluster.test", p, knownvalue.NotNull()))
 	}
+	// A label edit settles the whole plan, including fields like
+	// regions[].primary that the per-attribute modifiers can't reach.
+	quietChecks = append(quietChecks, expectNoUnknownValues{address: "cockroach_cluster.test"})
 
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               true,
@@ -5210,6 +5214,410 @@ resource "cockroach_cluster" "test" {
 				Config: cfg("production"),
 				ConfigPlanChecks: resource.ConfigPlanChecks{
 					PreApply: quietChecks,
+				},
+			},
+		},
+	})
+}
+
+// expectNoUnknownValues asserts that no attribute of the named resource is
+// planned as "(known after apply)".
+type expectNoUnknownValues struct {
+	address string
+}
+
+func (e expectNoUnknownValues) CheckPlan(
+	_ context.Context, req plancheck.CheckPlanRequest, resp *plancheck.CheckPlanResponse,
+) {
+	for _, rc := range req.Plan.ResourceChanges {
+		if rc.Address != e.address || rc.Change == nil {
+			continue
+		}
+		var unknown []string
+		collectUnknownPaths("", rc.Change.AfterUnknown, &unknown)
+		if len(unknown) > 0 {
+			sort.Strings(unknown)
+			resp.Error = fmt.Errorf("%s: expected every attribute to be known in the plan, but %d were unknown: %s",
+				e.address, len(unknown), strings.Join(unknown, ", "))
+		}
+		return
+	}
+	resp.Error = fmt.Errorf("%s not found in plan", e.address)
+}
+
+// collectUnknownPaths walks a plan's after_unknown structure, which mirrors the
+// resource's shape and holds true at every attribute planned as unknown.
+func collectUnknownPaths(prefix string, raw any, out *[]string) {
+	switch v := raw.(type) {
+	case bool:
+		if v {
+			if prefix == "" {
+				prefix = "(whole resource)"
+			}
+			*out = append(*out, prefix)
+		}
+	case map[string]any:
+		for key, child := range v {
+			nested := key
+			if prefix != "" {
+				nested = prefix + "." + key
+			}
+			collectUnknownPaths(nested, child, out)
+		}
+	case []any:
+		for i, child := range v {
+			collectUnknownPaths(fmt.Sprintf("%s[%d]", prefix, i), child, out)
+		}
+	}
+}
+
+// TestIntegrationClusterMetadataOnlyPlanNoise validates that editing any one of
+// the metadata-only attributes leaves nothing in the plan unknown. Each runs as
+// its own case so a regression names the attribute that broke.
+func TestIntegrationClusterMetadataOnlyPlanNoise(t *testing.T) {
+	const folderID = "11111111-1111-1111-1111-111111111111"
+
+	// The API reports the new frequency and keeps the fields the request omits.
+	updatedFrequencyBackupConfig := &client.BackupConfiguration{
+		Enabled:          initialBackupConfig.Enabled,
+		FrequencyMinutes: 240,
+		RetentionDays:    initialBackupConfig.RetentionDays,
+	}
+
+	noChange := func(*client.Cluster) {}
+
+	testCases := []struct {
+		name string
+		// The only attribute block that differs between the two steps.
+		before, after string
+		// The cluster the API reports for each step.
+		mutateBefore, mutateAfter func(*client.Cluster)
+		// When set, the backup config the API reports after the update. Implies
+		// an UpdateBackupConfiguration call.
+		afterBackupConfig *client.BackupConfiguration
+	}{
+		{
+			// Turned off second, since a protected cluster can't be destroyed
+			// at the end of the test.
+			name:   "delete_protection",
+			before: `delete_protection = true`,
+			after:  `delete_protection = false`,
+			mutateBefore: func(c *client.Cluster) {
+				c.DeleteProtection = ptr(client.DELETEPROTECTIONSTATETYPE_ENABLED)
+			},
+			mutateAfter: noChange,
+		},
+		{
+			name:         "parent_id",
+			before:       `parent_id = "root"`,
+			after:        fmt.Sprintf(`parent_id = %q`, folderID),
+			mutateBefore: noChange,
+			mutateAfter:  func(c *client.Cluster) { c.ParentId = ptr(folderID) },
+		},
+		{
+			// Left out of the first config so the update makes the only call
+			// to the backup endpoint.
+			name:              "backup_config",
+			before:            "",
+			after:             fmt.Sprintf(`backup_config = { frequency_minutes = %d }`, updatedFrequencyBackupConfig.FrequencyMinutes),
+			mutateBefore:      noChange,
+			mutateAfter:       noChange,
+			afterBackupConfig: updatedFrequencyBackupConfig,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			clusterName := fmt.Sprintf("%s-meta-%s", tfTestPrefix, GenerateRandomString(3))
+			clusterID := uuid.Nil.String()
+			if os.Getenv(CockroachAPIKey) == "" {
+				os.Setenv(CockroachAPIKey, "fake")
+			}
+
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+
+			cluster := func() *client.Cluster {
+				return &client.Cluster{
+					Id:               clusterID,
+					Name:             clusterName,
+					CockroachVersion: minSupportedClusterPatchVersion,
+					Plan:             client.PLANTYPE_ADVANCED,
+					CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+					State:            client.CLUSTERSTATETYPE_CREATED,
+					AccountId:        ptr("account-12345"),
+					ParentId:         ptr("root"),
+					DeleteProtection: ptr(client.DELETEPROTECTIONSTATETYPE_DISABLED),
+					Config: client.ClusterConfig{
+						Dedicated: &client.DedicatedHardwareConfig{
+							MachineType: "m6i.xlarge", NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 8,
+						},
+					},
+					Regions: []client.Region{{
+						Name: "us-east-1", NodeCount: 3,
+						SqlDns:      "us-east-1.sql.example.com",
+						UiDns:       "us-east-1.ui.example.com",
+						InternalDns: "us-east-1.internal.example.com",
+					}},
+				}
+			}
+
+			before := cluster()
+			testCase.mutateBefore(before)
+			after := cluster()
+			testCase.mutateAfter(after)
+
+			current := before
+			currentBackupConfig := initialBackupConfig
+
+			s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(before, nil, nil)
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+				func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+					return current, httpOk, nil
+				}).AnyTimes()
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).DoAndReturn(
+				func(_ context.Context, _ string) (*client.BackupConfiguration, *http.Response, error) {
+					return currentBackupConfig, httpOk, nil
+				}).AnyTimes()
+			s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+				func(_ context.Context, _ string, _ *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+					current = after
+					return after, httpOk, nil
+				})
+			if testCase.afterBackupConfig != nil {
+				s.EXPECT().UpdateBackupConfiguration(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+					func(_ context.Context, _ string, _ *client.UpdateBackupConfigurationSpec) (
+						*client.BackupConfiguration, *http.Response, error,
+					) {
+						currentBackupConfig = testCase.afterBackupConfig
+						return testCase.afterBackupConfig, httpOk, nil
+					})
+			}
+			s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+			cfg := func(attribute string) string {
+				return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15, num_virtual_cpus = 4 }
+  regions = [{ name = "us-east-1", node_count = 3 }]
+  %s
+}
+`, clusterName, minSupportedClusterMajorVersion, attribute)
+			}
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{Config: cfg(testCase.before)},
+					{
+						Config: cfg(testCase.after),
+						ConfigPlanChecks: resource.ConfigPlanChecks{
+							PreApply: []plancheck.PlanCheck{
+								expectNoUnknownValues{address: "cockroach_cluster.test"},
+							},
+						},
+					},
+				},
+			})
+		})
+	}
+}
+
+// TestIntegrationClusterLabelChangeMidOperationStaysUnknown validates that a
+// label edit against a busy cluster still plans the status fields as unknown.
+// Update waits out the operation and returns a settled cluster, so pinning them
+// would fail the apply with "inconsistent result after apply".
+func TestIntegrationClusterLabelChangeMidOperationStaysUnknown(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-midop-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := func(labels map[string]string, opStatus client.ClusterStatusType) *client.Cluster {
+		return &client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: minSupportedClusterPatchVersion,
+			Plan:             client.PLANTYPE_ADVANCED,
+			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			OperationStatus:  opStatus,
+			AccountId:        ptr("account-12345"),
+			ParentId:         ptr("root"),
+			DeleteProtection: ptr(client.DELETEPROTECTIONSTATETYPE_DISABLED),
+			Labels:           labels,
+			Config: client.ClusterConfig{
+				Dedicated: &client.DedicatedHardwareConfig{
+					MachineType: "m6i.xlarge", NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 8,
+				},
+			},
+			Regions: []client.Region{{
+				Name: "us-east-1", NodeCount: 3,
+				SqlDns:      "us-east-1.sql.example.com",
+				UiDns:       "us-east-1.ui.example.com",
+				InternalDns: "us-east-1.internal.example.com",
+			}},
+		}
+	}
+
+	// A patch upgrade is running at plan time. By the time the apply returns,
+	// the cluster has settled back to UNSPECIFIED.
+	running := cluster(map[string]string{"environment": "staging"}, client.CLUSTERSTATUSTYPE_CRDB_PATCH_RUNNING)
+	settled := cluster(map[string]string{"environment": "production"}, client.CLUSTERSTATUSTYPE_UNSPECIFIED)
+	current := running
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(running, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, _ *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			current = settled
+			return settled, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(env string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15, num_virtual_cpus = 4 }
+  regions = [{ name = "us-east-1", node_count = 3 }]
+  labels = { environment = "%s" }
+}
+`, clusterName, minSupportedClusterMajorVersion, env)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg("staging")},
+			{
+				Config: cfg("production"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						// Pinning this to CRDB_PATCH_RUNNING would fail the apply.
+						plancheck.ExpectUnknownValue("cockroach_cluster.test",
+							tfjsonpath.New("operation_status")),
+					},
+				},
+			},
+		},
+	})
+}
+
+// TestIntegrationClusterMaterialChangeStillPlansUnknowns validates that a label
+// edit bundled with a vCPU resize still plans the derived fields as unknown.
+// Pinning here would produce a quiet plan that under-reports the resize.
+func TestIntegrationClusterMaterialChangeStillPlansUnknowns(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-material-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := func(labels map[string]string, vcpus int32, machineType string, memory float32) *client.Cluster {
+		return &client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: minSupportedClusterPatchVersion,
+			Plan:             client.PLANTYPE_ADVANCED,
+			CloudProvider:    client.CLOUDPROVIDERTYPE_AWS,
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			AccountId:        ptr("account-12345"),
+			ParentId:         ptr("root"),
+			DeleteProtection: ptr(client.DELETEPROTECTIONSTATETYPE_DISABLED),
+			Labels:           labels,
+			Config: client.ClusterConfig{
+				Dedicated: &client.DedicatedHardwareConfig{
+					MachineType: machineType, NumVirtualCpus: vcpus, StorageGib: 15, MemoryGib: memory,
+				},
+			},
+			Regions: []client.Region{{
+				Name: "us-east-1", NodeCount: 3,
+				SqlDns:      "us-east-1.sql.example.com",
+				UiDns:       "us-east-1.ui.example.com",
+				InternalDns: "us-east-1.internal.example.com",
+			}},
+		}
+	}
+
+	before := cluster(map[string]string{"environment": "staging"}, 4, "m6i.xlarge", 8)
+	after := cluster(map[string]string{"environment": "production"}, 8, "m6i.2xlarge", 16)
+	current := before
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(before, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, _ *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			current = after
+			return after, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(env string, vcpus int) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name              = "%s"
+  cloud_provider    = "AWS"
+  cockroach_version = "%s"
+  dedicated = { storage_gib = 15, num_virtual_cpus = %d }
+  regions = [{ name = "us-east-1", node_count = 3 }]
+  labels = { environment = "%s" }
+}
+`, clusterName, minSupportedClusterMajorVersion, vcpus, env)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg("staging", 4)},
+			{
+				// Label and vCPU count both change. The resize is material, so
+				// the derived hardware fields have to stay unknown.
+				Config: cfg("production", 8),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: []plancheck.PlanCheck{
+						plancheck.ExpectUnknownValue("cockroach_cluster.test",
+							tfjsonpath.New("dedicated").AtMapKey("machine_type")),
+						plancheck.ExpectUnknownValue("cockroach_cluster.test",
+							tfjsonpath.New("dedicated").AtMapKey("memory_gib")),
+					},
 				},
 			},
 		},

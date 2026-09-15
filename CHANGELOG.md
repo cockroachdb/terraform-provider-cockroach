@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.23.1] - 2026-09-15
+
 ### Changed
 
 - Destroying a `cockroach_physical_replication_stream` that is still replicating

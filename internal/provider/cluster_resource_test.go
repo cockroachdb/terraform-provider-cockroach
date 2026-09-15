@@ -5216,6 +5216,120 @@ resource "cockroach_cluster" "test" {
 	})
 }
 
+// TestIntegrationServerlessPlanTypeChangeAccountId validates that moving a
+// serverless cluster between plan types marks account_id unknown. The hosting
+// project differs per plan type, so a value pinned to prior state would fail
+// the apply as an inconsistent result.
+func TestIntegrationServerlessPlanTypeChangeAccountId(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-plan-acct-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := func(planType client.PlanType, accountID string, usageLimits *client.UsageLimits) *client.Cluster {
+		return &client.Cluster{
+			Id:               clusterID,
+			Name:             clusterName,
+			CockroachVersion: latestClusterPatchVersion,
+			CloudProvider:    "GCP",
+			State:            client.CLUSTERSTATETYPE_CREATED,
+			Plan:             ptr(planType),
+			AccountId:        ptr(accountID),
+			Config: client.ClusterConfig{
+				Serverless: &client.ServerlessClusterConfig{
+					RoutingId:   "routing-id",
+					UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+					UsageLimits: usageLimits,
+				},
+			},
+			Regions: []client.Region{{Name: "us-central1"}},
+		}
+	}
+
+	// BASIC clusters report an empty account_id. STANDARD clusters report the
+	// shared serverless project.
+	basic := cluster(client.PLANTYPE_BASIC, "", nil)
+	standard := cluster(client.PLANTYPE_STANDARD, "crl-prod-p99", &client.UsageLimits{
+		ProvisionedVirtualCpus: ptr(int64(6)),
+	})
+	current := basic
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(basic, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			if spec.Plan != nil && *spec.Plan == client.PLANTYPE_BASIC {
+				current = basic
+			} else {
+				current = standard
+			}
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(planAttr, serverless string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  %s
+  serverless     = %s
+  regions        = [{ name = "us-central1" }]
+}
+`, clusterName, planAttr, serverless)
+	}
+
+	accountIDUnknown := resource.ConfigPlanChecks{
+		PreApply: []plancheck.PlanCheck{
+			plancheck.ExpectUnknownValue("cockroach_cluster.test", tfjsonpath.New("account_id")),
+		},
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: cfg("", "{}")},
+			// Config leaves plan unset, so the plan type is implied by the
+			// usage limits and both plan and account_id must go unknown.
+			{
+				Config: cfg("", "{ usage_limits = { provisioned_virtual_cpus = 6 } }"),
+				ConfigPlanChecks: resource.ConfigPlanChecks{
+					PreApply: append(accountIDUnknown.PreApply,
+						plancheck.ExpectUnknownValue("cockroach_cluster.test", tfjsonpath.New("plan")),
+					),
+				},
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "account_id", "crl-prod-p99"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "plan", "STANDARD"),
+				),
+			},
+			// Config sets the plan explicitly, so only account_id goes unknown.
+			{
+				Config:           cfg(`plan = "BASIC"`, "{}"),
+				ConfigPlanChecks: accountIDUnknown,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "account_id", ""),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "plan", "BASIC"),
+				),
+			},
+		},
+	})
+}
+
 // TestIntegrationDedicatedClusterStorageResizeDiskIops validates that growing
 // storage_gib marks the server-derived disk_iops unknown, and that memory_gib,
 // which is derived from the machine type alone, stays known.

@@ -659,6 +659,27 @@ func (r *clusterResource) ValidateConfig(
 	}
 }
 
+// The target plan type comes from config rather than the plan, since the plan
+// can carry a value that UseStateForUnknown pinned to the prior state.
+func planTypeChanging(config, state *CockroachCluster) bool {
+	if config == nil || state == nil {
+		return false
+	}
+	if IsKnown(config.Plan) && IsKnown(state.Plan) {
+		return !config.Plan.Equal(state.Plan)
+	}
+	// Without an explicit plan the serverless plan type follows the usage
+	// limits: provisioned vCPUs mean STANDARD, their absence BASIC.
+	if config.ServerlessConfig == nil || state.ServerlessConfig == nil {
+		return false
+	}
+	return isProvisioned(config.ServerlessConfig) != isProvisioned(state.ServerlessConfig)
+}
+
+func isProvisioned(config *ServerlessClusterConfig) bool {
+	return config.UsageLimits != nil && IsKnown(config.UsageLimits.ProvisionedVirtualCpus)
+}
+
 func derivePlanType(cluster *CockroachCluster) (client.PlanType, error) {
 	var planType client.PlanType
 	if IsKnown(cluster.Plan) {
@@ -1153,7 +1174,25 @@ func (r *clusterResource) ModifyPlan(
 
 		// Coordinate the dedicated machine plan so per-field plan modifiers don't
 		// leave stale-but-known values that a resize/add/remove would invalidate.
-		if coordinateDedicatedMachinePlan(config, plan, state) {
+		planChanged := coordinateDedicatedMachinePlan(config, plan, state)
+
+		// UseStateForUnknown pins plan and account_id to the prior state, but
+		// both change with the plan type: BASIC has an empty account_id while
+		// STANDARD has the shared serverless project. A stale pin fails the
+		// apply as an inconsistent result. An explicit config plan is already
+		// correct, so only an unset one is reset.
+		if planTypeChanging(config, state) {
+			if IsKnown(plan.AccountId) {
+				plan.AccountId = types.StringUnknown()
+				planChanged = true
+			}
+			if !IsKnown(config.Plan) && IsKnown(plan.Plan) {
+				plan.Plan = types.StringUnknown()
+				planChanged = true
+			}
+		}
+
+		if planChanged {
 			resp.Diagnostics.Append(resp.Plan.Set(ctx, plan)...)
 		}
 	}

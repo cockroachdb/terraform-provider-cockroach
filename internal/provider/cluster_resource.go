@@ -150,7 +150,7 @@ var regionSchema = schema.NestedAttributeObject{
 }
 
 func (r *clusterResource) Schema(
-	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+	ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
 		Description: "CockroachDB Cloud cluster.",
@@ -476,6 +476,11 @@ func (r *clusterResource) Schema(
 				Validators:  labelsValidator,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			// Editing only timeouts runs Update (framework default; no fast path).
+			// Timeout semantics: see resolveTimeout.
+			"timeouts": timeoutsBlockWithMinimums(ctx, clusterCreateTimeout, clusterUpdateTimeout),
+		},
 	}
 }
 
@@ -645,6 +650,13 @@ func (r *clusterResource) Create(
 
 	var config CockroachCluster
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Create has a single wait phase, so the configured flag isn't needed here.
+	createTimeout, _, diagsTimeout := resolveTimeout(ctx, plan.Timeouts, timeoutCreate, clusterCreateTimeout)
+	resp.Diagnostics.Append(diagsTimeout...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -845,7 +857,7 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterCreateTimeout,
+	err = retry.RetryContext(ctx, createTimeout,
 		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -861,6 +873,9 @@ func (r *clusterResource) Create(
 	var newState CockroachCluster
 	diags = loadClusterToTerraformState(ctx, clusterObj, nil, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
+	// Timeouts is a config-only attribute the API doesn't echo back; carry the
+	// plan value through so it round-trips into state.
+	newState.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -919,6 +934,7 @@ func (r *clusterResource) Create(
 
 	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
+	newState.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 }
@@ -991,6 +1007,7 @@ func (r *clusterResource) Read(
 	var newState CockroachCluster
 	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &state)
 	resp.Diagnostics.Append(diags...)
+	newState.Timeouts = state.Timeouts
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -1145,6 +1162,19 @@ func (r *clusterResource) Update(
 		return
 	}
 
+	updateTimeout, updateTimeoutConfigured, diagsTimeout := resolveTimeout(ctx, plan.Timeouts, timeoutUpdate, clusterUpdateTimeout)
+	resp.Diagnostics.Append(diagsTimeout...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Opt-in end-to-end deadline; see resolveTimeout.
+	if updateTimeoutConfigured {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, updateTimeout)
+		defer cancel()
+	}
+
 	// Machine-type mode is decided from config, not plan; see buildRegionMachineSpecs.
 	var config CockroachCluster
 	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
@@ -1152,7 +1182,7 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	waitForClusterLock(ctx, state, r.provider.service, &resp.Diagnostics)
+	waitForClusterLock(ctx, state, r.provider.service, updateTimeout, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -1208,7 +1238,7 @@ func (r *clusterResource) Update(
 			return
 		}
 
-		err = retry.RetryContext(ctx, clusterUpdateTimeout,
+		err = retry.RetryContext(ctx, updateTimeout,
 			waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -1352,7 +1382,7 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, updateTimeout,
 		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -1416,6 +1446,7 @@ func (r *clusterResource) Update(
 	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
 
+	newState.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -2127,7 +2158,11 @@ func waitForClusterReadyFunc(
 // waitForClusterLock checks to see if the cluster is locked by any sort of automatic job,
 // and waits if necessary before proceeding.
 func waitForClusterLock(
-	ctx context.Context, state CockroachCluster, s client.Service, diags *diag.Diagnostics,
+	ctx context.Context,
+	state CockroachCluster,
+	s client.Service,
+	timeout time.Duration,
+	diags *diag.Diagnostics,
 ) {
 	if state.State.ValueString() == string(client.CLUSTERSTATETYPE_LOCKED) {
 		tflog.Info(ctx, "Cluster is locked. Waiting for the operation to finish.")
@@ -2137,7 +2172,7 @@ func waitForClusterLock(
 			diags.AddError("Couldn't retrieve cluster info", formatAPIErrorMessage(err))
 			return
 		}
-		err = retry.RetryContext(ctx, clusterUpdateTimeout,
+		err = retry.RetryContext(ctx, timeout,
 			waitForClusterReadyFunc(ctx, clusterObj.Id, s, clusterObj))
 		if err != nil {
 			diags.AddError("Cluster is not ready", err.Error())

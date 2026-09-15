@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/cockroachdb/terraform-provider-cockroach/internal/validators"
@@ -5311,6 +5312,284 @@ resource "cockroach_cluster" "test" {
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.disk_iops", "3000"),
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "dedicated.storage_gib", "100"),
 				),
+			},
+		},
+	})
+}
+
+// TestAccClusterWithTimeouts verifies that a configured `timeouts` block on
+// cockroach_cluster is accepted and round-trips into state against the live API.
+func TestAccClusterWithTimeouts(t *testing.T) {
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	testClusterWithTimeouts(t, clusterName, false)
+}
+
+// TestIntegrationClusterWithTimeouts verifies the same behavior with the mocked
+// API client. Behavior under the default (no block) is exercised by every other
+// TestIntegration* case above.
+func TestIntegrationClusterWithTimeouts(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Plan:             "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{{Name: "us-central1"}},
+	}
+	updatedCluster := cluster
+	updatedServerless := *cluster.Config.Serverless
+	updatedUsageLimits := *cluster.Config.Serverless.UsageLimits
+	updatedProvisionedVCPUs := int64(4)
+	updatedUsageLimits.ProvisionedVirtualCpus = &updatedProvisionedVCPUs
+	updatedServerless.UsageLimits = &updatedUsageLimits
+	updatedCluster.Config.Serverless = &updatedServerless
+
+	currentCluster := cluster
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(ctx context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return &currentCluster, httpOk, nil
+		},
+	).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, _ string, _ *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			currentCluster = updatedCluster
+			return &updatedCluster, httpOk, nil
+		},
+	)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	testClusterWithTimeouts(t, clusterName, true)
+}
+
+func testClusterWithTimeouts(t *testing.T, clusterName string, useMock bool) {
+	config := func(provisionedVCPUs int64, createTimeout, updateTimeout string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    plan           = "STANDARD"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = %d
+        }
+    }
+    regions = [{
+        name = "us-central1"
+    }]
+    timeouts {
+        create = "%s"
+        update = "%s"
+    }
+}
+`, clusterName, provisionedVCPUs, createTimeout, updateTimeout)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: config(2, "2h", "3h"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "serverless.usage_limits.provisioned_virtual_cpus", "2"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "timeouts.create", "2h"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "timeouts.update", "3h"),
+				),
+			},
+			{
+				Config: config(4, "2h", "3h"),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "serverless.usage_limits.provisioned_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "timeouts.create", "2h"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "timeouts.update", "3h"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationClusterUpdateDeadlineOptIn verifies the opt-in end-to-end
+// deadline: the context passed to UpdateCluster carries a deadline only when
+// timeouts.update is explicitly configured. Without it, the legacy per-phase
+// behavior is preserved (no end-to-end deadline).
+func TestIntegrationClusterUpdateDeadlineOptIn(t *testing.T) {
+	t.Run("with timeouts", func(t *testing.T) {
+		runClusterUpdateDeadlineCase(t, true)
+	})
+	t.Run("without timeouts", func(t *testing.T) {
+		runClusterUpdateDeadlineCase(t, false)
+	})
+}
+
+func runClusterUpdateDeadlineCase(t *testing.T, withTimeouts bool) {
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	cluster := client.Cluster{
+		Id:               clusterID,
+		Name:             clusterName,
+		CockroachVersion: latestClusterPatchVersion,
+		CloudProvider:    "GCP",
+		State:            "CREATED",
+		Plan:             "STANDARD",
+		Config: client.ClusterConfig{
+			Serverless: &client.ServerlessClusterConfig{
+				UpgradeType: client.UPGRADETYPETYPE_AUTOMATIC,
+				UsageLimits: &client.UsageLimits{
+					ProvisionedVirtualCpus: ptr(int64(2)),
+				},
+				RoutingId: "routing-id",
+			},
+		},
+		Regions: []client.Region{{Name: "us-central1"}},
+	}
+	updatedCluster := cluster
+	updatedServerless := *cluster.Config.Serverless
+	updatedUsageLimits := *cluster.Config.Serverless.UsageLimits
+	updatedProvisionedVCPUs := int64(4)
+	updatedUsageLimits.ProvisionedVirtualCpus = &updatedProvisionedVCPUs
+	updatedServerless.UsageLimits = &updatedUsageLimits
+	updatedCluster.Config.Serverless = &updatedServerless
+
+	currentCluster := cluster
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(&cluster, nil, nil)
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(ctx context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return &currentCluster, httpOk, nil
+		},
+	).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(ctx context.Context, _ string, _ *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			deadline, hasDeadline := ctx.Deadline()
+			if hasDeadline != withTimeouts {
+				t.Errorf("UpdateCluster ctx deadline present=%v, want %v", hasDeadline, withTimeouts)
+			}
+			if withTimeouts && hasDeadline {
+				// Configured update is 3h; the shared deadline should be ~3h out.
+				if remaining := time.Until(deadline); remaining < 2*time.Hour || remaining > 3*time.Hour+time.Minute {
+					t.Errorf("UpdateCluster ctx deadline remaining=%s, want ~3h", remaining)
+				}
+			}
+			currentCluster = updatedCluster
+			return &updatedCluster, httpOk, nil
+		},
+	)
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	config := func(provisionedVCPUs int64) string {
+		timeoutsBlock := ""
+		if withTimeouts {
+			timeoutsBlock = `
+    timeouts {
+        update = "3h"
+    }`
+		}
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    plan           = "STANDARD"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = %d
+        }
+    }
+    regions = [{
+        name = "us-central1"
+    }]%s
+}
+`, clusterName, provisionedVCPUs, timeoutsBlock)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{Config: config(2)},
+			{Config: config(4)},
+		},
+	})
+}
+
+// TestIntegrationClusterTimeoutsBelowDefault verifies that timeout values
+// shorter than the operation's default budget (1h create / 2h update) are
+// rejected during validation, before any API call.
+func TestIntegrationClusterTimeoutsBelowDefault(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
+	config := func(createTimeout, updateTimeout string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "%s"
+    cloud_provider = "GCP"
+    plan           = "STANDARD"
+    serverless = {
+        usage_limits = {
+            provisioned_virtual_cpus = 2
+        }
+    }
+    regions = [{
+        name = "us-central1"
+    }]
+    timeouts {
+        create = "%s"
+        update = "%s"
+    }
+}
+`, clusterName, createTimeout, updateTimeout)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      config("30m", "2h"),
+				ExpectError: regexp.MustCompile(`must be at least 1h`),
+			},
+			{
+				Config:      config("1h", "1h"),
+				ExpectError: regexp.MustCompile(`must be at least 2h`),
 			},
 		},
 	})

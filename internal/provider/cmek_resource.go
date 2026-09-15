@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"reflect"
 	"sort"
+	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -128,11 +129,16 @@ type cmekResource struct {
 }
 
 func (r *cmekResource) Schema(
-	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
+	ctx context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Customer-managed encryption keys (CMEK) resource for a single cluster.",
 		Attributes:          cmekAttributes,
+		Blocks: map[string]schema.Block{
+			// Editing only timeouts runs Update (framework default; no fast path).
+			// Timeout semantics: see resolveTimeout.
+			"timeouts": timeoutsBlockWithMinimums(ctx, clusterUpdateTimeout, clusterUpdateTimeout),
+		},
 	}
 }
 
@@ -230,8 +236,21 @@ func (r *cmekResource) Create(
 	cmekObj := &client.CMEKClusterInfo{}
 	cluster := &client.Cluster{}
 
-	err := retry.RetryContext(ctx, clusterUpdateTimeout,
-		retryEnableCMEKSpec(ctx, r.provider.service, clusterID, cluster, cmekSpec, cmekObj))
+	createTimeout, createTimeoutConfigured, diagsTimeout := resolveTimeout(ctx, plan.Timeouts, timeoutCreate, clusterUpdateTimeout)
+	resp.Diagnostics.Append(diagsTimeout...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Opt-in end-to-end deadline; see resolveTimeout.
+	if createTimeoutConfigured {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, createTimeout)
+		defer cancel()
+	}
+
+	err := retry.RetryContext(ctx, createTimeout,
+		retryEnableCMEKSpec(ctx, r.provider.service, clusterID, cluster, createTimeout, cmekSpec, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error enabling CMEK",
@@ -240,7 +259,7 @@ func (r *cmekResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retry.RetryContext(ctx, createTimeout,
 		waitForCMEKReadyFunc(ctx, clusterID, r.provider.service, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -255,6 +274,9 @@ func (r *cmekResource) Create(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	// Timeouts is a config-only attribute the API doesn't echo back; carry the
+	// plan value through so it round-trips into state.
+	state.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -331,8 +353,17 @@ func (r *cmekResource) Update(
 				region),
 		)
 	}
+	updateTimeout, updateTimeoutConfigured, diagsTimeout := resolveTimeout(ctx, plan.Timeouts, timeoutUpdate, clusterUpdateTimeout)
+	resp.Diagnostics.Append(diagsTimeout...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	// Opt-in end-to-end deadline; see resolveTimeout.
+	if updateTimeoutConfigured {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, updateTimeout)
+		defer cancel()
 	}
 
 	existingRegions := make(map[string]client.CMEKRegionSpecification, len(state.Regions))
@@ -395,7 +426,7 @@ func (r *cmekResource) Update(
 			return
 		}
 
-		err = retry.RetryContext(ctx, clusterUpdateTimeout,
+		err = retry.RetryContext(ctx, updateTimeout,
 			waitForClusterReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cluster))
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -421,7 +452,7 @@ func (r *cmekResource) Update(
 	}
 
 	var clusterInfo client.CMEKClusterInfo
-	err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	err := retry.RetryContext(ctx, updateTimeout,
 		waitForCMEKReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, &clusterInfo))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -435,6 +466,7 @@ func (r *cmekResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+	state.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
 }
@@ -562,6 +594,7 @@ func retryEnableCMEKSpec(
 	cl client.Service,
 	clusterID string,
 	cluster *client.Cluster,
+	readinessTimeout time.Duration,
 	cmekSpec *client.EnableCMEKSpecBody,
 	cmekObj *client.CMEKClusterInfo,
 ) retry.RetryFunc {
@@ -582,8 +615,9 @@ func retryEnableCMEKSpec(
 
 			// Check for transient cluster errors (503)
 			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
-				// Wait for cluster to be ready.
-				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+				// Wait for cluster to be ready, honoring the caller's timeout
+				// budget rather than a fixed default.
+				clusterErr := retry.RetryContext(ctx, readinessTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
 					return retry.NonRetryableError(

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added the `cockroach_cluster_runtime_scanning` resource to enable or disable per-cluster runtime scanning (HBTD, host-based threat detection) enforcement.
 
+- Added configurable `timeouts` blocks (`create` / `update`) to the `cockroach_cluster` and `cockroach_cmek` resources, for example `create = "3h"` and `update = "4h"`. A value shorter than the corresponding default is rejected during validation. Behavior depends on whether a value is set:
+  - When the block (or a specific timeout) is omitted, behavior is unchanged from previous releases: the previously-hardcoded defaults apply (1h create / 2h update for `cockroach_cluster`; 2h for `cockroach_cmek`), and each internal wait phase of an operation receives that budget as before.
+  - When a value is explicitly set, it is treated as the total end-to-end budget for that operation, so it can be sized to a CI/CD wall-clock limit rather than applied per phase.
+
 ### Changed
 
 - Bumped version of cockroach-cloud-sdk-go from v9 to v10.

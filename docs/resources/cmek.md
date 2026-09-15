@@ -38,6 +38,7 @@ resource "cockroach_cmek" "advanced" {
 
 - `additional_regions` (Attributes List) Once CMEK is enabled for a cluster, no new regions can be added to the cluster resource, since they need encryption key info stored in the CMEK resource. New regions can be added and maintained here instead. (see [below for nested schema](#nestedatt--additional_regions))
 - `status` (String) Aggregated status of the cluster's encryption key(s).
+- `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
 <a id="nestedatt--regions"></a>
 ### Nested Schema for `regions`
@@ -92,6 +93,15 @@ Read-Only:
 - `s3_vpc_endpoint_id` (String) The ID of the AWS S3 VPC gateway endpoint for this region. Used to configure S3 bucket policies that restrict access to traffic from this VPC endpoint. Only populated for Advanced clusters on AWS.
 - `sql_dns` (String) DNS name of the cluster's SQL interface. Used to connect to the cluster with IP allowlisting.
 - `ui_dns` (String) DNS name used when connecting to the DB Console for the cluster.
+
+
+<a id="nestedblock--timeouts"></a>
+### Nested Schema for `timeouts`
+
+Optional:
+
+- `create` (String) Must be at least 2h. When set, it bounds the entire operation.
+- `update` (String) Must be at least 2h. When set, it bounds the entire operation.
 
 ## Import
 

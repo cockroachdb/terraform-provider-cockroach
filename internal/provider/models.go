@@ -19,6 +19,7 @@ package provider
 import (
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework-timeouts/resource/timeouts"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
@@ -146,6 +147,35 @@ type CockroachCluster struct {
 	DeleteProtection     types.Bool               `tfsdk:"delete_protection"`
 	BackupConfig         types.Object             `tfsdk:"backup_config"`
 	Labels               types.Map                `tfsdk:"labels"`
+	// Timeouts is exposed only on the resource schema; the data-source schema
+	// (cluster_data_source.go) uses CockroachClusterDataSource which omits it.
+	Timeouts timeouts.Value `tfsdk:"timeouts"`
+}
+
+// CockroachClusterDataSource mirrors CockroachCluster for use by
+// cluster_data_source.go, minus the resource-only Timeouts field. Kept in sync
+// with CockroachCluster by hand; if you add a data-source-visible field to
+// CockroachCluster, add it here as well.
+type CockroachClusterDataSource struct {
+	ID                   types.String             `tfsdk:"id"`
+	Name                 types.String             `tfsdk:"name"`
+	CloudProvider        types.String             `tfsdk:"cloud_provider"`
+	AccountId            types.String             `tfsdk:"account_id"`
+	CustomerCloudAccount *CustomerCloudAccount    `tfsdk:"customer_cloud_account"`
+	DedicatedConfig      *DedicatedClusterConfig  `tfsdk:"dedicated"`
+	ServerlessConfig     *ServerlessClusterConfig `tfsdk:"serverless"`
+	Regions              []Region                 `tfsdk:"regions"`
+	CockroachVersion     types.String             `tfsdk:"cockroach_version"`
+	FullVersion          types.String             `tfsdk:"full_version"`
+	Plan                 types.String             `tfsdk:"plan"`
+	State                types.String             `tfsdk:"state"`
+	CreatorId            types.String             `tfsdk:"creator_id"`
+	OperationStatus      types.String             `tfsdk:"operation_status"`
+	UpgradeStatus        types.String             `tfsdk:"upgrade_status"`
+	ParentId             types.String             `tfsdk:"parent_id"`
+	DeleteProtection     types.Bool               `tfsdk:"delete_protection"`
+	BackupConfig         types.Object             `tfsdk:"backup_config"`
+	Labels               types.Map                `tfsdk:"labels"`
 }
 
 type AllowlistEntry struct {
@@ -219,6 +249,7 @@ type ClusterCMEK struct {
 	Status            types.String           `tfsdk:"status"`
 	Regions           []CMEKRegion           `tfsdk:"regions"`
 	AdditionalRegions []CMEKAdditionalRegion `tfsdk:"additional_regions"`
+	Timeouts          timeouts.Value         `tfsdk:"timeouts"`
 }
 
 // CMEKAdditionalRegion mirrors Region for the cockroach_cmek resource's

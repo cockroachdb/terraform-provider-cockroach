@@ -305,7 +305,7 @@ func (d *clusterDataSource) Read(
 		return
 	}
 
-	var state CockroachCluster
+	var state CockroachClusterDataSource
 	diags := req.Config.Get(ctx, &state)
 
 	resp.Diagnostics.Append(diags...)
@@ -361,8 +361,37 @@ func (d *clusterDataSource) Read(
 	resp.Diagnostics.Append(
 		loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)...,
 	)
-	diags = resp.State.Set(ctx, newState)
+	// The data-source schema has no `timeouts` attribute; convert to the
+	// data-source model so field-set matches the schema.
+	dsState := cockroachClusterToDataSource(&newState)
+	diags = resp.State.Set(ctx, dsState)
 	resp.Diagnostics.Append(diags...)
+}
+
+// cockroachClusterToDataSource projects the shared resource model onto the
+// data-source model, dropping the resource-only `timeouts` field.
+func cockroachClusterToDataSource(c *CockroachCluster) CockroachClusterDataSource {
+	return CockroachClusterDataSource{
+		ID:                   c.ID,
+		Name:                 c.Name,
+		CloudProvider:        c.CloudProvider,
+		AccountId:            c.AccountId,
+		CustomerCloudAccount: c.CustomerCloudAccount,
+		DedicatedConfig:      c.DedicatedConfig,
+		ServerlessConfig:     c.ServerlessConfig,
+		Regions:              c.Regions,
+		CockroachVersion:     c.CockroachVersion,
+		FullVersion:          c.FullVersion,
+		Plan:                 c.Plan,
+		State:                c.State,
+		CreatorId:            c.CreatorId,
+		OperationStatus:      c.OperationStatus,
+		UpgradeStatus:        c.UpgradeStatus,
+		ParentId:             c.ParentId,
+		DeleteProtection:     c.DeleteProtection,
+		BackupConfig:         c.BackupConfig,
+		Labels:               c.Labels,
+	}
 }
 
 func NewClusterDataSource() datasource.DataSource {

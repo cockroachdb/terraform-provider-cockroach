@@ -33,7 +33,9 @@ func (r *physicalReplicationStreamResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Description: "Physical replication stream.",
+		Description: "Physical replication stream. Destroying a stream that has " +
+			"not failed over cancels it, which stops replication without promoting " +
+			"the standby cluster.",
 		Attributes: map[string]schema.Attribute{
 			"primary_cluster_id": schema.StringAttribute{
 				Required: true,
@@ -357,6 +359,11 @@ func (r *physicalReplicationStreamResource) Update(
 func (r *physicalReplicationStreamResource) Delete(
 	ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse,
 ) {
+	if r.provider == nil || !r.provider.configured {
+		addConfigureProviderErr(&resp.Diagnostics)
+		return
+	}
+
 	var state PhysicalReplicationStream
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -364,12 +371,50 @@ func (r *physicalReplicationStreamResource) Delete(
 		return
 	}
 
-	if state.Status != types.StringValue(string(client.REPLICATIONSTREAMSTATUSTYPE_COMPLETED)) {
-		resp.Diagnostics.AddError("Cannot remove PCR stream", "A PCR stream must be completed to be removable")
+	switch client.ReplicationStreamStatusType(state.Status.ValueString()) {
+	case client.REPLICATIONSTREAMSTATUSTYPE_COMPLETED, client.REPLICATIONSTREAMSTATUSTYPE_CANCELED:
+		resp.State.RemoveResource(ctx)
 		return
 	}
 
-	// Remove resource from state
+	// An active stream blocks deletion of both clusters, so tear it down rather
+	// than just dropping it from state. Cancelling stops replication without
+	// promoting the standby, which failover would do.
+	canceledStatus := client.REPLICATIONSTREAMSTATUSTYPE_CANCELED
+	updateSpec := &client.UpdatePhysicalReplicationStreamSpec{
+		Status: &canceledStatus,
+	}
+
+	traceAPICall("UpdatePhysicalReplicationStream")
+	streamObj, httpResp, err := r.provider.service.UpdatePhysicalReplicationStream(
+		ctx, state.ID.ValueString(), updateSpec)
+	if err != nil {
+		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.AddError(
+			"Error canceling PCR stream",
+			fmt.Sprintf("Could not cancel PCR stream: %s", formatAPIErrorMessage(err)),
+		)
+		return
+	}
+
+	err = retry.RetryContext(
+		ctx,
+		physicalReplicationStreamCompleteTimeout,
+		waitForPhysicalReplicationStreamStatusFunc(
+			ctx, streamObj.Id, r.provider.service, streamObj, client.REPLICATIONSTREAMSTATUSTYPE_CANCELED,
+		),
+	)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"PCR stream cancellation failed",
+			fmt.Sprintf("PCR stream failed to cancel: %s", formatAPIErrorMessage(err)),
+		)
+		return
+	}
+
 	resp.State.RemoveResource(ctx)
 }
 

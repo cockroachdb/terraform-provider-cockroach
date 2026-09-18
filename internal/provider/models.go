@@ -114,6 +114,18 @@ type SQLUser struct {
 	ID                types.String `tfsdk:"id"`
 }
 
+// SQLRole models cockroach_sql_role. There is deliberately no Password field:
+// the resource offers only the write-only password, so the secret never
+// reaches Terraform state.
+type SQLRole struct {
+	ClusterId         types.String `tfsdk:"cluster_id"`
+	Name              types.String `tfsdk:"name"`
+	Login             types.Bool   `tfsdk:"login"`
+	PasswordWO        types.String `tfsdk:"password_wo"`
+	PasswordWOVersion types.Int64  `tfsdk:"password_wo_version"`
+	ID                types.String `tfsdk:"id"`
+}
+
 type APIErrorMessage struct {
 	Code     int
 	Message  string

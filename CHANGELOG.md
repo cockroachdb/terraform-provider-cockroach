@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added the `cockroach_sql_role` resource, which manages a CockroachDB SQL role. A role starts with no privileges, unlike `cockroach_sql_user`, which is always created as an `admin`. Set `login` to make the role a principal that can authenticate, which is how a service account is provisioned without granting cluster ownership; `login` is toggled in place and never forces a replacement. The password is write-only (`password_wo` with `password_wo_version`, requires Terraform CLI 1.11+) and never enters Terraform state. Requires a feature flag to be enabled on your organization.
+
 - Added configurable `timeouts` blocks (`create` / `update`) to the `cockroach_cluster` and `cockroach_cmek` resources, for example `create = "3h"` and `update = "4h"`. A value shorter than the corresponding default is rejected during validation. Behavior depends on whether a value is set:
   - When the block (or a specific timeout) is omitted, behavior is unchanged from previous releases: the previously-hardcoded defaults apply (1h create / 2h update for `cockroach_cluster`; 2h for `cockroach_cmek`), and each internal wait phase of an operation receives that budget as before.
   - When a value is explicitly set, it is treated as the total end-to-end budget for that operation, so it can be sized to a CI/CD wall-clock limit rather than applied per phase.

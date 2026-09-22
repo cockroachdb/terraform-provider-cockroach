@@ -105,6 +105,21 @@ func TestIntegrationEgressPrivateEndpointResource(t *testing.T) {
 			endpoint: defaultEndpoint,
 		},
 		{
+			description: "host cluster",
+			setupCluster: func() client.Cluster {
+				hostCluster := *defaultAWSCluster
+				hostCluster.Plan = nil
+				hostCluster.Config = client.ClusterConfig{
+					Host: &client.HostClusterConfig{
+						StorageGib:     15,
+						NumVirtualCpus: 4,
+					},
+				}
+				return hostCluster
+			},
+			endpoint: defaultEndpoint,
+		},
+		{
 			description: "serverless cluster",
 			expectError: "Egress private endpoints cannot be created on serverless clusters",
 

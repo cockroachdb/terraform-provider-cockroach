@@ -35,7 +35,7 @@ func (d *clusterDataSource) Schema(
 	_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		Description: "CockroachDB Cloud cluster. Can be Dedicated or Serverless.",
+		Description: "CockroachDB Cloud cluster. Can be Dedicated, Host, or Serverless.",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Required: true,
@@ -185,6 +185,32 @@ func (d *clusterDataSource) Schema(
 					"supports_cluster_virtualization": schema.BoolAttribute{
 						Computed:            true,
 						MarkdownDescription: "Specifies whether an Advanced cluster is started with a virtual cluster architecture.",
+					},
+				},
+			},
+			"host": schema.SingleNestedAttribute{
+				Computed:    true,
+				Description: "Hardware of a host cluster, which provides dedicated hardware for virtual clusters.",
+				Attributes: map[string]schema.Attribute{
+					"num_virtual_cpus": schema.Int64Attribute{
+						Computed:    true,
+						Description: "Number of virtual CPUs per node in the cluster.",
+					},
+					"storage_gib": schema.Int64Attribute{
+						Computed:    true,
+						Description: "Storage amount per node in GiB.",
+					},
+					"memory_gib": schema.Float64Attribute{
+						Computed:    true,
+						Description: "Memory per node in GiB.",
+					},
+					"disk_iops": schema.Int64Attribute{
+						Computed:    true,
+						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. This value reflects the actual provisioned IOPS, which may differ from the value specified during cluster creation or update. A value of zero indicates the cloud provider-specific default.",
+					},
+					"cidr_range": schema.StringAttribute{
+						Computed:    true,
+						Description: "The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.",
 					},
 				},
 			},
@@ -386,6 +412,7 @@ func cockroachClusterToDataSource(c *CockroachCluster) CockroachClusterDataSourc
 		CustomerCloudAccount: c.CustomerCloudAccount,
 		DedicatedConfig:      c.DedicatedConfig,
 		ServerlessConfig:     c.ServerlessConfig,
+		HostConfig:           c.HostConfig,
 		Regions:              c.Regions,
 		CockroachVersion:     c.CockroachVersion,
 		FullVersion:          c.FullVersion,

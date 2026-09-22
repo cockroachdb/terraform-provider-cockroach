@@ -171,3 +171,24 @@ resource "cockroach_cluster" "continuum_mission_critical" {
     "cost-center" = "mkt-1234"
   }
 }
+
+resource "cockroach_cluster" "continuum_host" {
+  name           = "cockroach-continuum-host"
+  cloud_provider = "GCP"
+  edition        = "MISSION_CRITICAL"
+  host = {
+    storage_gib      = 15
+    num_virtual_cpus = 4
+  }
+  regions = [
+    {
+      name       = "us-central1"
+      node_count = 3
+    }
+  ]
+  delete_protection = true
+  labels = {
+    environment   = "production",
+    "cost-center" = "mkt-1234"
+  }
+}

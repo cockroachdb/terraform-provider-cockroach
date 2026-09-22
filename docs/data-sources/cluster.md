@@ -3,12 +3,12 @@
 page_title: "cockroach_cluster Data Source - terraform-provider-cockroach"
 subcategory: ""
 description: |-
-  CockroachDB Cloud cluster. Can be Dedicated or Serverless.
+  CockroachDB Cloud cluster. Can be Dedicated, Host, or Serverless.
 ---
 
 # cockroach_cluster (Data Source)
 
-CockroachDB Cloud cluster. Can be Dedicated or Serverless.
+CockroachDB Cloud cluster. Can be Dedicated, Host, or Serverless.
 
 ## Example Usage
 
@@ -42,6 +42,7 @@ data "cockroach_cluster" "cockroach" {
   * STANDARD
   * MISSION_CRITICAL
 - `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
+- `host` (Attributes) Hardware of a host cluster, which provides dedicated hardware for virtual clusters. (see [below for nested schema](#nestedatt--host))
 - `id` (String) The ID of this resource.
 - `labels` (Map of String) Map of key-value pairs used to organize and categorize resources.
 - `name` (String) Name of the cluster.
@@ -111,6 +112,18 @@ Read-Only:
 - `private_network_visibility` (Boolean) Indicates whether private IP addresses are assigned to nodes. Required for CMEK and other advanced networking features.
 - `storage_gib` (Number) Storage amount per node in GiB.
 - `supports_cluster_virtualization` (Boolean) Specifies whether an Advanced cluster is started with a virtual cluster architecture.
+
+
+<a id="nestedatt--host"></a>
+### Nested Schema for `host`
+
+Read-Only:
+
+- `cidr_range` (String) The IPv4 range in CIDR format that is in use by the cluster. It is only set on GCP clusters and is otherwise empty.
+- `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. This value reflects the actual provisioned IOPS, which may differ from the value specified during cluster creation or update. A value of zero indicates the cloud provider-specific default.
+- `memory_gib` (Number) Memory per node in GiB.
+- `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster.
+- `storage_gib` (Number) Storage amount per node in GiB.
 
 
 <a id="nestedatt--regions"></a>

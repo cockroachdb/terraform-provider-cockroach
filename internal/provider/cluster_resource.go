@@ -141,7 +141,7 @@ var regionSchema = schema.NestedAttributeObject{
 			PlanModifiers: []planmodifier.String{
 				SuppressMachineTypeDrift(),
 			},
-			MarkdownDescription: "Machine type identifier per node in this region, e.g., m6.xlarge, n2-standard-4. Set this (or `num_virtual_cpus`) on every region to create a heterogeneous Advanced cluster. Mutually exclusive with the cluster-wide `dedicated.num_virtual_cpus`/`dedicated.machine_type` and with `num_virtual_cpus` on the same region. This attribute requires a feature flag to be enabled; it is recommended to use `num_virtual_cpus` instead. Valid for Advanced clusters only.",
+			MarkdownDescription: "Machine type identifier per node in this region, e.g., m6.xlarge, n2-standard-4. Set this (or `num_virtual_cpus`) on every region to create a heterogeneous Advanced cluster. Mutually exclusive with the cluster-wide `dedicated.num_virtual_cpus`/`dedicated.machine_type` and with `num_virtual_cpus` on the same region. This attribute requires a feature flag to be enabled; it is recommended to use `num_virtual_cpus` instead. Valid for Advanced clusters only, and not supported on host clusters.",
 		},
 		"primary": schema.BoolAttribute{
 			Optional: true,
@@ -261,7 +261,7 @@ func (r *clusterResource) Schema(
 					"organizations set an `edition`; clusters in organizations that are not on " +
 					"Continuum set a `plan` instead, so `edition` and `plan` cannot both be set. " +
 					"`STANDARD` clusters require a `serverless` block and `MISSION_CRITICAL` clusters " +
-					"require a `dedicated` block. Changing the edition of an existing cluster is not " +
+					"require a `dedicated` or `host` block. Changing the edition of an existing cluster is not " +
 					"currently supported. Allowed values are:" +
 					formatEnumMarkdownList(client.AllowedEditionTypeEnumValues),
 			},
@@ -359,7 +359,7 @@ func (r *clusterResource) Schema(
 						},
 						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Only configurable for AWS clusters during creation. For GCP and Azure clusters, this value is ignored and the cloud provider default is used. Omit this attribute to use the server-side default based on machine type and storage size. The provisioned value may differ from the requested value.",
 						// When omitted from config the server derives this from the
-						// machine type and storage size. coordinateDedicatedMachinePlan
+						// machine type and storage size. coordinateMachinePlan
 						// resets it to unknown when either of those changes.
 						PlanModifiers: []planmodifier.Int64{
 							int64planmodifier.UseStateForUnknown(),
@@ -368,7 +368,7 @@ func (r *clusterResource) Schema(
 					"memory_gib": schema.Float64Attribute{
 						Computed:    true,
 						Description: "Memory per node in GiB.",
-						// Derived from the machine type. coordinateDedicatedMachinePlan
+						// Derived from the machine type. coordinateMachinePlan
 						// resets it to unknown when the plan implies a resize.
 						PlanModifiers: []planmodifier.Float64{
 							float64planmodifier.UseStateForUnknown(),
@@ -393,7 +393,7 @@ func (r *clusterResource) Schema(
 					"private_network_visibility": schema.BoolAttribute{
 						Optional:            true,
 						Computed:            true,
-						MarkdownDescription: "Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.",
+						MarkdownDescription: "Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  Mission Critical clusters always use private IP addresses, so `false` is rejected. See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},
@@ -414,6 +414,62 @@ func (r *clusterResource) Schema(
 						MarkdownDescription: "supports_cluster_virtualization specifies whether an Advanced cluster is started with a virtual cluster architecture. This field is restricted to Private Preview usage; see our documentation for details: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
+						},
+					},
+				},
+			},
+			"host": schema.SingleNestedAttribute{
+				Optional: true,
+				MarkdownDescription: "Configures a host cluster, which provides dedicated hardware for " +
+					"virtual clusters. Host clusters are available only in Cockroach Continuum " +
+					"organizations.",
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
+				Attributes: map[string]schema.Attribute{
+					"storage_gib": schema.Int64Attribute{
+						Optional: true,
+						Computed: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Description: "Storage amount per node in GiB.",
+					},
+					"disk_iops": schema.Int64Attribute{
+						Optional: true,
+						Computed: true,
+						Validators: []validator.Int64{
+							// If supplied this value must be non-zero. 0 is a
+							// valid api value indicating the default being
+							// returned but it causes a provider inconsistency.
+							int64validator.AtLeast(1),
+						},
+						Description: "Number of disk I/O operations per second that are permitted on each node in the cluster. Only configurable for AWS clusters during creation. For GCP clusters, this value is ignored and the cloud provider default is used. Omit this attribute to use the server-side default based on machine type and storage size. The provisioned value may differ from the requested value.",
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+					},
+					"memory_gib": schema.Float64Attribute{
+						Computed:    true,
+						Description: "Memory per node in GiB.",
+						PlanModifiers: []planmodifier.Float64{
+							float64planmodifier.UseStateForUnknown(),
+						},
+					},
+					"num_virtual_cpus": schema.Int64Attribute{
+						Optional: true,
+						Computed: true,
+						PlanModifiers: []planmodifier.Int64{
+							int64planmodifier.UseStateForUnknown(),
+						},
+						Description: "Number of virtual CPUs per node in the cluster. Must be at least 4. Mutually exclusive with per-region `regions[].num_virtual_cpus`.",
+					},
+					"cidr_range": schema.StringAttribute{
+						Optional:    true,
+						Computed:    true,
+						Description: "The IPv4 range in CIDR format that will be used by the cluster. This is supported only on GCP, and must have a subnet mask no larger than /19. Defaults to \"172.28.0.0/14\". This cannot be changed after cluster creation.",
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
 						},
 					},
 				},
@@ -538,15 +594,34 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 			path.MatchRoot("dedicated"),
 			path.MatchRoot("serverless"),
 		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("host"),
+			path.MatchRoot("dedicated"),
+		),
+		resourcevalidator.Conflicting(
+			path.MatchRoot("host"),
+			path.MatchRoot("serverless"),
+		),
 		// A cluster reports either a plan (legacy) or an edition (Continuum),
 		// never both.
 		resourcevalidator.Conflicting(
 			path.MatchRoot("plan"),
 			path.MatchRoot("edition"),
 		),
+		// Host clusters exist only in Continuum organizations, which do not use
+		// the legacy plan.
+		resourcevalidator.Conflicting(
+			path.MatchRoot("host"),
+			path.MatchRoot("plan"),
+		),
 		// BYOC is not supported on serverless clusters.
 		resourcevalidator.Conflicting(
 			path.MatchRoot("serverless"),
+			path.MatchRoot("customer_cloud_account"),
+		),
+		// BYOC is not supported on host clusters.
+		resourcevalidator.Conflicting(
+			path.MatchRoot("host"),
 			path.MatchRoot("customer_cloud_account"),
 		),
 		// Only one BYOC provider block may be configured at a time.
@@ -601,21 +676,42 @@ func (r *clusterResource) ValidateConfig(
 		return
 	}
 
-	// Standard is serverless and Mission Critical is dedicated. The server is
-	// authoritative; this only moves the rejection from apply to plan.
+	// Standard is serverless and Mission Critical is dedicated or host. The
+	// server is authoritative; this only moves the rejection from apply to plan.
 	if IsKnown(cluster.Edition) {
 		switch client.EditionType(cluster.Edition.ValueString()) {
 		case client.EDITIONTYPE_MISSION_CRITICAL:
-			if cluster.DedicatedConfig == nil {
+			if cluster.DedicatedConfig == nil && cluster.HostConfig == nil {
 				resp.Diagnostics.AddAttributeError(path.Root("edition"), "Invalid Attribute Combination",
-					"Mission Critical edition clusters run on dedicated hardware and require a dedicated block.")
+					"Mission Critical edition clusters run on dedicated hardware and require a dedicated or host block.")
 			}
 		case client.EDITIONTYPE_STANDARD:
 			if cluster.DedicatedConfig != nil {
 				resp.Diagnostics.AddAttributeError(path.Root("edition"), "Invalid Attribute Combination",
 					"Standard edition clusters run on shared infrastructure and require a serverless block, not dedicated.")
 			}
+			if cluster.HostConfig != nil {
+				resp.Diagnostics.AddAttributeError(path.Root("edition"), "Invalid Attribute Combination",
+					"Host clusters require the MISSION_CRITICAL edition.")
+			}
 		}
+	} else if cluster.HostConfig != nil && cluster.Edition.IsNull() {
+		resp.Diagnostics.AddAttributeError(path.Root("host"), "Missing Attribute",
+			"Host clusters require edition to be set to MISSION_CRITICAL.")
+	}
+
+	// Mission Critical clusters always run with private IP addresses. The provider
+	// sends network visibility only when it is private, so requesting public would
+	// apply, read back as private, and fail as an inconsistent result. The host
+	// block has no such attribute.
+	if dedicated := cluster.DedicatedConfig; dedicated != nil &&
+		IsKnown(cluster.Edition) &&
+		client.EditionType(cluster.Edition.ValueString()) == client.EDITIONTYPE_MISSION_CRITICAL &&
+		IsKnown(dedicated.PrivateNetworkVisibility) &&
+		!dedicated.PrivateNetworkVisibility.ValueBool() {
+		resp.Diagnostics.AddAttributeError(path.Root("dedicated").AtName("private_network_visibility"),
+			"Invalid Attribute Value",
+			"Mission Critical clusters always use private IP addresses. Omit private_network_visibility or set it to true.")
 	}
 
 	plan, err := derivePlanType(&cluster)
@@ -635,15 +731,20 @@ func (r *clusterResource) ValidateConfig(
 		return
 	}
 
-	// The cluster-wide dedicated.num_virtual_cpus/machine_type and
+	// The cluster-wide dedicated/host num_virtual_cpus/machine_type and
 	// the per-region regions[].num_virtual_cpus/machine_type are
 	// mutually exclusive.
-	clusterHasMachineType := cluster.DedicatedConfig != nil &&
-		(!cluster.DedicatedConfig.NumVirtualCpus.IsNull() || !cluster.DedicatedConfig.MachineType.IsNull())
+	hardware := cluster.hardwareConfig()
+	clusterHasMachineType := hardware != nil &&
+		(!hardware.NumVirtualCpus.IsNull() || !hardware.MachineType.IsNull())
 
 	anyRegionHasMachineType := false
 	allRegionsHaveMachineType := true
 	for i, region := range cluster.Regions {
+		if cluster.HostConfig != nil && !region.MachineType.IsNull() {
+			resp.Diagnostics.AddAttributeError(path.Root("regions").AtListIndex(i).AtName("machine_type"),
+				"Invalid Attribute", "Host clusters are sized with num_virtual_cpus. machine_type is not supported.")
+		}
 		if !region.NumVirtualCpus.IsNull() && !region.MachineType.IsNull() {
 			resp.Diagnostics.AddAttributeError(path.Root("regions").AtListIndex(i), "Invalid Attribute Combination",
 				"num_virtual_cpus and machine_type are mutually exclusive within a region.")
@@ -655,8 +756,12 @@ func (r *clusterResource) ValidateConfig(
 	}
 
 	if anyRegionHasMachineType && clusterHasMachineType {
+		clusterWide, perRegion := "dedicated.num_virtual_cpus/machine_type", "regions[].num_virtual_cpus/machine_type"
+		if cluster.HostConfig != nil {
+			clusterWide, perRegion = "host.num_virtual_cpus", "regions[].num_virtual_cpus"
+		}
 		resp.Diagnostics.AddError("Invalid Attribute Combination",
-			"Specify machine types either cluster-wide via dedicated.num_virtual_cpus/machine_type or per-region via regions[].num_virtual_cpus/machine_type, not both.")
+			fmt.Sprintf("Specify machine types either cluster-wide via %s or per-region via %s, not both.", clusterWide, perRegion))
 	}
 	if anyRegionHasMachineType && !allRegionsHaveMachineType {
 		resp.Diagnostics.AddError("Invalid Attribute Combination",
@@ -689,7 +794,7 @@ func derivePlanType(cluster *CockroachCluster) (client.PlanType, error) {
 	var planType client.PlanType
 	if IsKnown(cluster.Plan) {
 		planType = client.PlanType(cluster.Plan.ValueString())
-	} else if cluster.DedicatedConfig != nil {
+	} else if cluster.DedicatedConfig != nil || cluster.HostConfig != nil {
 		planType = client.PLANTYPE_ADVANCED
 	} else if cluster.ServerlessConfig != nil {
 		if cluster.ServerlessConfig.UsageLimits != nil && IsKnown(cluster.ServerlessConfig.UsageLimits.ProvisionedVirtualCpus) {
@@ -847,6 +952,46 @@ func (r *clusterResource) Create(
 		}
 		dedicated.SupportsClusterVirtualization = ptr(cfg.SupportsClusterVirtualization.ValueBool())
 		clusterSpec.SetDedicated(dedicated)
+	} else if plan.HostConfig != nil {
+		host := client.HostClusterCreateSpecification{}
+		if IsKnown(plan.CockroachVersion) {
+			version := plan.CockroachVersion.ValueString()
+			host.CockroachVersion = &version
+		}
+		if plan.Regions != nil {
+			regionNodes := make(map[string]int32, len(plan.Regions))
+			for _, region := range plan.Regions {
+				regionNodes[region.Name.ValueString()] = int32(region.NodeCount.ValueInt64())
+				if IsKnown(region.Primary) {
+					resp.Diagnostics.AddError("Invalid Attribute Combination",
+						"Host clusters do not support the primary attribute on regions.")
+				}
+			}
+			host.RegionNodes = regionNodes
+		}
+		hardware := client.DedicatedHardwareCreateSpecification{}
+		if regionSpecs, ok := buildRegionMachineSpecs(config.Regions); ok {
+			host.RegionMachineSpecs = &regionSpecs
+		} else {
+			machineSpec := buildClusterWideMachineSpec(config.HostConfig.hardware(), plan.HostConfig.hardware())
+			hardware.MachineSpec = &machineSpec
+		}
+
+		cfg := plan.HostConfig
+		if IsKnown(cfg.StorageGib) {
+			hardware.StorageGib = int32(cfg.StorageGib.ValueInt64())
+		}
+		if IsKnown(cfg.DiskIops) {
+			diskiops := int32(cfg.DiskIops.ValueInt64())
+			hardware.DiskIops = &diskiops
+		}
+		host.Hardware = hardware
+		// Network visibility is left to the server, which makes every host
+		// cluster private.
+		if cfg.CidrRange.ValueString() != "" {
+			host.CidrRange = ptr(cfg.CidrRange.ValueString())
+		}
+		clusterSpec.SetHost(host)
 	}
 
 	// Customer Cloud Account for BYOC.
@@ -1156,20 +1301,22 @@ func (r *clusterResource) ModifyPlan(
 					"customer cloud account settings.")
 		}
 		if ((plan.DedicatedConfig == nil) != (state.DedicatedConfig == nil)) ||
+			((plan.HostConfig == nil) != (state.HostConfig == nil)) ||
 			((plan.ServerlessConfig == nil) != (state.ServerlessConfig == nil)) {
 			resp.Diagnostics.AddError("Cannot update cluster plan type",
 				"To prevent accidental deletion of data, changing a cluster's plan type "+
 					"isn't allowed. Please explicitly destroy this cluster before changing between "+
-					"dedicated and serverless plans.")
+					"dedicated, host and serverless plans.")
 			return
 		}
-		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.PrivateNetworkVisibility != state.DedicatedConfig.PrivateNetworkVisibility {
+		planHW, stateHW := plan.hardwareConfig(), state.hardwareConfig()
+		if planHW != nil && stateHW != nil && planHW.PrivateNetworkVisibility != stateHW.PrivateNetworkVisibility {
 			resp.Diagnostics.AddError("Cannot update network visibility",
 				"To prevent accidental deletion of data, changing a cluster's network "+
 					"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
 					"network visibility.")
 		}
-		if dedicated := plan.DedicatedConfig; dedicated != nil && dedicated.CidrRange != state.DedicatedConfig.CidrRange {
+		if planHW != nil && stateHW != nil && planHW.CidrRange != stateHW.CidrRange {
 			resp.Diagnostics.AddError("Cannot update cidr range",
 				"To prevent accidental deletion of data, changing a cluster's cidr range "+
 					"isn't allowed. Please explicitly destroy this cluster before changing "+
@@ -1191,7 +1338,7 @@ func (r *clusterResource) ModifyPlan(
 
 		// Coordinate the dedicated machine plan so per-field plan modifiers don't
 		// leave stale-but-known values that a resize/add/remove would invalidate.
-		planChanged := coordinateDedicatedMachinePlan(config, plan, state)
+		planChanged := coordinateMachinePlan(config, plan, state)
 
 		// UseStateForUnknown pins plan and account_id to the prior state, but
 		// both change with the plan type: BASIC has an empty account_id while
@@ -1450,6 +1597,34 @@ func (r *clusterResource) Update(
 		}
 
 		clusterReq.SetDedicated(*dedicated)
+	} else if cfg := plan.HostConfig; cfg != nil {
+		host := client.NewHostClusterUpdateSpecification()
+		if plan.Regions != nil {
+			regionNodes, diags := reconcileRegionUpdate(ctx, state.Regions, plan.Regions, state.ID.ValueString(), r.provider.service)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+			host.RegionNodes = regionNodes
+		}
+		host.Hardware = client.NewDedicatedHardwareUpdateSpecification()
+		if IsKnown(cfg.StorageGib) {
+			storage := int32(cfg.StorageGib.ValueInt64())
+			host.Hardware.StorageGib = &storage
+		}
+		if IsKnown(cfg.DiskIops) {
+			diskiops := int32(cfg.DiskIops.ValueInt64())
+			host.Hardware.DiskIops = &diskiops
+		}
+
+		if regionSpecs, ok := buildRegionMachineSpecs(config.Regions); ok {
+			host.RegionMachineSpecs = &regionSpecs
+		} else {
+			machineSpec := buildClusterWideMachineSpec(config.HostConfig.hardware(), cfg.hardware())
+			host.Hardware.MachineSpec = &machineSpec
+		}
+
+		clusterReq.SetHost(*host)
 	}
 
 	// Parent Id
@@ -1756,6 +1931,13 @@ func loadClusterToTerraformState(
 		planRegions = plan.Regions
 	}
 	state.Regions = getManagedRegions(&clusterObj.Regions, planRegions, clusterObj.CloudProvider, &allDiags)
+	if clusterObj.Config.Host != nil {
+		// Host clusters don't support machine_type, so the value the API reports
+		// is dropped rather than surfaced as a field nobody can set.
+		for i := range state.Regions {
+			state.Regions[i].MachineType = types.StringNull()
+		}
+	}
 	state.UpgradeStatus = types.StringValue(string(clusterObj.UpgradeStatus))
 
 	if clusterObj.ParentId == nil {
@@ -1844,6 +2026,14 @@ func loadClusterToTerraformState(
 					&allDiags,
 				)
 			}
+		}
+	} else if clusterObj.Config.Host != nil {
+		state.HostConfig = &HostClusterConfig{
+			NumVirtualCpus: types.Int64Value(int64(clusterObj.Config.Host.NumVirtualCpus)),
+			StorageGib:     types.Int64Value(int64(clusterObj.Config.Host.StorageGib)),
+			MemoryGib:      types.Float64Value(float64(clusterObj.Config.Host.MemoryGib)),
+			DiskIops:       types.Int64Value(int64(clusterObj.Config.Host.DiskIops)),
+			CidrRange:      types.StringValue(clusterObj.CidrRange),
 		}
 	}
 
@@ -1959,19 +2149,46 @@ func resolveMachinePlan(
 	}
 }
 
-// coordinateDedicatedMachinePlan shapes the dedicated machine plan in a single
+// coordinateMachinePlan runs coordinateHardwarePlan against whichever hardware
+// block the plan carries.
+func coordinateMachinePlan(config, plan, state *CockroachCluster) bool {
+	if config == nil || plan == nil || state == nil {
+		return false
+	}
+	if plan.DedicatedConfig != nil {
+		return coordinateHardwarePlan(
+			config.DedicatedConfig, plan.DedicatedConfig, state.DedicatedConfig,
+			config.Regions, plan.Regions, state.Regions)
+	}
+	if plan.HostConfig == nil {
+		return false
+	}
+	// The host block is a subset of the dedicated shape, so it coordinates
+	// through a dedicated view that is written back afterwards.
+	planHW := plan.HostConfig.hardware()
+	changed := coordinateHardwarePlan(
+		config.HostConfig.hardware(), planHW, state.HostConfig.hardware(),
+		config.Regions, plan.Regions, state.Regions)
+	plan.HostConfig.applyHardware(planHW)
+	return changed
+}
+
+// coordinateHardwarePlan shapes the dedicated or host machine plan in a single
 // region-diff-aware pass so the field-scoped plan modifiers
 // (SuppressMachineTypeDrift / UseStateForUnknown) don't leave a stale-but-known
 // value that a resize, region addition, or region removal would invalidate at
 // apply time ("inconsistent result after apply"). It decides the mode from CONFIG
 // (the plan can carry modifier-populated values that don't reflect intent) and
-// mutates plan in place, returning whether anything changed.
+// mutates planHW and planRegions in place, returning whether anything changed.
 //
 // The per-region sibling-coordination rule lives in resolveMachinePlan; this
 // function orchestrates it across all regions plus the cluster-wide block and the
-// derived computed fields. It must be called with a non-nil state (an update).
-func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool {
-	if config == nil || plan == nil || plan.DedicatedConfig == nil {
+// derived computed fields. It must be called during an update, where state exists.
+func coordinateHardwarePlan(
+	configHW, planHW, stateHW *DedicatedClusterConfig,
+	configRegions, planRegions, stateRegions []Region,
+) bool {
+	if planHW == nil {
 		return false
 	}
 
@@ -1980,14 +2197,14 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 	// recomputed, or a region was added/removed). When it is, the cluster-wide
 	// derived computed fields must be recomputed too.
 	resizing := false
-	heterogeneous := isHeterogeneous(config.Regions)
+	heterogeneous := isHeterogeneous(configRegions)
 
-	stateByName := make(map[string]Region, len(state.Regions))
-	for _, r := range state.Regions {
+	stateByName := make(map[string]Region, len(stateRegions))
+	for _, r := range stateRegions {
 		stateByName[r.Name.ValueString()] = r
 	}
-	configByName := make(map[string]Region, len(config.Regions))
-	for _, r := range config.Regions {
+	configByName := make(map[string]Region, len(configRegions))
+	for _, r := range configRegions {
 		configByName[r.Name.ValueString()] = r
 	}
 
@@ -1995,17 +2212,17 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 	// values (clear them); heterogeneous clusters resolve each region BY NAME so
 	// the computed sibling comes from the same-named state region (correct even
 	// when the list is reordered) and is set unknown on a resize.
-	for i := range plan.Regions {
+	for i := range planRegions {
 		var newVCPUs types.Int64
 		var newMT types.String
 		if !heterogeneous {
 			newVCPUs, newMT = types.Int64Null(), types.StringNull()
 		} else {
-			regionConfig, ok := configByName[plan.Regions[i].Name.ValueString()]
+			regionConfig, ok := configByName[planRegions[i].Name.ValueString()]
 			if !ok {
 				continue
 			}
-			regionState, hasState := stateByName[plan.Regions[i].Name.ValueString()]
+			regionState, hasState := stateByName[planRegions[i].Name.ValueString()]
 			var stateVCPUs types.Int64
 			var stateMT types.String
 			if hasState {
@@ -2015,12 +2232,12 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 			newVCPUs, newMT, regionChanged = resolveMachinePlan(regionConfig.NumVirtualCpus, regionConfig.MachineType, stateVCPUs, stateMT, hasState)
 			resizing = resizing || regionChanged
 		}
-		if !newVCPUs.Equal(plan.Regions[i].NumVirtualCpus) {
-			plan.Regions[i].NumVirtualCpus = newVCPUs
+		if !newVCPUs.Equal(planRegions[i].NumVirtualCpus) {
+			planRegions[i].NumVirtualCpus = newVCPUs
 			changed = true
 		}
-		if !newMT.Equal(plan.Regions[i].MachineType) {
-			plan.Regions[i].MachineType = newMT
+		if !newMT.Equal(planRegions[i].MachineType) {
+			planRegions[i].MachineType = newMT
 			changed = true
 		}
 	}
@@ -2040,17 +2257,17 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 
 	// Cluster-wide pass (homogeneous only; heterogeneous cluster-wide fields are
 	// derived aggregates handled by the resizing block below).
-	if !heterogeneous && state.DedicatedConfig != nil {
+	if !heterogeneous && stateHW != nil && configHW != nil {
 		newVCPUs, newMT, clusterChanged := resolveMachinePlan(
-			config.DedicatedConfig.NumVirtualCpus, config.DedicatedConfig.MachineType,
-			state.DedicatedConfig.NumVirtualCpus, state.DedicatedConfig.MachineType, true,
+			configHW.NumVirtualCpus, configHW.MachineType,
+			stateHW.NumVirtualCpus, stateHW.MachineType, true,
 		)
-		if !newVCPUs.Equal(plan.DedicatedConfig.NumVirtualCpus) {
-			plan.DedicatedConfig.NumVirtualCpus = newVCPUs
+		if !newVCPUs.Equal(planHW.NumVirtualCpus) {
+			planHW.NumVirtualCpus = newVCPUs
 			changed = true
 		}
-		if !newMT.Equal(plan.DedicatedConfig.MachineType) {
-			plan.DedicatedConfig.MachineType = newMT
+		if !newMT.Equal(planHW.MachineType) {
+			planHW.MachineType = newMT
 			changed = true
 		}
 		resizing = resizing || clusterChanged
@@ -2058,12 +2275,12 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 
 	if resizing {
 		// memory_gib is derived from the machine type and changes on resize.
-		plan.DedicatedConfig.MemoryGib = types.Float64Unknown()
+		planHW.MemoryGib = types.Float64Unknown()
 		if heterogeneous {
 			// The cluster-wide num_virtual_cpus/machine_type are derived aggregates
 			// for a heterogeneous cluster and may shift when any region changes.
-			plan.DedicatedConfig.NumVirtualCpus = types.Int64Unknown()
-			plan.DedicatedConfig.MachineType = types.StringUnknown()
+			planHW.NumVirtualCpus = types.Int64Unknown()
+			planHW.MachineType = types.StringUnknown()
 		}
 		changed = true
 	}
@@ -2074,12 +2291,11 @@ func coordinateDedicatedMachinePlan(config, plan, state *CockroachCluster) bool 
 	// storage_gib is compared config-to-state because the plan can carry a state
 	// value forward via UseStateForUnknown. An unknown config value counts as a
 	// change, since pinning disk_iops when storage may move risks a failed apply.
-	if config.DedicatedConfig != nil && !IsKnown(config.DedicatedConfig.DiskIops) && state.DedicatedConfig != nil {
-		storageChanged := config.DedicatedConfig.StorageGib.IsUnknown() ||
-			(IsKnown(config.DedicatedConfig.StorageGib) &&
-				!config.DedicatedConfig.StorageGib.Equal(state.DedicatedConfig.StorageGib))
-		if (resizing || storageChanged) && !plan.DedicatedConfig.DiskIops.IsUnknown() {
-			plan.DedicatedConfig.DiskIops = types.Int64Unknown()
+	if configHW != nil && !IsKnown(configHW.DiskIops) && stateHW != nil {
+		storageChanged := configHW.StorageGib.IsUnknown() ||
+			(IsKnown(configHW.StorageGib) && !configHW.StorageGib.Equal(stateHW.StorageGib))
+		if (resizing || storageChanged) && !planHW.DiskIops.IsUnknown() {
+			planHW.DiskIops = types.Int64Unknown()
 			changed = true
 		}
 	}

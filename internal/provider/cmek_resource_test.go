@@ -244,6 +244,139 @@ func testIntegrationCMEKResource(t *testing.T, includeTimeouts bool) {
 	testCMEKResource(t, clusterName, true, includeTimeouts)
 }
 
+// TestIntegrationCMEKHostCluster enables CMEK on a host cluster and adds a
+// region. The CMEK resource sends a dedicated update specification regardless of
+// cluster type, which the API normalizes for host clusters.
+func TestIntegrationCMEKHostCluster(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-cmek-host-%s", tfTestPrefix, GenerateRandomString(4))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	edition := client.EDITIONTYPE_MISSION_CRITICAL
+	visibility := client.NETWORKVISIBILITYTYPE_PRIVATE
+	initialCluster := &client.Cluster{
+		Id:                clusterID,
+		Name:              clusterName,
+		CockroachVersion:  minSupportedClusterPatchVersion,
+		CloudProvider:     "AWS",
+		State:             "CREATED",
+		Edition:           &edition,
+		NetworkVisibility: &visibility,
+		Config: client.ClusterConfig{
+			Host: &client.HostClusterConfig{
+				MachineType: "m6i.xlarge", NumVirtualCpus: 4, StorageGib: 35, MemoryGib: 16,
+			},
+		},
+		Regions: []client.Region{{Name: "us-central-1", NodeCount: 3}},
+	}
+	updatedCluster := &client.Cluster{}
+	*updatedCluster = *initialCluster
+	updatedCluster.Regions = append(updatedCluster.Regions, client.Region{Name: "us-east-1", NodeCount: 3})
+
+	keySpec := &client.CMEKKeySpecification{
+		Type:          ptr(client.CMEKKeyType("AWS_KMS")),
+		Uri:           ptr("aws-kms-key-arn"),
+		AuthPrincipal: ptr("aws-auth-principal-arn"),
+	}
+	usCentral1, usEast1 := "us-central-1", "us-east-1"
+	cmekStatus := client.CMEKSTATUS_ENABLED
+	regionInfo := func(region *string) client.CMEKRegionInfo {
+		return client.CMEKRegionInfo{
+			Region:   region,
+			Status:   &cmekStatus,
+			KeyInfos: &[]client.CMEKKeyInfo{{Status: &cmekStatus, Spec: keySpec}},
+		}
+	}
+	initialCMEKInfo := &client.CMEKClusterInfo{
+		Status:      &cmekStatus,
+		RegionInfos: &[]client.CMEKRegionInfo{regionInfo(&usCentral1)},
+	}
+	updatedCMEKInfo := &client.CMEKClusterInfo{
+		Status:      &cmekStatus,
+		RegionInfos: &[]client.CMEKRegionInfo{regionInfo(&usCentral1), regionInfo(&usEast1)},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).Return(initialCluster, nil, nil)
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().EnableCMEKSpec(gomock.Any(), clusterID, &client.EnableCMEKSpecBody{
+		RegionSpecs: []client.CMEKRegionSpecification{{Region: &usCentral1, KeySpec: keySpec}},
+	}).Return(initialCMEKInfo, nil, nil)
+
+	currentCluster, currentCMEKInfo := initialCluster, initialCMEKInfo
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return currentCluster, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().GetCMEKClusterInfo(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.CMEKClusterInfo, *http.Response, error) {
+			return currentCMEKInfo, nil, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		Dedicated: &client.DedicatedClusterUpdateSpecification{
+			RegionNodes:     &map[string]int32{usCentral1: 3, usEast1: 3},
+			CmekRegionSpecs: &[]client.CMEKRegionSpecification{{Region: &usEast1, KeySpec: keySpec}},
+		},
+	}).DoAndReturn(
+		func(context.Context, string, *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			currentCluster, currentCMEKInfo = updatedCluster, updatedCMEKInfo
+			return updatedCluster, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
+
+	cfg := func(cmekRegions, additionalRegions string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "AWS"
+  edition        = "MISSION_CRITICAL"
+  host = {
+    storage_gib      = 35
+    num_virtual_cpus = 4
+  }
+  regions = [{ name = "us-central-1", node_count = 3 }]
+}
+
+resource "cockroach_cmek" "test" {
+  id                 = cockroach_cluster.test.id
+  regions            = [%s]
+  %s
+}
+`, clusterName, cmekRegions, additionalRegions)
+	}
+	key := `key = { auth_principal = "aws-auth-principal-arn", type = "AWS_KMS", uri = "aws-kms-key-arn" }`
+	centralRegion := `{ region = "us-central-1", ` + key + ` }`
+	eastRegion := `{ region = "us-east-1", ` + key + ` }`
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg(centralRegion, ""),
+				Check:  testCheckCockroachClusterExists("cockroach_cluster.test"),
+			},
+			{
+				Config: cfg(centralRegion+", "+eastRegion,
+					`additional_regions = [{ name = "us-east-1", node_count = 3 }]`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "1"),
+					resource.TestCheckResourceAttr("cockroach_cmek.test", "regions.#", "2"),
+				),
+			},
+		},
+	})
+}
+
 func testCMEKResource(t *testing.T, clusterName string, useMock, includeTimeouts bool) {
 	var (
 		clusterResourceName = "cockroach_cluster.test"

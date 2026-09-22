@@ -177,7 +177,7 @@ func (r *egressPrivateEndpointResource) Create(ctx context.Context, req resource
 			"Egress private endpoints cannot be created on Azure clusters",
 		)
 		return
-	} else if cluster.Config.Dedicated == nil {
+	} else if cluster.Config.Serverless != nil {
 		resp.Diagnostics.AddError(
 			"Error creating egress private endpoint",
 			"Egress private endpoints cannot be created on serverless clusters",

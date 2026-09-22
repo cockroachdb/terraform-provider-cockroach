@@ -4286,7 +4286,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
 		plan := &CockroachCluster{DedicatedConfig: ded(v8, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.Equal(t, int64(8), plan.DedicatedConfig.NumVirtualCpus.ValueInt64())
 		require.True(t, plan.DedicatedConfig.MachineType.IsUnknown())
 		require.True(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
@@ -4297,7 +4297,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
 		plan := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", nullI, nullS)}}
 
-		require.False(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.False(t, coordinateMachinePlan(config, plan, state))
 		require.Equal(t, mtSmall, plan.DedicatedConfig.MachineType)
 		require.Equal(t, float64(8), plan.DedicatedConfig.MemoryGib.ValueFloat64())
 	})
@@ -4307,7 +4307,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
 		plan := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v8, mtSmall), region("us-east-2", v8, mtLarge)}}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.True(t, plan.Regions[0].MachineType.IsUnknown()) // resized region's sibling
 		require.Equal(t, mtLarge, plan.Regions[1].MachineType)   // unchanged region kept
 		require.True(t, plan.DedicatedConfig.NumVirtualCpus.IsUnknown())
@@ -4323,7 +4323,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
 		plan := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-2", v8, mtSmall), region("us-east-1", v4, mtLarge)}}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.Equal(t, mtLarge, plan.Regions[0].MachineType)       // us-east-2 corrected
 		require.Equal(t, mtSmall, plan.Regions[1].MachineType)       // us-east-1 corrected
 		require.False(t, plan.DedicatedConfig.MemoryGib.IsUnknown()) // not a resize
@@ -4334,7 +4334,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: ded(v8, mtLarge, 16), Regions: []Region{region("us-east-1", v8, mtLarge), region("us-east-2", v8, mtLarge), region("us-west-2", v4, mtSmall)}}
 		plan := &CockroachCluster{DedicatedConfig: ded(v8, mtLarge, 16), Regions: []Region{region("us-east-2", v8, mtLarge), region("us-west-2", v4, mtSmall)}}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.True(t, plan.DedicatedConfig.NumVirtualCpus.IsUnknown())
 		require.True(t, plan.DedicatedConfig.MachineType.IsUnknown())
 		require.True(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
@@ -4345,7 +4345,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: ded(v4, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
 		plan := &CockroachCluster{DedicatedConfig: ded(v8, mtSmall, 8), Regions: []Region{region("us-east-1", v4, mtSmall), region("us-east-2", v8, mtLarge)}}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.True(t, plan.Regions[0].NumVirtualCpus.IsNull())
 		require.True(t, plan.Regions[0].MachineType.IsNull())
 		require.True(t, plan.Regions[1].NumVirtualCpus.IsNull())
@@ -4366,7 +4366,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 	}
 	storage15, storage100 := types.Int64Value(15), types.Int64Value(100)
 	iops300 := types.Int64Value(300)
-	// A fresh slice per use: coordinateDedicatedMachinePlan mutates plan.Regions,
+	// A fresh slice per use: coordinateMachinePlan mutates plan.Regions,
 	// so config, state and plan must not share backing storage.
 	regions := func() []Region { return []Region{region("us-east-1", nullI, nullS)} }
 
@@ -4375,7 +4375,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: dedStorage(storage15, iops300), Regions: regions()}
 		plan := &CockroachCluster{DedicatedConfig: dedStorage(storage100, iops300), Regions: regions()}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.True(t, plan.DedicatedConfig.DiskIops.IsUnknown())
 		// Not a machine resize, so memory_gib must stay known.
 		require.False(t, plan.DedicatedConfig.MemoryGib.IsUnknown())
@@ -4389,7 +4389,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: dedStorage(storage15, iops300), Regions: regions()}
 		plan := &CockroachCluster{DedicatedConfig: dedStorage(unknownStorage, iops300), Regions: regions()}
 
-		require.True(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.True(t, coordinateMachinePlan(config, plan, state))
 		require.True(t, plan.DedicatedConfig.DiskIops.IsUnknown())
 	})
 
@@ -4398,7 +4398,7 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: dedStorage(storage15, iops300), Regions: regions()}
 		plan := &CockroachCluster{DedicatedConfig: dedStorage(storage15, iops300), Regions: regions()}
 
-		require.False(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.False(t, coordinateMachinePlan(config, plan, state))
 		require.Equal(t, int64(300), plan.DedicatedConfig.DiskIops.ValueInt64())
 	})
 
@@ -4408,8 +4408,21 @@ func TestCoordinateDedicatedMachinePlan(t *testing.T) {
 		state := &CockroachCluster{DedicatedConfig: dedStorage(storage15, iops300), Regions: regions()}
 		plan := &CockroachCluster{DedicatedConfig: dedStorage(storage100, iops500), Regions: regions()}
 
-		require.False(t, coordinateDedicatedMachinePlan(config, plan, state))
+		require.False(t, coordinateMachinePlan(config, plan, state))
 		require.Equal(t, int64(500), plan.DedicatedConfig.DiskIops.ValueInt64())
+	})
+
+	t.Run("host resize writes back to the host block", func(t *testing.T) {
+		host := func(vcpus types.Int64, mem float64) *HostClusterConfig {
+			return &HostClusterConfig{NumVirtualCpus: vcpus, MemoryGib: types.Float64Value(mem)}
+		}
+		config := &CockroachCluster{HostConfig: host(v8, 8), Regions: regions()}
+		state := &CockroachCluster{HostConfig: host(v4, 8), Regions: regions()}
+		plan := &CockroachCluster{HostConfig: host(v8, 8), Regions: regions()}
+
+		require.True(t, coordinateMachinePlan(config, plan, state))
+		require.Equal(t, int64(8), plan.HostConfig.NumVirtualCpus.ValueInt64())
+		require.True(t, plan.HostConfig.MemoryGib.IsUnknown())
 	})
 }
 
@@ -4544,6 +4557,14 @@ func TestDerivePlanType(t *testing.T) {
 			name: "Dedicated Config",
 			cluster: CockroachCluster{
 				DedicatedConfig: &DedicatedClusterConfig{},
+			},
+			expected: client.PLANTYPE_ADVANCED,
+			err:      nil,
+		},
+		{
+			name: "Host Config",
+			cluster: CockroachCluster{
+				HostConfig: &HostClusterConfig{},
 			},
 			expected: client.PLANTYPE_ADVANCED,
 			err:      nil,
@@ -5467,6 +5488,464 @@ func TestLoadClusterToTerraformStateEditionPlanExclusivity(t *testing.T) {
 		require.Equal(t, string(client.PLANTYPE_ADVANCED), state.Plan.ValueString())
 		require.True(t, state.Edition.IsNull(), "edition should be null when plan is reported")
 	})
+}
+
+// TestAccHostClusterResource creates a host cluster against the real API, scales
+// it, and verifies that import and the data source round-trip the host block.
+func TestAccHostClusterResource(t *testing.T) {
+	t.Skip("Skipping until acceptance tests can target a Cockroach Continuum " +
+		"organization; see CNSL-2895.")
+	t.Parallel()
+	clusterName := fmt.Sprintf("%s-host-%s", tfTestPrefix, GenerateRandomString(3))
+
+	cfg := func(storage, nodes int) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  edition        = "MISSION_CRITICAL"
+  host = {
+    storage_gib      = %d
+    num_virtual_cpus = 4
+  }
+  regions = [
+    { name = "`+testRegion+`", node_count = %d },
+  ]
+}
+
+data "cockroach_cluster" "test" {
+  id = cockroach_cluster.test.id
+}
+`, clusterName, storage, nodes)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               false,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg(15, 3),
+				Check: resource.ComposeTestCheckFunc(
+					testCheckCockroachClusterExists("cockroach_cluster.test"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "host.num_virtual_cpus", "4"),
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "dedicated.machine_type"),
+					resource.TestCheckResourceAttr("data.cockroach_cluster.test", "host.num_virtual_cpus", "4"),
+				),
+			},
+			{
+				Config: cfg(35, 6),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "host.storage_gib", "35"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.node_count", "6"),
+				),
+			},
+			{
+				ResourceName:      "cockroach_cluster.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+				// Import has no plan to compare against, so it surfaces the
+				// per-region vCPU count the server reports. A cluster sized
+				// through the cluster-wide host block leaves that field null.
+				// See CC-37253.
+				ImportStateVerifyIgnore: []string{"regions.0.num_virtual_cpus"},
+			},
+		},
+	})
+}
+
+// TestIntegrationHostClusterResource verifies that a host cluster is created and
+// updated through the host specification rather than the dedicated one.
+func TestIntegrationHostClusterResource(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-host-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	edition := client.EDITIONTYPE_MISSION_CRITICAL
+	visibility := client.NETWORKVISIBILITYTYPE_PRIVATE
+	hostCluster := func(storage int32) client.Cluster {
+		return client.Cluster{
+			Id:                clusterID,
+			Name:              clusterName,
+			CockroachVersion:  minSupportedClusterPatchVersion,
+			CloudProvider:     client.CLOUDPROVIDERTYPE_GCP,
+			State:             client.CLUSTERSTATETYPE_CREATED,
+			Edition:           &edition,
+			NetworkVisibility: &visibility,
+			Config: client.ClusterConfig{
+				Host: &client.HostClusterConfig{
+					MachineType: "n2-standard-4", NumVirtualCpus: 4, StorageGib: storage, MemoryGib: 16,
+				},
+			},
+			Regions: []client.Region{{Name: testRegion, NodeCount: 3}},
+		}
+	}
+	initial := hostCluster(15)
+	resized := hostCluster(100)
+	current := &initial
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+			if req.Spec.Dedicated != nil {
+				return nil, nil, fmt.Errorf("expected a host spec, got a dedicated one")
+			}
+			host := req.Spec.Host
+			if host == nil {
+				return nil, nil, fmt.Errorf("expected a host spec")
+			}
+			if host.Hardware.MachineSpec == nil || host.Hardware.MachineSpec.NumVirtualCpus == nil ||
+				*host.Hardware.MachineSpec.NumVirtualCpus != 4 {
+				return nil, nil, fmt.Errorf("expected a cluster-wide 4 vCPU machine spec, got %+v", host.Hardware.MachineSpec)
+			}
+			if host.RegionNodes[testRegion] != 3 {
+				return nil, nil, fmt.Errorf("expected 3 nodes in %s, got %+v", testRegion, host.RegionNodes)
+			}
+			if host.NetworkVisibility != nil {
+				return nil, nil, fmt.Errorf("expected the server to decide network visibility, got %v", *host.NetworkVisibility)
+			}
+			return &initial, nil, nil
+		})
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.Cluster, *http.Response, error) {
+			return current, httpOk, nil
+		}).AnyTimes()
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, spec *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			if spec.Dedicated != nil {
+				return nil, nil, fmt.Errorf("expected a host spec, got a dedicated one")
+			}
+			host := spec.Host
+			if host == nil || host.Hardware == nil || host.Hardware.StorageGib == nil {
+				return nil, nil, fmt.Errorf("expected a host hardware update, got %+v", host)
+			}
+			if *host.Hardware.StorageGib != 100 {
+				return nil, nil, fmt.Errorf("expected a resize to 100 GiB, got %d", *host.Hardware.StorageGib)
+			}
+			current = &resized
+			return &resized, httpOk, nil
+		})
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	cfg := func(storage int) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  edition        = "MISSION_CRITICAL"
+  host = {
+    num_virtual_cpus = 4
+    storage_gib      = %d
+  }
+  regions = [{ name = "`+testRegion+`", node_count = 3 }]
+}
+`, clusterName, storage)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: cfg(15),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "host.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "host.memory_gib", "16"),
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "dedicated.machine_type"),
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "plan"),
+				),
+			},
+			{
+				Config: cfg(100),
+				Check:  resource.TestCheckResourceAttr("cockroach_cluster.test", "host.storage_gib", "100"),
+			},
+			{
+				ResourceName:      "cockroach_cluster.test",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
+// TestIntegrationHostClusterPerRegionSizing verifies that per-region sizing on a
+// host cluster is sent as region_machine_specs and that the machine type the API
+// reports is not read back.
+func TestIntegrationHostClusterPerRegionSizing(t *testing.T) {
+	clusterName := fmt.Sprintf("%s-host-hetero-%s", tfTestPrefix, GenerateRandomString(3))
+	clusterID := uuid.Nil.String()
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	edition := client.EDITIONTYPE_MISSION_CRITICAL
+	visibility := client.NETWORKVISIBILITYTYPE_PRIVATE
+	cluster := client.Cluster{
+		Id:                clusterID,
+		Name:              clusterName,
+		CockroachVersion:  minSupportedClusterPatchVersion,
+		CloudProvider:     client.CLOUDPROVIDERTYPE_GCP,
+		State:             client.CLUSTERSTATETYPE_CREATED,
+		Edition:           &edition,
+		NetworkVisibility: &visibility,
+		Config: client.ClusterConfig{
+			Host: &client.HostClusterConfig{
+				MachineType: "n2-standard-4", NumVirtualCpus: 4, StorageGib: 15, MemoryGib: 16,
+			},
+		},
+		Regions: []client.Region{
+			{Name: "us-east1", NodeCount: 3, NumVirtualCpus: ptr(int32(4)), MachineType: ptr("n2-standard-4")},
+			{Name: "us-west2", NodeCount: 3, NumVirtualCpus: ptr(int32(8)), MachineType: ptr("n2-standard-8")},
+		},
+	}
+
+	s.EXPECT().CreateCluster(gomock.Any(), gomock.Any()).DoAndReturn(
+		func(_ context.Context, req *client.CreateClusterRequest) (*client.Cluster, *http.Response, error) {
+			host := req.Spec.Host
+			if host == nil || host.RegionMachineSpecs == nil {
+				return nil, nil, fmt.Errorf("expected region_machine_specs on the host spec, got %+v", host)
+			}
+			specs := *host.RegionMachineSpecs
+			if len(specs) != 2 || *specs["us-east1"].NumVirtualCpus != 4 || *specs["us-west2"].NumVirtualCpus != 8 {
+				return nil, nil, fmt.Errorf("unexpected region_machine_specs: %+v", specs)
+			}
+			if host.Hardware.MachineSpec != nil {
+				return nil, nil, fmt.Errorf("cluster-wide machine_spec must not be sent alongside region_machine_specs")
+			}
+			return &cluster, nil, nil
+		})
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = "%s"
+  cloud_provider = "GCP"
+  edition        = "MISSION_CRITICAL"
+  host           = { storage_gib = 15 }
+  regions = [
+    { name = "us-east1", node_count = 3, num_virtual_cpus = 4 },
+    { name = "us-west2", node_count = 3, num_virtual_cpus = 8 },
+  ]
+}
+`, clusterName),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.0.num_virtual_cpus", "4"),
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.1.num_virtual_cpus", "8"),
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "regions.0.machine_type"),
+					resource.TestCheckNoResourceAttr("cockroach_cluster.test", "regions.1.machine_type"),
+				),
+			},
+		},
+	})
+}
+
+// TestLoadClusterToTerraformStateHost verifies the read path populates the host
+// block and leaves the dedicated block nil.
+func TestLoadClusterToTerraformStateHost(t *testing.T) {
+	ctx := context.Background()
+	edition := client.EDITIONTYPE_MISSION_CRITICAL
+	visibility := client.NETWORKVISIBILITYTYPE_PRIVATE
+	cluster := client.Cluster{
+		Id:                uuid.Must(uuid.NewRandom()).String(),
+		Name:              "host-read-test",
+		CockroachVersion:  minSupportedClusterPatchVersion,
+		CloudProvider:     client.CLOUDPROVIDERTYPE_GCP,
+		State:             client.CLUSTERSTATETYPE_CREATED,
+		Edition:           &edition,
+		NetworkVisibility: &visibility,
+		Regions: []client.Region{{
+			Name: testRegion, NodeCount: 3,
+			NumVirtualCpus: ptr(int32(4)), MachineType: ptr("n2-standard-4"),
+		}},
+	}
+	cluster.Config.Host = &client.HostClusterConfig{
+		MachineType:    "n2-standard-4",
+		NumVirtualCpus: 4,
+		StorageGib:     15,
+		MemoryGib:      16,
+		DiskIops:       450,
+	}
+
+	t.Run("populates the host block", func(t *testing.T) {
+		var state CockroachCluster
+		diags := loadClusterToTerraformState(ctx, &cluster, nil, &state, nil)
+		require.False(t, diags.HasError(), "unexpected errors: %v", diags.Errors())
+		require.Nil(t, state.DedicatedConfig)
+		require.NotNil(t, state.HostConfig)
+		require.Equal(t, int64(4), state.HostConfig.NumVirtualCpus.ValueInt64())
+		require.Equal(t, int64(15), state.HostConfig.StorageGib.ValueInt64())
+		require.Equal(t, float64(16), state.HostConfig.MemoryGib.ValueFloat64())
+		require.Equal(t, int64(450), state.HostConfig.DiskIops.ValueInt64())
+		require.True(t, state.Plan.IsNull())
+		require.Len(t, state.Regions, 1)
+		require.True(t, state.Regions[0].MachineType.IsNull())
+		require.Equal(t, int64(4), state.Regions[0].NumVirtualCpus.ValueInt64())
+	})
+}
+
+// TestIntegrationHostClusterConfigValidation verifies the host block's
+// configuration rules are enforced at plan time.
+func TestIntegrationHostClusterConfigValidation(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+
+	hostConfig := func(extraCluster, extraHost string) string {
+		return fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+    name           = "host-validation"
+    cloud_provider = "GCP"
+    %s
+    host = {
+        num_virtual_cpus = 4
+        storage_gib      = 15
+        %s
+    }
+    regions = [{
+        name       = "`+testRegion+`"
+        node_count = 3
+    }]
+}
+`, extraCluster, extraHost)
+	}
+
+	for _, tc := range []struct {
+		name        string
+		config      string
+		expectError *regexp.Regexp
+	}{
+		{
+			name:        "standard edition",
+			config:      hostConfig(`edition = "STANDARD"`, ""),
+			expectError: regexp.MustCompile(`(?s)Host clusters require the MISSION_CRITICAL edition`),
+		},
+		{
+			name:        "no edition",
+			config:      hostConfig("", ""),
+			expectError: regexp.MustCompile(`(?s)Host clusters require edition to be set to MISSION_CRITICAL`),
+		},
+		{
+			name:        "host with plan",
+			config:      hostConfig(`plan = "ADVANCED"`, ""),
+			expectError: regexp.MustCompile(`(?s)Invalid Attribute Combination`),
+		},
+		{
+			name: "host with dedicated",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "host-validation"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    host      = { num_virtual_cpus = 4, storage_gib = 15 }
+    dedicated = { num_virtual_cpus = 4, storage_gib = 15 }
+    regions = [{
+        name       = "` + testRegion + `"
+        node_count = 3
+    }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)Invalid Attribute Combination`),
+		},
+		{
+			name: "per-region machine types with cluster-wide sizing",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "host-validation"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    host = { num_virtual_cpus = 4, storage_gib = 15 }
+    regions = [{
+        name             = "` + testRegion + `"
+        node_count       = 3
+        num_virtual_cpus = 4
+    }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)cluster-wide via\s+host\.num_virtual_cpus`),
+		},
+		{
+			name: "per-region machine type",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "host-validation"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    host = { storage_gib = 15 }
+    regions = [{
+        name         = "` + testRegion + `"
+        node_count   = 3
+        machine_type = "n2-standard-4"
+    }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)Host clusters are sized with num_virtual_cpus`),
+		},
+		{
+			name: "dedicated mission critical with public network visibility",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "host-validation"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    dedicated = {
+        num_virtual_cpus           = 4
+        storage_gib                = 15
+        private_network_visibility = false
+    }
+    regions = [{
+        name       = "` + testRegion + `"
+        node_count = 3
+    }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)Mission Critical clusters always use private IP addresses`),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config:      tc.config,
+						ExpectError: tc.expectError,
+					},
+				},
+			})
+		})
+	}
 }
 
 // editionClusterConfig builds a config whose shape matches the edition:

@@ -60,6 +60,46 @@ type DedicatedClusterConfig struct {
 	SupportsClusterVirtualization types.Bool    `tfsdk:"supports_cluster_virtualization"`
 }
 
+// HostClusterConfig describes the hardware of a host cluster. It is the
+// dedicated hardware block minus supports_cluster_virtualization, which the API
+// reserves for hosts, minus private_network_visibility, which is always
+// private, and minus machine_type, which is legacy. Sizing is always by
+// num_virtual_cpus, so the dedicated view below leaves the machine type null.
+type HostClusterConfig struct {
+	NumVirtualCpus types.Int64   `tfsdk:"num_virtual_cpus"`
+	StorageGib     types.Int64   `tfsdk:"storage_gib"`
+	MemoryGib      types.Float64 `tfsdk:"memory_gib"`
+	DiskIops       types.Int64   `tfsdk:"disk_iops"`
+	CidrRange      types.String  `tfsdk:"cidr_range"`
+}
+
+// hardware returns a copy of the block in the dedicated shape it is a subset
+// of, so the shared machine-plan and hardware-spec helpers take one type.
+// Mutations must be written back with applyHardware.
+func (c *HostClusterConfig) hardware() *DedicatedClusterConfig {
+	if c == nil {
+		return nil
+	}
+	return &DedicatedClusterConfig{
+		NumVirtualCpus: c.NumVirtualCpus,
+		StorageGib:     c.StorageGib,
+		MemoryGib:      c.MemoryGib,
+		DiskIops:       c.DiskIops,
+		CidrRange:      c.CidrRange,
+	}
+}
+
+func (c *HostClusterConfig) applyHardware(hw *DedicatedClusterConfig) {
+	if c == nil || hw == nil {
+		return
+	}
+	c.NumVirtualCpus = hw.NumVirtualCpus
+	c.StorageGib = hw.StorageGib
+	c.MemoryGib = hw.MemoryGib
+	c.DiskIops = hw.DiskIops
+	c.CidrRange = hw.CidrRange
+}
+
 type ServerlessClusterConfig struct {
 	// TODO(andyk): SpendLimit is deprecated and will be removed in a future
 	// release.
@@ -134,6 +174,7 @@ type CockroachCluster struct {
 	AccountId            types.String             `tfsdk:"account_id"`
 	CustomerCloudAccount *CustomerCloudAccount    `tfsdk:"customer_cloud_account"`
 	DedicatedConfig      *DedicatedClusterConfig  `tfsdk:"dedicated"`
+	HostConfig           *HostClusterConfig       `tfsdk:"host"`
 	ServerlessConfig     *ServerlessClusterConfig `tfsdk:"serverless"`
 	Regions              []Region                 `tfsdk:"regions"`
 	CockroachVersion     types.String             `tfsdk:"cockroach_version"`
@@ -165,6 +206,7 @@ type CockroachClusterDataSource struct {
 	CustomerCloudAccount *CustomerCloudAccount    `tfsdk:"customer_cloud_account"`
 	DedicatedConfig      *DedicatedClusterConfig  `tfsdk:"dedicated"`
 	ServerlessConfig     *ServerlessClusterConfig `tfsdk:"serverless"`
+	HostConfig           *HostClusterConfig       `tfsdk:"host"`
 	Regions              []Region                 `tfsdk:"regions"`
 	CockroachVersion     types.String             `tfsdk:"cockroach_version"`
 	FullVersion          types.String             `tfsdk:"full_version"`
@@ -178,6 +220,18 @@ type CockroachClusterDataSource struct {
 	DeleteProtection     types.Bool               `tfsdk:"delete_protection"`
 	BackupConfig         types.Object             `tfsdk:"backup_config"`
 	Labels               types.Map                `tfsdk:"labels"`
+}
+
+// hardwareConfig returns the dedicated or host block in the dedicated shape,
+// or nil when the cluster has neither.
+func (c *CockroachCluster) hardwareConfig() *DedicatedClusterConfig {
+	if c == nil {
+		return nil
+	}
+	if c.DedicatedConfig != nil {
+		return c.DedicatedConfig
+	}
+	return c.HostConfig.hardware()
 }
 
 type AllowlistEntry struct {

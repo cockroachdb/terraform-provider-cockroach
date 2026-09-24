@@ -5906,6 +5906,22 @@ resource "cockroach_cluster" "test" {
 			expectError: regexp.MustCompile(`(?s)Host clusters are sized with num_virtual_cpus`),
 		},
 		{
+			name: "no sizing",
+			config: `
+resource "cockroach_cluster" "test" {
+    name           = "host-validation"
+    cloud_provider = "GCP"
+    edition        = "MISSION_CRITICAL"
+    host = { storage_gib = 15 }
+    regions = [{
+        name       = "` + testRegion + `"
+        node_count = 3
+    }]
+}
+`,
+			expectError: regexp.MustCompile(`(?s)Set num_virtual_cpus either cluster-wide`),
+		},
+		{
 			name: "dedicated mission critical with public network visibility",
 			config: `
 resource "cockroach_cluster" "test" {

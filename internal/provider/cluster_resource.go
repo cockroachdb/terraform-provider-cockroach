@@ -462,7 +462,7 @@ func (r *clusterResource) Schema(
 						PlanModifiers: []planmodifier.Int64{
 							int64planmodifier.UseStateForUnknown(),
 						},
-						Description: "Number of virtual CPUs per node in the cluster. Must be at least 4. Mutually exclusive with per-region `regions[].num_virtual_cpus`.",
+						Description: "Number of virtual CPUs per node in the cluster. Must be at least 4. Mutually exclusive with per-region `regions[].num_virtual_cpus`. One of `num_virtual_cpus` or `regions[].num_virtual_cpus` is required.",
 					},
 					"cidr_range": schema.StringAttribute{
 						Optional:    true,
@@ -766,6 +766,14 @@ func (r *clusterResource) ValidateConfig(
 	if anyRegionHasMachineType && !allRegionsHaveMachineType {
 		resp.Diagnostics.AddError("Invalid Attribute Combination",
 			"When any region specifies num_virtual_cpus or machine_type, every region must specify one.")
+	}
+	// A host cluster with no sizing anywhere is rejected by the server, so it is
+	// caught here instead. An empty region list means the regions are unknown,
+	// which leaves nothing to check.
+	if cluster.HostConfig != nil && len(cluster.Regions) > 0 &&
+		!clusterHasMachineType && !anyRegionHasMachineType {
+		resp.Diagnostics.AddError("Missing Attribute Configuration",
+			"Set num_virtual_cpus either cluster-wide via host.num_virtual_cpus or per-region via regions[].num_virtual_cpus.")
 	}
 }
 

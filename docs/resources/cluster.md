@@ -342,7 +342,7 @@ Optional:
 
 - `cidr_range` (String) The IPv4 range in CIDR format that will be used by the cluster. This is supported only on GCP, and must have a subnet mask no larger than /19. Defaults to "172.28.0.0/14". This cannot be changed after cluster creation.
 - `disk_iops` (Number) Number of disk I/O operations per second that are permitted on each node in the cluster. Only configurable for AWS clusters during creation. For GCP clusters, this value is ignored and the cloud provider default is used. Omit this attribute to use the server-side default based on machine type and storage size. The provisioned value may differ from the requested value.
-- `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster. Must be at least 4. Mutually exclusive with per-region `regions[].num_virtual_cpus`.
+- `num_virtual_cpus` (Number) Number of virtual CPUs per node in the cluster. Must be at least 4. Mutually exclusive with per-region `regions[].num_virtual_cpus`. One of `num_virtual_cpus` or `regions[].num_virtual_cpus` is required.
 - `storage_gib` (Number) Storage amount per node in GiB.
 
 Read-Only:

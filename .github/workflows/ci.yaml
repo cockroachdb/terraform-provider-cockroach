@@ -12,21 +12,21 @@ jobs:
     name: 'Golint'
     runs-on: ubuntu-latest
     steps:
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: 1.23
-          
       - name: Checkout sources
         uses: actions/checkout@v4
         with:
           ref: ${{github.event.pull_request.head.ref}}
           repository: ${{github.event.pull_request.head.repo.full_name}}
 
-      - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v4
+      - name: Setup Go
+        uses: actions/setup-go@v5
         with:
-          version: v1.64.8
+          go-version-file: 'go.mod'
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: v2.15.0
           working-directory: .
           args: --timeout=5m
 
@@ -44,7 +44,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23
+          go-version-file: 'go.mod'
 
       # We don't pin the version of terraform to ensure the tests run against
       # the latest CLI version.
@@ -65,7 +65,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23
+          go-version-file: 'go.mod'
 
       - name: Build terraform-provider
         run: make install
@@ -76,6 +76,11 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
 
       # Terraform fmt is run on the docs directory, don't bother pinning this
       # version.  This will install the latest version. If there is a difference

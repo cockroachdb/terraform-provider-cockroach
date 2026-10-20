@@ -1,6 +1,6 @@
 module github.com/cockroachdb/terraform-provider-cockroach
 
-go 1.23.9
+go 1.26.10
 
 require (
 	github.com/cockroachdb/cockroach-cloud-sdk-go/v10 v10.0.0

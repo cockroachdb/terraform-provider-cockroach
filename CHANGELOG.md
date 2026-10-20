@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- Released binaries are now built with Go 1.26.10, which picks up the Go
-  security fixes released since 1.23.9. Building the provider from source now
-  requires Go 1.26.10 or later.
-
 ### Added
 
 - Added a `host` block to the `cockroach_cluster` resource and data source for
@@ -21,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added configurable `timeouts` blocks (`create` / `update`) to the `cockroach_cluster` and `cockroach_cmek` resources, for example `create = "3h"` and `update = "4h"`. A value shorter than the corresponding default is rejected during validation. Behavior depends on whether a value is set:
   - When the block (or a specific timeout) is omitted, behavior is unchanged from previous releases: the previously-hardcoded defaults apply (1h create / 2h update for `cockroach_cluster`; 2h for `cockroach_cmek`), and each internal wait phase of an operation receives that budget as before.
   - When a value is explicitly set, it is treated as the total end-to-end budget for that operation, so it can be sized to a CI/CD wall-clock limit rather than applied per phase.
+
+### Changed
+
+- Released binaries are now built with Go 1.26.10. Building the provider from
+  source now requires Go 1.26.10 or later.
 
 ### Fixed
 

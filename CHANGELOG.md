@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Released binaries are now built with Go 1.26.10, which picks up the Go
+  security fixes released since 1.23.9. Building the provider from source now
+  requires Go 1.26.10 or later.
+
 ### Added
 
 - Added a `host` block to the `cockroach_cluster` resource and data source for

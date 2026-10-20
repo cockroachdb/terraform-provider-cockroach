@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -201,7 +202,7 @@ func TestEgressTrafficPolicyRetryFuncs(t *testing.T) {
 						Return(&http.Response{StatusCode: tc.statusCode}, nil)
 				} else {
 					mockService.EXPECT().SetEgressTrafficPolicy(gomock.Any(), clusterID, gomock.Any()).
-						Return(&http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
+						Return(&http.Response{StatusCode: tc.statusCode}, errors.New(tc.errorMsg))
 				}
 
 				retryErr := setEgressTrafficPolicyRetryFunc(context.Background(), mockService, clusterID, true)()

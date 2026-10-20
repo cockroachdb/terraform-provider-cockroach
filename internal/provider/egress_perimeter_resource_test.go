@@ -18,6 +18,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"os"
@@ -579,7 +580,7 @@ func TestRetryFuncBehavior(t *testing.T) {
 				clusterID := uuid.New().String()
 
 				mockService.EXPECT().SetEgressTrafficPolicy(gomock.Any(), clusterID, gomock.Any()).
-					Return(&http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
+					Return(&http.Response{StatusCode: tc.statusCode}, errors.New(tc.errorMsg))
 
 				retryErr := setEgressTrafficPolicyFunc(context.Background(), mockService, clusterID)()
 				assertRetryBehavior(t, tc, retryErr)
@@ -597,7 +598,7 @@ func TestRetryFuncBehavior(t *testing.T) {
 				addReq := &client.AddEgressRuleBody{Name: "test", Description: "test", Type: "FQDN", Destination: "example.com"}
 
 				mockService.EXPECT().AddEgressRule(gomock.Any(), clusterID, addReq).
-					Return(nil, &http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
+					Return(nil, &http.Response{StatusCode: tc.statusCode}, errors.New(tc.errorMsg))
 
 				var rule client.EgressRule
 				retryErr := createEgressRuleFunc(context.Background(), mockService, clusterID, addReq, &rule)()
@@ -615,7 +616,7 @@ func TestRetryFuncBehavior(t *testing.T) {
 				clusterID, ruleID := uuid.New().String(), uuid.New().String()
 
 				mockService.EXPECT().DeleteEgressRule(gomock.Any(), clusterID, ruleID, gomock.Any()).
-					Return(nil, &http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
+					Return(nil, &http.Response{StatusCode: tc.statusCode}, errors.New(tc.errorMsg))
 
 				retryErr := deleteEgressRuleFunc(context.Background(), mockService, clusterID, ruleID)()
 				assertRetryBehavior(t, tc, retryErr)
@@ -633,7 +634,7 @@ func TestRetryFuncBehavior(t *testing.T) {
 				editReq := &client.EditEgressRuleBody{}
 
 				mockService.EXPECT().EditEgressRule(gomock.Any(), clusterID, ruleID, editReq).
-					Return(nil, &http.Response{StatusCode: tc.statusCode}, fmt.Errorf(tc.errorMsg))
+					Return(nil, &http.Response{StatusCode: tc.statusCode}, errors.New(tc.errorMsg))
 
 				var rule client.EgressRule
 				retryErr := updateEgressRuleFunc(context.Background(), mockService, clusterID, ruleID, editReq, &rule)()

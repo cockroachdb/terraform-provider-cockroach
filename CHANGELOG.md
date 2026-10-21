@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.24.0] - 2026-10-21
+## [1.24.1] - 2026-10-21
 
 ### Added
 
@@ -22,6 +22,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Released binaries are now built with Go 1.26.10. Building the provider from
   source now requires Go 1.26.10 or later.
+
+- Releases no longer include a 32-bit Windows ARM (`windows_arm`) binary, which
+  Go 1.26 no longer supports. 64-bit Windows ARM (`windows_arm64`) is unaffected.
 
 ### Fixed
 

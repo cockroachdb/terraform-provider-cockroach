@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.24.0] - 2026-10-21
+
 ### Added
 
 - Added a `host` block to the `cockroach_cluster` resource and data source for

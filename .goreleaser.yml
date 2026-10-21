@@ -28,6 +28,9 @@ builds:
   ignore:
     - goos: darwin
       goarch: '386'
+    # Go dropped the 32-bit Windows ARM port; goreleaser still offers the pair.
+    - goos: windows
+      goarch: arm
   binary: '{{ .ProjectName }}_v{{ .Version }}'
 archives:
 - format: zip

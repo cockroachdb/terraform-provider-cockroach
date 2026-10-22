@@ -1,0 +1,1374 @@
+{
+  "version": 1,
+  "seed": 13974157022924561887,
+  "now": "2026-10-21T23:32:03Z",
+  "vars": {
+    "testRegion": "us-east1",
+    "testSecondRegion": "us-east4",
+    "testThirdRegion": "us-west1"
+  },
+  "interactions": [
+    {
+      "method": "POST",
+      "path": "/api/v1/clusters",
+      "request_body": {
+        "name": "tftest-serverless-uy",
+        "provider": "GCP",
+        "spec": {
+          "delete_protection": "DISABLED",
+          "serverless": {
+            "regions": [
+              "us-east1"
+            ],
+            "usage_limits": {
+              "request_unit_limit": "10000000000",
+              "storage_mib_limit": "102400"
+            }
+          }
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "10000000000",
+              "storage_mib_limit": "102400"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATING",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:10.785158Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "10000000000",
+              "storage_mib_limit": "102400"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATING",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:10.785158Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "10000000000",
+              "storage_mib_limit": "102400"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/backups-config",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "enabled": true,
+        "frequency_minutes": 1440,
+        "retention_days": 30
+      },
+      "count": 43
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {
+            "request_unit_limit": "1000000",
+            "storage_mib_limit": "1024"
+          }
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "1000000",
+              "storage_mib_limit": "1024"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "1000000",
+              "storage_mib_limit": "1024"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 6
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {}
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 6
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {
+            "request_unit_limit": "10000000000",
+            "storage_mib_limit": "102400"
+          }
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "10000000000",
+              "storage_mib_limit": "102400"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "10000000000",
+              "storage_mib_limit": "102400"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 6
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {}
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 11
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {
+            "request_unit_limit": "40000000",
+            "storage_mib_limit": "4096"
+          }
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "40000000",
+              "storage_mib_limit": "4096"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "request_unit_limit": "40000000",
+              "storage_mib_limit": "4096"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 7
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {}
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:32:12.917414Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 6
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "STANDARD",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {
+            "provisioned_virtual_cpus": "6"
+          }
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "account-id-1",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "provisioned_virtual_cpus": "6"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": "gcp-auth-principal-1"
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "STANDARD",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:33:03.793779Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "account-id-1",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": {
+              "provisioned_virtual_cpus": "6"
+            }
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": "gcp-auth-principal-1"
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "STANDARD",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:33:03.793779Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/backups-config",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "enabled": true,
+        "frequency_minutes": 60,
+        "retention_days": 30
+      },
+      "count": 5
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "parent_id": "root",
+        "plan": "BASIC",
+        "serverless": {
+          "primary_region": "",
+          "regions": [
+            "us-east1"
+          ],
+          "usage_limits": {}
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:33:10.412954Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:33:10.412954Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/backups-config",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "enabled": true,
+        "frequency_minutes": 1440,
+        "retention_days": 30
+      },
+      "count": 2
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-serverless-uy-22098",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-21T23:32:09.663019Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": "2026-10-21T23:33:20.663704Z",
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-serverless-uy",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-serverless-uy-22098.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-serverless-uy-22098.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "DELETED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-21T23:33:20.663854Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    }
+  ]
+}

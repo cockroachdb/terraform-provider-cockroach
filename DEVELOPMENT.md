@@ -191,6 +191,15 @@ names and times as the recording. Use `testNow()` instead of `time.Now()` for an
 config. Values of the `password`, `secret`, `api_key` and `azure_client_secret` fields are redacted, and the
 `Authorization` header is never stored.
 
+When a recording is saved, every UUID is replaced with a stable fake such as
+`00000000-0000-4000-8000-000000000001`, numbered by first appearance, and cloud account identifiers such as
+`account_id` and `gcp_auth_principal` become placeholders like `account-id-1`. Re-recording a test reuses the
+seed of its existing recording, so the test creates resources with the same names. Together these keep a
+re-recorded diff down to the lines that actually changed, and keep the test org's IDs out of the repo. Replay
+still matches because every ID the provider sends came from a response that was rewritten the same way. The
+exception is a real ID written into a test's config, which won't match its fake. Tests that do that can't be
+recorded as-is.
+
 Re-record a test whenever replay reports a request the recording doesn't have, which usually means the
 provider now sends a different request. A recording can't catch changes in API behavior, so live runs are
 still needed before a release.

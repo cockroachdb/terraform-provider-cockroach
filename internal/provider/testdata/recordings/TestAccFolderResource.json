@@ -1,0 +1,213 @@
+{
+  "version": 1,
+  "seed": 8675667043600718762,
+  "now": "2026-10-22T00:57:31Z",
+  "vars": {
+    "testRegion": "us-east1",
+    "testSecondRegion": "us-east4",
+    "testThirdRegion": "us-west1"
+  },
+  "interactions": [
+    {
+      "method": "POST",
+      "path": "/api/v1/folders",
+      "request_body": {
+        "labels": {
+          "cost-center": "12345",
+          "env": "production"
+        },
+        "name": "tftest-folder-ycng",
+        "parent_id": "root"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {
+          "cost-center": "12345",
+          "env": "production"
+        },
+        "name": "tftest-folder-ycng",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "root",
+        "path": [],
+        "resource_id": "00000000-0000-4000-8000-000000000002",
+        "resource_type": "FOLDER"
+      },
+      "count": 1
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/folders",
+      "request_body": {
+        "labels": {
+          "campaign": "98765",
+          "managed_by": "engineer_a"
+        },
+        "name": "tftest-folder-gkvb",
+        "parent_id": "00000000-0000-4000-8000-000000000002"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {
+          "campaign": "98765",
+          "managed_by": "engineer_a"
+        },
+        "name": "tftest-folder-gkvb",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "00000000-0000-4000-8000-000000000002",
+        "path": [
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "name": "tftest-folder-ycng"
+          }
+        ],
+        "resource_id": "00000000-0000-4000-8000-000000000003",
+        "resource_type": "FOLDER"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000003",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {
+          "campaign": "98765",
+          "managed_by": "engineer_a"
+        },
+        "name": "tftest-folder-gkvb",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "00000000-0000-4000-8000-000000000002",
+        "path": [
+          {
+            "id": "00000000-0000-4000-8000-000000000002",
+            "name": "tftest-folder-ycng"
+          }
+        ],
+        "resource_id": "00000000-0000-4000-8000-000000000003",
+        "resource_type": "FOLDER"
+      },
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {
+          "cost-center": "12345",
+          "env": "production"
+        },
+        "name": "tftest-folder-ycng",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "root",
+        "path": [],
+        "resource_id": "00000000-0000-4000-8000-000000000002",
+        "resource_type": "FOLDER"
+      },
+      "count": 3
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000002",
+      "request_body": {
+        "labels": {},
+        "name": "tftest-folder-ycng",
+        "parent_id": "root"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {},
+        "name": "tftest-folder-ycng",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "root",
+        "path": [],
+        "resource_id": "00000000-0000-4000-8000-000000000002",
+        "resource_type": "FOLDER"
+      },
+      "count": 1
+    },
+    {
+      "method": "PATCH",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000003",
+      "request_body": {
+        "labels": {
+          "campaign": "87654",
+          "managed_by": "engineer_b"
+        },
+        "name": "tftest-folder-xhht",
+        "parent_id": "root"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {
+          "campaign": "87654",
+          "managed_by": "engineer_b"
+        },
+        "name": "tftest-folder-xhht",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "root",
+        "path": [],
+        "resource_id": "00000000-0000-4000-8000-000000000003",
+        "resource_type": "FOLDER"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000003",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {
+          "campaign": "87654",
+          "managed_by": "engineer_b"
+        },
+        "name": "tftest-folder-xhht",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "root",
+        "path": [],
+        "resource_id": "00000000-0000-4000-8000-000000000003",
+        "resource_type": "FOLDER"
+      },
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "labels": {},
+        "name": "tftest-folder-ycng",
+        "organization_id": "00000000-0000-4000-8000-000000000001",
+        "parent_id": "root",
+        "path": [],
+        "resource_id": "00000000-0000-4000-8000-000000000002",
+        "resource_type": "FOLDER"
+      },
+      "count": 3
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000003",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {},
+      "count": 1
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/folders/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {},
+      "count": 1
+    }
+  ]
+}

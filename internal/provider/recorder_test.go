@@ -24,12 +24,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"maps"
 	"math/rand/v2"
 	"net/http"
 	"net/url"
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -57,6 +60,23 @@ var redactedFields = map[string]bool{
 	"password":            true,
 	"secret":              true,
 }
+
+// normalizedFields hold cloud account identifiers that aren't UUIDs. Their
+// values are replaced everywhere in a recording, along with every UUID.
+var normalizedFields = map[string]bool{
+	"account_id":                        true,
+	"aws_account_id":                    true,
+	"egress_private_endpoint_principal": true,
+	"gcp_auth_principal":                true,
+}
+
+// minNormalizedLength keeps short values from being replaced inside unrelated
+// strings.
+const minNormalizedLength = 6
+
+const nilUUID = "00000000-0000-0000-0000-000000000000"
+
+var uuidPattern = regexp.MustCompile(`(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b`)
 
 // recording is the on-disk format of a golden file.
 type recording struct {
@@ -130,10 +150,17 @@ type recorder struct {
 	queues map[string][]*replayEntry
 }
 
+// newRecordingRecorder reuses the seed of an existing recording at path, so a
+// re-recorded test creates resources with the same names and its diff stays
+// small.
 func newRecordingRecorder(t testing.TB, path string) *recorder {
-	var seedBytes [8]byte
-	if _, err := cryptorand.Read(seedBytes[:]); err != nil {
-		t.Fatalf("generating recording seed: %v", err)
+	seed, ok := existingSeed(path)
+	if !ok {
+		var seedBytes [8]byte
+		if _, err := cryptorand.Read(seedBytes[:]); err != nil {
+			t.Fatalf("generating recording seed: %v", err)
+		}
+		seed = binary.LittleEndian.Uint64(seedBytes[:])
 	}
 	r := &recorder{
 		t:    t,
@@ -141,7 +168,7 @@ func newRecordingRecorder(t testing.TB, path string) *recorder {
 		path: path,
 		rec: recording{
 			Version: recordingVersion,
-			Seed:    binary.LittleEndian.Uint64(seedBytes[:]),
+			Seed:    seed,
 			Now:     time.Now().UTC().Truncate(time.Second),
 			Vars:    map[string]string{},
 		},
@@ -149,6 +176,18 @@ func newRecordingRecorder(t testing.TB, path string) *recorder {
 	}
 	r.rng = rand.New(rand.NewPCG(r.rec.Seed, r.rec.Seed))
 	return r
+}
+
+func existingSeed(path string) (uint64, bool) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, false
+	}
+	var rec recording
+	if err := json.Unmarshal(data, &rec); err != nil || rec.Seed == 0 {
+		return 0, false
+	}
+	return rec.Seed, true
 }
 
 func newReplayingRecorder(t testing.TB, path string) (*recorder, error) {
@@ -366,6 +405,9 @@ func (r *recorder) reportUnconsumed() {
 func (r *recorder) save() error {
 	r.mu.Lock()
 	data, err := marshalJSON(r.rec, true)
+	if err == nil {
+		data = normalizeIdentifiers(r.rec.Interactions, data)
+	}
 	r.mu.Unlock()
 	if err != nil {
 		return err
@@ -379,6 +421,77 @@ func (r *recorder) save() error {
 		return err
 	}
 	return os.WriteFile(r.path, append(data, '\n'), 0o644)
+}
+
+// normalizeIdentifiers replaces server-generated identifiers in a recording
+// with stable fakes, numbered by first appearance. Re-recording a test then
+// only changes the lines whose content actually changed, and the test org's
+// IDs and cloud accounts stay out of the repo. Replay still matches because
+// every identifier the provider sends came from a response that was rewritten
+// the same way.
+func normalizeIdentifiers(interactions []*interaction, data []byte) []byte {
+	// Replace longer values first, since a principal contains the account ID.
+	values := normalizedFieldValues(interactions)
+	slices.SortStableFunc(values, func(a, b normalizedValue) int { return len(b.value) - len(a.value) })
+	for _, v := range values {
+		data = bytes.ReplaceAll(data, []byte(v.value), []byte(v.fake))
+	}
+
+	fakes := map[string]string{}
+	return uuidPattern.ReplaceAllFunc(data, func(id []byte) []byte {
+		key := strings.ToLower(string(id))
+		if key == nilUUID {
+			return id
+		}
+		fake, ok := fakes[key]
+		if !ok {
+			fake = fmt.Sprintf("00000000-0000-4000-8000-%012d", len(fakes)+1)
+			fakes[key] = fake
+		}
+		return []byte(fake)
+	})
+}
+
+type normalizedValue struct {
+	value, fake string
+}
+
+// normalizedFieldValues returns the distinct values of normalizedFields in
+// first-appearance order, each with a fake named after the field it was first
+// seen in, such as "account-id-1".
+func normalizedFieldValues(interactions []*interaction) []normalizedValue {
+	var values []normalizedValue
+	seen := map[string]bool{}
+	perField := map[string]int{}
+	var walk func(v any)
+	walk = func(v any) {
+		switch v := v.(type) {
+		case map[string]any:
+			for _, k := range slices.Sorted(maps.Keys(v)) {
+				s, ok := v[k].(string)
+				if !ok || !normalizedFields[k] || len(s) < minNormalizedLength || seen[s] {
+					walk(v[k])
+					continue
+				}
+				seen[s] = true
+				perField[k]++
+				fake := fmt.Sprintf("%s-%d", strings.ReplaceAll(k, "_", "-"), perField[k])
+				values = append(values, normalizedValue{value: s, fake: fake})
+			}
+		case []any:
+			for _, child := range v {
+				walk(child)
+			}
+		}
+	}
+	for _, ix := range interactions {
+		for _, body := range []json.RawMessage{ix.RequestBody, ix.ResponseBody} {
+			if v, ok := decodeJSON(body); ok {
+				walk(v)
+			}
+		}
+	}
+	return values
 }
 
 // recorderTransport routes requests through the active recorder. With no

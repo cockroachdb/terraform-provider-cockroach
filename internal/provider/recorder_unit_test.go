@@ -233,6 +233,66 @@ func TestRecorderReplayMismatch(t *testing.T) {
 	require.Equal(t, recordedHits, hits.Load(), "replay must not call the server")
 }
 
+func TestRecorderNormalizesIdentifiers(t *testing.T) {
+	const (
+		clusterID = "5f1c2b7e-3d4a-4e8b-9c6d-2a7b8e9f0a1b"
+		orgID     = "C0FFEE00-1234-4ABC-8DEF-0123456789AB"
+		account   = "crl-test-abc1"
+		principal = "Sa@crl-test-abc1.iam.gserviceaccount.com"
+	)
+	clusterJSON := fmt.Sprintf(`{"id": %q, "organization_id": %q, "parent_id": %q, "account_id": %q, "gcp_auth_principal": %q}`,
+		clusterID, orgID, nilUUID, account, principal)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/api/v1/clusters", "/api/v1/clusters/" + clusterID:
+			fmt.Fprint(w, clusterJSON)
+		default:
+			t.Errorf("unexpected request %s %s", r.Method, r.URL)
+		}
+	}))
+	defer srv.Close()
+
+	// createAndRead creates a cluster and reads it back by the returned ID,
+	// like the provider does.
+	createAndRead := func(c *http.Client) string {
+		_, body, err := doRequest(t, c, http.MethodPost, srv.URL+"/api/v1/clusters", `{"name": "c"}`)
+		require.NoError(t, err)
+		id := uuidPattern.FindString(body)
+		_, body, err = doRequest(t, c, http.MethodGet, srv.URL+"/api/v1/clusters/"+id, "")
+		require.NoError(t, err)
+		return body
+	}
+
+	path := filepath.Join(t.TempDir(), "TestCluster.json")
+	tb := &fakeTB{TB: t}
+	rec := newRecordingRecorder(tb, path)
+	createAndRead(recorderClient(rec))
+	rec.finish()
+	require.Empty(t, tb.errors)
+
+	data, err := os.ReadFile(path)
+	require.NoError(t, err)
+	file := string(data)
+	for _, real := range []string{clusterID, strings.ToLower(orgID), orgID, account} {
+		require.NotContains(t, file, real)
+	}
+	require.Contains(t, file, `"/api/v1/clusters/00000000-0000-4000-8000-000000000001"`)
+	require.Contains(t, file, `"organization_id": "00000000-0000-4000-8000-000000000002"`)
+	require.Contains(t, file, `"parent_id": "`+nilUUID+`"`)
+	require.Contains(t, file, `"account_id": "account-id-1"`)
+	require.Contains(t, file, `"gcp_auth_principal": "gcp-auth-principal-1"`)
+
+	rep, err := newReplayingRecorder(tb, path)
+	require.NoError(t, err)
+	body := createAndRead(recorderClient(rep))
+	require.Contains(t, body, "00000000-0000-4000-8000-000000000001")
+	rep.finish()
+	require.Empty(t, tb.errors)
+
+	require.Equal(t, rec.rec.Seed, newRecordingRecorder(tb, path).rec.Seed, "re-recording must reuse the seed")
+}
+
 func TestRecorderRefusesToSaveAPIKey(t *testing.T) {
 	t.Setenv(CockroachAPIKey, "CCDB1_leaked")
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

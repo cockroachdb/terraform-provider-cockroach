@@ -1,0 +1,413 @@
+{
+  "version": 1,
+  "seed": 10856486386176105303,
+  "now": "2026-10-22T00:02:36Z",
+  "vars": {
+    "testRegion": "us-east1",
+    "testSecondRegion": "us-east4",
+    "testThirdRegion": "us-west1"
+  },
+  "interactions": [
+    {
+      "method": "POST",
+      "path": "/api/v1/clusters",
+      "request_body": {
+        "name": "tftest-sql-user-sram",
+        "provider": "GCP",
+        "spec": {
+          "delete_protection": "DISABLED",
+          "serverless": {
+            "regions": [
+              "us-east1"
+            ]
+          }
+        }
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-sql-user-sram-22099",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-22T00:02:37.395022Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-sql-user-sram",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-sql-user-sram-22099.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATING",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-22T00:02:37.816479Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-sql-user-sram-22099",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-22T00:02:37.395022Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-sql-user-sram",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-sql-user-sram-22099.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATING",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-22T00:02:37.816479Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-sql-user-sram-22099",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-22T00:02:37.395022Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": null,
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-sql-user-sram",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-sql-user-sram-22099.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "CREATED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-22T00:02:39.620752Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/backups-config",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "enabled": true,
+        "frequency_minutes": 1440,
+        "retention_days": 30
+      },
+      "count": 6
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users",
+      "request_body": {
+        "name": "cockroach-user",
+        "password": "REDACTED"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user"
+      },
+      "count": 1
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users",
+      "request_body": {
+        "name": "cockroach-user-wo",
+        "password": "REDACTED"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user-wo"
+      },
+      "count": 1
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users",
+      "request_body": {
+        "name": "cockroach-user-nopass",
+        "password": "REDACTED"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user-nopass"
+      },
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "pagination": null,
+        "users": [
+          {
+            "name": "cockroach-user"
+          },
+          {
+            "name": "cockroach-user-nopass"
+          },
+          {
+            "name": "cockroach-user-wo"
+          }
+        ]
+      },
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users",
+      "query": "pagination.limit=500&pagination.page=",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "pagination": null,
+        "users": [
+          {
+            "name": "cockroach-user"
+          },
+          {
+            "name": "cockroach-user-nopass"
+          },
+          {
+            "name": "cockroach-user-wo"
+          }
+        ]
+      },
+      "count": 17
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users/cockroach-user/password",
+      "request_body": {
+        "password": "REDACTED"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user"
+      },
+      "count": 1
+    },
+    {
+      "method": "PUT",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users/cockroach-user-wo/password",
+      "request_body": {
+        "password": "REDACTED"
+      },
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user-wo"
+      },
+      "count": 1
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users/cockroach-user-nopass",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user-nopass"
+      },
+      "count": 1
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users/cockroach-user",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user"
+      },
+      "count": 1
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002/sql-users/cockroach-user-wo",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "name": "cockroach-user-wo"
+      },
+      "count": 1
+    },
+    {
+      "method": "DELETE",
+      "path": "/api/v1/clusters/00000000-0000-4000-8000-000000000002",
+      "status": 200,
+      "content_type": "application/json",
+      "response_body": {
+        "account_id": "",
+        "azure_cluster_identity_client_id": "",
+        "cidr_range": "",
+        "cloud_provider": "GCP",
+        "cockroach_version": "v26.2.7",
+        "config": {
+          "serverless": {
+            "routing_id": "tftest-sql-user-sram-22099",
+            "upgrade_type": "AUTOMATIC",
+            "usage_limits": null
+          }
+        },
+        "created_at": "2026-10-22T00:02:37.395022Z",
+        "creator_id": "00000000-0000-4000-8000-000000000001",
+        "customer_cloud_account": null,
+        "delete_protection": "DISABLED",
+        "deleted_at": "2026-10-22T00:03:03.330054Z",
+        "egress_private_endpoint_principal": "",
+        "egress_traffic_policy": "UNSPECIFIED",
+        "id": "00000000-0000-4000-8000-000000000002",
+        "keychain_config": {
+          "aws_account_id": "",
+          "gcp_auth_principal": ""
+        },
+        "labels": {},
+        "name": "tftest-sql-user-sram",
+        "network_visibility": "PUBLIC",
+        "operation_status": "UNSPECIFIED",
+        "parent_id": "root",
+        "plan": "BASIC",
+        "regions": [
+          {
+            "disk_iops": 0,
+            "internal_dns": "",
+            "machine_type": "",
+            "name": "us-east1",
+            "node_count": 0,
+            "num_virtual_cpus": 0,
+            "primary": true,
+            "private_endpoint_dns": "tftest-sql-user-sram-22099.internal-jxf.gcp-us-east1.cockroachlabs.cloud",
+            "s3_vpc_endpoint_id": "",
+            "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+            "ui_dns": ""
+          }
+        ],
+        "sql_dns": "tftest-sql-user-sram-22099.jxf.gcp-us-east1.cockroachlabs.cloud",
+        "state": "DELETED",
+        "storage_type": "PROVISIONED",
+        "updated_at": "2026-10-22T00:03:03.330316Z",
+        "upgrade_status": "FINALIZED"
+      },
+      "count": 1
+    }
+  ]
+}

@@ -1641,7 +1641,7 @@ func (r *clusterResource) Update(
 		clusterReq.SetParentId(parentID)
 	}
 
-	if !(plan.DeleteProtection.IsNull() || plan.DeleteProtection.IsUnknown()) &&
+	if IsKnown(plan.DeleteProtection) &&
 		plan.DeleteProtection.ValueBool() != state.DeleteProtection.ValueBool() {
 		var deleteProtection client.DeleteProtectionStateType
 		if plan.DeleteProtection.ValueBool() {
@@ -1817,7 +1817,7 @@ var majorVersionRE = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 func parseMajorVersion(majorVersion string) (int, int, error) {
 	parts := majorVersionRE.FindStringSubmatch(majorVersion)
 	if len(parts) == 0 {
-		return 0, 0, fmt.Errorf("'%s' is not a valid major CockroachDB version.", majorVersion)
+		return 0, 0, fmt.Errorf("'%s' is not a valid major CockroachDB version", majorVersion)
 	}
 	// regex guarantees we'll have parsable ints
 	major, _ := strconv.Atoi(parts[1])

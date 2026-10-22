@@ -141,7 +141,7 @@ func resolveTimeout(
 // timeoutAttrConfigured reports whether the named timeout was explicitly set in
 // the practitioner's timeouts block (versus falling back to the default).
 func timeoutAttrConfigured(t tftimeouts.Value, name string) bool {
-	v, ok := t.Object.Attributes()[name]
+	v, ok := t.Attributes()[name]
 	if !ok {
 		return false
 	}

@@ -131,7 +131,7 @@ func TestRecordClusterCreation_ConcurrentWrites(t *testing.T) {
 		wg.Add(1)
 		go func(n int) {
 			defer wg.Done()
-			id := strings.Replace(strings.Repeat("0", 8), "0", string(rune('a'+n%26)), -1)
+			id := strings.ReplaceAll(strings.Repeat("0", 8), "0", string(rune('a'+n%26)))
 			recordClusterCreation(filePath, id, "cluster-"+id)
 		}(i)
 	}

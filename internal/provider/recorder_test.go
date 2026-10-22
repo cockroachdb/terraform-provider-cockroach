@@ -74,7 +74,10 @@ var normalizedFields = map[string]bool{
 // strings.
 const minNormalizedLength = 6
 
-const nilUUID = "00000000-0000-0000-0000-000000000000"
+// placeholderUUIDPrefix marks UUIDs the API never issues, such as the nil UUID
+// or notFoundResourceId. Tests write these into configs, so they're kept
+// as-is to keep matching the requests they produce.
+const placeholderUUIDPrefix = "00000000-0000-0000-0000-"
 
 var uuidPattern = regexp.MustCompile(`(?i)\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b`)
 
@@ -440,7 +443,7 @@ func normalizeIdentifiers(interactions []*interaction, data []byte) []byte {
 	fakes := map[string]string{}
 	return uuidPattern.ReplaceAllFunc(data, func(id []byte) []byte {
 		key := strings.ToLower(string(id))
-		if key == nilUUID {
+		if strings.HasPrefix(key, placeholderUUIDPrefix) {
 			return id
 		}
 		fake, ok := fakes[key]

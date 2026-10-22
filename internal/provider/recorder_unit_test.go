@@ -241,7 +241,7 @@ func TestRecorderNormalizesIdentifiers(t *testing.T) {
 		principal = "Sa@crl-test-abc1.iam.gserviceaccount.com"
 	)
 	clusterJSON := fmt.Sprintf(`{"id": %q, "organization_id": %q, "parent_id": %q, "account_id": %q, "gcp_auth_principal": %q}`,
-		clusterID, orgID, nilUUID, account, principal)
+		clusterID, orgID, notFoundResourceId, account, principal)
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		switch r.URL.Path {
@@ -279,7 +279,7 @@ func TestRecorderNormalizesIdentifiers(t *testing.T) {
 	}
 	require.Contains(t, file, `"/api/v1/clusters/00000000-0000-4000-8000-000000000001"`)
 	require.Contains(t, file, `"organization_id": "00000000-0000-4000-8000-000000000002"`)
-	require.Contains(t, file, `"parent_id": "`+nilUUID+`"`)
+	require.Contains(t, file, `"parent_id": "`+notFoundResourceId+`"`)
 	require.Contains(t, file, `"account_id": "account-id-1"`)
 	require.Contains(t, file, `"gcp_auth_principal": "gcp-auth-principal-1"`)
 

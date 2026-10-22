@@ -59,7 +59,7 @@ type clusterReadCounts struct {
 // a real cluster and SQL user. It will be skipped if TF_ACC isn't set.
 func TestAccSqlUserResource(t *testing.T) {
 	skipIfTerraformBelowWriteOnly(t)
-	t.Parallel()
+	accTestSetup(t)
 	clusterName := fmt.Sprintf("%s-sql-user-%s", tfTestPrefix, GenerateRandomString(4))
 	sqlUserNamePass := "cockroach-user"
 	sqlUserNameWO := "cockroach-user-wo"

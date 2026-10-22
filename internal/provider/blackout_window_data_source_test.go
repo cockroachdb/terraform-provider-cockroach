@@ -23,7 +23,7 @@ func TestAccBlackoutWindowDataSource(t *testing.T) {
 	// First BOW starts 8 days from now and lasts 2 hours.
 	// Second BOW starts 3 days after the first ends and lasts 2 hours.
 	// Third BOW starts 6 days after the second ends and lasts 2 hours.
-	firstStart := time.Now().AddDate(0, 0, 8).UTC()
+	firstStart := testNow().AddDate(0, 0, 8).UTC()
 	firstEnd := firstStart.Add(2 * time.Hour)
 
 	secondStart := firstStart.Add(72 * time.Hour)

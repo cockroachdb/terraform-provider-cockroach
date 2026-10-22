@@ -324,7 +324,7 @@ func (r *logExportConfigResource) Create(
 	}
 
 	apiLogExportObj := &client.LogExportClusterInfo{}
-	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
+	err = retryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
 		ctx, clusterUpdateTimeout, r.provider.service,
 		clusterID, cluster, logExportRequest, apiLogExportObj,
 	))
@@ -335,7 +335,7 @@ func (r *logExportConfigResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retryContext(ctx, clusterUpdateTimeout,
 		waitForLogExportReadyFunc(ctx, clusterID, r.provider.service, apiLogExportObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -379,7 +379,7 @@ func retryEnableLogExport(
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
-				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
 					return retry.NonRetryableError(
@@ -598,7 +598,7 @@ func (r *logExportConfigResource) Update(
 	clusterID := plan.ID.ValueString()
 	cluster := &client.Cluster{}
 	apiLogExportObj := &client.LogExportClusterInfo{}
-	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
+	err := retryContext(ctx, clusterUpdateTimeout, retryEnableLogExport(
 		ctx, clusterUpdateTimeout, r.provider.service,
 		clusterID, cluster, logExportRequest, apiLogExportObj,
 	))
@@ -609,7 +609,7 @@ func (r *logExportConfigResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retryContext(ctx, clusterUpdateTimeout,
 		waitForLogExportReadyFunc(ctx, clusterID, r.provider.service, apiLogExportObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -736,7 +736,7 @@ func (r *logExportConfigResource) Delete(
 					}
 					if httpResp.StatusCode == http.StatusServiceUnavailable {
 						// Wait for cluster to be ready.
-						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
 							return retry.NonRetryableError(
@@ -752,7 +752,7 @@ func (r *logExportConfigResource) Delete(
 		}
 	}
 
-	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
+	err := retryContext(ctx, clusterUpdateTimeout, retryFunc())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting log export config", err.Error(),

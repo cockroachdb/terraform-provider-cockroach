@@ -54,6 +54,28 @@ jobs:
       - name: Tests
         run: make test
 
+  # replay recorded acceptance tests without calling the CockroachDB Cloud API
+  acceptance-replay:
+    name: acceptance-replay
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
+      - name: Install terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Tests
+        run: make testreplay
+
   # pre job to build terraform-provider on every pull request
   pre-build:
     name: build-terraform-provider

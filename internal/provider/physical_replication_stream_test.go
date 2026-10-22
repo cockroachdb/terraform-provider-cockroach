@@ -550,7 +550,7 @@ func testWaitForPhysicalReplicationStreamFailoverReady(resourceName string) reso
 		id := rs.Primary.Attributes["id"]
 
 		ctx := context.Background()
-		return retry.RetryContext(ctx, pcrFailoverReadyTimeout, func() *retry.RetryError {
+		return retryContext(ctx, pcrFailoverReadyTimeout, func() *retry.RetryError {
 			traceAPICall("GetPhysicalReplicationStream")
 			stream, _, err := p.service.GetPhysicalReplicationStream(ctx, id)
 			if err != nil {

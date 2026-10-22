@@ -40,6 +40,10 @@ func addConfigureProviderErr(diagnostics *diag.Diagnostics) {
 	)
 }
 
+// retryContext is the retry loop used for all API polling. Tests replaying
+// recorded API traffic override it with a loop that doesn't sleep.
+var retryContext = retry.RetryContext
+
 // HookGlobal sets `*ptr = val` and returns a closure for restoring `*ptr` to
 // its original value. A runtime panic will occur if `val` is not assignable to
 // `*ptr`.
@@ -348,7 +352,7 @@ func testWaitForBackupReadyFunc(
 
 		// 15m chosen to allow 5m for first backup and a 10m buffer
 		t.Logf("Waiting for backups to be available for cluster %s", clusterID)
-		err := retry.RetryContext(ctx, 15*time.Minute, waitForBackupReadyFunc(ctx, clusterID, service))
+		err := retryContext(ctx, 15*time.Minute, waitForBackupReadyFunc(ctx, clusterID, service))
 		if err != nil {
 			return fmt.Errorf("failed waiting for backups: %v", err)
 		}

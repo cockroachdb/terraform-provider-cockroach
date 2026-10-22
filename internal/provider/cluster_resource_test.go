@@ -77,7 +77,7 @@ var httpFail = &http.Response{Status: http.StatusText(http.StatusBadRequest)}
 // TestAccServerlessClusterResource attempts to create, check, update, and
 // destroy a real cluster. It will be skipped if TF_ACC isn't set.
 func TestAccServerlessClusterResource(t *testing.T) {
-	t.Parallel()
+	accTestSetup(t)
 	clusterName := fmt.Sprintf("%s-serverless-%s", tfTestPrefix, GenerateRandomString(2))
 	resource.Test(t, resource.TestCase{
 		IsUnitTest:               false,
@@ -1917,7 +1917,7 @@ func makeDefaultServerlessResourceChecks(
 }
 
 func TestAccDedicatedClusterResource(t *testing.T) {
-	t.Parallel()
+	accTestSetup(t)
 	clusterName := fmt.Sprintf("%s-dedicated-%s", tfTestPrefix, GenerateRandomString(3))
 	testDedicatedClusterResource(t, clusterName, false)
 }

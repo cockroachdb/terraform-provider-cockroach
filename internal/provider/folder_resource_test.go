@@ -19,7 +19,7 @@ import (
 // TestAccFolderResource attempts to create, check, update, and destroy real
 // folders. It will be skipped if TF_ACC isn't set.
 func TestAccFolderResource(t *testing.T) {
-	t.Parallel()
+	accTestSetup(t)
 	var (
 		folderName       = fmt.Sprintf("%s-folder-%s", tfTestPrefix, GenerateRandomString(4))
 		newFolderName    = fmt.Sprintf("%s-folder-%s", tfTestPrefix, GenerateRandomString(4))

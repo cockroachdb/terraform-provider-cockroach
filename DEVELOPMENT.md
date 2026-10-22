@@ -167,6 +167,34 @@ is unset. The key belongs to the `Cloud API Terraform Testing - Continuum` org (
 Admin, Billing Coordinator, Cluster Admin, and Folder Admin roles. CI passes it from the `COCKROACH_CONTINUUM_API_KEY`
 secret.
 
+### Recorded acceptance tests
+
+Acceptance tests that start with `accTestSetup(t)` instead of `t.Parallel()` can also run from a recording of
+their API traffic, which takes seconds instead of the minutes or hours a live run spends waiting on clusters.
+The `COCKROACH_TEST_RECORDING` env var selects the mode:
+
+- Unset: the test runs live and in parallel, as before.
+- `record`: the test runs live and sequentially, and if it passes, its traffic is saved to
+  `internal/provider/testdata/recordings/<TestName>.json`. Run it with
+  `make testrecord RUN='^TestAccFoo$'`, where `RUN` is a `go test -run` regex. It needs `COCKROACH_API_KEY` and
+  creates real resources.
+- `replay`: the test is served from its recording and never calls the API. Tests without a recording are
+  skipped. `make testreplay` runs every recorded test, and CI runs it on each pull request. `RUN` narrows it
+  down the same way.
+
+Replay matches each request by method, path and query. Reads (`GET`) are served in the order they were
+recorded, and the last response keeps being served once they run out. Mutations also have to match the
+recorded JSON body, but can arrive in any order. Identical consecutive responses are stored once with a
+`count`, and replay retries poll loops without sleeping. A recording stores the seed for
+`GenerateRandomString`, the time returned by `testNow()`, and the test regions, so a replay sends the same
+names and times as the recording. Use `testNow()` instead of `time.Now()` for any time that ends up in a
+config. Values of the `password`, `secret`, `api_key` and `azure_client_secret` fields are redacted, and the
+`Authorization` header is never stored.
+
+Re-record a test whenever replay reports a request the recording doesn't have, which usually means the
+provider now sends a different request. A recording can't catch changes in API behavior, so live runs are
+still needed before a release.
+
 ## Releasing
 
 The release process is documented in [RELEASE.md](RELEASE.md).

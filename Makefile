@@ -52,5 +52,17 @@ test:
 testacc:
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m -parallel 100
 
+# Record acceptance tests against the live API into
+# internal/provider/testdata/recordings. Select tests with a -run regex, for
+# example RUN='^(TestAccFoo|TestAccBar)$'.
+testrecord:
+	@test -n '$(value RUN)' || (echo "usage: make testrecord RUN='^TestAccFoo$$'" && exit 1)
+	COCKROACH_TEST_RECORDING=record TF_ACC=1 go test ./internal/provider -v -run '$(value RUN)' $(TESTARGS) -timeout 180m
+
+# Replay recorded acceptance tests without calling the API. Tests without a
+# recording are skipped. RUN optionally narrows the tests.
+testreplay:
+	COCKROACH_TEST_RECORDING=replay TF_ACC=1 go test ./internal/provider -v -run '$(or $(value RUN),^TestAcc)' $(TESTARGS) -timeout 30m
+
 cleanup-test-clusters:
 	bash scripts/cleanup-test-clusters.sh

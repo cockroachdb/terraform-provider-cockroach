@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   required for write-only headers). Increment `otlp_headers_wo_version` to rotate
   credentials. Ordinary updates preserve the credentials stored by Cockroach Cloud.
 
+- Added a record and replay mode for acceptance tests, so recorded tests can run
+  on every pull request without calling the CockroachDB Cloud API.
+
 ### Fixed
 
 - `cockroach_physical_replication_stream` no longer fails to apply with

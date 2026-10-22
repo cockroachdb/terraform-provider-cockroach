@@ -249,7 +249,7 @@ func (r *cmekResource) Create(
 		defer cancel()
 	}
 
-	err := retry.RetryContext(ctx, createTimeout,
+	err := retryContext(ctx, createTimeout,
 		retryEnableCMEKSpec(ctx, r.provider.service, clusterID, cluster, createTimeout, cmekSpec, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -259,7 +259,7 @@ func (r *cmekResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, createTimeout,
+	err = retryContext(ctx, createTimeout,
 		waitForCMEKReadyFunc(ctx, clusterID, r.provider.service, cmekObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -426,7 +426,7 @@ func (r *cmekResource) Update(
 			return
 		}
 
-		err = retry.RetryContext(ctx, updateTimeout,
+		err = retryContext(ctx, updateTimeout,
 			waitForClusterReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cluster))
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -452,7 +452,7 @@ func (r *cmekResource) Update(
 	}
 
 	var clusterInfo client.CMEKClusterInfo
-	err := retry.RetryContext(ctx, updateTimeout,
+	err := retryContext(ctx, updateTimeout,
 		waitForCMEKReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, &clusterInfo))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -617,7 +617,7 @@ func retryEnableCMEKSpec(
 			if httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable {
 				// Wait for cluster to be ready, honoring the caller's timeout
 				// budget rather than a fixed default.
-				clusterErr := retry.RetryContext(ctx, readinessTimeout,
+				clusterErr := retryContext(ctx, readinessTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
 					return retry.NonRetryableError(

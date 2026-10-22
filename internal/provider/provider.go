@@ -19,6 +19,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
@@ -32,6 +33,10 @@ import (
 
 // NewService overrides the client method for testing.
 var NewService = client.NewService
+
+// wrapTransport lets tests intercept the provider's HTTP traffic to record or
+// replay it.
+var wrapTransport = func(rt http.RoundTripper) http.RoundTripper { return rt }
 
 // provider satisfies the tfsdk.Provider interface and usually is included
 // with all Resource and DataSource implementations.
@@ -111,6 +116,7 @@ func (p *provider) Configure(
 	httpClient.Logger = &leveledTFLogger{baseCtx: ctx}
 	httpClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	httpClient.CheckRetry = retryGetRequestsOnly
+	httpClient.HTTPClient.Transport = wrapTransport(httpClient.HTTPClient.Transport)
 	cfg.HTTPClient = httpClient.StandardClient()
 
 	cl := client.NewClient(cfg)

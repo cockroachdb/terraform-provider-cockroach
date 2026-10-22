@@ -220,7 +220,7 @@ func (r *clusterRuntimeScanningResource) Delete(
 
 	clusterID := runtimeScanning.ClusterID.ValueString()
 	cluster := &client.Cluster{}
-	err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	err := retryContext(ctx, clusterUpdateTimeout,
 		retryDisableClusterRuntimeScanning(ctx, r.provider.service, clusterID, cluster))
 	if err != nil {
 		resp.Diagnostics.AddError("Error disabling runtime scanning", err.Error())
@@ -277,7 +277,7 @@ func (r *clusterRuntimeScanningResource) enableRuntimeScanning(
 	requestedType := client.RuntimeScanningType(runtimeScanning.Type.ValueString())
 	enableBody := client.NewEnableClusterRuntimeScanningBody(requestedType)
 	apiObj := &client.RuntimeScanningInfo{}
-	err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	err := retryContext(ctx, clusterUpdateTimeout,
 		retryEnableClusterRuntimeScanning(ctx, r.provider.service, clusterID, cluster, enableBody, apiObj))
 	if err != nil {
 		diags.AddError("Error enabling runtime scanning", err.Error())
@@ -298,7 +298,7 @@ func (r *clusterRuntimeScanningResource) enableRuntimeScanning(
 	// resource as disabled/drifted. The wait only succeeds once the read matches
 	// requestedType, so the state written above is already correct.
 	readyInfo := &client.RuntimeScanningInfo{}
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		waitForClusterRuntimeScanningReadyFunc(ctx, clusterID, requestedType, r.provider.service, readyInfo)); err != nil {
 		diags.AddError(
 			"Error enabling runtime scanning",
@@ -379,7 +379,7 @@ func handleClusterRuntimeScanningRetryError(
 ) *retry.RetryError {
 	if isClusterBusy(httpResp, apiErrMsg) {
 		// Wait for the cluster to be ready, then retry.
-		clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+		clusterErr := retryContext(ctx, clusterUpdateTimeout,
 			waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 		if clusterErr != nil {
 			return retry.NonRetryableError(

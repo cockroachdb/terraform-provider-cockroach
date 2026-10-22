@@ -114,7 +114,7 @@ func (r *metricExportPrometheusConfigResource) Create(
 	}
 
 	apiObj := &client.PrometheusMetricExportInfo{}
-	err = retry.RetryContext(ctx, metricExportEnableTimeout, retryEnablePrometheusMetricExport(
+	err = retryContext(ctx, metricExportEnableTimeout, retryEnablePrometheusMetricExport(
 		ctx, r.provider.service, clusterID, cluster,
 		apiObj,
 	))
@@ -125,7 +125,7 @@ func (r *metricExportPrometheusConfigResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, metricExportStableTimeout,
+	err = retryContext(ctx, metricExportStableTimeout,
 		waitForPrometheusMetricExportStableFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -172,7 +172,7 @@ func retryEnablePrometheusMetricExport(
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
-				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
 					return retry.NonRetryableError(
@@ -339,7 +339,7 @@ func (r *metricExportPrometheusConfigResource) Delete(
 					if httpResp.StatusCode == http.StatusServiceUnavailable ||
 						strings.Contains(apiErrMsg, "lock") {
 						// Wait for cluster to be ready.
-						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
 							return retry.NonRetryableError(
@@ -355,7 +355,7 @@ func (r *metricExportPrometheusConfigResource) Delete(
 
 			if apiObj.GetStatus() == client.METRICEXPORTSTATUSTYPE_DISABLING {
 				// We are passing empty PrometheusMetricExportInfo object as we don't need it in stage management.
-				err = retry.RetryContext(ctx, metricExportStableTimeout,
+				err = retryContext(ctx, metricExportStableTimeout,
 					waitForPrometheusMetricExportStableFunc(ctx, clusterID, r.provider.service, client.NewPrometheusMetricExportInfoWithDefaults()))
 				if err != nil {
 					resp.Diagnostics.AddError(
@@ -369,7 +369,7 @@ func (r *metricExportPrometheusConfigResource) Delete(
 		}
 	}
 
-	err := retry.RetryContext(ctx, metricExportDisableTimeout, deletePromMetricExport())
+	err := retryContext(ctx, metricExportDisableTimeout, deletePromMetricExport())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting Prometheus metric export config", err.Error(),

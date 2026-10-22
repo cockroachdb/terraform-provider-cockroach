@@ -26,7 +26,7 @@ func TestAccRestoresDataSource(t *testing.T) {
 	// Use 2 days from now as the end time so that date-only inputs (without timestamp)
 	// still include all of today’s data and the test passes regardless of what time of
 	// day it's run.
-	endTime := time.Now().Add(2 * 24 * time.Hour).Truncate(time.Second).UTC()
+	endTime := testNow().Add(2 * 24 * time.Hour).Truncate(time.Second).UTC()
 	startTime := endTime.Add(-3 * 24 * time.Hour)
 
 	testRestoresDataSource(

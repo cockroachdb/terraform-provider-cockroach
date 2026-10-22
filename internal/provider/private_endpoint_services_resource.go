@@ -205,7 +205,7 @@ func (r *privateEndpointServicesResource) Create(
 	}
 	var services *client.PrivateEndpointServices
 	var retryErr *retry.RetryError
-	err = retry.RetryContext(ctx, endpointServicesCreateTimeout, func() *retry.RetryError {
+	err = retryContext(ctx, endpointServicesCreateTimeout, func() *retry.RetryError {
 		services, retryErr = arePrivateEndpointsServicesCreated(ctx, cluster, r.provider.service)
 		return retryErr
 	})

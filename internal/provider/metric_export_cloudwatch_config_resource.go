@@ -155,7 +155,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 	}
 
 	apiObj := &client.CloudWatchMetricExportInfo{}
-	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
+	err = retryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
 		ctx, r.provider.service, clusterID, cluster, apiRequest, apiObj,
 	))
 	if err != nil {
@@ -165,7 +165,7 @@ func (r *metricExportCloudWatchConfigResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retryContext(ctx, clusterUpdateTimeout,
 		waitForCloudWatchMetricExportReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -197,7 +197,7 @@ func retryEnableCloudWatchMetricExport(
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
-				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
 					return retry.NonRetryableError(
@@ -381,7 +381,7 @@ func (r *metricExportCloudWatchConfigResource) Update(
 	clusterID := plan.ID.ValueString()
 	cluster := &client.Cluster{}
 	apiObj := &client.CloudWatchMetricExportInfo{}
-	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
+	err := retryContext(ctx, clusterUpdateTimeout, retryEnableCloudWatchMetricExport(
 		ctx, r.provider.service, clusterID, cluster, apiRequest, apiObj,
 	))
 	if err != nil {
@@ -391,7 +391,7 @@ func (r *metricExportCloudWatchConfigResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retryContext(ctx, clusterUpdateTimeout,
 		waitForCloudWatchMetricExportReadyFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -433,7 +433,7 @@ func (r *metricExportCloudWatchConfigResource) Delete(
 					if httpResp.StatusCode == http.StatusServiceUnavailable ||
 						strings.Contains(apiErrMsg, "lock") {
 						// Wait for cluster to be ready.
-						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
 							return retry.NonRetryableError(
@@ -449,7 +449,7 @@ func (r *metricExportCloudWatchConfigResource) Delete(
 		}
 	}
 
-	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
+	err := retryContext(ctx, clusterUpdateTimeout, retryFunc())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting CloudWatch metric export config", err.Error(),

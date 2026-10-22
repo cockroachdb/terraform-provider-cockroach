@@ -20,7 +20,9 @@ import (
 	"context"
 	cryptorand "crypto/rand"
 	"math/big"
+	"net/http"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
@@ -39,9 +41,11 @@ func init() {
 	apiJWT := os.Getenv(CockroachAPIJWT)
 
 	cfg := getClientConfiguration(apiKey, apiJWT, "test", "")
+	cfg.HTTPClient = &http.Client{Transport: recorderTransport{inner: http.DefaultTransport}}
 
 	cl = client.NewClient(cfg)
 	testAccProvider = New("test")()
+	installRecordingHooks()
 }
 
 // testAccProtoV6ProviderFactories are used to instantiate a provider during
@@ -53,6 +57,11 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 }
 
 func testAccPreCheck(t *testing.T) {
+	if mode := recordingMode(); mode != "" && strings.HasPrefix(t.Name(), "TestAcc") {
+		if r := currentRecorder(); r == nil || r.t != t {
+			t.Skipf("%s=%s, but this test doesn't call accTestSetup", recordingModeEnvVar, mode)
+		}
+	}
 	if os.Getenv(CockroachAPIKey) == "" && os.Getenv(CockroachAPIJWT) == "" {
 		t.Fatalf(
 			"%s or %s must be set for acceptance testing",
@@ -118,7 +127,12 @@ func TestClientConfigurationSetsCcClientHeader(t *testing.T) {
 	require.Equal(t, "terraform", cfg.DefaultHeader["Cc-Client"])
 }
 
+// GenerateRandomString returns n random lowercase letters. While a test is
+// recording or replaying, the letters come from the recording's seed.
 func GenerateRandomString(n int) string {
+	if r := currentRecorder(); r != nil {
+		return r.randomString(n)
+	}
 	letters := "abcdefghijklmnopqrstuvwxyz"
 	letterRunes := []rune(letters)
 	b := make([]rune, n)

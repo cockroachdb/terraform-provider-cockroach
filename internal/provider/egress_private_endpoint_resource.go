@@ -196,7 +196,7 @@ func (r *egressPrivateEndpointResource) Create(ctx context.Context, req resource
 
 	// Retry create operation if cluster is locked
 	var createdEndpoint client.EgressPrivateEndpoint
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		createEgressPrivateEndpointFunc(
 			ctx,
 			r.provider.service,
@@ -215,7 +215,7 @@ func (r *egressPrivateEndpointResource) Create(ctx context.Context, req resource
 	}
 
 	var endpoint client.EgressPrivateEndpoint
-	if err := retry.RetryContext(ctx, egressPrivateEndpointCreateTimeout,
+	if err := retryContext(ctx, egressPrivateEndpointCreateTimeout,
 		waitForEgressEndpointCreatedFunc(
 			ctx,
 			r.provider.service,
@@ -251,7 +251,7 @@ func (r *egressPrivateEndpointResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		deleteEgressEndpointFunc(
 			ctx,
 			r.provider.service,
@@ -266,7 +266,7 @@ func (r *egressPrivateEndpointResource) Delete(ctx context.Context, req resource
 		return
 	}
 
-	if err := retry.RetryContext(ctx, egressPrivateEndpointDeleteTimeout,
+	if err := retryContext(ctx, egressPrivateEndpointDeleteTimeout,
 		waitForEgressEndpointDeletedFunc(
 			ctx,
 			r.provider.service,

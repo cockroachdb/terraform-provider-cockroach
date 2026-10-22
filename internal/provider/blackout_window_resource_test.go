@@ -21,7 +21,7 @@ func TestAccBlackoutWindowResource(t *testing.T) {
 	t.Parallel()
 
 	clusterName := fmt.Sprintf("%s-bwin-%s", tfTestPrefix, GenerateRandomString(4))
-	start := time.Now().AddDate(0, 0, 8).UTC()
+	start := testNow().AddDate(0, 0, 8).UTC()
 	end := start.Add(48 * time.Hour)
 	updatedStart := start.Add(6 * time.Hour)
 	updatedEnd := updatedStart.Add(36 * time.Hour)

@@ -186,7 +186,7 @@ func (r *egressPerimeterResource) Create(
 
 	// Only set the policy if it's not already DEFAULT_DENY
 	if cluster.GetEgressTrafficPolicy() != client.EGRESSTRAFFICPOLICYTYPE_DEFAULT_DENY {
-		if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+		if err := retryContext(ctx, clusterUpdateTimeout,
 			setEgressTrafficPolicyFunc(ctx, r.provider.service, clusterID),
 		); err != nil {
 			resp.Diagnostics.AddError(
@@ -215,7 +215,7 @@ func (r *egressPerimeterResource) Create(
 
 	// Retry create operation if cluster is locked
 	var createdRule client.EgressRule
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		createEgressRuleFunc(ctx, r.provider.service, clusterID, &addReq, &createdRule),
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -227,7 +227,7 @@ func (r *egressPerimeterResource) Create(
 
 	// Wait for rule to become active
 	var rule client.EgressRule
-	if err := retry.RetryContext(ctx, egressRuleActiveTimeout,
+	if err := retryContext(ctx, egressRuleActiveTimeout,
 		waitForEgressRuleActiveFunc(ctx, r.provider.service, clusterID, createdRule.GetId(), &rule),
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -342,7 +342,7 @@ func (r *egressPerimeterResource) Update(
 
 	// Retry update operation if cluster is locked
 	var updatedRule client.EgressRule
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		updateEgressRuleFunc(ctx, r.provider.service, clusterID, ruleID, &editReq, &updatedRule),
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -354,7 +354,7 @@ func (r *egressPerimeterResource) Update(
 
 	// Wait for rule to become active
 	var rule client.EgressRule
-	if err := retry.RetryContext(ctx, egressRuleActiveTimeout,
+	if err := retryContext(ctx, egressRuleActiveTimeout,
 		waitForEgressRuleActiveFunc(ctx, r.provider.service, clusterID, updatedRule.GetId(), &rule),
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -392,7 +392,7 @@ func (r *egressPerimeterResource) Delete(
 	ruleID := state.ID.ValueString()
 
 	// Retry delete operation if cluster is locked
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		deleteEgressRuleFunc(ctx, r.provider.service, clusterID, ruleID),
 	); err != nil {
 		resp.Diagnostics.AddError(
@@ -403,7 +403,7 @@ func (r *egressPerimeterResource) Delete(
 	}
 
 	// Wait for rule to be deleted
-	if err := retry.RetryContext(ctx, egressRuleDeletedTimeout,
+	if err := retryContext(ctx, egressRuleDeletedTimeout,
 		waitForEgressRuleDeletedFunc(ctx, r.provider.service, clusterID, ruleID),
 	); err != nil {
 		resp.Diagnostics.AddError(

@@ -178,7 +178,7 @@ func (r *physicalReplicationStreamResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(
+	err = retryContext(
 		ctx,
 		physicalReplicationStreamCreateTimeout,
 		waitForPhysicalReplicationStreamStatusFunc(
@@ -368,7 +368,7 @@ func (r *physicalReplicationStreamResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(
+	err = retryContext(
 		ctx,
 		physicalReplicationStreamCompleteTimeout,
 		waitForPhysicalReplicationStreamStatusFunc(
@@ -436,7 +436,7 @@ func (r *physicalReplicationStreamResource) Delete(
 		return
 	}
 
-	err = retry.RetryContext(
+	err = retryContext(
 		ctx,
 		physicalReplicationStreamCompleteTimeout,
 		waitForPhysicalReplicationStreamStatusFunc(

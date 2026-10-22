@@ -1100,7 +1100,7 @@ func (r *clusterResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, createTimeout,
+	err = retryContext(ctx, createTimeout,
 		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -1506,7 +1506,7 @@ func (r *clusterResource) Update(
 			return
 		}
 
-		err = retry.RetryContext(ctx, updateTimeout,
+		err = retryContext(ctx, updateTimeout,
 			waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 		if err != nil {
 			resp.Diagnostics.AddError(
@@ -1678,7 +1678,7 @@ func (r *clusterResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(ctx, updateTimeout,
+	err = retryContext(ctx, updateTimeout,
 		waitForClusterReadyFunc(ctx, clusterObj.Id, r.provider.service, clusterObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -2517,7 +2517,7 @@ func waitForClusterLock(
 			diags.AddError("Couldn't retrieve cluster info", formatAPIErrorMessage(err))
 			return
 		}
-		err = retry.RetryContext(ctx, timeout,
+		err = retryContext(ctx, timeout,
 			waitForClusterReadyFunc(ctx, clusterObj.Id, s, clusterObj))
 		if err != nil {
 			diags.AddError("Cluster is not ready", err.Error())

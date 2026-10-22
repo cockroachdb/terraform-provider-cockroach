@@ -139,7 +139,7 @@ func (r *metricExportDatadogConfigResource) Create(
 	}
 
 	apiObj := &client.DatadogMetricExportInfo{}
-	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
+	err = retryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service, clusterID, cluster,
 		client.NewEnableDatadogMetricExportBody(plan.ApiKey.ValueString(), *site),
 		apiObj,
@@ -151,7 +151,7 @@ func (r *metricExportDatadogConfigResource) Create(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retryContext(ctx, clusterUpdateTimeout,
 		waitForDatdogMetricExportReadyFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -186,7 +186,7 @@ func retryEnableDatadogMetricExport(
 			if (httpResp != nil && httpResp.StatusCode == http.StatusServiceUnavailable) ||
 				strings.Contains(apiErrMsg, "lock") {
 				// Wait for cluster to be ready.
-				clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+				clusterErr := retryContext(ctx, clusterUpdateTimeout,
 					waitForClusterReadyFunc(ctx, clusterID, cl, cluster))
 				if clusterErr != nil {
 					return retry.NonRetryableError(
@@ -353,7 +353,7 @@ func (r *metricExportDatadogConfigResource) Update(
 	clusterID := plan.ID.ValueString()
 	cluster := &client.Cluster{}
 	apiObj := &client.DatadogMetricExportInfo{}
-	err = retry.RetryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
+	err = retryContext(ctx, clusterUpdateTimeout, retryEnableDatadogMetricExport(
 		ctx, clusterUpdateTimeout, r.provider.service, clusterID, cluster,
 		client.NewEnableDatadogMetricExportBody(plan.ApiKey.ValueString(), *site),
 		apiObj,
@@ -365,7 +365,7 @@ func (r *metricExportDatadogConfigResource) Update(
 		return
 	}
 
-	err = retry.RetryContext(ctx, clusterUpdateTimeout,
+	err = retryContext(ctx, clusterUpdateTimeout,
 		waitForDatdogMetricExportReadyFunc(ctx, clusterID, r.provider.service, apiObj))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -410,7 +410,7 @@ func (r *metricExportDatadogConfigResource) Delete(
 					if httpResp.StatusCode == http.StatusServiceUnavailable ||
 						strings.Contains(apiErrMsg, "lock") {
 						// Wait for cluster to be ready.
-						clusterErr := retry.RetryContext(ctx, clusterUpdateTimeout,
+						clusterErr := retryContext(ctx, clusterUpdateTimeout,
 							waitForClusterReadyFunc(ctx, clusterID, r.provider.service, cluster))
 						if clusterErr != nil {
 							return retry.NonRetryableError(
@@ -426,7 +426,7 @@ func (r *metricExportDatadogConfigResource) Delete(
 		}
 	}
 
-	err := retry.RetryContext(ctx, clusterUpdateTimeout, retryFunc())
+	err := retryContext(ctx, clusterUpdateTimeout, retryFunc())
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error deleting Datadog metric export config", err.Error(),

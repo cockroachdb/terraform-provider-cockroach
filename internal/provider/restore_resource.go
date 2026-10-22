@@ -275,7 +275,7 @@ func (r *restoreResource) Create(
 	}
 
 	// Poll until restore job completes.
-	err = retry.RetryContext(ctx, createRestoreEndpointTimeout,
+	err = retryContext(ctx, createRestoreEndpointTimeout,
 		waitForRestoreReadyFunc(ctx, plan.DestinationClusterID.ValueString(), restoreObj.Id, r.provider.service, restoreObj))
 	if err != nil {
 		if errors.Is(err, errCreateRestorePending) {

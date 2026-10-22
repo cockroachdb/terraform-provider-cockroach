@@ -7,8 +7,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
-
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
@@ -179,7 +177,7 @@ func testMetricExportPrometheusConfigExists(
 		}
 
 		if cluster.GetState() == client.CLUSTERSTATETYPE_LOCKED {
-			err = retry.RetryContext(context.TODO(), metricExportEnableTimeout,
+			err = retryContext(context.TODO(), metricExportEnableTimeout,
 				waitForClusterReadyFunc(context.TODO(), clusterID, p.service, cluster))
 			if err != nil {
 				return fmt.Errorf("error in checking cluster state")

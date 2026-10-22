@@ -208,7 +208,7 @@ func (r *egressTrafficPolicyResource) applyEgressTrafficPolicy(
 	clusterID := policy.ID.ValueString()
 	allowAll := policy.AllowAll.ValueBool()
 
-	if err := retry.RetryContext(ctx, clusterUpdateTimeout,
+	if err := retryContext(ctx, clusterUpdateTimeout,
 		setEgressTrafficPolicyRetryFunc(ctx, r.provider.service, clusterID, allowAll),
 	); err != nil {
 		diagnostics.AddError(
@@ -218,7 +218,7 @@ func (r *egressTrafficPolicyResource) applyEgressTrafficPolicy(
 		return
 	}
 
-	if err := retry.RetryContext(ctx, egressTrafficPolicyStableTimeout,
+	if err := retryContext(ctx, egressTrafficPolicyStableTimeout,
 		waitForEgressTrafficPolicyStableFunc(ctx, r.provider.service, clusterID),
 	); err != nil {
 		diagnostics.AddError(

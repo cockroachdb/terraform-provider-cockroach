@@ -163,7 +163,7 @@ func (r *privateEndpointConnectionResource) Create(
 	}
 
 	var connection client.PrivateEndpointConnection
-	err = retry.RetryContext(ctx, endpointConnectionCreateTimeout,
+	err = retryContext(ctx, endpointConnectionCreateTimeout,
 		waitForEndpointConnectionCreatedFunc(ctx, cluster.Id, plan.EndpointID.ValueString(), svc, &connection))
 	if err != nil {
 		resp.Diagnostics.AddError(

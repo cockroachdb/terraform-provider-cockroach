@@ -117,7 +117,7 @@ func (r *clientCACertResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	// poll until update completes
-	err = retry.RetryContext(ctx, clientCACertEndpointTimeout,
+	err = retryContext(ctx, clientCACertEndpointTimeout,
 		waitForClientCACertReady(ctx, plan.ID.ValueString(), r.provider.service, certInfo))
 	if err != nil {
 		resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
@@ -198,7 +198,7 @@ func (r *clientCACertResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 
 		// poll until update completes
-		err = retry.RetryContext(ctx, clientCACertEndpointTimeout,
+		err = retryContext(ctx, clientCACertEndpointTimeout,
 			waitForClientCACertReady(ctx, plan.ID.ValueString(), r.provider.service, certInfo))
 		if err != nil {
 			resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))
@@ -232,7 +232,7 @@ func (r *clientCACertResource) Delete(ctx context.Context, req resource.DeleteRe
 	}
 
 	// poll until update completes
-	err = retry.RetryContext(ctx, clientCACertEndpointTimeout,
+	err = retryContext(ctx, clientCACertEndpointTimeout,
 		waitForClientCACertReady(ctx, state.ID.ValueString(), r.provider.service, certInfo))
 	if err != nil {
 		resp.Diagnostics.AddError("Client CA Cert update timed out and may have failed", formatAPIErrorMessage(err))

@@ -318,7 +318,7 @@ func updateEgressPrivateEndpointDomainNames(
 	endpointID string,
 	domainNames []string,
 ) error {
-	if err := retry.RetryContext(
+	if err := retryContext(
 		ctx,
 		egressPrivateEndpointAvailableTimeout,
 		waitForEgressEndpointAvailableFunc(ctx, cl, clusterID, endpointID),
@@ -326,7 +326,7 @@ func updateEgressPrivateEndpointDomainNames(
 		return err
 	}
 
-	if err := retry.RetryContext(
+	if err := retryContext(
 		ctx,
 		clusterUpdateTimeout,
 		updateEgressPrivateEndpointFunc(ctx, cl, clusterID, endpointID, domainNames),
@@ -339,7 +339,7 @@ func updateEgressPrivateEndpointDomainNames(
 		desiredState = client.EGRESSPRIVATEENDPOINTDOMAINNAMESSTATETYPE_EMPTY
 	}
 
-	return retry.RetryContext(
+	return retryContext(
 		ctx,
 		egressPrivateEndpointDomainNamesAvailableTimeout,
 		waitForEgressEndpointDomainNamesStateFunc(ctx, cl, clusterID, endpointID, desiredState),

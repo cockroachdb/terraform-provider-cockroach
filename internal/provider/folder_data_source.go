@@ -72,7 +72,7 @@ func (d *folderDataSource) Schema(
 	}
 }
 
-func (r *folderDataSource) ConfigValidators(ctx context.Context) []datasource.ConfigValidator {
+func (d *folderDataSource) ConfigValidators(ctx context.Context) []datasource.ConfigValidator {
 	return []datasource.ConfigValidator{
 		datasourcevalidator.ExactlyOneOf(
 			path.MatchRoot("path"),

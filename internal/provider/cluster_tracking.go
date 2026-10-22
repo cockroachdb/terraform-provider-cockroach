@@ -88,7 +88,11 @@ func recordClusterCreation(filePath, id, name string) {
 		fmt.Fprintf(os.Stderr, "[cluster-tracking] Error opening tracking file: %s\n", err)
 		return
 	}
-	defer f.Close()
+	defer func() {
+		if err := f.Close(); err != nil {
+			fmt.Fprintf(os.Stderr, "[cluster-tracking] Error closing tracking file: %s\n", err)
+		}
+	}()
 
 	if _, err := fmt.Fprintf(f, "%s %s\n", id, name); err != nil {
 		fmt.Fprintf(os.Stderr, "[cluster-tracking] Error writing to tracking file: %s\n", err)
@@ -141,19 +145,19 @@ func recordClusterDeletion(filePath, id string) {
 	}
 	if _, err := tmpFile.WriteString(content); err != nil {
 		fmt.Fprintf(os.Stderr, "[cluster-tracking] Error writing temp file: %s\n", err)
-		tmpFile.Close()
-		os.Remove(tmpPath)
+		_ = tmpFile.Close()
+		_ = os.Remove(tmpPath)
 		return
 	}
 	if err := tmpFile.Close(); err != nil {
 		fmt.Fprintf(os.Stderr, "[cluster-tracking] Error closing temp file: %s\n", err)
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return
 	}
 
 	if err := os.Rename(tmpPath, filePath); err != nil {
 		fmt.Fprintf(os.Stderr, "[cluster-tracking] Error renaming temp file: %s\n", err)
-		os.Remove(tmpPath)
+		_ = os.Remove(tmpPath)
 		return
 	}
 

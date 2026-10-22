@@ -1,3 +1,4 @@
+// Package utils holds conversion helpers shared across the provider.
 package utils
 
 import (

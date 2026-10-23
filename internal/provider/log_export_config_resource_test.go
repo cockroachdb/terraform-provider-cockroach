@@ -23,6 +23,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
@@ -392,4 +394,423 @@ func TestRetryEnableLogExport_ServiceUnavailable(t *testing.T) {
 
 	require.NotNil(t, result, "Expected retryable error")
 	require.True(t, result.Retryable, "Expected retryable error for 503, got non-retryable: %v", result.Err)
+}
+
+// TestAccOTLPLogExportConfigResource attempts to create, check, and destroy a
+// real cluster with OTLP/HTTP log export. It requires OTLP/HTTP log export to be
+// enabled for the organization and cluster, and a receiver configured through
+// TF_VAR_otlp_endpoint and TF_VAR_otlp_headers.
+func TestAccOTLPLogExportConfigResource(t *testing.T) {
+	skipIfTerraformBelowWriteOnly(t)
+	if os.Getenv("TF_VAR_otlp_endpoint") == "" {
+		t.Skip("Set TF_VAR_otlp_endpoint and TF_VAR_otlp_headers to test against an OTLP receiver.")
+	}
+	clusterName := fmt.Sprintf("%s-otlp-%s", tfTestPrefix, GenerateRandomString(4))
+	testOTLPLogExportConfigResource(t, clusterName, false)
+}
+
+// TestIntegrationOTLPLogExportConfigResource attempts to create, check, and
+// destroy an OTLP log export configuration, but uses a mocked API service.
+func TestIntegrationOTLPLogExportConfigResource(t *testing.T) {
+	skipIfTerraformBelowWriteOnly(t)
+	for _, cloud := range []client.CloudProviderType{
+		client.CLOUDPROVIDERTYPE_AWS, client.CLOUDPROVIDERTYPE_GCP,
+	} {
+		t.Run(string(cloud), func(t *testing.T) {
+			endpoint := "https://logs.example.com"
+			if cloud == client.CLOUDPROVIDERTYPE_AWS {
+				endpoint += "/v1/logs"
+			}
+			t.Setenv(CockroachAPIKey, "fake")
+			t.Setenv("TF_VAR_otlp_endpoint", endpoint)
+			t.Setenv("TF_VAR_otlp_headers", `{"authorization":"Bearer first"}`)
+			clusterName := fmt.Sprintf("%s-otlp-%s", tfTestPrefix, GenerateRandomString(4))
+			clusterID := uuid.Nil.String()
+			cluster := &client.Cluster{
+				Id:            clusterID,
+				CloudProvider: cloud,
+				State:         client.CLUSTERSTATETYPE_CREATED,
+				Config: client.ClusterConfig{
+					Dedicated: &client.DedicatedHardwareConfig{},
+				},
+			}
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service { return s })()
+
+			var current *client.LogExportClusterInfo
+			s.EXPECT().GetCluster(gomock.Any(), clusterID).Return(cluster, httpOk, nil).AnyTimes()
+			s.EXPECT().GetLogExportInfo(gomock.Any(), clusterID).
+				DoAndReturn(func(context.Context, string) (*client.LogExportClusterInfo, *http.Response, error) {
+					return current, httpOk, nil
+				}).AnyTimes()
+			s.EXPECT().DeleteLogExport(gomock.Any(), clusterID).Return(nil, httpOk, nil)
+
+			groups := []client.LogExportGroup{{
+				LogName:  "crdb-audit",
+				Channels: []string{"USER_ADMIN", "PRIVILEGES", "SENSITIVE_ACCESS"},
+				MinLevel: ptr(client.LOGLEVELTYPE_UNSPECIFIED),
+			}}
+			expectEnable := func(endpoint string, headers *map[string]string, redact bool) {
+				s.EXPECT().EnableLogExport(gomock.Any(), clusterID, &client.EnableLogExportBody{
+					Type:         client.LOGEXPORTTYPE_OTLP_HTTP,
+					LogName:      "logs",
+					Groups:       &groups,
+					OtlpEndpoint: &endpoint,
+					OtlpHeaders:  headers,
+					Redact:       &redact,
+				}).DoAndReturn(func(_ context.Context, _ string, req *client.EnableLogExportBody) (*client.LogExportClusterInfo, *http.Response, error) {
+					// The API returns header names, never their values.
+					current = &client.LogExportClusterInfo{
+						ClusterId: &clusterID,
+						Status:    ptr(client.LOGEXPORTSTATUS_ENABLED),
+						Spec: &client.LogExportClusterSpecification{
+							Type:            ptr(req.Type),
+							LogName:         ptr(req.LogName),
+							Groups:          req.Groups,
+							Redact:          req.Redact,
+							OtlpEndpoint:    req.OtlpEndpoint,
+							OtlpHeaderNames: ptr([]string{"authorization"}),
+						},
+					}
+					return current, httpOk, nil
+				})
+			}
+			firstHeaders := map[string]string{"authorization": "Bearer first"}
+			expectEnable(endpoint, &firstHeaders, false)
+
+			// Only creation depends on the cluster's cloud.
+			if cloud == client.CLOUDPROVIDERTYPE_AWS {
+				resource.Test(t, resource.TestCase{
+					IsUnitTest:               true,
+					ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+					Steps: []resource.TestStep{{
+						Config: getTestOTLPLogExportConfigResourceConfig(clusterName, true),
+						Check: resource.ComposeTestCheckFunc(
+							resource.TestCheckResourceAttr("cockroach_log_export_config.test", "type", "OTLP_HTTP"),
+							resource.TestCheckNoResourceAttr("cockroach_log_export_config.test", "otlp_headers_wo.%"),
+						),
+					}},
+				})
+				return
+			}
+
+			rotatedHeaders := map[string]string{
+				"authorization":      "Bearer first",
+				"x-tf-otlp-rotation": "2",
+			}
+			expectEnable(endpoint, nil, true)
+			expectEnable(endpoint, &rotatedHeaders, false)
+			expectEnable("https://other.example.com/v1/logs", &rotatedHeaders, false)
+			expectEnable("https://other.example.com/v1/logs", nil, false)
+
+			configType := client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING
+			s.EXPECT().EnableLogExport(gomock.Any(), clusterID, &client.EnableLogExportBody{
+				Type:          configType,
+				LogName:       "logs",
+				AuthPrincipal: ptr("principal"),
+				Groups:        &groups,
+			}).DoAndReturn(func(_ context.Context, _ string, req *client.EnableLogExportBody) (*client.LogExportClusterInfo, *http.Response, error) {
+				current = &client.LogExportClusterInfo{
+					ClusterId: &clusterID,
+					Status:    ptr(client.LOGEXPORTSTATUS_ENABLED),
+					Spec: &client.LogExportClusterSpecification{
+						Type:          ptr(req.Type),
+						LogName:       ptr(req.LogName),
+						AuthPrincipal: req.AuthPrincipal,
+						Groups:        req.Groups,
+					},
+				}
+				return current, httpOk, nil
+			})
+			expectEnable(endpoint, &firstHeaders, false)
+
+			testOTLPLogExportConfigResource(t, clusterName, true)
+		})
+	}
+}
+
+func testOTLPLogExportConfigResource(t *testing.T, clusterName string, useMock bool) {
+	t.Helper()
+	resourceName := "cockroach_log_export_config.test"
+	initial := getTestOTLPLogExportConfigResourceConfig(clusterName, useMock)
+	steps := []resource.TestStep{
+		{
+			Config: initial,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr(resourceName, "type", "OTLP_HTTP"),
+				resource.TestCheckNoResourceAttr(resourceName, "auth_principal"),
+				resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+				resource.TestCheckResourceAttr(resourceName, "otlp_headers_wo_version", "1"),
+			),
+		},
+		{
+			RefreshState: true,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+				resource.TestCheckResourceAttr(resourceName, "otlp_headers_wo_version", "1"),
+			),
+		},
+	}
+	ordinary := initial
+	if useMock {
+		// A header-only change must neither trigger an update nor be sent
+		// when another attribute changes without a header version bump.
+		ordinary = strings.Replace(initial, "otlp_headers_wo = var.otlp_headers",
+			`otlp_headers_wo = merge(var.otlp_headers, { "x-tf-otlp-ignored" = "1" })`, 1)
+		steps = append(steps, resource.TestStep{Config: ordinary, PlanOnly: true})
+	}
+	ordinary = strings.Replace(ordinary, "redact = false", "redact = true", 1)
+	rotated := strings.Replace(initial, "otlp_headers_wo = var.otlp_headers",
+		`otlp_headers_wo = merge(var.otlp_headers, { "x-tf-otlp-rotation" = "2" })`, 1)
+	rotated = strings.Replace(rotated, "otlp_headers_wo_version = 1", "otlp_headers_wo_version = 2", 1)
+	steps = append(steps,
+		resource.TestStep{
+			Config: ordinary,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckResourceAttr(resourceName, "redact", "true"),
+				resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+				resource.TestCheckResourceAttr(resourceName, "otlp_headers_wo_version", "1"),
+			),
+		},
+		resource.TestStep{
+			Config: rotated,
+			Check: resource.ComposeTestCheckFunc(
+				resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+				resource.TestCheckResourceAttr(resourceName, "otlp_headers_wo_version", "2"),
+			),
+		},
+		resource.TestStep{
+			ResourceName:            resourceName,
+			ImportState:             true,
+			ImportStateVerify:       true,
+			ImportStateVerifyIgnore: []string{"otlp_headers_wo_version"},
+		},
+	)
+
+	if useMock {
+		otherEndpoint := "https://other.example.com/v1/logs"
+		moved := strings.Replace(rotated, "otlp_endpoint = var.otlp_endpoint",
+			fmt.Sprintf("otlp_endpoint = %q", otherEndpoint), 1)
+		preserved := strings.Replace(moved,
+			`otlp_headers_wo = merge(var.otlp_headers, { "x-tf-otlp-rotation" = "2" })`,
+			"otlp_headers_wo = null", 1)
+		preserved = strings.Replace(preserved, "otlp_headers_wo_version = 2", "otlp_headers_wo_version = null", 1)
+		native := fmt.Sprintf(`
+resource "cockroach_log_export_config" "test" {
+  id             = %q
+  type           = "GCP_CLOUD_LOGGING"
+  log_name       = "logs"
+  auth_principal = "principal"
+  groups = [{
+    log_name = "crdb-audit"
+    channels = ["USER_ADMIN", "PRIVILEGES", "SENSITIVE_ACCESS"]
+  }]
+}
+`, uuid.Nil.String())
+		steps = append(steps,
+			resource.TestStep{
+				Config: moved,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(resourceName, "otlp_endpoint", otherEndpoint),
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+					resource.TestCheckResourceAttr(resourceName, "otlp_headers_wo_version", "2"),
+				),
+			},
+			resource.TestStep{
+				Config: preserved,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo_version"),
+				),
+			},
+			resource.TestStep{Config: preserved, PlanOnly: true},
+			resource.TestStep{
+				Config: native,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_endpoint"),
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo_version"),
+				),
+			},
+			resource.TestStep{
+				Config: initial,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckNoResourceAttr(resourceName, "auth_principal"),
+					resource.TestCheckResourceAttr(resourceName, "type", "OTLP_HTTP"),
+					resource.TestCheckNoResourceAttr(resourceName, "otlp_headers_wo.%"),
+					resource.TestCheckResourceAttr(resourceName, "otlp_headers_wo_version", "1"),
+				),
+			},
+		)
+	}
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               useMock,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps:                    steps,
+	})
+}
+
+func getTestOTLPLogExportConfigResourceConfig(clusterName string, useMock bool) string {
+	clusterConfig := fmt.Sprintf(`
+resource "cockroach_cluster" "test" {
+  name           = %q
+  cloud_provider = "GCP"
+  plan           = "ADVANCED"
+  dedicated = {
+    num_virtual_cpus = 4
+    storage_gib     = 15
+  }
+  regions = [{ name = %q, node_count = 3 }]
+}
+`, clusterName, testRegion)
+	clusterID := "cockroach_cluster.test.id"
+	if useMock {
+		clusterConfig = ""
+		clusterID = fmt.Sprintf("%q", uuid.Nil.String())
+	}
+	return fmt.Sprintf(`
+variable "otlp_endpoint" {
+  type = string
+}
+variable "otlp_headers" {
+  type      = map(string)
+  sensitive = true
+  ephemeral = true
+  default   = {}
+}
+%s
+resource "cockroach_log_export_config" "test" {
+  id = %s
+  type = "OTLP_HTTP"
+  log_name = "logs"
+  otlp_endpoint = var.otlp_endpoint
+  otlp_headers_wo = var.otlp_headers
+  otlp_headers_wo_version = 1
+  redact = false
+  groups = [{
+    log_name = "crdb-audit"
+    channels = ["USER_ADMIN", "PRIVILEGES", "SENSITIVE_ACCESS"]
+  }]
+}
+`, clusterConfig, clusterID)
+}
+
+// TestIntegrationLogExportConfigValidation checks that invalid sink settings
+// are rejected before apply, using a mocked API service.
+func TestIntegrationLogExportConfigValidation(t *testing.T) {
+	skipIfTerraformBelowWriteOnly(t)
+	t.Setenv(CockroachAPIKey, "fake")
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service { return s })()
+
+	for _, tc := range []struct {
+		name        string
+		configType  string
+		attributes  string
+		expectError string
+	}{
+		{
+			name:        "missing OTLP endpoint",
+			configType:  "OTLP_HTTP",
+			expectError: "otlp_endpoint is required when type is OTLP_HTTP",
+		},
+		{
+			name:        "blank OTLP endpoint",
+			configType:  "OTLP_HTTP",
+			attributes:  `otlp_endpoint = " "`,
+			expectError: "otlp_endpoint is required when type is OTLP_HTTP",
+		},
+		{
+			name:        "OTLP auth principal",
+			configType:  "OTLP_HTTP",
+			attributes:  "otlp_endpoint = \"https://logs.example.com\"\nauth_principal = \"principal\"",
+			expectError: "OTLP_HTTP authenticates through otlp_headers_wo",
+		},
+		{
+			name:        "empty OTLP auth principal",
+			configType:  "OTLP_HTTP",
+			attributes:  "otlp_endpoint = \"https://logs.example.com\"\nauth_principal = \"\"",
+			expectError: "OTLP_HTTP authenticates through otlp_headers_wo",
+		},
+		{
+			name:        "null OTLP header value",
+			configType:  "OTLP_HTTP",
+			attributes:  "otlp_endpoint = \"https://logs.example.com\"\notlp_headers_wo = { authorization = null }\notlp_headers_wo_version = 1",
+			expectError: "otlp_headers_wo values must not be null",
+		},
+		{
+			name:        "OTLP headers without version",
+			configType:  "OTLP_HTTP",
+			attributes:  "otlp_endpoint = \"https://logs.example.com\"\notlp_headers_wo = { authorization = \"Bearer test\" }",
+			expectError: "must be configured together",
+		},
+		{
+			name:        "OTLP version without headers",
+			configType:  "OTLP_HTTP",
+			attributes:  "otlp_endpoint = \"https://logs.example.com\"\notlp_headers_wo_version = 1",
+			expectError: "must be configured together",
+		},
+		{
+			name:        "endpoint on CloudWatch",
+			configType:  "AWS_CLOUDWATCH",
+			attributes:  "auth_principal = \"principal\"\notlp_endpoint = \"https://logs.example.com\"",
+			expectError: "otlp_endpoint can only be configured when type is OTLP_HTTP",
+		},
+		{
+			name:        "headers on Cloud Logging",
+			configType:  "GCP_CLOUD_LOGGING",
+			attributes:  "auth_principal = \"principal\"\notlp_headers_wo = { authorization = \"Bearer test\" }\notlp_headers_wo_version = 1",
+			expectError: "otlp_headers_wo can only be configured when type is OTLP_HTTP",
+		},
+		{
+			name:        "headers version on Cloud Logging",
+			configType:  "GCP_CLOUD_LOGGING",
+			attributes:  "auth_principal = \"principal\"\notlp_headers_wo_version = 1",
+			expectError: "otlp_headers_wo_version can only be configured when type is OTLP_HTTP",
+		},
+		{
+			name:        "OTLP sending queue",
+			configType:  "OTLP_HTTP",
+			attributes:  "otlp_endpoint = \"https://logs.example.com\"\ngroups = [{ log_name = \"audit\", channels = [\"USER_ADMIN\"], enable_sending_queue = true }]",
+			expectError: "enable_sending_queue is not supported for OTLP_HTTP",
+		},
+		{
+			name:        "missing CloudWatch principal",
+			configType:  "AWS_CLOUDWATCH",
+			expectError: "auth_principal is required",
+		},
+		{
+			name:        "missing Cloud Logging principal",
+			configType:  "GCP_CLOUD_LOGGING",
+			expectError: "auth_principal is required",
+		},
+		{
+			name:        "missing Azure principal",
+			configType:  "AZURE_LOG_ANALYTICS",
+			expectError: "auth_principal is required",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{{
+					Config: fmt.Sprintf(`
+resource "cockroach_log_export_config" "test" {
+  id       = %q
+  type     = %q
+  log_name = "logs"
+  %s
+}
+`, uuid.Nil.String(), tc.configType, tc.attributes),
+					PlanOnly:    true,
+					ExpectError: regexp.MustCompile(tc.expectError),
+				}},
+			})
+		})
+	}
 }

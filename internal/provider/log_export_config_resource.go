@@ -24,6 +24,7 @@ import (
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
+	"github.com/hashicorp/terraform-plugin-framework-validators/resourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -42,8 +43,10 @@ var logExportAttributes = map[string]schema.Attribute{
 		},
 	},
 	"auth_principal": schema.StringAttribute{
-		Required:            true,
-		MarkdownDescription: "Either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch or the GCP Project ID that the cluster service account has permissions to write to for cloud logging.",
+		Optional: true,
+		MarkdownDescription: "Either the AWS Role ARN that identifies a role that the cluster account can assume to write to CloudWatch, " +
+			"the GCP Project ID that the cluster service account has permissions to write to for cloud logging, or the Azure workspace ID. " +
+			"Required for AWS_CLOUDWATCH, GCP_CLOUD_LOGGING, and AZURE_LOG_ANALYTICS. Not used for OTLP_HTTP, which authenticates through otlp_headers_wo.",
 	},
 	"log_name": schema.StringAttribute{
 		Required:            true,
@@ -118,6 +121,29 @@ var logExportAttributes = map[string]schema.Attribute{
 		Optional:    true,
 		Description: "The external ID to use when assuming the AWS role.",
 	},
+	"otlp_endpoint": schema.StringAttribute{
+		Optional: true,
+		MarkdownDescription: "The HTTPS OTLP/HTTP endpoint. Accepts either a base URL, such as `https://logs.example.com`, " +
+			"or a full URL ending in `/v1/logs`, such as `https://logs.example.com/v1/logs`. " +
+			"For a base URL, `/v1/logs` is appended when sending logs; for a full URL, the path is not appended again. " +
+			"The API and Terraform state preserve the configured URL. Required when `type` is `OTLP_HTTP`; not supported for other export types.",
+	},
+	"otlp_headers_wo": schema.MapAttribute{
+		Optional:    true,
+		Sensitive:   true,
+		WriteOnly:   true,
+		ElementType: types.StringType,
+		MarkdownDescription: "Write-only authentication headers for `OTLP_HTTP`, such as `authorization` (Terraform CLI 1.11+ required). " +
+			"Values are never stored in Terraform plan or state. Headers are sent when the export is created, when `type` changes to `OTLP_HTTP`, " +
+			"when `otlp_endpoint` changes, and when `otlp_headers_wo_version` changes. Other updates, and an empty or omitted map, leave stored headers unchanged. " +
+			"To rotate, change the values and increment `otlp_headers_wo_version`; changing values alone does not trigger an update. " +
+			"To remove stored headers, disable log export or switch to another export type.",
+	},
+	"otlp_headers_wo_version": schema.Int64Attribute{
+		Optional: true,
+		MarkdownDescription: "Trigger attribute for rotating `otlp_headers_wo`. Increment this integer to send the current `otlp_headers_wo` values. " +
+			"Configure it together with `otlp_headers_wo`. Import does not recover this value, so configuring it after import sends the supplied headers.",
+	},
 }
 
 type logExportConfigResource struct {
@@ -128,8 +154,85 @@ func (r *logExportConfigResource) Schema(
 	_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse,
 ) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Log Export configuration for a cluster.",
-		Attributes:          logExportAttributes,
+		MarkdownDescription: "Log Export configuration for a cluster.\n\n`OTLP_HTTP` exports directly to an OTLP/HTTP destination and requires " +
+			"a dedicated cluster with OTLP/HTTP log export enabled for its organization and cluster. Contact support to request access. " +
+			"The `enable_sending_queue` option is not supported for `OTLP_HTTP`.",
+		Attributes: logExportAttributes,
+	}
+}
+
+func (r *logExportConfigResource) ConfigValidators(_ context.Context) []resource.ConfigValidator {
+	return []resource.ConfigValidator{
+		resourcevalidator.RequiredTogether(path.MatchRoot("otlp_headers_wo"), path.MatchRoot("otlp_headers_wo_version")),
+	}
+}
+
+func (r *logExportConfigResource) ValidateConfig(
+	ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse,
+) {
+	var configType, authPrincipal, endpoint types.String
+	var headers types.Map
+	var headersVersion types.Int64
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("type"), &configType)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("auth_principal"), &authPrincipal)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("otlp_endpoint"), &endpoint)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("otlp_headers_wo"), &headers)...)
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("otlp_headers_wo_version"), &headersVersion)...)
+	if resp.Diagnostics.HasError() || !IsKnown(configType) {
+		return
+	}
+
+	if client.LogExportType(configType.ValueString()) == client.LOGEXPORTTYPE_OTLP_HTTP {
+		if endpoint.IsNull() || (IsKnown(endpoint) && strings.TrimSpace(endpoint.ValueString()) == "") {
+			resp.Diagnostics.AddAttributeError(path.Root("otlp_endpoint"), "Missing Attribute",
+				"otlp_endpoint is required when type is OTLP_HTTP.")
+		}
+		if IsKnown(authPrincipal) {
+			resp.Diagnostics.AddAttributeError(path.Root("auth_principal"), "Invalid Attribute Combination",
+				"OTLP_HTTP authenticates through otlp_headers_wo, not auth_principal.")
+		}
+		for name, value := range headers.Elements() {
+			if value.IsNull() {
+				resp.Diagnostics.AddAttributeError(path.Root("otlp_headers_wo").AtMapKey(name), "Invalid Attribute Value",
+					"otlp_headers_wo values must not be null.")
+			}
+		}
+		var groups types.List
+		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("groups"), &groups)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		for i, group := range groups.Elements() {
+			if group.IsNull() || group.IsUnknown() {
+				continue
+			}
+			if group.(types.Object).Attributes()["enable_sending_queue"].Equal(types.BoolValue(true)) {
+				resp.Diagnostics.AddAttributeError(path.Root("groups").AtListIndex(i).AtName("enable_sending_queue"),
+					"Invalid Attribute Combination", "enable_sending_queue is not supported for OTLP_HTTP.")
+			}
+		}
+		return
+	}
+
+	if IsKnown(endpoint) {
+		resp.Diagnostics.AddAttributeError(path.Root("otlp_endpoint"), "Invalid Attribute Combination",
+			"otlp_endpoint can only be configured when type is OTLP_HTTP.")
+	}
+	if IsKnown(headers) {
+		resp.Diagnostics.AddAttributeError(path.Root("otlp_headers_wo"), "Invalid Attribute Combination",
+			"otlp_headers_wo can only be configured when type is OTLP_HTTP.")
+	}
+	if IsKnown(headersVersion) {
+		resp.Diagnostics.AddAttributeError(path.Root("otlp_headers_wo_version"), "Invalid Attribute Combination",
+			"otlp_headers_wo_version can only be configured when type is OTLP_HTTP.")
+	}
+	// Azure V2 uses its own authentication fields instead of auth_principal.
+	switch client.LogExportType(configType.ValueString()) {
+	case client.LOGEXPORTTYPE_AWS_CLOUDWATCH, client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING, client.LOGEXPORTTYPE_AZURE_LOG_ANALYTICS:
+		if authPrincipal.IsNull() || (IsKnown(authPrincipal) && strings.TrimSpace(authPrincipal.ValueString()) == "") {
+			resp.Diagnostics.AddAttributeError(path.Root("auth_principal"), "Missing Attribute",
+				"auth_principal is required for AWS_CLOUDWATCH, GCP_CLOUD_LOGGING, and AZURE_LOG_ANALYTICS.")
+		}
 	}
 }
 
@@ -164,6 +267,9 @@ func (r *logExportConfigResource) Create(
 
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
+	// Write-only values are available only in configuration, never in the plan.
+	var headers types.Map
+	resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("otlp_headers_wo"), &headers)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -190,26 +296,26 @@ func (r *logExportConfigResource) Create(
 	}
 
 	if cluster.GetCloudProvider() == client.CLOUDPROVIDERTYPE_AWS &&
-		*configType != client.LOGEXPORTTYPE_AWS_CLOUDWATCH {
+		*configType != client.LOGEXPORTTYPE_AWS_CLOUDWATCH && *configType != client.LOGEXPORTTYPE_OTLP_HTTP {
 		resp.Diagnostics.AddError(
 			"Incompatible log export type",
-			fmt.Sprintf("For an AWS cluster, expected %s but got: %s",
-				client.LOGEXPORTTYPE_AWS_CLOUDWATCH, plan.Type.ValueString()),
+			fmt.Sprintf("For an AWS cluster, expected %s or %s but got: %s",
+				client.LOGEXPORTTYPE_AWS_CLOUDWATCH, client.LOGEXPORTTYPE_OTLP_HTTP, plan.Type.ValueString()),
 		)
 		return
 	}
 	if cluster.GetCloudProvider() == client.CLOUDPROVIDERTYPE_GCP &&
-		*configType != client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING {
+		*configType != client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING && *configType != client.LOGEXPORTTYPE_OTLP_HTTP {
 		resp.Diagnostics.AddError(
 			"Incompatible log export type",
-			fmt.Sprintf("For a GCP cluster, expected %s but got: %s",
-				client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING, plan.Type.ValueString()),
+			fmt.Sprintf("For a GCP cluster, expected %s or %s but got: %s",
+				client.LOGEXPORTTYPE_GCP_CLOUD_LOGGING, client.LOGEXPORTTYPE_OTLP_HTTP, plan.Type.ValueString()),
 		)
 		return
 	}
 
 	logExportRequest := client.NewEnableLogExportBodyWithDefaults()
-	if err = loadPlanIntoEnableLogExportRequest(plan, logExportRequest); err != nil {
+	if err = loadPlanIntoEnableLogExportRequest(ctx, plan, headers, logExportRequest); err != nil {
 		resp.Diagnostics.AddError(
 			"Error preparing log export config",
 			fmt.Sprintf("Invalid log export config: %s", err),
@@ -240,6 +346,7 @@ func (r *logExportConfigResource) Create(
 	}
 
 	var state ClusterLogExport
+	state.OTLPHeadersWOVersion = plan.OTLPHeadersWOVersion
 	loadLogExportIntoTerraformState(apiLogExportObj, &state)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -354,7 +461,10 @@ func loadLogExportIntoTerraformState(
 	}
 
 	state.ID = types.StringValue(apiLogExportObj.GetClusterId())
-	state.AuthPrincipal = types.StringValue(spec.GetAuthPrincipal())
+	state.AuthPrincipal = types.StringNull()
+	if spec.GetAuthPrincipal() != "" {
+		state.AuthPrincipal = types.StringValue(spec.GetAuthPrincipal())
+	}
 	state.LogName = types.StringValue(spec.GetLogName())
 	state.Type = types.StringValue(string(spec.GetType()))
 	state.Redact = apiRedact
@@ -366,6 +476,14 @@ func loadLogExportIntoTerraformState(
 	state.UpdatedAt = types.StringValue(apiLogExportObj.GetUpdatedAt().String())
 	state.OmittedChannels = &omittedChannels
 	state.AWSExternalID = awsExternalID
+	state.OTLPEndpoint = types.StringNull()
+	if spec.GetOtlpEndpoint() != "" {
+		state.OTLPEndpoint = types.StringValue(spec.GetOtlpEndpoint())
+	}
+	state.OTLPHeadersWO = types.MapNull(types.StringType)
+	if spec.GetType() != client.LOGEXPORTTYPE_OTLP_HTTP {
+		state.OTLPHeadersWOVersion = types.Int64Null()
+	}
 }
 
 func (r *logExportConfigResource) Read(
@@ -455,8 +573,21 @@ func (r *logExportConfigResource) Update(
 		return
 	}
 
+	// The API keeps stored headers when a request omits them, but rejects a
+	// different scheme, host, or port without headers when any are stored.
+	// Resend configured headers on endpoint or type changes as well as rotation.
+	headers := types.MapNull(types.StringType)
+	if client.LogExportType(plan.Type.ValueString()) == client.LOGEXPORTTYPE_OTLP_HTTP &&
+		(!plan.Type.Equal(state.Type) || !plan.OTLPEndpoint.Equal(state.OTLPEndpoint) ||
+			!plan.OTLPHeadersWOVersion.Equal(state.OTLPHeadersWOVersion)) {
+		resp.Diagnostics.Append(req.Config.GetAttribute(ctx, path.Root("otlp_headers_wo"), &headers)...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+	}
+
 	logExportRequest := client.NewEnableLogExportBodyWithDefaults()
-	if err := loadPlanIntoEnableLogExportRequest(plan, logExportRequest); err != nil {
+	if err := loadPlanIntoEnableLogExportRequest(ctx, plan, headers, logExportRequest); err != nil {
 		resp.Diagnostics.AddError(
 			"Error preparing log export config update",
 			fmt.Sprintf("Invalid log export config: %s", err),
@@ -488,6 +619,7 @@ func (r *logExportConfigResource) Update(
 		return
 	}
 
+	state.OTLPHeadersWOVersion = plan.OTLPHeadersWOVersion
 	loadLogExportIntoTerraformState(apiLogExportObj, &state)
 	diags = resp.State.Set(ctx, state)
 	resp.Diagnostics.Append(diags...)
@@ -526,7 +658,7 @@ func logExportGroupToClientGroup(group LogExportGroup) (*client.LogExportGroup, 
 }
 
 func loadPlanIntoEnableLogExportRequest(
-	plan ClusterLogExport, req *client.EnableLogExportBody,
+	ctx context.Context, plan ClusterLogExport, headers types.Map, req *client.EnableLogExportBody,
 ) error {
 	if plan.Groups != nil {
 		logExportGroups := make([]client.LogExportGroup, len(*plan.Groups))
@@ -540,7 +672,9 @@ func loadPlanIntoEnableLogExportRequest(
 		req.SetGroups(logExportGroups)
 	}
 
-	req.SetAuthPrincipal(plan.AuthPrincipal.ValueString())
+	if IsKnown(plan.AuthPrincipal) {
+		req.SetAuthPrincipal(plan.AuthPrincipal.ValueString())
+	}
 	req.SetLogName(plan.LogName.ValueString())
 	if IsKnown(plan.Redact) {
 		req.SetRedact(plan.Redact.ValueBool())
@@ -557,6 +691,16 @@ func loadPlanIntoEnableLogExportRequest(
 	}
 	if IsKnown(plan.AWSExternalID) {
 		req.SetAwsExternalId(plan.AWSExternalID.ValueString())
+	}
+	if IsKnown(plan.OTLPEndpoint) {
+		req.SetOtlpEndpoint(plan.OTLPEndpoint.ValueString())
+	}
+	if client.LogExportType(plan.Type.ValueString()) == client.LOGEXPORTTYPE_OTLP_HTTP && !headers.IsNull() {
+		var values map[string]string
+		if diags := headers.ElementsAs(ctx, &values, false); diags.HasError() {
+			return fmt.Errorf("invalid otlp_headers_wo: %s", diags)
+		}
+		req.SetOtlpHeaders(values)
 	}
 
 	configType, err := client.NewLogExportTypeFromValue(plan.Type.ValueString())

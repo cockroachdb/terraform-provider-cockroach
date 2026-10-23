@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `otlp_endpoint`, write-only `otlp_headers_wo`, and `otlp_headers_wo_version` attributes to
+  `cockroach_log_export_config` for direct OTLP/HTTP log export. OTLP exports
+  no longer require `auth_principal` and are accepted on AWS and GCP clusters.
+  Header values are never stored in Terraform plan or state (Terraform CLI 1.11+
+  required for write-only headers). Increment `otlp_headers_wo_version` to rotate
+  credentials. Ordinary updates preserve the credentials stored by Cockroach Cloud.
+
 ## [1.24.1] - 2026-10-21
 
 ### Added

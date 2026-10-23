@@ -379,19 +379,22 @@ type LogExportGroup struct {
 }
 
 type ClusterLogExport struct {
-	ID              types.String      `tfsdk:"id"`
-	AuthPrincipal   types.String      `tfsdk:"auth_principal"`
-	LogName         types.String      `tfsdk:"log_name"`
-	Type            types.String      `tfsdk:"type"`
-	Redact          types.Bool        `tfsdk:"redact"`
-	Region          types.String      `tfsdk:"region"`
-	Groups          *[]LogExportGroup `tfsdk:"groups"`
-	Status          types.String      `tfsdk:"status"`
-	UserMessage     types.String      `tfsdk:"user_message"`
-	CreatedAt       types.String      `tfsdk:"created_at"`
-	UpdatedAt       types.String      `tfsdk:"updated_at"`
-	OmittedChannels *[]types.String   `tfsdk:"omitted_channels"`
-	AWSExternalID   types.String      `tfsdk:"aws_external_id"`
+	ID                   types.String      `tfsdk:"id"`
+	AuthPrincipal        types.String      `tfsdk:"auth_principal"`
+	LogName              types.String      `tfsdk:"log_name"`
+	Type                 types.String      `tfsdk:"type"`
+	Redact               types.Bool        `tfsdk:"redact"`
+	Region               types.String      `tfsdk:"region"`
+	Groups               *[]LogExportGroup `tfsdk:"groups"`
+	Status               types.String      `tfsdk:"status"`
+	UserMessage          types.String      `tfsdk:"user_message"`
+	CreatedAt            types.String      `tfsdk:"created_at"`
+	UpdatedAt            types.String      `tfsdk:"updated_at"`
+	OmittedChannels      *[]types.String   `tfsdk:"omitted_channels"`
+	AWSExternalID        types.String      `tfsdk:"aws_external_id"`
+	OTLPEndpoint         types.String      `tfsdk:"otlp_endpoint"`
+	OTLPHeadersWO        types.Map         `tfsdk:"otlp_headers_wo"`
+	OTLPHeadersWOVersion types.Int64       `tfsdk:"otlp_headers_wo_version"`
 }
 
 type ClusterCloudWatchMetricExportConfig struct {

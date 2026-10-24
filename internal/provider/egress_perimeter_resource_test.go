@@ -792,9 +792,10 @@ func (f *egressRuleTestFixture) setupReplacementMocks(originalRule, replacementR
 
 	f.mock.EXPECT().DeleteEgressRule(gomock.Any(), f.clusterID, gomock.Any(), gomock.Any()).
 		DoAndReturn(func(ctx context.Context, cID, rID string, opts *client.DeleteEgressRuleOptions) (*client.DeleteEgressRuleResponse, *http.Response, error) {
-			if rID == f.ruleID {
+			switch rID {
+			case f.ruleID:
 				atomic.StoreInt32(&originalDeleted, 1)
-			} else if rID == replacementRuleID {
+			case replacementRuleID:
 				atomic.StoreInt32(&replacementDeleted, 1)
 			}
 			return &client.DeleteEgressRuleResponse{}, nil, nil

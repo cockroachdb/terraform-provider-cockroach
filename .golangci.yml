@@ -1,18 +1,15 @@
 version: "2"
 
 linters:
-  # golangci-lint v2 folded gosimple and stylecheck into staticcheck and turned
-  # on the quickfix (QF) checks. Keep the v1 check set so the v2 upgrade did not
-  # change which findings fail CI.
   settings:
     staticcheck:
       checks:
         - all
-        - -QF*
-        - -ST1*
+        # The Id/Url/Sql spellings mirror the Cloud API SDK's own field names.
+        - -ST1003
   exclusions:
     # v1 applied these by default; v2 makes them opt-in. Dropping them would
-    # newly fail on unchecked Close and os.Remove calls.
+    # newly fail on unchecked Close and os.Setenv calls.
     presets:
       - comments
       - common-false-positives

@@ -1127,7 +1127,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			initialCluster: singleRegionClusterWithUnlimited("BASIC"),
 			updateStep: func() resource.TestStep {
 				step := onDemandSingleRegionClusterNoLimitsStep(clusterName, defaultPlanType)
-				step.Config = strings.Replace(step.Config, "GCP", "AWS", -1)
+				step.Config = strings.ReplaceAll(step.Config, "GCP", "AWS")
 				step.ExpectError = regexp.MustCompile("Cannot update cluster cloud provider")
 				return step
 			},
@@ -1193,7 +1193,7 @@ func TestIntegrationServerlessClusterResource(t *testing.T) {
 			name: "use serverless primary region on dedicated cluster",
 			createStep: func() resource.TestStep {
 				config := getTestDedicatedClusterResourceConfig(clusterName, latestClusterMajorVersion, false, 4, nil, false)
-				config = strings.Replace(config, "node_count: 1", "primary: true", -1)
+				config = strings.ReplaceAll(config, "node_count: 1", "primary: true")
 				return resource.TestStep{
 					Config:      config,
 					ExpectError: regexp.MustCompile("Dedicated clusters do not support the primary attribute on regions."),

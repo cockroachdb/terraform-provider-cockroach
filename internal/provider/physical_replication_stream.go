@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
@@ -20,6 +21,13 @@ const (
 	physicalReplicationStreamCreateTimeout   = time.Hour
 	physicalReplicationStreamCompleteTimeout = 10 * time.Minute
 )
+
+// replicationStreamStatusInitialScan is the status API versions after
+// 2026-09-15 report while the standby runs its initial scan. Earlier versions,
+// including the one the SDK pins, report REPLICATING instead. It is defined
+// here so the provider keeps working when it moves to an SDK that sends a
+// newer Cc-Version.
+const replicationStreamStatusInitialScan client.ReplicationStreamStatusType = "INITIAL_SCAN"
 
 type physicalReplicationStreamResource struct {
 	provider *provider
@@ -158,7 +166,10 @@ func (r *physicalReplicationStreamResource) Create(
 		ctx,
 		physicalReplicationStreamCreateTimeout,
 		waitForPhysicalReplicationStreamStatusFunc(
-			ctx, streamObj.Id, r.provider.service, streamObj, client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING,
+			ctx, streamObj.Id, r.provider.service, streamObj,
+			// The initial scan can run for hours, longer than the create
+			// timeout, so creation finishes once the stream has started.
+			replicationStreamStatusInitialScan, client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING,
 		),
 	)
 	if err != nil {
@@ -176,7 +187,7 @@ func (r *physicalReplicationStreamResource) Create(
 
 func waitForPhysicalReplicationStreamStatusFunc(
 	ctx context.Context, id string, cl client.Service, stream *client.PhysicalReplicationStream,
-	desiredStatus client.ReplicationStreamStatusType,
+	desiredStatuses ...client.ReplicationStreamStatusType,
 ) retry.RetryFunc {
 	return func() *retry.RetryError {
 		traceAPICall("GetPhysicalReplicationStream")
@@ -189,8 +200,8 @@ func waitForPhysicalReplicationStreamStatusFunc(
 			}
 		}
 		*stream = *apiStream
-		if stream.Status != desiredStatus {
-			return retry.RetryableError(fmt.Errorf("physical replication stream has status %s; desired status is %s", stream.Status, desiredStatus))
+		if !slices.Contains(desiredStatuses, stream.Status) {
+			return retry.RetryableError(fmt.Errorf("physical replication stream has status %s; desired status is one of %v", stream.Status, desiredStatuses))
 		}
 		return nil
 	}

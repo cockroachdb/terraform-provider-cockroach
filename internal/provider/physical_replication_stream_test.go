@@ -12,6 +12,7 @@ import (
 	mock_client "github.com/cockroachdb/terraform-provider-cockroach/mock"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
@@ -190,6 +191,38 @@ func TestIntegrationPhysicalReplicationStreamDestroyCancelsStream(t *testing.T) 
 			},
 		},
 	})
+}
+
+// TestLoadPCRStreamToTerraformStateOmittedFields checks that fields the API
+// omits before the standby reports replication status end up null rather than
+// left unknown from the plan, which Terraform rejects after apply.
+func TestLoadPCRStreamToTerraformStateOmittedFields(t *testing.T) {
+	stream := client.PhysicalReplicationStream{
+		Id:               uuid.New().String(),
+		PrimaryClusterId: uuid.New().String(),
+		StandbyClusterId: uuid.New().String(),
+		CreatedAt:        time.Now(),
+		Status:           client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING,
+	}
+	state := PhysicalReplicationStream{
+		ReplicatedTime:        types.StringUnknown(),
+		ReplicationLagSeconds: types.Int64Unknown(),
+		RetainedTime:          types.StringUnknown(),
+		ActivatedAt:           types.StringUnknown(),
+	}
+
+	loadPCRStreamToTerraformState(&stream, &state)
+
+	for name, isNull := range map[string]bool{
+		"replicated_time":         state.ReplicatedTime.IsNull(),
+		"replication_lag_seconds": state.ReplicationLagSeconds.IsNull(),
+		"retained_time":           state.RetainedTime.IsNull(),
+		"activated_at":            state.ActivatedAt.IsNull(),
+	} {
+		if !isNull {
+			t.Errorf("%s: expected null", name)
+		}
+	}
 }
 
 func pcrTestClusters(

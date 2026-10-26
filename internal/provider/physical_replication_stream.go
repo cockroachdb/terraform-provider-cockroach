@@ -203,14 +203,23 @@ func loadPCRStreamToTerraformState(
 	state.PrimaryClusterId = types.StringValue(apiObj.GetPrimaryClusterId())
 	state.StandbyClusterId = types.StringValue(apiObj.GetStandbyClusterId())
 	state.CreatedAt = types.StringValue(apiObj.GetCreatedAt().String())
+	// The API omits these until the standby reports replication status. A
+	// computed attribute left unknown after apply is an error, so record them
+	// as null instead.
 	if apiObj.ReplicatedTime != nil {
 		state.ReplicatedTime = types.StringValue(apiObj.GetReplicatedTime().String())
+	} else {
+		state.ReplicatedTime = types.StringNull()
 	}
 	if apiObj.ReplicationLagSeconds != nil {
 		state.ReplicationLagSeconds = types.Int64Value(int64(apiObj.GetReplicationLagSeconds()))
+	} else {
+		state.ReplicationLagSeconds = types.Int64Null()
 	}
 	if apiObj.RetainedTime != nil {
 		state.RetainedTime = types.StringValue(apiObj.GetRetainedTime().String())
+	} else {
+		state.RetainedTime = types.StringNull()
 	}
 	if apiObj.ActivatedAt != nil {
 		state.ActivatedAt = types.StringValue(apiObj.GetActivatedAt().String())

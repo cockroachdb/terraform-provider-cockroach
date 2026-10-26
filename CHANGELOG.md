@@ -16,6 +16,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   required for write-only headers). Increment `otlp_headers_wo_version` to rotate
   credentials. Ordinary updates preserve the credentials stored by Cockroach Cloud.
 
+### Fixed
+
+- `cockroach_physical_replication_stream` no longer fails to apply with
+  "Provider returned invalid result object" when the stream does not yet report
+  `replicated_time`, `replication_lag_seconds`, or `retained_time`. They are
+  now recorded as null.
+
 ## [1.24.1] - 2026-10-21
 
 ### Added

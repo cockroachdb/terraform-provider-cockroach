@@ -23,6 +23,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `replicated_time`, `replication_lag_seconds`, or `retained_time`. They are
   now recorded as null.
 
+- `cockroach_physical_replication_stream` creation now finishes once the stream
+  reports `INITIAL_SCAN` as well as `REPLICATING`. Newer Cloud API versions
+  report `INITIAL_SCAN` for the whole initial scan, which can run longer than
+  the one-hour create timeout.
+
 ## [1.24.1] - 2026-10-21
 
 ### Added

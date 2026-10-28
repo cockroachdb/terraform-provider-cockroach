@@ -75,7 +75,7 @@ func (r *physicalReplicationStreamResource) Schema(
 			},
 			"replicated_time": schema.StringAttribute{
 				Computed:    true,
-				Description: "The timestamp indicating the point up to which data has been replicated.",
+				Description: "The timestamp indicating the point up to which data has been replicated. Null whenever the standby is not reporting one, including throughout the initial scan. Failover is possible only once this is set.",
 			},
 			"replication_lag_seconds": schema.Int64Attribute{
 				Computed:    true,
@@ -86,8 +86,13 @@ func (r *physicalReplicationStreamResource) Schema(
 				Description: "The timestamp indicating the earliest time that the replication stream can failover to.",
 			},
 			"status": schema.StringAttribute{
-				Computed:    true,
-				Description: "The status of the replication stream.",
+				Computed: true,
+				MarkdownDescription: "The status of the replication stream. Possible values are:" +
+					"\n  * `STARTING`: the stream is being set up." +
+					"\n  * `REPLICATING`: the stream has started. This includes the initial scan, during which the standby copies the primary's existing data. Failover is unavailable until `replicated_time` is set." +
+					"\n  * `FAILING_OVER`: failover to the standby is in progress." +
+					"\n  * `COMPLETED`: failover finished and the standby cluster has been promoted." +
+					"\n  * `CANCELED`: the stream was canceled without failing over.",
 			},
 			"failover_at": schema.StringAttribute{
 				Optional:    true,

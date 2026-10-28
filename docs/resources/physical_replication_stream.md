@@ -53,8 +53,9 @@ resource "cockroach_cluster" "pcr_example_2" {
 resource "cockroach_physical_replication_stream" "pcr_stream" {
   primary_cluster_id = cockroach_cluster.pcr_example_1.id
   standby_cluster_id = cockroach_cluster.pcr_example_2.id
-  # After a PCR stream is replicating, uncomment this field to perform
-  # failover. Alternatively, set failover_at.
+  # Once the stream reports a replicated_time, which happens when its initial
+  # scan finishes, uncomment this field to perform failover. Alternatively, set
+  # failover_at.
   # failover_immediately = true
 }
 ```
@@ -77,10 +78,15 @@ resource "cockroach_physical_replication_stream" "pcr_stream" {
 - `activated_at` (String) The timestamp indicating the actual timestamp at which failover was finalized.
 - `created_at` (String) The timestamp at which the replication stream was created.
 - `id` (String) A unique identifier for the replication stream.
-- `replicated_time` (String) The timestamp indicating the point up to which data has been replicated.
+- `replicated_time` (String) The timestamp indicating the point up to which data has been replicated. Null whenever the standby is not reporting one, including throughout the initial scan. Failover is possible only once this is set.
 - `replication_lag_seconds` (Number) The replication lag in seconds.
 - `retained_time` (String) The timestamp indicating the earliest time that the replication stream can failover to.
-- `status` (String) The status of the replication stream.
+- `status` (String) The status of the replication stream. Possible values are:
+  * `STARTING`: the stream is being set up.
+  * `REPLICATING`: the stream has started. This includes the initial scan, during which the standby copies the primary's existing data. Failover is unavailable until `replicated_time` is set.
+  * `FAILING_OVER`: failover to the standby is in progress.
+  * `COMPLETED`: failover finished and the standby cluster has been promoted.
+  * `CANCELED`: the stream was canceled without failing over.
 
 ## Import
 

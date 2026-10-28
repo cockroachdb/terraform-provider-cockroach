@@ -28,6 +28,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   report `INITIAL_SCAN` for the whole initial scan, which can run longer than
   the one-hour create timeout.
 
+- `cockroach_physical_replication_stream` is now recorded in state as soon as
+  the API creates it. Previously, if the wait for the stream to start failed,
+  the stream was left running but untracked, which blocked deleting both
+  clusters. It is now marked tainted instead, so the next apply replaces it.
+
 - `cockroach_physical_replication_stream` documentation now lists the values
   `status` can take, and the examples say failover is available once
   `replicated_time` is set rather than once the stream is replicating.

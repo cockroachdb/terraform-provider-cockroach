@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"regexp"
 	"testing"
 	"time"
 
@@ -188,6 +189,81 @@ func TestIntegrationPhysicalReplicationStreamDestroyCancelsStream(t *testing.T) 
 					testCheckPhysicalReplicationStreamExists("cockroach_physical_replication_stream.stream"),
 					resource.TestCheckResourceAttr("cockroach_physical_replication_stream.stream", "status", string(client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING)),
 				),
+			},
+		},
+	})
+}
+
+// TestIntegrationPhysicalReplicationStreamCreateWaitFailureTracksStream checks
+// that a stream whose create wait fails is still recorded in state, so destroy
+// cancels it. An untracked active stream blocks deletion of both clusters.
+func TestIntegrationPhysicalReplicationStreamCreateWaitFailureTracksStream(t *testing.T) {
+	primaryClusterName := fmt.Sprintf("primary-cluster-%s", GenerateRandomString(4))
+	standbyClusterName := fmt.Sprintf("standby-cluster-%s", GenerateRandomString(4))
+	primaryClusterID := uuid.New().String()
+	standbyClusterID := uuid.New().String()
+	replicationID := uuid.New().String()
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	primaryCluster, standbyCluster := pcrTestClusters(
+		primaryClusterName, standbyClusterName, primaryClusterID, standbyClusterID)
+
+	startingStream := client.PhysicalReplicationStream{
+		Id:               replicationID,
+		PrimaryClusterId: primaryClusterID,
+		StandbyClusterId: standbyClusterID,
+		CreatedAt:        time.Now(),
+		Status:           client.REPLICATIONSTREAMSTATUSTYPE_STARTING,
+	}
+	canceledStream := startingStream
+	canceledStream.Status = client.REPLICATIONSTREAMSTATUSTYPE_CANCELED
+
+	s.EXPECT().CreateCluster(gomock.Any(), clusterReqMatcher{ExpectedName: primaryClusterName}).Return(&primaryCluster, nil, nil).Times(1)
+	s.EXPECT().CreateCluster(gomock.Any(), clusterReqMatcher{ExpectedName: standbyClusterName}).Return(&standbyCluster, nil, nil).Times(1)
+	s.EXPECT().CreatePhysicalReplicationStream(gomock.Any(), gomock.Any()).Return(&startingStream, nil, nil).Times(1)
+
+	s.EXPECT().GetCluster(gomock.Any(), primaryClusterID).Return(&primaryCluster, nil, nil).AnyTimes()
+	s.EXPECT().GetCluster(gomock.Any(), standbyClusterID).Return(&standbyCluster, nil, nil).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), primaryClusterID).Return(initialBackupConfig, nil, nil).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), standbyClusterID).Return(initialBackupConfig, nil, nil).AnyTimes()
+
+	// A client error ends the create wait at once, standing in for a wait
+	// that times out.
+	s.EXPECT().GetPhysicalReplicationStream(gomock.Any(), replicationID).Return(
+		nil, &http.Response{StatusCode: http.StatusBadRequest}, fmt.Errorf("bad request")).Times(1)
+	var canceled bool
+	s.EXPECT().GetPhysicalReplicationStream(gomock.Any(), replicationID).DoAndReturn(
+		func(_ context.Context, _ string) (*client.PhysicalReplicationStream, *http.Response, error) {
+			if canceled {
+				return &canceledStream, nil, nil
+			}
+			return &startingStream, nil, nil
+		}).AnyTimes()
+
+	// Destroy only cancels a stream that is in state. The controller fails the
+	// test if the cancellation never arrives.
+	s.EXPECT().UpdatePhysicalReplicationStream(gomock.Any(), replicationID, gomock.Any()).DoAndReturn(
+		func(_ context.Context, _ string, _ *client.UpdatePhysicalReplicationStreamSpec) (*client.PhysicalReplicationStream, *http.Response, error) {
+			canceled = true
+			return &canceledStream, nil, nil
+		}).Times(1)
+
+	s.EXPECT().DeleteCluster(gomock.Any(), primaryClusterID)
+	s.EXPECT().DeleteCluster(gomock.Any(), standbyClusterID)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config:      getTestPhysicalReplicationStreamResourceConfigCreate(primaryClusterName, standbyClusterName),
+				ExpectError: regexp.MustCompile("PCR stream creation failed"),
 			},
 		},
 	})

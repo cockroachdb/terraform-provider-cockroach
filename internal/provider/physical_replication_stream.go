@@ -167,6 +167,17 @@ func (r *physicalReplicationStreamResource) Create(
 		return
 	}
 
+	// Record the stream before waiting on it. Terraform keeps this state even
+	// if the wait fails, marking the stream tainted rather than losing track of
+	// it, so a later destroy or replace cancels it. An untracked active stream
+	// blocks deleting both clusters.
+	loadPCRStreamToTerraformState(streamObj, &plan)
+	diags = resp.State.Set(ctx, plan)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	err = retry.RetryContext(
 		ctx,
 		physicalReplicationStreamCreateTimeout,

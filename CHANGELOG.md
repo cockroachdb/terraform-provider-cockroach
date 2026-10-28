@@ -28,6 +28,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   report `INITIAL_SCAN` for the whole initial scan, which can run longer than
   the one-hour create timeout.
 
+- `cockroach_physical_replication_stream` documentation now lists the values
+  `status` can take, and the examples say failover is available once
+  `replicated_time` is set rather than once the stream is replicating.
+
 ## [1.24.1] - 2026-10-21
 
 ### Added

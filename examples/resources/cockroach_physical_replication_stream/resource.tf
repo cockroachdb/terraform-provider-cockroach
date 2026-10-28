@@ -38,8 +38,9 @@ resource "cockroach_cluster" "pcr_example_2" {
 resource "cockroach_physical_replication_stream" "pcr_stream" {
   primary_cluster_id = cockroach_cluster.pcr_example_1.id
   standby_cluster_id = cockroach_cluster.pcr_example_2.id
-  # After a PCR stream is replicating, uncomment this field to perform
-  # failover. Alternatively, set failover_at.
+  # Once the stream reports a replicated_time, which happens when its initial
+  # scan finishes, uncomment this field to perform failover. Alternatively, set
+  # failover_at.
   # failover_immediately = true
 }
 

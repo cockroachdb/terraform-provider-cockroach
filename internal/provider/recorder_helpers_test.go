@@ -144,6 +144,20 @@ func accTestSetup(t *testing.T) {
 	})
 }
 
+// skipUnlessRecorderActive skips an acceptance test that doesn't call
+// accTestSetup when a recording mode is set, so it neither runs live
+// unrecorded nor fails against the replay transport.
+func skipUnlessRecorderActive(t *testing.T) {
+	t.Helper()
+	mode := recordingMode()
+	if mode == "" || !strings.HasPrefix(t.Name(), "TestAcc") {
+		return
+	}
+	if r := currentRecorder(); r == nil || r.t != t {
+		t.Skipf("%s=%s, but this test doesn't call accTestSetup", recordingModeEnvVar, mode)
+	}
+}
+
 // pinTestVars saves pinnedTestVars to a new recording, or restores them from
 // a replayed one.
 func pinTestVars(r *recorder) (restore func()) {

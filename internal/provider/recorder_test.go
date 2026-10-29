@@ -415,7 +415,7 @@ func (r *recorder) save() error {
 	if err != nil {
 		return err
 	}
-	for _, env := range []string{CockroachAPIKey, CockroachAPIJWT} {
+	for _, env := range []string{CockroachAPIKey, CockroachAPIJWT, cockroachContinuumAPIKey} {
 		if secret := os.Getenv(env); secret != "" && bytes.Contains(data, []byte(secret)) {
 			return fmt.Errorf("refusing to write %s because it contains the value of %s", r.path, env)
 		}

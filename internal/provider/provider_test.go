@@ -22,7 +22,6 @@ import (
 	"math/big"
 	"net/http"
 	"os"
-	"strings"
 	"testing"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
@@ -57,11 +56,7 @@ var testAccProtoV6ProviderFactories = map[string]func() (tfprotov6.ProviderServe
 }
 
 func testAccPreCheck(t *testing.T) {
-	if mode := recordingMode(); mode != "" && strings.HasPrefix(t.Name(), "TestAcc") {
-		if r := currentRecorder(); r == nil || r.t != t {
-			t.Skipf("%s=%s, but this test doesn't call accTestSetup", recordingModeEnvVar, mode)
-		}
-	}
+	skipUnlessRecorderActive(t)
 	if os.Getenv(CockroachAPIKey) == "" && os.Getenv(CockroachAPIJWT) == "" {
 		t.Fatalf(
 			"%s or %s must be set for acceptance testing",
@@ -72,6 +67,7 @@ func testAccPreCheck(t *testing.T) {
 }
 
 func testAccContinuumPreCheck(t *testing.T) {
+	skipUnlessRecorderActive(t)
 	if os.Getenv(cockroachContinuumAPIKey) == "" {
 		t.Skipf("%s must be set to run Continuum acceptance tests", cockroachContinuumAPIKey)
 	}

@@ -4,10 +4,12 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"sort"
+	"strings"
 
-	"github.com/cockroachdb/terraform-provider-cockroach/internal/utils"
 	"github.com/hashicorp/terraform-plugin-framework-validators/helpers/validatordiag"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
 var labelKeyRegex = regexp.MustCompile("^[a-z][a-z0-9_-]*$")
@@ -63,21 +65,47 @@ func (validator labelsValidator) MarkdownDescription(ctx context.Context) string
 }
 
 func (validator labelsValidator) ValidateMap(
-	ctx context.Context, request validator.MapRequest, response *validator.MapResponse,
+	_ context.Context, request validator.MapRequest, response *validator.MapResponse,
 ) {
-	if request.ConfigValue.IsNull() || request.ConfigValue.IsUnknown() || len(request.ConfigValue.Elements()) == 0 {
+	value := request.ConfigValue
+	if value.IsNull() || value.IsUnknown() || len(value.Elements()) == 0 {
 		return
 	}
 
-	value, diags := request.ConfigValue.ToMapValue(ctx)
-	response.Diagnostics.Append(diags...)
+	// A label value is unknown during the validate walk when it references a value
+	// Terraform has not resolved yet, as in `labels = { environment = var.environment }`.
+	// Validators must tolerate unknown values and defer to the walk that runs once
+	// they resolve, rather than failing the whole plan.
+	labels := make(map[string]string, len(value.Elements()))
+	var nullKeys []string
+	for key, elem := range value.Elements() {
+		strVal, ok := elem.(types.String)
+		if !ok {
+			// Only reachable if this validator is attached to a map whose element
+			// type is not a string, which the schema is meant to rule out.
+			response.Diagnostics.Append(validatordiag.BugInProviderDiagnostic(
+				fmt.Sprintf("Labels validator received a non-string value for key %q", key),
+			))
+			return
+		}
+		switch {
+		case strVal.IsNull():
+			nullKeys = append(nullKeys, key)
+			labels[key] = ""
+		case strVal.IsUnknown():
+			labels[key] = ""
+		default:
+			labels[key] = strVal.ValueString()
+		}
+	}
 
-	labels, err := utils.ToStringMap(value)
-	if err != nil {
-		response.Diagnostics.AddError(
-			"Error processing labels",
-			fmt.Sprintf("Could not convert labels: %v", err),
-		)
+	if len(nullKeys) > 0 {
+		sort.Strings(nullKeys)
+		response.Diagnostics.Append(validatordiag.InvalidAttributeValueDiagnostic(
+			request.Path,
+			fmt.Sprintf("must not contain null values, but found null for: %s", strings.Join(nullKeys, ", ")),
+			value.String(),
+		))
 	}
 
 	if len(labels) > ResourceLabelLimit {

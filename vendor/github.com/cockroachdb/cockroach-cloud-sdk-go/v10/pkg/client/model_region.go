@@ -20,16 +20,16 @@ package client
 
 // Region struct for Region.
 type Region struct {
-	// disk_iops is the provisioned disk I/O operations per second for nodes in this region. Only meaningful for Advanced clusters on AWS; for GCP and Azure the cloud provider chooses based on disk size.
+	// Limited Access: disk_iops is the provisioned disk I/O operations per second for nodes in this region. Only meaningful for Advanced clusters on AWS; for GCP and Azure the cloud provider chooses based on disk size.
 	DiskIops *int32 `json:"disk_iops,omitempty"`
 	// internal_dns is the internal DNS name of the cluster within the cloud provider's network. It is used to connect to the cluster with AWS PrivateLink, Azure Private Link, and GCP VPC Peering, but not GCP Private Service Connect.
 	InternalDns string `json:"internal_dns"`
-	// machine_type is the machine type identifier within the cloud provider for nodes in this region (e.g. m5.xlarge, n2-standard-4). May differ across regions in a heterogeneous Advanced cluster. Only populated for Advanced clusters.
+	// Limited Access: machine_type is the machine type identifier within the cloud provider for nodes in this region (e.g. m5.xlarge, n2-standard-4). May differ across regions in a heterogeneous Advanced cluster. Only populated for Advanced clusters.
 	MachineType *string `json:"machine_type,omitempty"`
 	Name        string  `json:"name"`
 	// node_count will be 0 for Serverless clusters.
 	NodeCount int32 `json:"node_count"`
-	// num_virtual_cpus is the number of virtual CPUs per node in this region, derived from machine_type. Only populated for Advanced clusters.
+	// Limited Access: num_virtual_cpus is the number of virtual CPUs per node in this region, derived from machine_type. Only populated for Advanced clusters.
 	NumVirtualCpus *int32 `json:"num_virtual_cpus,omitempty"`
 	// primary is true only for the primary region in a Multi Region Serverless cluster.
 	Primary *bool `json:"primary,omitempty"`

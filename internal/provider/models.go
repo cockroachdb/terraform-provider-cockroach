@@ -407,6 +407,19 @@ type ClusterCloudWatchMetricExportConfig struct {
 	Status       types.String `tfsdk:"status"`
 }
 
+type ClusterOTLPMetricExportConfig struct {
+	ID          types.String                             `tfsdk:"id"`
+	CloudWatch  *ClusterOTLPMetricExportCloudWatchConfig `tfsdk:"cloudwatch"`
+	Status      types.String                             `tfsdk:"status"`
+	UserMessage types.String                             `tfsdk:"user_message"`
+}
+
+type ClusterOTLPMetricExportCloudWatchConfig struct {
+	RoleArn      types.String `tfsdk:"role_arn"`
+	TargetRegion types.String `tfsdk:"target_region"`
+	ExternalID   types.String `tfsdk:"external_id"`
+}
+
 type ClusterDatadogMetricExportConfig struct {
 	ID          types.String `tfsdk:"id"`
 	Site        types.String `tfsdk:"site"`

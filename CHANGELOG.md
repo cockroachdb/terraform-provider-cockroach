@@ -9,12 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `cockroach_metric_export_otlp_config` to manage OTLP metric export from
+  dedicated clusters to Amazon CloudWatch, including IAM role, target region,
+  external ID, deployment status, and import by cluster ID. Refresh warns when an
+  export is missing or not deployed. Requires access to the limited-access Cloud
+  API feature.
+
 - Added `otlp_endpoint`, write-only `otlp_headers_wo`, and `otlp_headers_wo_version` attributes to
   `cockroach_log_export_config` for direct OTLP/HTTP log export. OTLP exports
   no longer require `auth_principal` and are accepted on AWS and GCP clusters.
   Header values are never stored in Terraform plan or state (Terraform CLI 1.11+
   required for write-only headers). Increment `otlp_headers_wo_version` to rotate
   credentials. Ordinary updates preserve the credentials stored by Cockroach Cloud.
+
+### Changed
+
+- Updated `cockroach-cloud-sdk-go` from `v10.0.0` to `v10.1.0`.
 
 ### Fixed
 

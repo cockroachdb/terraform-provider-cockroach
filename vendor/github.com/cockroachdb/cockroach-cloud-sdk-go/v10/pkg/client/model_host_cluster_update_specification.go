@@ -23,7 +23,7 @@ type HostClusterUpdateSpecification struct {
 	// This field should contain the CMEK specs for newly added regions. If a CMEK spec is provided for an existing region, the request is invalid and will fail.
 	CmekRegionSpecs *[]CMEKRegionSpecification            `json:"cmek_region_specs,omitempty"`
 	Hardware        *DedicatedHardwareUpdateSpecification `json:"hardware,omitempty"`
-	// region_machine_specs updates machine types per region. Only regions named in this map are affected; unnamed regions retain their current machine type. Use this to add a new region with a distinct machine type or to resize an existing region independently of others. Mutually exclusive with hardware.machine_spec.
+	// Limited Access: region_machine_specs updates machine types per region. Only regions named in this map are affected; unnamed regions retain their current machine type. Use this to add a new region with a distinct machine type or to resize an existing region independently of others. Mutually exclusive with hardware.machine_spec.
 	RegionMachineSpecs *map[string]DedicatedMachineTypeSpecification `json:"region_machine_specs,omitempty"`
 	// Region keys should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. Values represent the node count.
 	RegionNodes *map[string]int32 `json:"region_nodes,omitempty"`

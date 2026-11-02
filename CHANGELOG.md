@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Clearing all `additional_regions` from `cockroach_cmek` now preserves whether
+  the attribute is omitted or explicitly empty in state instead of claiming
+  every region in the cluster or returning an inconsistent result.
+
 - `cockroach_physical_replication_stream` no longer fails to apply with
   "Provider returned invalid result object" when the stream does not yet report
   `replicated_time`, `replication_lag_seconds`, or `retained_time`. They are

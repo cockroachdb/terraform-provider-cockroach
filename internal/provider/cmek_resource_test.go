@@ -330,6 +330,16 @@ func TestIntegrationCMEKHostCluster(t *testing.T) {
 			currentCluster, currentCMEKInfo = updatedCluster, updatedCMEKInfo
 			return updatedCluster, httpOk, nil
 		})
+	s.EXPECT().UpdateCluster(gomock.Any(), clusterID, &client.UpdateClusterSpecification{
+		Dedicated: &client.DedicatedClusterUpdateSpecification{
+			RegionNodes:     &map[string]int32{usCentral1: 3},
+			CmekRegionSpecs: &[]client.CMEKRegionSpecification{},
+		},
+	}).DoAndReturn(
+		func(context.Context, string, *client.UpdateClusterSpecification) (*client.Cluster, *http.Response, error) {
+			currentCluster, currentCMEKInfo = initialCluster, initialCMEKInfo
+			return initialCluster, httpOk, nil
+		})
 	s.EXPECT().DeleteCluster(gomock.Any(), clusterID)
 
 	cfg := func(cmekRegions, additionalRegions string) string {
@@ -371,6 +381,22 @@ resource "cockroach_cmek" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "1"),
 					resource.TestCheckResourceAttr("cockroach_cmek.test", "regions.#", "2"),
+				),
+			},
+			{
+				Config: cfg(centralRegion, `additional_regions = []`),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "1"),
+					resource.TestCheckResourceAttr("cockroach_cmek.test", "additional_regions.#", "0"),
+					resource.TestCheckResourceAttr("cockroach_cmek.test", "regions.#", "1"),
+				),
+			},
+			{
+				Config: cfg(centralRegion, ""),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr("cockroach_cluster.test", "regions.#", "1"),
+					resource.TestCheckResourceAttr("cockroach_cmek.test", "additional_regions.#", "0"),
+					resource.TestCheckResourceAttr("cockroach_cmek.test", "regions.#", "1"),
 				),
 			},
 		},
@@ -934,6 +960,20 @@ func TestUndeclaredCMEKRegions(t *testing.T) {
 			planRegion("us-east-1", "u1"),
 			planRegion("us-east-2", "u2"),
 		}}
+		require.Empty(t, undeclaredCMEKRegions(state, plan))
+	})
+
+	t.Run("removed additional region is intentional", func(t *testing.T) {
+		state := &ClusterCMEK{
+			Regions: []CMEKRegion{
+				planRegion("us-east-1", "u1"),
+				planRegion("us-east-2", "u2"),
+			},
+			AdditionalRegions: []CMEKAdditionalRegion{
+				{Name: types.StringValue("us-east-2")},
+			},
+		}
+		plan := &ClusterCMEK{Regions: []CMEKRegion{planRegion("us-east-1", "u1")}}
 		require.Empty(t, undeclaredCMEKRegions(state, plan))
 	})
 }

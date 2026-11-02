@@ -342,9 +342,8 @@ func (r *cmekResource) Update(
 		return
 	}
 
-	// Preflight: CMEK can't be removed from a region, so any region in the
-	// refreshed state but absent from the config is undeclared drift. Fail
-	// before any mutating call so a partial update can't be left behind.
+	// A state region absent from config is drift unless this update intentionally
+	// removes it through additional_regions. Fail before any mutating call.
 	for _, region := range undeclaredCMEKRegions(&state, &plan) {
 		resp.Diagnostics.AddError(
 			"CMEK enabled on an undeclared region",
@@ -405,10 +404,23 @@ func (r *cmekResource) Update(
 
 	var cluster *client.Cluster
 	if regionNodes != nil {
-		// UpdateCluster expects only new regions in CmekRegionSpecs. Theoretically,
-		// this should be the regions that are in the plan, but not the spec.
-		if len(*regionNodes) != len(newRegions)+len(existingRegions) {
-			resp.Diagnostics.AddError("Mismatch between CMEK and cluster regions", "Each new addition to `additional_regions` must be accompanied by exactly one corresponding entry in `regions`.")
+		// CmekRegionSpecs contains only additions, but every remaining region must be in the CMEK plan.
+		plannedCMEKRegions := make(map[string]bool, len(plan.Regions))
+		for _, region := range plan.Regions {
+			plannedCMEKRegions[region.Region.ValueString()] = true
+		}
+		regionSetsMatch := len(*regionNodes) == len(plannedCMEKRegions)
+		for region := range *regionNodes {
+			if _, ok := plannedCMEKRegions[region]; !ok {
+				regionSetsMatch = false
+				break
+			}
+		}
+		if !regionSetsMatch {
+			resp.Diagnostics.AddError(
+				"Mismatch between CMEK and cluster regions",
+				"`regions` must match the cluster regions after applying changes to `additional_regions`.",
+			)
 			return
 		}
 		var err error
@@ -430,12 +442,15 @@ func (r *cmekResource) Update(
 			waitForClusterReadyFunc(ctx, plan.ID.ValueString(), r.provider.service, cluster))
 		if err != nil {
 			resp.Diagnostics.AddError(
-				"Adding new regions failed",
-				fmt.Sprintf("Error adding new regions: %s", formatAPIErrorMessage(err)),
+				"Cluster region update failed",
+				fmt.Sprintf("Error waiting for cluster region update: %s", formatAPIErrorMessage(err)),
 			)
 			return
 		}
-		state.AdditionalRegions = regionsToCMEKRegions(getManagedRegions(&cluster.Regions, cmekRegionsToRegions(plan.AdditionalRegions), cluster.CloudProvider, &resp.Diagnostics))
+		if len(plan.AdditionalRegions) != 0 {
+			managedRegions := getManagedRegions(&cluster.Regions, cmekRegionsToRegions(plan.AdditionalRegions), cluster.CloudProvider, &resp.Diagnostics)
+			state.AdditionalRegions = regionsToCMEKRegions(managedRegions)
+		}
 	}
 
 	if len(updateRegions) != 0 {
@@ -462,6 +477,10 @@ func (r *cmekResource) Update(
 		return
 	}
 
+	if len(plan.AdditionalRegions) == 0 {
+		// Terraform distinguishes null and empty collections after apply.
+		state.AdditionalRegions = plan.AdditionalRegions
+	}
 	loadCMEKToTerraformState(&clusterInfo, &state, &plan, &resp.Diagnostics, true)
 	if resp.Diagnostics.HasError() {
 		return
@@ -672,18 +691,32 @@ func NewCMEKResource() resource.Resource {
 	return &cmekResource{}
 }
 
-// undeclaredCMEKRegions returns region names present in state but absent from
-// the plan. CMEK can't be removed from a region, so these represent drift that
-// must be added to the config before an update can proceed.
+// undeclaredCMEKRegions returns state regions absent from the plan, excluding
+// additional regions intentionally removed by the plan.
 func undeclaredCMEKRegions(state, plan *ClusterCMEK) []string {
 	planned := make(map[string]struct{}, len(plan.Regions))
 	for _, region := range plan.Regions {
 		planned[region.Region.ValueString()] = struct{}{}
 	}
+	plannedAdditional := make(map[string]struct{}, len(plan.AdditionalRegions))
+	for _, region := range plan.AdditionalRegions {
+		plannedAdditional[region.Name.ValueString()] = struct{}{}
+	}
+	removedAdditional := make(map[string]struct{}, len(state.AdditionalRegions))
+	for _, region := range state.AdditionalRegions {
+		name := region.Name.ValueString()
+		if _, ok := plannedAdditional[name]; !ok {
+			removedAdditional[name] = struct{}{}
+		}
+	}
 	var out []string
 	for _, region := range state.Regions {
-		if _, ok := planned[region.Region.ValueString()]; !ok {
-			out = append(out, region.Region.ValueString())
+		name := region.Region.ValueString()
+		if _, ok := planned[name]; ok {
+			continue
+		}
+		if _, intentionallyRemoved := removedAdditional[name]; !intentionallyRemoved {
+			out = append(out, name)
 		}
 	}
 	return out

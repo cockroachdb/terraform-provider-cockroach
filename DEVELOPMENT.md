@@ -167,6 +167,39 @@ is unset. The key belongs to the `Cloud API Terraform Testing - Continuum` org (
 Admin, Billing Coordinator, Cluster Admin, and Folder Admin roles. CI passes it from the `COCKROACH_CONTINUUM_API_KEY`
 secret.
 
+### OTLP metric export acceptance test
+
+`TestAccMetricExportOTLPConfigResource` creates an AWS dedicated cluster and
+exports its metrics to CloudWatch using OTLP. The test organization must have
+access to the limited-access OTLP metric export API. In addition to
+`COCKROACH_API_KEY`, configure:
+
+- `COCKROACH_OTLP_METRICS_ROLE_ARN`: an existing IAM role whose trust policy
+  allows the cluster's AWS account to assume it, and whose permissions grant
+  `cloudwatch:PutMetricData` (required).
+- `COCKROACH_OTLP_METRICS_TARGET_REGION`: an AWS region supporting CloudWatch
+  OTLP ingestion and PromQL (defaults to `us-east-1`). The cluster is created in
+  this region so both the default destination and explicit destination are valid.
+- `COCKROACH_OTLP_METRICS_EXTERNAL_ID`: the external ID required by the role's
+  trust policy, if any.
+
+The test does not provision or update AWS IAM resources. The AWS account assigned
+to a newly created cluster can vary between runs, so a fixed role ARN alone does
+not ensure access: the role's trust policy must allow the actual cluster account.
+The acceptance workflows do not configure this role, so the live OTLP test is
+not automatically exercised in CI. Its mocked counterpart runs in regular PR
+checks.
+
+```shell
+TF_ACC=1 go test ./internal/provider -run '^TestAccMetricExportOTLPConfigResource$' -v -timeout 120m
+```
+
+The test exercises create, update, import, removing an optional destination
+region, and delete. It skips when the role is not configured. It creates real
+resources and incurs cloud charges. The mocked counterpart runs with
+`go test ./internal/provider -run '^TestIntegrationMetricExportOTLPConfigResource$'`
+without creating cloud resources.
+
 ## Releasing
 
 The release process is documented in [RELEASE.md](RELEASE.md).

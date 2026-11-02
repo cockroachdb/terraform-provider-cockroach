@@ -673,6 +673,22 @@ func (mr *MockServiceMockRecorder) DeleteMigrationAssistantSourceCACert(arg0, ar
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteMigrationAssistantSourceCACert", reflect.TypeOf((*MockService)(nil).DeleteMigrationAssistantSourceCACert), arg0, arg1)
 }
 
+// DeleteOtlpMetricExport mocks base method.
+func (m *MockService) DeleteOtlpMetricExport(arg0 context.Context, arg1 string) (*client.DeleteMetricExportResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteOtlpMetricExport", arg0, arg1)
+	ret0, _ := ret[0].(*client.DeleteMetricExportResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// DeleteOtlpMetricExport indicates an expected call of DeleteOtlpMetricExport.
+func (mr *MockServiceMockRecorder) DeleteOtlpMetricExport(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteOtlpMetricExport", reflect.TypeOf((*MockService)(nil).DeleteOtlpMetricExport), arg0, arg1)
+}
+
 // DeletePrivateEndpointConnection mocks base method.
 func (m *MockService) DeletePrivateEndpointConnection(arg0 context.Context, arg1, arg2 string) (*http.Response, error) {
 	m.ctrl.T.Helper()
@@ -909,6 +925,22 @@ func (m *MockService) EnableLogExport(arg0 context.Context, arg1 string, arg2 *c
 func (mr *MockServiceMockRecorder) EnableLogExport(arg0, arg1, arg2 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableLogExport", reflect.TypeOf((*MockService)(nil).EnableLogExport), arg0, arg1, arg2)
+}
+
+// EnableOtlpMetricExport mocks base method.
+func (m *MockService) EnableOtlpMetricExport(arg0 context.Context, arg1 string, arg2 *client.EnableOtlpMetricExportBody) (*client.OtlpMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "EnableOtlpMetricExport", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.OtlpMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// EnableOtlpMetricExport indicates an expected call of EnableOtlpMetricExport.
+func (mr *MockServiceMockRecorder) EnableOtlpMetricExport(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "EnableOtlpMetricExport", reflect.TypeOf((*MockService)(nil).EnableOtlpMetricExport), arg0, arg1, arg2)
 }
 
 // EnablePrometheusMetricExport mocks base method.
@@ -1357,6 +1389,22 @@ func (m *MockService) GetOrganizationInfo(arg0 context.Context) (*client.Organiz
 func (mr *MockServiceMockRecorder) GetOrganizationInfo(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOrganizationInfo", reflect.TypeOf((*MockService)(nil).GetOrganizationInfo), arg0)
+}
+
+// GetOtlpMetricExportInfo mocks base method.
+func (m *MockService) GetOtlpMetricExportInfo(arg0 context.Context, arg1 string) (*client.OtlpMetricExportInfo, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetOtlpMetricExportInfo", arg0, arg1)
+	ret0, _ := ret[0].(*client.OtlpMetricExportInfo)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetOtlpMetricExportInfo indicates an expected call of GetOtlpMetricExportInfo.
+func (mr *MockServiceMockRecorder) GetOtlpMetricExportInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetOtlpMetricExportInfo", reflect.TypeOf((*MockService)(nil).GetOtlpMetricExportInfo), arg0, arg1)
 }
 
 // GetPersonUsersByEmail mocks base method.
@@ -1837,6 +1885,22 @@ func (m *MockService) ListFolders(arg0 context.Context, arg1 *client.ListFolders
 func (mr *MockServiceMockRecorder) ListFolders(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListFolders", reflect.TypeOf((*MockService)(nil).ListFolders), arg0, arg1)
+}
+
+// ListInvoiceDailyUsage mocks base method.
+func (m *MockService) ListInvoiceDailyUsage(arg0 context.Context, arg1 string, arg2 *client.ListInvoiceDailyUsageOptions) (*client.ListInvoiceDailyUsageResponse, *http.Response, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListInvoiceDailyUsage", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*client.ListInvoiceDailyUsageResponse)
+	ret1, _ := ret[1].(*http.Response)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// ListInvoiceDailyUsage indicates an expected call of ListInvoiceDailyUsage.
+func (mr *MockServiceMockRecorder) ListInvoiceDailyUsage(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListInvoiceDailyUsage", reflect.TypeOf((*MockService)(nil).ListInvoiceDailyUsage), arg0, arg1, arg2)
 }
 
 // ListInvoices mocks base method.

@@ -26,12 +26,13 @@ type DedicatedClusterCreateSpecification struct {
 	CockroachVersion  *string                              `json:"cockroach_version,omitempty"`
 	Hardware          DedicatedHardwareCreateSpecification `json:"hardware"`
 	NetworkVisibility *NetworkVisibilityType               `json:"network_visibility,omitempty"`
-	// region_machine_specs configures a machine type per region, producing a cluster whose regions may use different machine types. Keys are region codes (matching region_nodes) and values select a machine type by machine_type or num_virtual_cpus. When set, every region in region_nodes must have a corresponding entry, and hardware.machine_spec must be omitted (the two fields are mutually exclusive). hardware.storage_gib and hardware.disk_iops continue to apply cluster-wide.
+	// Limited Access: region_machine_specs configures a machine type per region, producing a cluster whose regions may use different machine types. Keys are region codes (matching region_nodes) and values select a machine type by machine_type or num_virtual_cpus. When set, every region in region_nodes must have a corresponding entry, and hardware.machine_spec must be omitted (the two fields are mutually exclusive). hardware.storage_gib and hardware.disk_iops continue to apply cluster-wide.
 	RegionMachineSpecs *map[string]DedicatedMachineTypeSpecification `json:"region_machine_specs,omitempty"`
 	// Region keys should match the cloud provider's zone code. For example, for Oregon, set region_name to \"us-west2\" for GCP and \"us-west-2\" for AWS. Values represent the node count.
 	RegionNodes map[string]int32 `json:"region_nodes"`
 	// Preview: restrict_egress_traffic if set, results in an egress traffic policy of default-deny at creation time.
-	RestrictEgressTraffic         *bool `json:"restrict_egress_traffic,omitempty"`
+	RestrictEgressTraffic *bool `json:"restrict_egress_traffic,omitempty"`
+	// Limited Access
 	SupportsClusterVirtualization *bool `json:"supports_cluster_virtualization,omitempty"`
 }
 

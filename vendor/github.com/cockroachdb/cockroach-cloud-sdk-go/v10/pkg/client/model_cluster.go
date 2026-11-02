@@ -24,7 +24,7 @@ import (
 
 // Cluster struct for Cluster.
 type Cluster struct {
-	// account_id is a cloud provider account ID representing the CockroachDB cluster. This ID can be used for setting up trust relationships with cloud resources. For GCP clusters, this value is a project name that can be used to construct principal service account names for authentication.
+	// account_id identifies the cloud provider account to grant access to when setting up a trust relationship between this cluster and your own cloud resources. Its form follows the cloud provider: an account ID on AWS, a project ID on GCP, and a subscription ID on Azure. On GCP the project ID also forms the principal service account names used for authentication.  Which account this is depends on how the cluster is hosted. An Advanced cluster or a host cluster reports the account it runs in, which is the account to grant access to when configuring CMEK. A virtual cluster reports the account its host cluster runs in, since it shares that hardware. A Basic or Standard cluster runs on hardware shared with other organizations, so it instead reports an account CockroachDB Cloud operates on its behalf, which is the account to grant access to when configuring metrics export or log export.  Empty when no account applies to the cluster, so treat an empty value as \"not applicable\" rather than an error.
 	AccountId *string `json:"account_id,omitempty"`
 	// The client ID of the Azure cluster identity associated with this cluster. This field is only populated for clusters deployed on Azure and is used to support customer-managed encryption keys (CMEK).
 	AzureClusterIdentityClientId *string `json:"azure_cluster_identity_client_id,omitempty"`
@@ -39,8 +39,10 @@ type Cluster struct {
 	DeleteProtection     *DeleteProtectionStateType `json:"delete_protection,omitempty"`
 	DeletedAt            *time.Time                 `json:"deleted_at,omitempty"`
 	Edition              *EditionType               `json:"edition,omitempty"`
-	EgressTrafficPolicy  *EgressTrafficPolicyType   `json:"egress_traffic_policy,omitempty"`
-	Id                   string                     `json:"id"`
+	// egress_private_endpoint_principal identifies this cluster to a service it connects to over an egress private endpoint. It is the value that service's allow list must permit for connection requests from this cluster to be approved.
+	EgressPrivateEndpointPrincipal *string                  `json:"egress_private_endpoint_principal,omitempty"`
+	EgressTrafficPolicy            *EgressTrafficPolicyType `json:"egress_traffic_policy,omitempty"`
+	Id                             string                   `json:"id"`
 	// labels are key-value pairs used to organize and categorize resources.
 	Labels            map[string]string      `json:"labels"`
 	Name              string                 `json:"name"`
@@ -257,6 +259,20 @@ func (o *Cluster) GetEdition() EditionType {
 // SetEdition gets a reference to the given EditionType and assigns it to the Edition field.
 func (o *Cluster) SetEdition(v EditionType) {
 	o.Edition = &v
+}
+
+// GetEgressPrivateEndpointPrincipal returns the EgressPrivateEndpointPrincipal field value if set, zero value otherwise.
+func (o *Cluster) GetEgressPrivateEndpointPrincipal() string {
+	if o == nil || o.EgressPrivateEndpointPrincipal == nil {
+		var ret string
+		return ret
+	}
+	return *o.EgressPrivateEndpointPrincipal
+}
+
+// SetEgressPrivateEndpointPrincipal gets a reference to the given string and assigns it to the EgressPrivateEndpointPrincipal field.
+func (o *Cluster) SetEgressPrivateEndpointPrincipal(v string) {
+	o.EgressPrivateEndpointPrincipal = &v
 }
 
 // GetEgressTrafficPolicy returns the EgressTrafficPolicy field value if set, zero value otherwise.

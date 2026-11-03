@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `status` can take, and the examples say failover is available once
   `replicated_time` is set rather than once the stream is replicating.
 
+### Security
+
+- Upgraded `google.golang.org/grpc`, `golang.org/x/net`, `golang.org/x/text`,
+  and `github.com/cloudflare/circl` to versions that clear all advisories
+  `govulncheck` reports as reachable, including CVE-2026-33186.
+
 ## [1.24.1] - 2026-10-21
 
 ### Added

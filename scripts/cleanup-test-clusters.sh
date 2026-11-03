@@ -29,6 +29,8 @@ API_URL="${COCKROACH_SERVER:-https://cockroachlabs.cloud}"
 DRY_RUN="${DRY_RUN:-0}"
 MAX_RETRIES=3
 RETRY_DELAY=5
+STREAM_CANCEL_POLLS=30
+STREAM_CANCEL_DELAY=10
 
 if [[ -z "${COCKROACH_API_KEY:-}" ]]; then
   log_error "COCKROACH_API_KEY is not set" "Configuration"
@@ -95,6 +97,84 @@ delete_cluster() {
 fetch_cluster() {
   local id="$1"
   curl -sf -H "$auth_header" "${API_URL}/api/v1/clusters/${id}"
+}
+
+# list_active_streams prints the IDs of replication streams involving the given
+# cluster that have not reached a terminal status. The cluster_id filter matches
+# either side of a pair, and the API rejects an unfiltered list request.
+# Arguments: $1=cluster id
+list_active_streams() {
+  local cluster_id="$1"
+  curl -sf -H "$auth_header" \
+    "${API_URL}/api/v1/physical-replication-streams?cluster_id=${cluster_id}" \
+    | jq -r '.physical_replication_streams[]?
+             | select(.status != "COMPLETED" and .status != "CANCELED")
+             | .id'
+}
+
+# cancel_stream cancels a replication stream and waits for it to settle.
+# Cancelling stops replication without promoting the standby, which failover
+# would do.
+# Arguments: $1=stream id
+# Returns: 0 once the stream is terminal or gone, 1 if it never settles.
+cancel_stream() {
+  local stream_id="$1"
+
+  echo "  Canceling replication stream ${stream_id}..."
+
+  local http_code
+  http_code=$(curl -s -o "$response_file" -w "%{http_code}" \
+    -X PATCH \
+    -H "$auth_header" \
+    -H "Content-Type: application/json" \
+    -d '{"status":"CANCELED"}' \
+    "${API_URL}/api/v1/physical-replication-streams/${stream_id}")
+
+  # A rejected cancel is still worth reporting, but the poll below decides the
+  # outcome: the stream may already be terminal, which also rejects the PATCH.
+  if [[ "$http_code" != "200" ]]; then
+    log_warning "Cancel request for stream ${stream_id} returned HTTP ${http_code}" "Stream Cancellation"
+    cat "$response_file" 2>/dev/null || true
+    echo ""
+  fi
+
+  local attempt status
+  for attempt in $(seq 1 "$STREAM_CANCEL_POLLS"); do
+    status=$(curl -sf -H "$auth_header" \
+      "${API_URL}/api/v1/physical-replication-streams/${stream_id}" \
+      | jq -r '.status // empty' || echo "")
+    if [[ -z "$status" ]]; then
+      echo "  Stream ${stream_id} is no longer readable, continuing"
+      return 0
+    fi
+    if [[ "$status" == "COMPLETED" || "$status" == "CANCELED" ]]; then
+      echo "  Stream ${stream_id} is ${status}"
+      return 0
+    fi
+    sleep "$STREAM_CANCEL_DELAY"
+  done
+
+  log_warning "Stream ${stream_id} is still ${status} after waiting" "Stream Cancellation"
+  return 1
+}
+
+# cancel_streams_for_cluster tears down every active stream holding a cluster.
+# CCAPI refuses to delete a cluster that is part of an active stream.
+# Arguments: $1=cluster id
+cancel_streams_for_cluster() {
+  local cluster_id="$1"
+
+  local stream_ids
+  stream_ids=$(list_active_streams "$cluster_id" || echo "")
+  if [[ -z "$stream_ids" ]]; then
+    return 0
+  fi
+
+  local stream_id
+  while read -r stream_id; do
+    [[ -n "$stream_id" ]] || continue
+    cancel_stream "$stream_id" || true
+  done <<< "$stream_ids"
 }
 
 # Exit early if no tracking file is configured or present.
@@ -185,6 +265,8 @@ for entry in "${clusters_to_delete[@]}"; do
   rest="${rest#*|}"
   state="${rest%%|*}"
   created="${rest#*|}"
+
+  cancel_streams_for_cluster "$id"
 
   if delete_cluster "$id" "$name"; then
     success_count=$((success_count + 1))

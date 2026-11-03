@@ -201,6 +201,11 @@ func (r *physicalReplicationStreamResource) Create(
 	resp.Diagnostics.Append(diags...)
 }
 
+// waitForPhysicalReplicationStreamStatusFunc polls the stream with the given id
+// until it reaches one of desiredStatuses, copying each read into stream.
+// Callers that already track the stream pass the id from state rather than
+// from an update response, so a malformed response body cannot redirect the
+// wait to a nonexistent stream and fail a destroy.
 func waitForPhysicalReplicationStreamStatusFunc(
 	ctx context.Context, id string, cl client.Service, stream *client.PhysicalReplicationStream,
 	desiredStatuses ...client.ReplicationStreamStatusType,
@@ -372,7 +377,7 @@ func (r *physicalReplicationStreamResource) Update(
 		ctx,
 		physicalReplicationStreamCompleteTimeout,
 		waitForPhysicalReplicationStreamStatusFunc(
-			ctx, streamObj.Id, r.provider.service, streamObj, client.REPLICATIONSTREAMSTATUSTYPE_COMPLETED,
+			ctx, state.ID.ValueString(), r.provider.service, streamObj, client.REPLICATIONSTREAMSTATUSTYPE_COMPLETED,
 		),
 	)
 	if err != nil {
@@ -440,7 +445,7 @@ func (r *physicalReplicationStreamResource) Delete(
 		ctx,
 		physicalReplicationStreamCompleteTimeout,
 		waitForPhysicalReplicationStreamStatusFunc(
-			ctx, streamObj.Id, r.provider.service, streamObj, client.REPLICATIONSTREAMSTATUSTYPE_CANCELED,
+			ctx, state.ID.ValueString(), r.provider.service, streamObj, client.REPLICATIONSTREAMSTATUSTYPE_CANCELED,
 		),
 	)
 	if err != nil {

@@ -33,6 +33,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the stream was left running but untracked, which blocked deleting both
   clusters. It is now marked tainted instead, so the next apply replaces it.
 
+- `cockroach_physical_replication_stream` failover and destroy now wait on the
+  stream ID recorded in state rather than the one in the API's update response,
+  so a malformed response no longer fails the destroy and leaves the stream
+  blocking deletion of both clusters.
+
 - `cockroach_physical_replication_stream` documentation now lists the values
   `status` can take, and the examples say failover is available once
   `replicated_time` is set rather than once the stream is replicating.

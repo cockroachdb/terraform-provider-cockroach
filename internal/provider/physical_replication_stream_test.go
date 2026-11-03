@@ -112,86 +112,96 @@ func TestIntegrationPhysicalReplicationStreamResource(t *testing.T) {
 // TestIntegrationPhysicalReplicationStreamDestroyCancelsStream checks that
 // destroying a stream that is still replicating cancels it through the API
 // rather than only dropping it from state. An uncanceled stream blocks deletion
-// of both clusters.
+// of both clusters. Destroy must also succeed when the cancel response does not
+// echo the stream, as in CC-37348, since the wait reads the ID from state.
 func TestIntegrationPhysicalReplicationStreamDestroyCancelsStream(t *testing.T) {
-	primaryClusterName := fmt.Sprintf("primary-cluster-%s", GenerateRandomString(4))
-	standbyClusterName := fmt.Sprintf("standby-cluster-%s", GenerateRandomString(4))
-	primaryClusterID := uuid.New().String()
-	standbyClusterID := uuid.New().String()
-	replicationID := uuid.New().String()
-
-	ctrl := gomock.NewController(t)
-	s := mock_client.NewMockService(ctrl)
-	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
-		return s
-	})()
-
-	primaryCluster, standbyCluster := pcrTestClusters(
-		primaryClusterName, standbyClusterName, primaryClusterID, standbyClusterID)
-
-	now := time.Now()
-	replicatedTime := now.Add(-1 * time.Hour)
-	retainedTime := now.Add(-24 * time.Hour)
-	replicatingStream := client.PhysicalReplicationStream{
-		Id:                    replicationID,
-		PrimaryClusterId:      primaryClusterID,
-		StandbyClusterId:      standbyClusterID,
-		CreatedAt:             now,
-		ReplicatedTime:        &replicatedTime,
-		ReplicationLagSeconds: ptr(int32(30)),
-		RetainedTime:          &retainedTime,
-		Status:                client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING,
-	}
-	canceledStream := replicatingStream
-	canceledStream.Status = client.REPLICATIONSTREAMSTATUSTYPE_CANCELED
-
-	s.EXPECT().CreateCluster(gomock.Any(), clusterReqMatcher{ExpectedName: primaryClusterName}).Return(&primaryCluster, nil, nil).Times(1)
-	s.EXPECT().CreateCluster(gomock.Any(), clusterReqMatcher{ExpectedName: standbyClusterName}).Return(&standbyCluster, nil, nil).Times(1)
-	s.EXPECT().CreatePhysicalReplicationStream(gomock.Any(), gomock.Any()).Return(&replicatingStream, nil, nil).Times(1)
-
-	s.EXPECT().GetCluster(gomock.Any(), primaryClusterID).Return(&primaryCluster, nil, nil).AnyTimes()
-	s.EXPECT().GetCluster(gomock.Any(), standbyClusterID).Return(&standbyCluster, nil, nil).AnyTimes()
-	s.EXPECT().GetBackupConfiguration(gomock.Any(), primaryClusterID).Return(initialBackupConfig, nil, nil).AnyTimes()
-	s.EXPECT().GetBackupConfiguration(gomock.Any(), standbyClusterID).Return(initialBackupConfig, nil, nil).AnyTimes()
-
-	var canceled bool
-	s.EXPECT().GetPhysicalReplicationStream(gomock.Any(), replicationID).DoAndReturn(
-		func(_ context.Context, _ string) (*client.PhysicalReplicationStream, *http.Response, error) {
-			if canceled {
-				return &canceledStream, nil, nil
-			}
-			return &replicatingStream, nil, nil
-		}).AnyTimes()
-
-	// Destroy must send exactly one cancellation. The controller fails the test
-	// if it never arrives.
-	s.EXPECT().UpdatePhysicalReplicationStream(gomock.Any(), replicationID, gomock.Any()).DoAndReturn(
-		func(_ context.Context, _ string, spec *client.UpdatePhysicalReplicationStreamSpec) (*client.PhysicalReplicationStream, *http.Response, error) {
-			if spec.Status == nil || *spec.Status != client.REPLICATIONSTREAMSTATUSTYPE_CANCELED {
-				return nil, nil, fmt.Errorf(
-					"expected a CANCELED status update, got %q", spec.GetStatus())
-			}
-			canceled = true
-			return &canceledStream, nil, nil
-		}).Times(1)
-
-	s.EXPECT().DeleteCluster(gomock.Any(), primaryClusterID)
-	s.EXPECT().DeleteCluster(gomock.Any(), standbyClusterID)
-
-	resource.Test(t, resource.TestCase{
-		IsUnitTest:               true,
-		PreCheck:                 func() { testAccPreCheck(t) },
-		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: getTestPhysicalReplicationStreamResourceConfigCreate(primaryClusterName, standbyClusterName),
-				Check: resource.ComposeTestCheckFunc(
-					testCheckPhysicalReplicationStreamExists("cockroach_physical_replication_stream.stream"),
-					resource.TestCheckResourceAttr("cockroach_physical_replication_stream.stream", "status", string(client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING)),
-				),
-			},
+	for name, cancelResponse := range map[string]func(client.PhysicalReplicationStream) *client.PhysicalReplicationStream{
+		"echoes stream": func(s client.PhysicalReplicationStream) *client.PhysicalReplicationStream { return &s },
+		"zero-valued stream": func(client.PhysicalReplicationStream) *client.PhysicalReplicationStream {
+			return &client.PhysicalReplicationStream{}
 		},
-	})
+	} {
+		t.Run(name, func(t *testing.T) {
+			primaryClusterName := fmt.Sprintf("primary-cluster-%s", GenerateRandomString(4))
+			standbyClusterName := fmt.Sprintf("standby-cluster-%s", GenerateRandomString(4))
+			primaryClusterID := uuid.New().String()
+			standbyClusterID := uuid.New().String()
+			replicationID := uuid.New().String()
+
+			ctrl := gomock.NewController(t)
+			s := mock_client.NewMockService(ctrl)
+			defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+				return s
+			})()
+
+			primaryCluster, standbyCluster := pcrTestClusters(
+				primaryClusterName, standbyClusterName, primaryClusterID, standbyClusterID)
+
+			now := time.Now()
+			replicatedTime := now.Add(-1 * time.Hour)
+			retainedTime := now.Add(-24 * time.Hour)
+			replicatingStream := client.PhysicalReplicationStream{
+				Id:                    replicationID,
+				PrimaryClusterId:      primaryClusterID,
+				StandbyClusterId:      standbyClusterID,
+				CreatedAt:             now,
+				ReplicatedTime:        &replicatedTime,
+				ReplicationLagSeconds: ptr(int32(30)),
+				RetainedTime:          &retainedTime,
+				Status:                client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING,
+			}
+			canceledStream := replicatingStream
+			canceledStream.Status = client.REPLICATIONSTREAMSTATUSTYPE_CANCELED
+
+			s.EXPECT().CreateCluster(gomock.Any(), clusterReqMatcher{ExpectedName: primaryClusterName}).Return(&primaryCluster, nil, nil).Times(1)
+			s.EXPECT().CreateCluster(gomock.Any(), clusterReqMatcher{ExpectedName: standbyClusterName}).Return(&standbyCluster, nil, nil).Times(1)
+			s.EXPECT().CreatePhysicalReplicationStream(gomock.Any(), gomock.Any()).Return(&replicatingStream, nil, nil).Times(1)
+
+			s.EXPECT().GetCluster(gomock.Any(), primaryClusterID).Return(&primaryCluster, nil, nil).AnyTimes()
+			s.EXPECT().GetCluster(gomock.Any(), standbyClusterID).Return(&standbyCluster, nil, nil).AnyTimes()
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), primaryClusterID).Return(initialBackupConfig, nil, nil).AnyTimes()
+			s.EXPECT().GetBackupConfiguration(gomock.Any(), standbyClusterID).Return(initialBackupConfig, nil, nil).AnyTimes()
+
+			var canceled bool
+			s.EXPECT().GetPhysicalReplicationStream(gomock.Any(), replicationID).DoAndReturn(
+				func(_ context.Context, _ string) (*client.PhysicalReplicationStream, *http.Response, error) {
+					if canceled {
+						return &canceledStream, nil, nil
+					}
+					return &replicatingStream, nil, nil
+				}).AnyTimes()
+
+			// Destroy must send exactly one cancellation. The controller fails the test
+			// if it never arrives.
+			s.EXPECT().UpdatePhysicalReplicationStream(gomock.Any(), replicationID, gomock.Any()).DoAndReturn(
+				func(_ context.Context, _ string, spec *client.UpdatePhysicalReplicationStreamSpec) (*client.PhysicalReplicationStream, *http.Response, error) {
+					if spec.Status == nil || *spec.Status != client.REPLICATIONSTREAMSTATUSTYPE_CANCELED {
+						return nil, nil, fmt.Errorf(
+							"expected a CANCELED status update, got %q", spec.GetStatus())
+					}
+					canceled = true
+					return cancelResponse(canceledStream), nil, nil
+				}).Times(1)
+
+			s.EXPECT().DeleteCluster(gomock.Any(), primaryClusterID)
+			s.EXPECT().DeleteCluster(gomock.Any(), standbyClusterID)
+
+			resource.Test(t, resource.TestCase{
+				IsUnitTest:               true,
+				PreCheck:                 func() { testAccPreCheck(t) },
+				ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+				Steps: []resource.TestStep{
+					{
+						Config: getTestPhysicalReplicationStreamResourceConfigCreate(primaryClusterName, standbyClusterName),
+						Check: resource.ComposeTestCheckFunc(
+							testCheckPhysicalReplicationStreamExists("cockroach_physical_replication_stream.stream"),
+							resource.TestCheckResourceAttr("cockroach_physical_replication_stream.stream", "status", string(client.REPLICATIONSTREAMSTATUSTYPE_REPLICATING)),
+						),
+					},
+				},
+			})
+		})
+	}
 }
 
 // TestIntegrationPhysicalReplicationStreamCreateWaitFailureTracksStream checks

@@ -245,8 +245,13 @@ func (r *clusterResource) Schema(
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
 				},
-				Validators:  []validator.String{stringvalidator.OneOf("BASIC", "STANDARD", "ADVANCED")},
-				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
+				Validators: []validator.String{stringvalidator.OneOf("BASIC", "STANDARD", "ADVANCED")},
+				MarkdownDescription: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'. " +
+					"A plan applies only to clusters in organizations that are not on Cockroach " +
+					"Continuum. Set `edition` instead for a cluster in a Continuum organization. " +
+					"See [Migrating to Cockroach Continuum]" +
+					"(https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration) " +
+					"for how to convert an existing configuration.",
 			},
 			"edition": schema.StringAttribute{
 				Computed: true,
@@ -393,7 +398,7 @@ func (r *clusterResource) Schema(
 					"private_network_visibility": schema.BoolAttribute{
 						Optional:            true,
 						Computed:            true,
-						MarkdownDescription: "Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  Mission Critical clusters always use private IP addresses, so `false` is rejected. See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.",
+						MarkdownDescription: "Set to true to assign private IP addresses to nodes. Required for CMEK and other advanced networking features. Clusters created with this flag will have advanced security features enabled.  This cannot be changed after cluster creation and incurs additional charges.  Mission Critical clusters use private IP addresses, so `false` is rejected. See [Create an Advanced Cluster](https://www.cockroachlabs.com/docs/cockroachcloud/create-an-advanced-cluster.html#step-6-configure-advanced-security-features) and [Pricing](https://www.cockroachlabs.com/pricing/) for more information.",
 						PlanModifiers: []planmodifier.Bool{
 							boolplanmodifier.UseStateForUnknown(),
 						},
@@ -659,7 +664,6 @@ func (r *clusterResource) ConfigValidators(_ context.Context) []resource.ConfigV
 func (r *clusterResource) ValidateConfig(
 	ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse,
 ) {
-
 	// ValidateConfig seems to be called multiple times, once before any values
 	// are known.  When all values are unknown we can't convert to our cluster
 	// model because we use some custom fields such as Regions.  Wait until
@@ -698,20 +702,6 @@ func (r *clusterResource) ValidateConfig(
 	} else if cluster.HostConfig != nil && cluster.Edition.IsNull() {
 		resp.Diagnostics.AddAttributeError(path.Root("host"), "Missing Attribute",
 			"Host clusters require edition to be set to MISSION_CRITICAL.")
-	}
-
-	// Mission Critical clusters always run with private IP addresses. The provider
-	// sends network visibility only when it is private, so requesting public would
-	// apply, read back as private, and fail as an inconsistent result. The host
-	// block has no such attribute.
-	if dedicated := cluster.DedicatedConfig; dedicated != nil &&
-		IsKnown(cluster.Edition) &&
-		client.EditionType(cluster.Edition.ValueString()) == client.EDITIONTYPE_MISSION_CRITICAL &&
-		IsKnown(dedicated.PrivateNetworkVisibility) &&
-		!dedicated.PrivateNetworkVisibility.ValueBool() {
-		resp.Diagnostics.AddAttributeError(path.Root("dedicated").AtName("private_network_visibility"),
-			"Invalid Attribute Value",
-			"Mission Critical clusters always use private IP addresses. Omit private_network_visibility or set it to true.")
 	}
 
 	plan, err := derivePlanType(&cluster)
@@ -839,6 +829,10 @@ func (r *clusterResource) Create(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Covers the readiness polling below too, so the created cluster is read
+	// back on the same axis it was created on.
+	ctx = continuumCompatIf(ctx, r.provider.sendCompatForWrite(&plan))
 
 	// Create has a single wait phase, so the configured flag isn't needed here.
 	createTimeout, _, diagsTimeout := resolveTimeout(ctx, plan.Timeouts, timeoutCreate, clusterCreateTimeout)
@@ -1116,6 +1110,7 @@ func (r *clusterResource) Create(
 	var newState CockroachCluster
 	diags = loadClusterToTerraformState(ctx, clusterObj, nil, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
+	continuumKeepPlannedEdition(&newState, &plan)
 	// Timeouts is a config-only attribute the API doesn't echo back; carry the
 	// plan value through so it round-trips into state.
 	newState.Timeouts = plan.Timeouts
@@ -1177,6 +1172,7 @@ func (r *clusterResource) Create(
 
 	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
+	continuumKeepPlannedEdition(&newState, &plan)
 	newState.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
@@ -1212,7 +1208,8 @@ func (r *clusterResource) Read(
 	}
 
 	traceAPICall("GetCluster")
-	clusterObj, httpResp, err := r.provider.service.GetCluster(ctx, clusterID)
+	clusterObj, httpResp, err := r.provider.service.GetCluster(
+		continuumCompatIf(ctx, r.provider.sendCompatForRead(&state)), clusterID)
 	if err != nil {
 		if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 			resp.Diagnostics.AddWarning(
@@ -1250,6 +1247,9 @@ func (r *clusterResource) Read(
 	var newState CockroachCluster
 	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &state)
 	resp.Diagnostics.Append(diags...)
+	if continuumCompatApplied(httpResp) {
+		continuumSynthesizeEdition(&newState)
+	}
 	newState.Timeouts = state.Timeouts
 	diags = resp.State.Set(ctx, newState)
 	resp.Diagnostics.Append(diags...)
@@ -1258,28 +1258,106 @@ func (r *clusterResource) Read(
 	}
 }
 
+func missionCriticalWantsPublicNodes(config, state *CockroachCluster) bool {
+	if config == nil || config.DedicatedConfig == nil ||
+		!IsKnown(config.Edition) ||
+		client.EditionType(config.Edition.ValueString()) != client.EDITIONTYPE_MISSION_CRITICAL ||
+		!IsKnown(config.DedicatedConfig.PrivateNetworkVisibility) ||
+		config.DedicatedConfig.PrivateNetworkVisibility.ValueBool() {
+		return false
+	}
+	return !stateProvesPublicNodes(state)
+}
+
+// A compat read reports network visibility from the security add-on rather than
+// from the edition, and state holds a plan alongside an edition exactly when the
+// read went through compat. Only an edition-axis read is evidence that a Mission
+// Critical cluster runs on public nodes.
+func stateProvesPublicNodes(state *CockroachCluster) bool {
+	if state == nil || !state.Plan.IsNull() ||
+		!IsKnown(state.Edition) ||
+		client.EditionType(state.Edition.ValueString()) != client.EDITIONTYPE_MISSION_CRITICAL {
+		return false
+	}
+	hardware := state.hardwareConfig()
+	return hardware != nil &&
+		IsKnown(hardware.PrivateNetworkVisibility) &&
+		!hardware.PrivateNetworkVisibility.ValueBool()
+}
+
 // ModifyPlan is used to make sure the user isn't trying to modify an
 // immutable attribute. We can't use `RequiresReplace` because that
 // would destroy the cluster and all of its data.
 func (r *clusterResource) ModifyPlan(
 	ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse,
 ) {
-	var state *CockroachCluster
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() || state == nil {
-		return
-	}
-
-	var plan *CockroachCluster
-	diags = req.Plan.Get(ctx, &plan)
+	var config *CockroachCluster
+	diags := req.Config.Get(ctx, &config)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var config *CockroachCluster
-	diags = req.Config.Get(ctx, &config)
+	// Reported above the state check below so a cluster that doesn't exist yet
+	// is covered too. Every resource still on plan surfaces in one run, which
+	// is what makes continuum_compat = false a rehearsal for the migration.
+	if r.provider != nil && r.provider.continuumCompatOff && config != nil && !config.Plan.IsNull() {
+		resp.Diagnostics.AddAttributeError(path.Root("plan"),
+			"Cluster still uses the legacy plan attribute",
+			"continuum_compat is false, so compatibility mode is off. "+
+				continuumPlanReplacementAdvice(config.Plan))
+		if dedicated := config.DedicatedConfig; dedicated != nil &&
+			client.PlanType(config.Plan.ValueString()) == client.PLANTYPE_ADVANCED &&
+			IsKnown(dedicated.PrivateNetworkVisibility) &&
+			!dedicated.PrivateNetworkVisibility.ValueBool() {
+			resp.Diagnostics.AddAttributeError(path.Root("dedicated").AtName("private_network_visibility"),
+				"Cluster sets private_network_visibility = false",
+				"Mission Critical clusters use private IP addresses, so this cluster reports "+
+					"private visibility once its organization is on Continuum. Remove "+
+					"private_network_visibility.")
+		}
+	}
+
+	var state *CockroachCluster
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// Mission Critical clusters run with private IP addresses. The provider
+	// sends network visibility only when it is private, so requesting public
+	// would apply, read back as private, and fail as an inconsistent result.
+	// Checked here rather than in ValidateConfig because only prior state can
+	// show a cluster that really does run on public nodes, and ValidateConfig
+	// has no state.
+	if missionCriticalWantsPublicNodes(config, state) {
+		resp.Diagnostics.AddAttributeError(path.Root("dedicated").AtName("private_network_visibility"),
+			"Invalid Attribute Value",
+			"Mission Critical clusters use private IP addresses. Omit private_network_visibility or set it to true.")
+	}
+
+	if state == nil {
+		return
+	}
+
+	// State holds both axes only for a cluster whose edition a compat read
+	// translated away, so this warns the configurations with something to fix
+	// and no others.
+	if r.provider != nil && !r.provider.continuumCompatOff && config != nil &&
+		!state.Plan.IsNull() && !state.Edition.IsNull() {
+		switch {
+		case IsKnown(config.Plan):
+			resp.Diagnostics.AddAttributeWarning(path.Root("plan"), continuumCompatPlanSummary,
+				continuumResourceCompatDetail(client.PlanType(config.Plan.ValueString())))
+		case config.Plan.IsNull() && config.Edition.IsNull():
+			resp.Diagnostics.AddWarning(continuumCompatSilentSummary,
+				continuumSilentResourceCompatDetail(client.EditionType(state.Edition.ValueString())))
+		}
+	}
+
+	var plan *CockroachCluster
+	diags = req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
@@ -1319,10 +1397,26 @@ func (r *clusterResource) ModifyPlan(
 		}
 		planHW, stateHW := plan.hardwareConfig(), state.hardwareConfig()
 		if planHW != nil && stateHW != nil && planHW.PrivateNetworkVisibility != stateHW.PrivateNetworkVisibility {
-			resp.Diagnostics.AddError("Cannot update network visibility",
-				"To prevent accidental deletion of data, changing a cluster's network "+
-					"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
-					"network visibility.")
+			// A legacy read reports network visibility from the security add-on,
+			// so an Advanced cluster without it reads false until the provider
+			// stops asking for that view, then flips to true with the edition.
+			// Without this the practitioner gets the generic message below and no
+			// hint of the cause.
+			if plan.DedicatedConfig != nil &&
+				client.EditionType(state.Edition.ValueString()) == client.EDITIONTYPE_MISSION_CRITICAL &&
+				stateHW.PrivateNetworkVisibility.ValueBool() &&
+				!planHW.PrivateNetworkVisibility.ValueBool() {
+				resp.Diagnostics.AddAttributeError(
+					path.Root("dedicated").AtName("private_network_visibility"),
+					"Invalid Attribute Value",
+					"This cluster now reports its edition rather than a legacy plan, so its network "+
+						"visibility is private. Omit private_network_visibility or set it to true.")
+			} else {
+				resp.Diagnostics.AddError("Cannot update network visibility",
+					"To prevent accidental deletion of data, changing a cluster's network "+
+						"visibility isn't allowed. Please explicitly destroy this cluster before changing "+
+						"network visibility.")
+			}
 		}
 		if planHW != nil && stateHW != nil && planHW.CidrRange != stateHW.CidrRange {
 			resp.Diagnostics.AddError("Cannot update cidr range",
@@ -1360,6 +1454,32 @@ func (r *clusterResource) ModifyPlan(
 			}
 			if !IsKnown(config.Plan) && IsKnown(plan.Plan) {
 				plan.Plan = types.StringUnknown()
+				planChanged = true
+			}
+		}
+
+		// A configuration that has moved to edition retires the plan
+		// UseStateForUnknown would otherwise keep. Without this the write goes
+		// out without compat, the API reports only the edition, and the apply
+		// fails as an inconsistent result. The reverse is not symmetric: a
+		// configuration still on plan keeps the edition a compat read
+		// synthesized, which is what holds the two axes in agreement.
+		if config != nil && !config.Edition.IsNull() && !plan.Plan.IsNull() {
+			plan.Plan = types.StringNull()
+			planChanged = true
+
+			// Compatibility mode reports network visibility from the security
+			// add-on rather than the cluster, so the two views can disagree.
+			// The write and every read after it stop using compatibility
+			// mode, and UseStateForUnknown would pin what the legacy view
+			// reported, failing the apply as an inconsistent result. Released
+			// rather than set to true, so a cluster that stays public reports
+			// what it has.
+			if dedicated, configDedicated := plan.DedicatedConfig, config.DedicatedConfig; dedicated != nil &&
+				configDedicated != nil &&
+				configDedicated.PrivateNetworkVisibility.IsNull() &&
+				IsKnown(dedicated.PrivateNetworkVisibility) {
+				dedicated.PrivateNetworkVisibility = types.BoolUnknown()
 				planChanged = true
 			}
 		}
@@ -1449,6 +1569,10 @@ func (r *clusterResource) Update(
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	// Covers the polling below too, so the cluster is read back on the same axis
+	// it was updated on.
+	ctx = continuumCompatIf(ctx, r.provider.sendCompatForWrite(&plan))
 
 	waitForClusterLock(ctx, state, r.provider.service, updateTimeout, &resp.Diagnostics)
 	if resp.Diagnostics.HasError() {
@@ -1741,6 +1865,7 @@ func (r *clusterResource) Update(
 	var newState CockroachCluster
 	diags = loadClusterToTerraformState(ctx, clusterObj, remoteBackupConfig, &newState, &plan)
 	resp.Diagnostics.Append(diags...)
+	continuumKeepPlannedEdition(&newState, &plan)
 
 	newState.Timeouts = plan.Timeouts
 	diags = resp.State.Set(ctx, newState)

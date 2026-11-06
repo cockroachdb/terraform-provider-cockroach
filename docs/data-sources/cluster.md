@@ -38,7 +38,7 @@ data "cockroach_cluster" "cockroach" {
 - `customer_cloud_account` (Attributes) Cloud-specific details required to host the cluster in your own cloud account. Returned value is one of: `aws`, `gcp`, or `azure`. This feature is available in [Private Preview](https://www.cockroachlabs.com/docs/stable/cockroachdb-feature-availability). Contact your Cockroach Labs account team to enable this feature. (see [below for nested schema](#nestedatt--customer_cloud_account))
 - `dedicated` (Attributes) (see [below for nested schema](#nestedatt--dedicated))
 - `delete_protection` (Boolean) Set to true to enable delete protection on the cluster.
-- `edition` (String) Denotes the cluster's edition. Set on clusters in Cockroach Continuum organizations, which report an `edition` instead of a `plan`. Allowed values are:
+- `edition` (String) Denotes the cluster's edition. Set on clusters in Cockroach Continuum organizations, and null elsewhere. Allowed values are:
   * STANDARD
   * MISSION_CRITICAL
 - `full_version` (String) The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)
@@ -48,7 +48,7 @@ data "cockroach_cluster" "cockroach" {
 - `name` (String) Name of the cluster.
 - `operation_status` (String) Describes the current long-running operation, if any.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
-- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'. For a cluster in a Cockroach Continuum organization this reports the plan the cluster's `edition` came from, and is null once the provider is set to `continuum_compat = false`. See [Migrating to Cockroach Continuum](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration).
 - `regions` (Attributes List) (see [below for nested schema](#nestedatt--regions))
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `state` (String) Describes whether the cluster is being created, updated, deleted, etc.

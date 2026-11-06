@@ -5944,7 +5944,7 @@ resource "cockroach_cluster" "test" {
     }]
 }
 `,
-			expectError: regexp.MustCompile(`(?s)Mission Critical clusters always use private IP addresses`),
+			expectError: regexp.MustCompile(`(?s)Mission Critical clusters use private IP addresses`),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

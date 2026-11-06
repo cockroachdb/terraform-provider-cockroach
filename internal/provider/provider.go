@@ -47,6 +47,10 @@ type provider struct {
 	// that the provider was previously configured.
 	configured bool
 
+	// continuumCompatOff reports that the practitioner set continuum_compat to
+	// false, which suppresses the compat header everywhere.
+	continuumCompatOff bool
+
 	// version is set to the provider version on release, "dev" when the
 	// provider is built and ran locally, and "test" when running acceptance
 	// testing.
@@ -55,8 +59,9 @@ type provider struct {
 
 // providerData can be used to store data from the Terraform configuration.
 type providerData struct {
-	ApiKey types.String `tfsdk:"apikey"`
-	ApiJWT types.String `tfsdk:"apijwt"`
+	ApiKey          types.String `tfsdk:"apikey"`
+	ApiJWT          types.String `tfsdk:"apijwt"`
+	ContinuumCompat types.Bool   `tfsdk:"continuum_compat"`
 }
 
 func (p *provider) Configure(
@@ -113,6 +118,10 @@ func (p *provider) Configure(
 	httpClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	httpClient.CheckRetry = retryGetRequestsOnly
 	cfg.HTTPClient = httpClient.StandardClient()
+	// Wrapping outside retryablehttp keeps the header on retried requests.
+	cfg.HTTPClient.Transport = &continuumCompatTransport{base: cfg.HTTPClient.Transport}
+
+	p.continuumCompatOff = IsKnown(config.ContinuumCompat) && !config.ContinuumCompat.ValueBool()
 
 	cl := client.NewClient(cfg)
 	svc := NewService(cl)
@@ -205,6 +214,15 @@ func (p *provider) Schema(
 					"service account ID.",
 				Optional:  true,
 				Sensitive: true,
+			},
+			"continuum_compat": schema.BoolAttribute{
+				MarkdownDescription: "Set to `false` to disable the automatic " +
+					"compatibility mode for Cockroach Continuum organizations whose " +
+					"cluster configurations still use the legacy `plan` attribute. " +
+					"See [Migrating to Cockroach Continuum]" +
+					"(https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration) " +
+					"for details.",
+				Optional: true,
 			},
 		},
 	}

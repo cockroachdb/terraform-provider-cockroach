@@ -53,14 +53,17 @@ func (d *clusterDataSource) Schema(
 				MarkdownDescription: "The full version string of CockroachDB running on the cluster. (e.g. v25.0.1)",
 			},
 			"plan": schema.StringAttribute{
-				Computed:    true,
-				Description: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.",
+				Computed: true,
+				MarkdownDescription: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'. " +
+					"For a cluster in a Cockroach Continuum organization this reports the plan the " +
+					"cluster's `edition` came from, and is null once the provider is set to " +
+					"`continuum_compat = false`. See [Migrating to Cockroach Continuum]" +
+					"(https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration).",
 			},
 			"edition": schema.StringAttribute{
 				Computed: true,
 				MarkdownDescription: "Denotes the cluster's edition. Set on clusters in Cockroach " +
-					"Continuum organizations, which report an `edition` instead of a `plan`. " +
-					"Allowed values are:" +
+					"Continuum organizations, and null elsewhere. Allowed values are:" +
 					formatEnumMarkdownList(client.AllowedEditionTypeEnumValues),
 			},
 			"cloud_provider": schema.StringAttribute{
@@ -364,7 +367,8 @@ func (d *clusterDataSource) Read(
 	}
 
 	traceAPICall("GetCluster")
-	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, clusterID)
+	cockroachCluster, httpResp, err := d.provider.service.GetCluster(
+		continuumCompatIf(ctx, d.provider.sendCompatForDataSourceRead()), clusterID)
 	if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"Cluster not found",
@@ -376,6 +380,11 @@ func (d *clusterDataSource) Read(
 			"Error getting cluster info",
 			fmt.Sprintf("Unexpected error while retrieving cluster info: %v", formatAPIErrorMessage(err)))
 		return
+	}
+
+	compatApplied := continuumCompatApplied(httpResp)
+	if compatApplied && claimContinuumDataSourceWarning() {
+		resp.Diagnostics.AddWarning(continuumCompatActiveSummary, continuumDataSourceCompatDetail)
 	}
 
 	traceAPICall("GetBackupConfiguration")
@@ -394,6 +403,9 @@ func (d *clusterDataSource) Read(
 	resp.Diagnostics.Append(
 		loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)...,
 	)
+	if compatApplied {
+		continuumSynthesizeEdition(&newState)
+	}
 	// The data-source schema has no `timeouts` attribute; convert to the
 	// data-source model so field-set matches the schema.
 	dsState := cockroachClusterToDataSource(&newState)

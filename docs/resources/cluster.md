@@ -235,7 +235,7 @@ resource "cockroach_cluster" "continuum_host" {
 - `host` (Attributes) Configures a host cluster, which provides dedicated hardware for virtual clusters. Host clusters are available only in Cockroach Continuum organizations. (see [below for nested schema](#nestedatt--host))
 - `labels` (Map of String) Map of key-value pairs used to organize and categorize resources. If unset, labels will not be managed by Terraform. If set, labels defined in Terraform will overwrite any labels configured outside this platform.
 - `parent_id` (String) The ID of the cluster's parent folder. 'root' is used for a cluster at the root level.
-- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'.
+- `plan` (String) Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'. A plan applies only to clusters in organizations that are not on Cockroach Continuum. Set `edition` instead for a cluster in a Continuum organization. See [Migrating to Cockroach Continuum](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration) for how to convert an existing configuration.
 - `serverless` (Attributes) (see [below for nested schema](#nestedatt--serverless))
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 

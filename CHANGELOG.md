@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added a compatibility mode for organizations migrating to Cockroach
+  Continuum. Compatibility automatically kicks in for orgs on continuum
+  that have not migrated their terraform configs.  A new `continuum_compat`
+  provider attribute was added to manually disable this mode. See the
+  [Migrating to Cockroach Continuum](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration)
+  guide for more information.
+
 ## [1.25.0] - 2026-11-05
 
 ### Added

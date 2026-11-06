@@ -35,3 +35,4 @@ provider "cockroach" {
 In this case, the vanity name of the organization is required and can be provided using the `COCKROACH_VANITY_NAME` environment variable. If the JWT is mapped to multiple identities, the identity to impersonate should be provided using the `COCKROACH_USERNAME` environment variable, and should contain either a user email address or a service account ID.
 - `apikey` (String, Sensitive) The API key to access CockroachDB Cloud.
 If this field is provided, it is used and `apijwt` is ignored.
+- `continuum_compat` (Boolean) Set to `false` to disable the automatic compatibility mode for Cockroach Continuum organizations whose cluster configurations still use the legacy `plan` attribute. See [Migrating to Cockroach Continuum](https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration) for details.

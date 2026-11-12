@@ -118,8 +118,6 @@ func (p *provider) Configure(
 	httpClient.ErrorHandler = retryablehttp.PassthroughErrorHandler
 	httpClient.CheckRetry = retryGetRequestsOnly
 	cfg.HTTPClient = httpClient.StandardClient()
-	// Wrapping outside retryablehttp keeps the header on retried requests.
-	cfg.HTTPClient.Transport = &continuumCompatTransport{base: cfg.HTTPClient.Transport}
 
 	p.continuumCompatOff = IsKnown(config.ContinuumCompat) && !config.ContinuumCompat.ValueBool()
 

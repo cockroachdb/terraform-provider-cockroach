@@ -36,8 +36,8 @@ import (
 )
 
 // compatCtxMatcher asserts whether a call asked for the legacy Continuum view.
-// The mock Service replaces the whole client, so the header the transport would
-// set is never built; the context holds the decision and is what can be
+// The mock Service replaces the whole client, so the request the SDK would
+// build is never made; the context holds the decision and is what can be
 // checked here.
 type compatCtxMatcher struct {
 	want bool
@@ -57,6 +57,30 @@ func (m compatCtxMatcher) String() string {
 
 func compatCtx(want bool) gomock.Matcher {
 	return compatCtxMatcher{want: want}
+}
+
+// sdkHeaderCtxKey is the key client.ContextWithHeader stores per-call headers
+// under. The SDK keeps it unexported, so recover it from the lookup
+// ContextWithHeader makes on its parent context.
+var sdkHeaderCtxKey = func() any {
+	recorder := &ctxKeyRecorder{Context: context.Background()}
+	client.ContextWithHeader(recorder, "Probe", "1")
+	return recorder.key
+}()
+
+type ctxKeyRecorder struct {
+	context.Context
+	key any
+}
+
+func (r *ctxKeyRecorder) Value(key any) any {
+	r.key = key
+	return nil
+}
+
+func continuumCompatFromCtx(ctx context.Context) bool {
+	header, _ := ctx.Value(sdkHeaderCtxKey).(http.Header)
+	return header.Get(continuumCompatHeader) == "true"
 }
 
 // compatAppliedResponse is the response of a legacy read whose cluster really
@@ -86,7 +110,7 @@ func isolateContinuumDetection(t *testing.T) {
 	t.Cleanup(resetContinuumDetection)
 }
 
-func TestContinuumCompatTransportSetsHeader(t *testing.T) {
+func TestContinuumCompatHeaderSentOnRequest(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
 		compat     bool
@@ -99,16 +123,16 @@ func TestContinuumCompatTransportSetsHeader(t *testing.T) {
 			var got string
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				got = r.Header.Get(continuumCompatHeader)
+				w.Header().Set("Content-Type", "application/json")
+				w.Write([]byte("{}"))
 			}))
 			defer srv.Close()
 
-			httpClient := &http.Client{Transport: &continuumCompatTransport{base: http.DefaultTransport}}
-			req, err := http.NewRequestWithContext(
-				continuumCompatIf(context.Background(), tc.compat), http.MethodGet, srv.URL, nil)
+			cfg := client.NewConfiguration("fake")
+			cfg.ServerURL = srv.URL
+			_, _, err := client.NewService(client.NewClient(cfg)).GetCluster(
+				continuumCompatIf(context.Background(), tc.compat), uuid.Nil.String())
 			require.NoError(t, err)
-			resp, err := httpClient.Do(req)
-			require.NoError(t, err)
-			require.NoError(t, resp.Body.Close())
 
 			// The server parses the value with strconv.ParseBool, so presence
 			// alone would not opt the call in.

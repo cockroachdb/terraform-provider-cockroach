@@ -39,44 +39,15 @@ const (
 	continuumCompatAppliedHeader = "Cc-Continuum-Compat-Applied"
 )
 
-type continuumCompatKey struct{}
-
-// withContinuumCompat marks a request context so continuumCompatTransport
-// sends the compat header. Callers decide per call.
-func withContinuumCompat(ctx context.Context) context.Context {
-	return context.WithValue(ctx, continuumCompatKey{}, true)
-}
-
-func continuumCompatFromCtx(ctx context.Context) bool {
-	compat, _ := ctx.Value(continuumCompatKey{}).(bool)
-	return compat
-}
-
 // continuumCompatIf keeps the per-call decision at the call site, so the
 // condition reads next to the request it governs.
 func continuumCompatIf(ctx context.Context, compat bool) context.Context {
 	if !compat {
 		return ctx
 	}
-	return withContinuumCompat(ctx)
-}
-
-// continuumCompatTransport sets the compat header on requests whose context
-// asked for it. The generated SDK builds its own header map per call and does
-// not consult the context, but it does attach the context to the request, so
-// the decision travels there instead.
-type continuumCompatTransport struct {
-	base http.RoundTripper
-}
-
-func (t *continuumCompatTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	if continuumCompatFromCtx(req.Context()) {
-		// The server parses this with strconv.ParseBool, so presence alone is
-		// not enough.
-		req = req.Clone(req.Context())
-		req.Header.Set(continuumCompatHeader, "true")
-	}
-	return t.base.RoundTrip(req)
+	// The server parses the value with strconv.ParseBool, so presence alone is
+	// not enough.
+	return client.ContextWithHeader(ctx, continuumCompatHeader, "true")
 }
 
 // continuumCompatApplied reports whether the response translated an edition

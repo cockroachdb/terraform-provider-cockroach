@@ -312,6 +312,12 @@ func (c *Client) prepareRequest(
 	for header, value := range c.cfg.DefaultHeader {
 		localVarRequest.Header.Set(header, value)
 	}
+
+	// A per-call header is the more specific statement, so it replaces both the
+	// request's own value and the client-wide default.
+	for header, values := range requestHeaderFromContext(ctx) {
+		localVarRequest.Header[header] = append([]string(nil), values...)
+	}
 	return localVarRequest, nil
 }
 

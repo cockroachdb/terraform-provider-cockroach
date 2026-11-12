@@ -124,7 +124,8 @@ func TestContinuumCompatHeaderSentOnRequest(t *testing.T) {
 			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				got = r.Header.Get(continuumCompatHeader)
 				w.Header().Set("Content-Type", "application/json")
-				w.Write([]byte("{}"))
+				_, err := w.Write([]byte("{}"))
+				require.NoError(t, err)
 			}))
 			defer srv.Close()
 

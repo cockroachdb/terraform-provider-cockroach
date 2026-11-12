@@ -83,19 +83,19 @@ func continuumResourceCompatDetail(plan client.PlanType) string {
 
 // continuumDataSourceCompatDetail is aimed at whatever reads a data source's
 // plan attribute. That reference is the one that breaks when the provider stops
-// asking for the legacy view. Reported once for the whole configuration rather
-// than once per data source: a data source can't see what reads its plan, so
-// there is nothing to narrow the warning down to.
+// reporting a plan. Reported once for the whole configuration rather than once
+// per data source: a data source can't see what reads its plan, so there is
+// nothing to narrow the warning down to.
 const continuumDataSourceCompatDetail = "This configuration uses cockroach_cluster data sources. A " +
 	"data source cannot see what reads its plan attribute, so the provider cannot tell when the last " +
-	"reference is gone and keeps compatibility mode on for all of them. Move anything reading plan to " +
+	"reference is gone and keeps reporting one for all of them. Move anything reading plan to " +
 	"edition, which does not report the same values: ADVANCED becomes MISSION_CRITICAL and STANDARD " +
 	"stays STANDARD. Then set continuum_compat = false on the provider, which stops the data sources " +
 	"reporting a plan and clears this warning."
 
 // continuumSilentResourceCompatDetail is aimed at a cluster whose configuration
 // sets neither axis. Nothing in that configuration tells the provider when the
-// legacy view is no longer needed, so it names the edition the cluster already
+// compat mode is no longer needed, so it states the edition the cluster already
 // reports and the two ways out.
 func continuumSilentResourceCompatDetail(edition client.EditionType) string {
 	return fmt.Sprintf("This cluster sets neither plan nor edition, so the provider cannot tell when "+
@@ -135,6 +135,18 @@ func continuumEditionForPlan(plan client.PlanType) (client.EditionType, bool) {
 	}
 }
 
+// continuumPlanForEdition maps an edition back to the legacy plan it came from.
+func continuumPlanForEdition(edition client.EditionType) (client.PlanType, bool) {
+	switch edition {
+	case client.EDITIONTYPE_MISSION_CRITICAL:
+		return client.PLANTYPE_ADVANCED, true
+	case client.EDITIONTYPE_STANDARD:
+		return client.PLANTYPE_STANDARD, true
+	default:
+		return "", false
+	}
+}
+
 var continuumDetection struct {
 	mu sync.Mutex
 	// dataSourceWarned records that the one data source warning was reported.
@@ -163,7 +175,7 @@ func (p *provider) sendCompatForWrite(plan *CockroachCluster) bool {
 	return !p.continuumCompatOff && IsKnown(plan.Plan)
 }
 
-// sendCompatForRead reports whether a refresh should ask for the legacy view.
+// sendCompatForRead reports whether a refresh should be a compat read.
 // Keyed on state rather than on the configuration: Read has no configuration,
 // and the axis the state already expresses is the one the response has to
 // agree with.
@@ -171,12 +183,12 @@ func (p *provider) sendCompatForRead(state *CockroachCluster) bool {
 	return !p.continuumCompatOff && !state.Plan.IsNull()
 }
 
-// sendCompatForDataSourceRead reports whether a data source read should ask for
-// the legacy view. Deliberately not tied to detection: a data source can't see
-// what reads its plan attribute, so switching axes under it would break that
-// reference with nothing to catch it. Setting continuum_compat = false is what
-// releases it.
-func (p *provider) sendCompatForDataSourceRead() bool {
+// synthesizePlanForDataSource reports whether a data source read should fill in
+// the legacy plan. Deliberately not tied to detection: a data source can't see
+// what reads its plan attribute, so dropping the attribute under it would break
+// that reference with nothing to catch it. Setting continuum_compat = false is
+// what releases it.
+func (p *provider) synthesizePlanForDataSource() bool {
 	return !p.continuumCompatOff
 }
 
@@ -188,6 +200,21 @@ func continuumSynthesizeEdition(state *CockroachCluster) {
 	if edition, ok := continuumEditionForPlan(client.PlanType(state.Plan.ValueString())); ok {
 		state.Edition = types.StringValue(string(edition))
 	}
+}
+
+// continuumSynthesizePlan fills in the plan an edition came from, so a data
+// source holds both axes and a reference to either resolves. It reports whether
+// it filled one in, which doubles as the signal that the cluster is in a
+// Continuum organization: only those report an edition. Deriving the plan here
+// rather than making a compat read keeps the rest of the response
+// describing the cluster as it actually is.
+func continuumSynthesizePlan(state *CockroachCluster) bool {
+	plan, ok := continuumPlanForEdition(client.EditionType(state.Edition.ValueString()))
+	if !ok {
+		return false
+	}
+	state.Plan = types.StringValue(string(plan))
+	return true
 }
 
 // continuumKeepPlannedEdition copies the edition Terraform planned into the

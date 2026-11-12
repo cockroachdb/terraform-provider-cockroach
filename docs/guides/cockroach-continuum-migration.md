@@ -86,10 +86,24 @@ Keep in mind that `plan` and `edition` do not resolve to the same values.  When 
 
 Cockroach Continuum clusters run on private nodes. An Advanced cluster that is
 not already on private nodes will be converted (when possible) during the
-migration, so afterwards it may report
-`dedicated.private_network_visibility = true`. Some older clusters may not be
+migration, so afterwards its `dedicated` block may report
+`private_network_visibility = true`. Some older clusters may not be
 eligible for this conversion. It is recommended to remove this value from your
 configuration altogether to avoid conflicts with the server-driven value.
+
+While a resource still sets `plan`, compatibility mode reports its network
+visibility the way the legacy API reported it, from the cluster's security
+add-on rather than from the cluster itself. A migrated cluster on private nodes
+that has no such add-on reports `private_network_visibility = false` until
+that resource moves to `edition`, at which point the value flips to `true`.
+
+The migration can change what a `cockroach_cluster` data source reports for
+this attribute. A data source for an Advanced cluster may report
+`private_network_visibility = false` before the migration and `true`
+immediately after. That value might conflict with what the resource for the
+same cluster reports, if that resource has not been updated to use `edition`.
+Please ensure this change will not cause adverse effects with your
+implementation.
 
 ## Migrating
 

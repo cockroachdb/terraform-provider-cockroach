@@ -367,8 +367,7 @@ func (d *clusterDataSource) Read(
 	}
 
 	traceAPICall("GetCluster")
-	cockroachCluster, httpResp, err := d.provider.service.GetCluster(
-		continuumCompatIf(ctx, d.provider.sendCompatForDataSourceRead()), clusterID)
+	cockroachCluster, httpResp, err := d.provider.service.GetCluster(ctx, clusterID)
 	if httpResp != nil && httpResp.StatusCode == http.StatusNotFound {
 		resp.Diagnostics.AddError(
 			"Cluster not found",
@@ -380,11 +379,6 @@ func (d *clusterDataSource) Read(
 			"Error getting cluster info",
 			fmt.Sprintf("Unexpected error while retrieving cluster info: %v", formatAPIErrorMessage(err)))
 		return
-	}
-
-	compatApplied := continuumCompatApplied(httpResp)
-	if compatApplied && claimContinuumDataSourceWarning() {
-		resp.Diagnostics.AddWarning(continuumCompatDataSourceSummary, continuumDataSourceCompatDetail)
 	}
 
 	traceAPICall("GetBackupConfiguration")
@@ -403,8 +397,9 @@ func (d *clusterDataSource) Read(
 	resp.Diagnostics.Append(
 		loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)...,
 	)
-	if compatApplied {
-		continuumSynthesizeEdition(&newState)
+	if d.provider.synthesizePlanForDataSource() && continuumSynthesizePlan(&newState) &&
+		claimContinuumDataSourceWarning() {
+		resp.Diagnostics.AddWarning(continuumCompatDataSourceSummary, continuumDataSourceCompatDetail)
 	}
 	// The data-source schema has no `timeouts` attribute; convert to the
 	// data-source model so field-set matches the schema.

@@ -83,7 +83,7 @@ func continuumCompatFromCtx(ctx context.Context) bool {
 	return header.Get(continuumCompatHeader) == "true"
 }
 
-// compatAppliedResponse is the response of a legacy read whose cluster really
+// compatAppliedResponse is the response of a compat read whose cluster really
 // had an edition translated away.
 func compatAppliedResponse() *http.Response {
 	return &http.Response{
@@ -177,16 +177,16 @@ func TestContinuumCompatSendRules(t *testing.T) {
 		require.False(t, p.sendCompatForRead(withoutPlan))
 	})
 
-	t.Run("data source always asks", func(t *testing.T) {
+	t.Run("data source derives the plan instead of asking", func(t *testing.T) {
 		p := &provider{}
-		require.True(t, p.sendCompatForDataSourceRead())
+		require.True(t, p.synthesizePlanForDataSource())
 	})
 
 	t.Run("continuum_compat false suppresses every path", func(t *testing.T) {
 		p := &provider{continuumCompatOff: true}
 		require.False(t, p.sendCompatForWrite(withPlan))
 		require.False(t, p.sendCompatForRead(withPlan))
-		require.False(t, p.sendCompatForDataSourceRead())
+		require.False(t, p.synthesizePlanForDataSource())
 	})
 }
 
@@ -231,6 +231,53 @@ func TestContinuumSynthesizeEdition(t *testing.T) {
 			require.Equal(t, tc.edition, state.Edition.ValueString())
 		})
 	}
+}
+
+func TestContinuumPlanForEdition(t *testing.T) {
+	for _, tc := range []struct {
+		edition client.EditionType
+		plan    client.PlanType
+		ok      bool
+	}{
+		{edition: client.EDITIONTYPE_MISSION_CRITICAL, plan: client.PLANTYPE_ADVANCED, ok: true},
+		{edition: client.EDITIONTYPE_STANDARD, plan: client.PLANTYPE_STANDARD, ok: true},
+		{edition: "", ok: false},
+	} {
+		t.Run(string(tc.edition), func(t *testing.T) {
+			plan, ok := continuumPlanForEdition(tc.edition)
+			require.Equal(t, tc.ok, ok)
+			if tc.ok {
+				require.Equal(t, tc.plan, plan)
+			}
+		})
+	}
+}
+
+func TestContinuumSynthesizePlan(t *testing.T) {
+	for _, tc := range []struct {
+		edition client.EditionType
+		plan    string
+	}{
+		{edition: client.EDITIONTYPE_MISSION_CRITICAL, plan: string(client.PLANTYPE_ADVANCED)},
+		{edition: client.EDITIONTYPE_STANDARD, plan: string(client.PLANTYPE_STANDARD)},
+	} {
+		t.Run(string(tc.edition), func(t *testing.T) {
+			state := &CockroachCluster{Edition: types.StringValue(string(tc.edition))}
+			require.True(t, continuumSynthesizePlan(state))
+			require.Equal(t, tc.plan, state.Plan.ValueString())
+		})
+	}
+
+	// A legacy cluster reports no edition, so its own plan stands and the
+	// caller learns the organization has not migrated.
+	t.Run("legacy cluster", func(t *testing.T) {
+		state := &CockroachCluster{
+			Plan:    types.StringValue(string(client.PLANTYPE_BASIC)),
+			Edition: types.StringNull(),
+		}
+		require.False(t, continuumSynthesizePlan(state))
+		require.Equal(t, string(client.PLANTYPE_BASIC), state.Plan.ValueString())
+	})
 }
 
 func TestContinuumKeepPlannedEdition(t *testing.T) {
@@ -351,7 +398,7 @@ func legacyPlanCluster(clusterName, id string, plan client.PlanType) client.Clus
 }
 
 // TestIntegrationContinuumCompatSentForLegacyConfig verifies that a
-// configuration still on the plan axis asks for the legacy view on every call,
+// configuration still on the plan axis asks for a compat read on every call,
 // so a migrated organization keeps reporting the plan the configuration names.
 func TestIntegrationContinuumCompatSentForLegacyConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
@@ -392,9 +439,9 @@ func TestIntegrationContinuumCompatSentForLegacyConfig(t *testing.T) {
 }
 
 // TestIntegrationContinuumCompatNotSentForEditionConfig verifies that a
-// configuration on the edition axis never asks for the legacy view. It also
+// configuration on the edition axis never asks for a compat read. It also
 // pins that every cluster resource is validated during a normal run: if
-// detection under-reported, the refresh would ask for the legacy view and the
+// detection under-reported, the refresh would ask for a compat read and the
 // expectation below would fail.
 func TestIntegrationContinuumCompatNotSentForEditionConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
@@ -431,10 +478,9 @@ func TestIntegrationContinuumCompatNotSentForEditionConfig(t *testing.T) {
 }
 
 // TestIntegrationContinuumCompatMixedConfig verifies that one resource still on
-// the plan axis holds every cluster in the configuration on the legacy view.
-// The silent resource keeps its plan rather than moving to an edition, which is
-// what keeps the two axes in agreement while any resource still needs the
-// legacy one.
+// the plan axis holds every cluster in the configuration on compat reads. The
+// silent resource keeps its plan rather than moving to an edition, which is
+// what keeps the two axes in agreement while any resource still needs them.
 func TestIntegrationContinuumCompatMixedConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -455,8 +501,8 @@ func TestIntegrationContinuumCompatMixedConfig(t *testing.T) {
 	})()
 
 	s.EXPECT().CreateCluster(compatCtx(true), gomock.Any()).Return(&legacy, httpOk, nil)
-	// The silent resource sets no plan, so its own create doesn't ask for the
-	// legacy view; its refresh does, because a sibling still needs it.
+	// The silent resource sets no plan, so its own create doesn't send the
+	// compat header; its refresh does, because a sibling still needs it.
 	s.EXPECT().CreateCluster(compatCtx(false), gomock.Any()).Return(&silent, httpOk, nil)
 	s.EXPECT().GetCluster(compatCtx(true), legacyID).Return(&legacy, httpOk, nil).AnyTimes()
 	s.EXPECT().GetCluster(gomock.Any(), silentID).Return(&silent, httpOk, nil).AnyTimes()
@@ -604,8 +650,8 @@ resource "cockroach_cluster" "%s" {
 //
 // A second resource stays on plan throughout, which is what a configuration
 // migrated a resource at a time looks like and what keeps the swapping
-// resource reading on the legacy view while its own configuration has already
-// moved. That combination is the only one the immutability check sees.
+// resource on compat reads while its own configuration has already moved.
+// That combination is the only one the immutability check sees.
 func TestIntegrationContinuumEquivalentSwap(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -636,7 +682,7 @@ func TestIntegrationContinuumEquivalentSwap(t *testing.T) {
 		}).Times(2)
 	s.EXPECT().GetCluster(gomock.Any(), holdoutID).
 		Return(&holdout, compatAppliedResponse(), nil).AnyTimes()
-	// The holdout keeps the legacy view on, so the swapping cluster still reads
+	// The holdout keeps compat mode on, so the swapping cluster still reads
 	// a plan; its own write and read-back go without it.
 	s.EXPECT().GetCluster(compatCtx(true), swapID).
 		Return(&legacy, compatAppliedResponse(), nil).AnyTimes()
@@ -708,7 +754,7 @@ resource "cockroach_cluster" "%s" {
 
 func legacyAdvancedCluster(clusterName, id string) client.Cluster {
 	plan := client.PLANTYPE_ADVANCED
-	// The legacy view reports visibility from the security add-on, which this
+	// A compat read reports visibility from the security add-on, which this
 	// cluster doesn't have.
 	visibility := client.NETWORKVISIBILITYTYPE_PUBLIC
 	return client.Cluster{
@@ -733,7 +779,7 @@ func legacyAdvancedCluster(clusterName, id string) client.Cluster {
 
 // TestIntegrationContinuumEquivalentSwapDedicated is the dedicated half of
 // TestIntegrationContinuumEquivalentSwap, where network visibility can differ
-// between the two views: the legacy view reports it from the security add-on,
+// between the two reads: a compat read reports it from the security add-on,
 // which an Advanced cluster need not have.
 // private_network_visibility is optional+computed with UseStateForUnknown, so
 // the planned value has to be released or the apply fails as an inconsistent
@@ -808,7 +854,7 @@ func TestIntegrationContinuumEquivalentSwapDedicated(t *testing.T) {
 }
 
 // TestIntegrationContinuumSilentConfigUpdate verifies that a configuration
-// setting neither plan nor edition still asks for the legacy view when it
+// setting neither plan nor edition still sends the compat header when it
 // updates a cluster whose state holds a plan. Both attributes are
 // optional+computed, so the planned state keeps the plan a compat read put
 // there even though nothing in the configuration asked for one, and the update
@@ -958,10 +1004,9 @@ func TestIntegrationContinuumImportSendsNoCompat(t *testing.T) {
 }
 
 // TestIntegrationContinuumDataSourceReportsBothAxes verifies that a data source
-// on a Continuum organization reports the plan the legacy view returned and the
-// edition that plan came from, so a reference to either resolves. The
-// configuration is only a data source, so nothing in it holds the legacy view:
-// a data source asks for it unconditionally.
+// on a Continuum organization reports the cluster's edition and the plan that
+// edition came from, so a reference to either resolves. The plan is derived
+// locally rather than asked for, so the request carries no compat header.
 func TestIntegrationContinuumDataSourceReportsBothAxes(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -969,7 +1014,7 @@ func TestIntegrationContinuumDataSourceReportsBothAxes(t *testing.T) {
 	isolateContinuumDetection(t)
 
 	clusterName := fmt.Sprintf("%s-compat-ds-both-%s", tfTestPrefix, GenerateRandomString(2))
-	cluster := legacyPlanCluster(clusterName, uuid.Nil.String(), client.PLANTYPE_ADVANCED)
+	cluster := editionCluster(clusterName, client.EDITIONTYPE_MISSION_CRITICAL)
 
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)
@@ -977,8 +1022,7 @@ func TestIntegrationContinuumDataSourceReportsBothAxes(t *testing.T) {
 		return s
 	})()
 
-	s.EXPECT().GetCluster(compatCtx(true), cluster.Id).
-		Return(&cluster, compatAppliedResponse(), nil).AnyTimes()
+	s.EXPECT().GetCluster(compatCtx(false), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), cluster.Id).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
@@ -1004,9 +1048,8 @@ data "cockroach_cluster" "test" {
 
 // TestIntegrationContinuumDataSourceLegacyOrgKeepsOnePlan verifies that a data
 // source on an organization that has not migrated reports a plan and no
-// edition. The request asks for the legacy view either way, so the response
-// header is what separates a translated edition from a cluster that never had
-// one.
+// edition. Only a Continuum cluster reports an edition, so there is nothing to
+// derive a plan from and the one the cluster already has stands.
 func TestIntegrationContinuumDataSourceLegacyOrgKeepsOnePlan(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
@@ -1022,7 +1065,7 @@ func TestIntegrationContinuumDataSourceLegacyOrgKeepsOnePlan(t *testing.T) {
 		return s
 	})()
 
-	s.EXPECT().GetCluster(compatCtx(true), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(compatCtx(false), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), cluster.Id).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 
@@ -1040,6 +1083,62 @@ data "cockroach_cluster" "test" {
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", "ADVANCED"),
 					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "edition"),
+				),
+			},
+		},
+	})
+}
+
+// TestIntegrationContinuumDataSourceReportsClusterNetworkVisibility verifies
+// that a data source reports the cluster's own network visibility rather than
+// what a compat read derives from the security add-on. Deriving the plan
+// locally is what buys this: a compat read would report a private Mission
+// Critical cluster as public.
+func TestIntegrationContinuumDataSourceReportsClusterNetworkVisibility(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+	isolateContinuumDetection(t)
+
+	clusterName := fmt.Sprintf("%s-compat-ds-vis-%s", tfTestPrefix, GenerateRandomString(2))
+	clusterID := uuid.Nil.String()
+	// Both reads describe the same cluster and disagree about visibility, so a
+	// data source that went back to a compat read would report false here
+	// rather than fail on a missing expectation.
+	legacy := legacyAdvancedCluster(clusterName, clusterID)
+	migrated := editionCluster(clusterName, client.EDITIONTYPE_MISSION_CRITICAL)
+	migrated.Id = clusterID
+	visibility := client.NETWORKVISIBILITYTYPE_PRIVATE
+	migrated.NetworkVisibility = &visibility
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	s.EXPECT().GetCluster(compatCtx(true), clusterID).
+		Return(&legacy, compatAppliedResponse(), nil).AnyTimes()
+	s.EXPECT().GetCluster(compatCtx(false), clusterID).Return(&migrated, httpOk, nil).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), clusterID).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: fmt.Sprintf(`
+data "cockroach_cluster" "test" {
+    id = "%s"
+}
+`, clusterID),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessDataSourceName,
+						"dedicated.private_network_visibility", "true"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", "ADVANCED"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", "MISSION_CRITICAL"),
 				),
 			},
 		},
@@ -1091,10 +1190,11 @@ data "cockroach_cluster" "test" {
 	})
 }
 
-// TestIntegrationContinuumDataSourceHeldOnLegacyView verifies that a `.plan`
-// reference keeps reporting a plan while some cluster resource in the same
-// configuration still sets one.
-func TestIntegrationContinuumDataSourceHeldOnLegacyView(t *testing.T) {
+// TestIntegrationContinuumDataSourceAlongsideLegacyResource verifies that a
+// configuration holding both a cluster resource on the plan axis and a data
+// source reading that cluster works, even though the two read different ways:
+// the resource asks for compat mode and the data source does not.
+func TestIntegrationContinuumDataSourceAlongsideLegacyResource(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
@@ -1111,6 +1211,7 @@ func TestIntegrationContinuumDataSourceHeldOnLegacyView(t *testing.T) {
 
 	s.EXPECT().CreateCluster(compatCtx(true), gomock.Any()).Return(&cluster, httpOk, nil)
 	s.EXPECT().GetCluster(compatCtx(true), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
+	s.EXPECT().GetCluster(compatCtx(false), cluster.Id).Return(&cluster, httpOk, nil).AnyTimes()
 	s.EXPECT().GetBackupConfiguration(gomock.Any(), cluster.Id).
 		Return(initialBackupConfig, httpOk, nil).AnyTimes()
 	s.EXPECT().DeleteCluster(gomock.Any(), cluster.Id).Return(&cluster, httpOk, nil)
@@ -1127,6 +1228,59 @@ data "cockroach_cluster" "test" {
 }
 `,
 				Check: resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", "STANDARD"),
+			},
+		},
+	})
+}
+
+// TestIntegrationContinuumVisibilityDiffersBetweenAxes verifies that a resource
+// still on the plan axis and a data source reading the same cluster disagree
+// about network visibility. The resource reads with compat mode, which derives
+// visibility from the security add-on this cluster doesn't have, and the data
+// source reads the cluster as it is.
+func TestIntegrationContinuumVisibilityDiffersBetweenAxes(t *testing.T) {
+	if os.Getenv(CockroachAPIKey) == "" {
+		os.Setenv(CockroachAPIKey, "fake")
+	}
+	isolateContinuumDetection(t)
+
+	clusterName := fmt.Sprintf("%s-compat-vis-axes-%s", tfTestPrefix, GenerateRandomString(2))
+	legacy := legacyAdvancedCluster(clusterName, uuid.Nil.String())
+	migrated := dedicatedVisibilityCluster(clusterName, true)
+
+	ctrl := gomock.NewController(t)
+	s := mock_client.NewMockService(ctrl)
+	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
+		return s
+	})()
+
+	s.EXPECT().CreateCluster(compatCtx(true), gomock.Any()).Return(&legacy, httpOk, nil)
+	s.EXPECT().GetCluster(compatCtx(true), legacy.Id).
+		Return(&legacy, compatAppliedResponse(), nil).AnyTimes()
+	s.EXPECT().GetCluster(compatCtx(false), legacy.Id).Return(&migrated, httpOk, nil).AnyTimes()
+	s.EXPECT().GetBackupConfiguration(gomock.Any(), legacy.Id).
+		Return(initialBackupConfig, httpOk, nil).AnyTimes()
+	s.EXPECT().DeleteCluster(gomock.Any(), legacy.Id).Return(&legacy, httpOk, nil)
+
+	resource.Test(t, resource.TestCase{
+		IsUnitTest:               true,
+		PreCheck:                 func() { testAccPreCheck(t) },
+		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: advancedClusterConfigNamed("test", clusterName) + `
+data "cockroach_cluster" "test" {
+    id = cockroach_cluster.test.id
+}
+`,
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessResourceName,
+						"dedicated.private_network_visibility", "false"),
+					resource.TestCheckResourceAttr(serverlessResourceName, "plan", "ADVANCED"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName,
+						"dedicated.private_network_visibility", "true"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", "MISSION_CRITICAL"),
+				),
 			},
 		},
 	})
@@ -1176,7 +1330,7 @@ provider "cockroach" {
 
 // TestIntegrationContinuumNetworkVisibilityDiagnostic verifies the targeted
 // message for a cluster whose network visibility flipped when the provider
-// stopped asking for the legacy view. A legacy read reports visibility from
+// stopped making compat reads. A compat read reports visibility from
 // the security add-on, so an Advanced cluster without it reads public and
 // reads private once it reports its edition. The configuration here sets
 // neither plan nor edition, which is the only shape that reaches this check:
@@ -1315,8 +1469,8 @@ resource "cockroach_cluster" "test" {
 }
 
 // dedicatedVisibilityCluster is the same dedicated cluster before and after its
-// organization migrates: on the legacy view it reports an Advanced plan and
-// public visibility, and on the edition view Mission Critical and private.
+// organization migrates: a compat read reports an Advanced plan and public
+// visibility, and a plain read Mission Critical and private.
 func dedicatedVisibilityCluster(clusterName string, migrated bool) client.Cluster {
 	cluster := client.Cluster{
 		Id:               uuid.Nil.String(),

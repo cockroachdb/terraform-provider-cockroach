@@ -6619,7 +6619,8 @@ func TestAccStandardEditionClusterResource(t *testing.T) {
 		ProtoV6ProviderFactories: continuumProviderFactories(),
 		Steps: []resource.TestStep{
 			// Create with edition STANDARD and verify it round-trips into state
-			// (and through the data source) with plan left null.
+			// with plan left null. The data source reports both axes, since
+			// compatibility mode stays on for data sources.
 			{
 				Config: continuumStandardConfig(clusterName, 2),
 				Check: resource.ComposeTestCheckFunc(
@@ -6628,7 +6629,7 @@ func TestAccStandardEditionClusterResource(t *testing.T) {
 					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
 					resource.TestCheckResourceAttr(serverlessResourceName, "serverless.usage_limits.provisioned_virtual_cpus", "2"),
 					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_STANDARD)),
-					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", string(client.PLANTYPE_STANDARD)),
 				),
 			},
 			// In-place update: raise the provisioned vCPU usage limit.
@@ -6671,7 +6672,8 @@ func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
 		ProtoV6ProviderFactories: continuumProviderFactories(),
 		Steps: []resource.TestStep{
 			// Create with edition MISSION_CRITICAL and verify it round-trips into
-			// state (and through the data source) with plan left null.
+			// state with plan left null. The data source reports both axes, since
+			// compatibility mode stays on for data sources.
 			{
 				Config: continuumMissionCriticalConfig(clusterName, 15),
 				Check: resource.ComposeTestCheckFunc(
@@ -6680,7 +6682,11 @@ func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
 					resource.TestCheckNoResourceAttr(serverlessResourceName, "plan"),
 					resource.TestCheckResourceAttr(serverlessResourceName, "dedicated.storage_gib", "15"),
 					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
-					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", string(client.PLANTYPE_ADVANCED)),
+					// A Continuum cluster runs on private nodes but has no legacy
+					// security add-on, which is what the compat view derives
+					// visibility from, so only a plain read reports true.
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "dedicated.private_network_visibility", "true"),
 				),
 			},
 			// In-place update: grow dedicated storage.
@@ -6703,6 +6709,20 @@ func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
 					"regions.0.num_virtual_cpus",
 					"regions.0.machine_type",
 				},
+			},
+			// Turn compatibility mode off and verify the data source stops
+			// reporting a plan. Last, so the earlier steps keep reading the way
+			// an unmigrated configuration does.
+			{
+				Config: `
+provider "cockroach" {
+    continuum_compat = false
+}
+` + continuumMissionCriticalConfig(clusterName, 30),
+				Check: resource.ComposeTestCheckFunc(
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
+					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+				),
 			},
 		},
 	})

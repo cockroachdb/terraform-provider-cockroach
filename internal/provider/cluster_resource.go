@@ -1397,9 +1397,9 @@ func (r *clusterResource) ModifyPlan(
 		}
 		planHW, stateHW := plan.hardwareConfig(), state.hardwareConfig()
 		if planHW != nil && stateHW != nil && planHW.PrivateNetworkVisibility != stateHW.PrivateNetworkVisibility {
-			// A legacy read reports network visibility from the security add-on,
+			// A compat read reports network visibility from the security add-on,
 			// so an Advanced cluster without it reads false until the provider
-			// stops asking for that view, then flips to true with the edition.
+			// stops making those reads, then flips to true with the edition.
 			// Without this the practitioner gets the generic message below and no
 			// hint of the cause.
 			if plan.DedicatedConfig != nil &&
@@ -1469,9 +1469,9 @@ func (r *clusterResource) ModifyPlan(
 			planChanged = true
 
 			// Compatibility mode reports network visibility from the security
-			// add-on rather than the cluster, so the two views can disagree.
+			// add-on rather than the cluster, so the two reads can disagree.
 			// The write and every read after it stop using compatibility
-			// mode, and UseStateForUnknown would pin what the legacy view
+			// mode, and UseStateForUnknown would pin what the compat read
 			// reported, failing the apply as an inconsistent result. Released
 			// rather than set to true, so a cluster that stays public reports
 			// what it has.

@@ -20,7 +20,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"sync"
 
 	"github.com/cockroachdb/cockroach-cloud-sdk-go/v10/pkg/client"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -56,14 +55,13 @@ func continuumCompatApplied(resp *http.Response) bool {
 	return resp != nil && resp.Header.Get(continuumCompatAppliedHeader) == "true"
 }
 
-// The three compat warnings carry distinct summaries because Terraform
-// consolidates warnings by summary, printing the first and collapsing the rest
-// into a count. A shared summary hid two of the three details, and each one
-// asks for a different change.
+// The compat warnings carry distinct summaries because Terraform consolidates
+// warnings by summary, printing the first and collapsing the rest into a
+// count. A shared summary hid one of them, and each asks for a different
+// change.
 const (
-	continuumCompatPlanSummary       = "Cluster sets plan on a Continuum organization"
-	continuumCompatSilentSummary     = "Cluster sets neither plan nor edition on a Continuum organization"
-	continuumCompatDataSourceSummary = "Data source reports a plan on a Continuum organization"
+	continuumCompatPlanSummary   = "Cluster sets plan on a Continuum organization"
+	continuumCompatSilentSummary = "Cluster sets neither plan nor edition on a Continuum organization"
 )
 
 // continuumResourceCompatDetail instructs a configuration that sets plan on a
@@ -80,18 +78,6 @@ func continuumResourceCompatDetail(plan client.PlanType) string {
 		"instead of plan. Compatibility mode is active for this cluster until the configuration is " +
 		"converted."
 }
-
-// continuumDataSourceCompatDetail is aimed at whatever reads a data source's
-// plan attribute. That reference is the one that breaks when the provider stops
-// reporting a plan. Reported once for the whole configuration rather than once
-// per data source: a data source can't see what reads its plan, so there is
-// nothing to narrow the warning down to.
-const continuumDataSourceCompatDetail = "This configuration uses cockroach_cluster data sources. A " +
-	"data source cannot see what reads its plan attribute, so the provider cannot tell when the last " +
-	"reference is gone and keeps reporting one for all of them. Move anything reading plan to " +
-	"edition, which does not report the same values: ADVANCED becomes MISSION_CRITICAL and STANDARD " +
-	"stays STANDARD. Then set continuum_compat = false on the provider, which stops the data sources " +
-	"reporting a plan and clears this warning."
 
 // continuumSilentResourceCompatDetail is aimed at a cluster whose configuration
 // sets neither axis. Nothing in that configuration tells the provider when the
@@ -147,25 +133,6 @@ func continuumPlanForEdition(edition client.EditionType) (client.PlanType, bool)
 	}
 }
 
-var continuumDetection struct {
-	mu sync.Mutex
-	// dataSourceWarned records that the one data source warning was reported.
-	dataSourceWarned bool
-}
-
-// claimContinuumDataSourceWarning reports whether this read should emit the
-// data source warning. One warning covers the configuration, so the first read
-// to ask for it takes it.
-func claimContinuumDataSourceWarning() bool {
-	continuumDetection.mu.Lock()
-	defer continuumDetection.mu.Unlock()
-	if continuumDetection.dataSourceWarned {
-		return false
-	}
-	continuumDetection.dataSourceWarned = true
-	return true
-}
-
 // sendCompatForWrite reports whether a create or update should ask the API to
 // accept a legacy plan. Keyed on the planned state because that is what fills
 // in spec.plan on the request. Keying on the configuration instead would let a
@@ -183,15 +150,6 @@ func (p *provider) sendCompatForRead(state *CockroachCluster) bool {
 	return !p.continuumCompatOff && !state.Plan.IsNull()
 }
 
-// synthesizePlanForDataSource reports whether a data source read should fill in
-// the legacy plan. Deliberately not tied to detection: a data source can't see
-// what reads its plan attribute, so dropping the attribute under it would break
-// that reference with nothing to catch it. Setting continuum_compat = false is
-// what releases it.
-func (p *provider) synthesizePlanForDataSource() bool {
-	return !p.continuumCompatOff
-}
-
 // continuumSynthesizeEdition fills in the edition a compat read translated
 // away, so the state holds both axes and a reference to either resolves.
 // Only correct for a response that actually had an edition substituted; a
@@ -203,18 +161,17 @@ func continuumSynthesizeEdition(state *CockroachCluster) {
 }
 
 // continuumSynthesizePlan fills in the plan an edition came from, so a data
-// source holds both axes and a reference to either resolves. It reports whether
-// it filled one in, which doubles as the signal that the cluster is in a
-// Continuum organization: only those report an edition. Deriving the plan here
-// rather than making a compat read keeps the rest of the response
-// describing the cluster as it actually is.
-func continuumSynthesizePlan(state *CockroachCluster) bool {
-	plan, ok := continuumPlanForEdition(client.EditionType(state.Edition.ValueString()))
-	if !ok {
-		return false
+// source holds both axes and a reference to either resolves. A data source
+// cannot see what reads its plan, so there is no point at which the attribute
+// could be dropped; it is a permanent alias rather than a compatibility
+// measure, and continuum_compat does not gate it. Deriving the plan rather
+// than making a compat read keeps the rest of the response describing the
+// cluster as it actually is. A cluster outside a Continuum organization
+// reports no edition and keeps its own plan.
+func continuumSynthesizePlan(state *CockroachCluster) {
+	if plan, ok := continuumPlanForEdition(client.EditionType(state.Edition.ValueString())); ok {
+		state.Plan = types.StringValue(string(plan))
 	}
-	state.Plan = types.StringValue(string(plan))
-	return true
 }
 
 // continuumKeepPlannedEdition copies the edition Terraform planned into the
@@ -226,10 +183,4 @@ func continuumKeepPlannedEdition(state, plan *CockroachCluster) {
 	if state.Edition.IsNull() && !state.Plan.IsNull() && plan != nil && IsKnown(plan.Edition) {
 		state.Edition = plan.Edition
 	}
-}
-
-func resetContinuumDetection() {
-	continuumDetection.mu.Lock()
-	defer continuumDetection.mu.Unlock()
-	continuumDetection.dataSourceWarned = false
 }

@@ -215,8 +215,10 @@ func (p *provider) Schema(
 			},
 			"continuum_compat": schema.BoolAttribute{
 				MarkdownDescription: "Set to `false` to disable the automatic " +
-					"compatibility mode for Cockroach Continuum organizations whose " +
-					"cluster configurations still use the legacy `plan` attribute. " +
+					"compatibility mode for `cockroach_cluster` resources in Cockroach " +
+					"Continuum organizations whose configurations still use the legacy " +
+					"`plan` attribute. Does not affect `cockroach_cluster` data sources, " +
+					"which always report both `plan` and `edition`. " +
 					"See [Migrating to Cockroach Continuum]" +
 					"(https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration) " +
 					"for details.",

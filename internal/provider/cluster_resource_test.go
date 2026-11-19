@@ -6619,8 +6619,8 @@ func TestAccStandardEditionClusterResource(t *testing.T) {
 		ProtoV6ProviderFactories: continuumProviderFactories(),
 		Steps: []resource.TestStep{
 			// Create with edition STANDARD and verify it round-trips into state
-			// with plan left null. The data source reports both axes, since
-			// compatibility mode stays on for data sources.
+			// with plan left null. The data source reports both axes: it
+			// derives the plan from the edition regardless of compatibility mode.
 			{
 				Config: continuumStandardConfig(clusterName, 2),
 				Check: resource.ComposeTestCheckFunc(
@@ -6672,8 +6672,8 @@ func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
 		ProtoV6ProviderFactories: continuumProviderFactories(),
 		Steps: []resource.TestStep{
 			// Create with edition MISSION_CRITICAL and verify it round-trips into
-			// state with plan left null. The data source reports both axes, since
-			// compatibility mode stays on for data sources.
+			// state with plan left null. The data source reports both axes: it
+			// derives the plan from the edition regardless of compatibility mode.
 			{
 				Config: continuumMissionCriticalConfig(clusterName, 15),
 				Check: resource.ComposeTestCheckFunc(
@@ -6710,9 +6710,10 @@ func TestAccMissionCriticalEditionClusterResource(t *testing.T) {
 					"regions.0.machine_type",
 				},
 			},
-			// Turn compatibility mode off and verify the data source stops
-			// reporting a plan. Last, so the earlier steps keep reading the way
-			// an unmigrated configuration does.
+			// Turn compatibility mode off and verify the data source still
+			// reports both axes, since continuum_compat governs resources only.
+			// Last, so the earlier steps keep reading the way an unmigrated
+			// configuration does.
 			{
 				Config: `
 provider "cockroach" {
@@ -6721,7 +6722,7 @@ provider "cockroach" {
 ` + continuumMissionCriticalConfig(clusterName, 30),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", string(client.EDITIONTYPE_MISSION_CRITICAL)),
-					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", string(client.PLANTYPE_ADVANCED)),
 				),
 			},
 		},

@@ -25,13 +25,14 @@ While compatibility mode is on, both `plan` and `edition` are populated and a
 reference to either resolves. It is enabled automatically, and in common cases
 will be disabled automatically once a configuration has been migrated. The
 `continuum_compat` provider option turns it off explicitly; only `false` is
-meaningful, as there is no way to force compatibility mode on.
+meaningful, as there is no way to force compatibility mode on. It applies to
+`cockroach_cluster` resources only.
 
 * **Clusters that don't set `plan` or `edition`** keep working as they are. The provider cannot tell when `plan` is safe to retire for these, so a warning is issued for each of them. The warning can be cleared either by adding the recommended `edition` or disabling compatibility mode in the provider settings.
 
 * **Clusters that do set `plan`** will eventually need to set `edition` instead.  A warning will be issued for each cluster until this is done.
 
-* **Configurations that read the `plan` field from a data source** should be updated to read the `edition` instead.  Since the provider is unable to detect the reliance on the legacy `plan` field, a warning will be issued for as long as any cluster data source is in use. It clears only when compatibility mode is disabled.
+* **Configurations that read the `plan` field from a data source** keep working. A `cockroach_cluster` data source reports both `plan` and `edition` for a Continuum cluster, and will continue to. Moving those references to `edition` is still recommended, but nothing requires it.
 
 ## Converting `plan` to `edition`
 
@@ -66,9 +67,11 @@ The conversion can be done one resource at a time.
 
 For a cluster in a Continuum organization a `cockroach_cluster` data source
 reports both an `edition` and the `plan` that edition came from, no matter how
-much of the rest of the configuration has been migrated.
+much of the rest of the configuration has been migrated and whether or not
+compatibility mode is on. The `plan` attribute is permanent here, so a
+reference to it will keep resolving.
 
-Move anything reading the `plan` attribute to `edition`. This could be an output, a module or a conditional.
+Moving anything reading the `plan` attribute to `edition` is still recommended. This could be an output, a module or a conditional.
 
 ```terraform
 data "cockroach_cluster" "example" {
@@ -128,11 +131,11 @@ TF_VAR_continuum_compat=false terraform plan
 
 Because the report is an error it also blocks `apply`, so leave the variable at
 its default until the conversion is finished. The report only covers
-`cockroach_cluster` resources. Notably, it cannot see what consumes a data source's
-`plan` attribute, so those references have to be found by hand.
+`cockroach_cluster` resources. A data source keeps reporting a `plan` either
+way, so references to that attribute are not part of this step.
 
-Committing `continuum_compat = false` is the last step. It is also what stops a
-data source reporting a `plan` and clears the remaining warnings.
+Committing `continuum_compat = false` is the last step. It clears the remaining
+warnings.
 
 ## Creating clusters after migration
 

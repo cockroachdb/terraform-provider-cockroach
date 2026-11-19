@@ -102,14 +102,6 @@ func wrappedPattern(s string) string {
 	return strings.Join(words, `\s+`)
 }
 
-// isolateContinuumDetection clears the detection tally, which is package-level
-// and so shared by every test in the binary.
-func isolateContinuumDetection(t *testing.T) {
-	t.Helper()
-	resetContinuumDetection()
-	t.Cleanup(resetContinuumDetection)
-}
-
 func TestContinuumCompatHeaderSentOnRequest(t *testing.T) {
 	for _, tc := range []struct {
 		name       string
@@ -148,16 +140,6 @@ func TestContinuumCompatApplied(t *testing.T) {
 	require.False(t, continuumCompatApplied(nil))
 }
 
-func TestContinuumDataSourceWarningClaimedOnce(t *testing.T) {
-	isolateContinuumDetection(t)
-
-	require.True(t, claimContinuumDataSourceWarning())
-	require.False(t, claimContinuumDataSourceWarning())
-
-	resetContinuumDetection()
-	require.True(t, claimContinuumDataSourceWarning())
-}
-
 func TestContinuumCompatSendRules(t *testing.T) {
 	withPlan := &CockroachCluster{Plan: types.StringValue(string(client.PLANTYPE_ADVANCED))}
 	withoutPlan := &CockroachCluster{Plan: types.StringNull()}
@@ -177,16 +159,10 @@ func TestContinuumCompatSendRules(t *testing.T) {
 		require.False(t, p.sendCompatForRead(withoutPlan))
 	})
 
-	t.Run("data source derives the plan instead of asking", func(t *testing.T) {
-		p := &provider{}
-		require.True(t, p.synthesizePlanForDataSource())
-	})
-
-	t.Run("continuum_compat false suppresses every path", func(t *testing.T) {
+	t.Run("continuum_compat false suppresses every resource path", func(t *testing.T) {
 		p := &provider{continuumCompatOff: true}
 		require.False(t, p.sendCompatForWrite(withPlan))
 		require.False(t, p.sendCompatForRead(withPlan))
-		require.False(t, p.synthesizePlanForDataSource())
 	})
 }
 
@@ -263,19 +239,19 @@ func TestContinuumSynthesizePlan(t *testing.T) {
 	} {
 		t.Run(string(tc.edition), func(t *testing.T) {
 			state := &CockroachCluster{Edition: types.StringValue(string(tc.edition))}
-			require.True(t, continuumSynthesizePlan(state))
+			continuumSynthesizePlan(state)
 			require.Equal(t, tc.plan, state.Plan.ValueString())
 		})
 	}
 
-	// A legacy cluster reports no edition, so its own plan stands and the
-	// caller learns the organization has not migrated.
+	// A cluster outside a Continuum organization reports no edition, so its own
+	// plan stands.
 	t.Run("legacy cluster", func(t *testing.T) {
 		state := &CockroachCluster{
 			Plan:    types.StringValue(string(client.PLANTYPE_BASIC)),
 			Edition: types.StringNull(),
 		}
-		require.False(t, continuumSynthesizePlan(state))
+		continuumSynthesizePlan(state)
 		require.Equal(t, string(client.PLANTYPE_BASIC), state.Plan.ValueString())
 	})
 }
@@ -305,11 +281,6 @@ func TestContinuumCompatDetail(t *testing.T) {
 	resourceDetail := continuumResourceCompatDetail(client.PLANTYPE_ADVANCED)
 	require.Contains(t, resourceDetail, `plan = "ADVANCED"`)
 	require.Contains(t, resourceDetail, `edition = "MISSION_CRITICAL"`)
-
-	require.Contains(t, continuumDataSourceCompatDetail, "plan attribute")
-	// Nothing in the configuration clears this one, so the detail has to say
-	// what does.
-	require.Contains(t, continuumDataSourceCompatDetail, "continuum_compat = false")
 
 	// A silent cluster has two ways out, and the state knows which edition to
 	// recommend.
@@ -404,8 +375,6 @@ func TestIntegrationContinuumCompatSentForLegacyConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-legacy-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := legacyPlanCluster(clusterName, uuid.Nil.String(), client.PLANTYPE_STANDARD)
 
@@ -447,8 +416,6 @@ func TestIntegrationContinuumCompatNotSentForEditionConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-edition-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := editionCluster(clusterName, client.EDITIONTYPE_STANDARD)
 
@@ -485,8 +452,6 @@ func TestIntegrationContinuumCompatMixedConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	legacyName := fmt.Sprintf("%s-compat-mixed-a-%s", tfTestPrefix, GenerateRandomString(2))
 	silentName := fmt.Sprintf("%s-compat-mixed-b-%s", tfTestPrefix, GenerateRandomString(2))
 	legacyID := "00000000-0000-0000-0000-000000000001"
@@ -535,8 +500,6 @@ func TestIntegrationContinuumReadinessReport(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
@@ -575,8 +538,6 @@ func TestIntegrationContinuumReadinessReportNetworkVisibility(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)
 	defer HookGlobal(&NewService, func(c *client.Client) client.Service {
@@ -656,8 +617,6 @@ func TestIntegrationContinuumEquivalentSwap(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	swapName := fmt.Sprintf("%s-compat-swap-%s", tfTestPrefix, GenerateRandomString(2))
 	holdoutName := fmt.Sprintf("%s-compat-holdout-%s", tfTestPrefix, GenerateRandomString(2))
 	swapID := "00000000-0000-0000-0000-000000000001"
@@ -799,8 +758,6 @@ func TestIntegrationContinuumEquivalentSwapDedicated(t *testing.T) {
 		{name: "stays on public nodes", visibility: client.NETWORKVISIBILITYTYPE_PUBLIC, want: "false"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			isolateContinuumDetection(t)
-
 			clusterName := fmt.Sprintf("%s-compat-swap-mc-%s", tfTestPrefix, GenerateRandomString(2))
 			clusterID := uuid.Nil.String()
 			legacy := legacyAdvancedCluster(clusterName, clusterID)
@@ -863,8 +820,6 @@ func TestIntegrationContinuumSilentConfigUpdate(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-silent-update-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	before := legacyPlanCluster(clusterName, clusterID, client.PLANTYPE_STANDARD)
@@ -927,8 +882,6 @@ func TestIntegrationContinuumSilentCreateOnLegacyOrg(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-legacy-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := legacyPlanCluster(clusterName, uuid.Nil.String(), client.PLANTYPE_STANDARD)
 
@@ -969,8 +922,6 @@ func TestIntegrationContinuumImportSendsNoCompat(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-import-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := editionCluster(clusterName, client.EDITIONTYPE_STANDARD)
 
@@ -1011,8 +962,6 @@ func TestIntegrationContinuumDataSourceReportsBothAxes(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-ds-both-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := editionCluster(clusterName, client.EDITIONTYPE_MISSION_CRITICAL)
 
@@ -1054,8 +1003,6 @@ func TestIntegrationContinuumDataSourceLegacyOrgKeepsOnePlan(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-ds-legacy-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := legacyPlanCluster(clusterName, uuid.Nil.String(), client.PLANTYPE_ADVANCED)
 
@@ -1098,8 +1045,6 @@ func TestIntegrationContinuumDataSourceReportsClusterNetworkVisibility(t *testin
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-ds-vis-%s", tfTestPrefix, GenerateRandomString(2))
 	clusterID := uuid.Nil.String()
 	// Both reads describe the same cluster and disagree about visibility, so a
@@ -1145,16 +1090,15 @@ data "cockroach_cluster" "test" {
 	})
 }
 
-// TestIntegrationContinuumDataSourceRetires verifies that continuum_compat =
-// false is what drops a plan from a data source. It is the last step of a
-// migration, taken once the references to that attribute have been moved.
-func TestIntegrationContinuumDataSourceRetires(t *testing.T) {
+// TestIntegrationContinuumDataSourceKeepsPlanWithCompatOff verifies that
+// continuum_compat governs resources only. A data source derives its plan from
+// the cluster's edition either way, since nothing tells it when the last
+// reference to that attribute is gone.
+func TestIntegrationContinuumDataSourceKeepsPlanWithCompatOff(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
-	cluster := editionCluster("compat-ds-retire", client.EDITIONTYPE_STANDARD)
+	cluster := editionCluster("compat-ds-off", client.EDITIONTYPE_STANDARD)
 
 	ctrl := gomock.NewController(t)
 	s := mock_client.NewMockService(ctrl)
@@ -1183,7 +1127,7 @@ data "cockroach_cluster" "test" {
 `, cluster.Id),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(serverlessDataSourceName, "edition", "STANDARD"),
-					resource.TestCheckNoResourceAttr(serverlessDataSourceName, "plan"),
+					resource.TestCheckResourceAttr(serverlessDataSourceName, "plan", "STANDARD"),
 				),
 			},
 		},
@@ -1198,8 +1142,6 @@ func TestIntegrationContinuumDataSourceAlongsideLegacyResource(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-ds-held-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := legacyPlanCluster(clusterName, uuid.Nil.String(), client.PLANTYPE_STANDARD)
 
@@ -1242,8 +1184,6 @@ func TestIntegrationContinuumVisibilityDiffersBetweenAxes(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-vis-axes-%s", tfTestPrefix, GenerateRandomString(2))
 	legacy := legacyAdvancedCluster(clusterName, uuid.Nil.String())
 	migrated := dedicatedVisibilityCluster(clusterName, true)
@@ -1294,8 +1234,6 @@ func TestIntegrationContinuumReadinessReportCleanConfig(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-clean-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := editionCluster(clusterName, client.EDITIONTYPE_STANDARD)
 
@@ -1339,8 +1277,6 @@ func TestIntegrationContinuumNetworkVisibilityDiagnostic(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-compat-netvis-%s", tfTestPrefix, GenerateRandomString(2))
 	legacy := dedicatedVisibilityCluster(clusterName, false)
 	migrated := dedicatedVisibilityCluster(clusterName, true)
@@ -1412,8 +1348,6 @@ func TestIntegrationMissionCriticalPublicNodesFromState(t *testing.T) {
 	if os.Getenv(CockroachAPIKey) == "" {
 		os.Setenv(CockroachAPIKey, "fake")
 	}
-	isolateContinuumDetection(t)
-
 	clusterName := fmt.Sprintf("%s-public-mc-%s", tfTestPrefix, GenerateRandomString(2))
 	cluster := dedicatedVisibilityCluster(clusterName, true)
 	cluster.NetworkVisibility = ptr(client.NETWORKVISIBILITYTYPE_PUBLIC)

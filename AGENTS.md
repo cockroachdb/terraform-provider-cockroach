@@ -28,3 +28,7 @@ with a mocked API client in `mock` used by integration tests.
 - Each resource and data source needs both integration tests (mocked API) and
   acceptance tests (live API). See the Testing section of
   [DEVELOPMENT.md](DEVELOPMENT.md) for details.
+- Never start an acceptance test run without being asked to, whether through
+  `make testacc` or the CI workflow. A full run takes over an hour and creates
+  real clusters that cost real money. This includes re-running a job that
+  failed on a flake.

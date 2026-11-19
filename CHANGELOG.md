@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A `cockroach_cluster` data source in a Cockroach Continuum organization now
+  always reports the `plan` its `edition` came from, including when
+  `continuum_compat = false`. The warning asking configurations to move data
+  source `plan` references to `edition` has been removed. `continuum_compat`
+  now governs `cockroach_cluster` resources only.
+
 ## [1.26.0] - 2026-11-13
 
 ### Added

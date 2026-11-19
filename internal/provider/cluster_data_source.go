@@ -56,8 +56,7 @@ func (d *clusterDataSource) Schema(
 				Computed: true,
 				MarkdownDescription: "Denotes cluster plan type: 'BASIC' or 'STANDARD' or 'ADVANCED'. " +
 					"For a cluster in a Cockroach Continuum organization this reports the plan the " +
-					"cluster's `edition` came from, and is null once the provider is set to " +
-					"`continuum_compat = false`. See [Migrating to Cockroach Continuum]" +
+					"cluster's `edition` came from. See [Migrating to Cockroach Continuum]" +
 					"(https://registry.terraform.io/providers/cockroachdb/cockroach/latest/docs/guides/cockroach-continuum-migration).",
 			},
 			"edition": schema.StringAttribute{
@@ -397,10 +396,7 @@ func (d *clusterDataSource) Read(
 	resp.Diagnostics.Append(
 		loadClusterToTerraformState(ctx, cockroachCluster, remoteBackupConfig, &newState, nil)...,
 	)
-	if d.provider.synthesizePlanForDataSource() && continuumSynthesizePlan(&newState) &&
-		claimContinuumDataSourceWarning() {
-		resp.Diagnostics.AddWarning(continuumCompatDataSourceSummary, continuumDataSourceCompatDetail)
-	}
+	continuumSynthesizePlan(&newState)
 	// The data-source schema has no `timeouts` attribute; convert to the
 	// data-source model so field-set matches the schema.
 	dsState := cockroachClusterToDataSource(&newState)

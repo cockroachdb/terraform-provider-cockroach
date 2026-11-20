@@ -54,6 +54,20 @@ jobs:
       - name: Tests
         run: make test
 
+  # the release scripts under scripts/release/ have their own shell tests
+  script-test:
+    name: script-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          ref: ${{github.event.pull_request.head.ref}}
+          repository: ${{github.event.pull_request.head.repo.full_name}}
+
+      - name: Tests
+        run: make test-scripts
+
   # pre job to build terraform-provider on every pull request
   pre-build:
     name: build-terraform-provider

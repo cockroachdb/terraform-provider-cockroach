@@ -1,44 +1,13 @@
-# This workflow is triggered by pushing a "v*" tag (i.e. v1.16.0) and runs the
-# full acceptance test suite against the live CockroachDB Cloud API. It gates
-# the release workflow (release.yml): there is no automated gate, so the
-# release workflow must not be dispatched until this workflow has passed on
-# the tag being released. See RELEASE.md for the full release process.
-name: pre-release-ci (acceptance tests, gates release)
+# Safety net for tags pushed by hand. The Release workflow tags only after the
+# acceptance tests pass, and the tags it pushes use GITHUB_TOKEN, which does
+# not trigger this workflow. So a run here means someone tagged outside the
+# release pipeline.
+name: pre-release-ci
 on:
   push:
     tags:
       - 'v*'
 jobs:
   acceptance-test:
-    name: acceptance-test
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout sources
-        uses: actions/checkout@v3
-        with:
-          ref: ${{github.event.pull_request.head.ref}}
-          repository: ${{github.event.pull_request.head.repo.full_name}}
-
-      - name: Setup Go
-        uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-
-      # We don't pin the version of terraform to ensure the tests run against
-      # the latest CLI version.
-      - name: Install terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Tests
-        run: make testacc
-        env:
-          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
-          COCKROACH_CONTINUUM_API_KEY: ${{ secrets.COCKROACH_CONTINUUM_API_KEY }}
-          CLEANUP_TRACKING_FILE: ${{ runner.temp }}/created-clusters.txt
-
-      - name: Cleanup orphaned test clusters
-        if: always()
-        run: bash scripts/cleanup-test-clusters.sh
-        env:
-          COCKROACH_API_KEY: ${{ secrets.COCKROACH_API_KEY }}
-          CLEANUP_TRACKING_FILE: ${{ runner.temp }}/created-clusters.txt
+    uses: ./.github/workflows/acceptance-tests.yml
+    secrets: inherit

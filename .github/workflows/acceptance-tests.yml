@@ -1,5 +1,18 @@
-name: Manually Run Acceptance Tests
-on: workflow_dispatch
+# The acceptance test suite, run against the live CockroachDB Cloud API.
+#
+# Dispatch it directly to test a branch, or call it from another workflow. The
+# release pipeline calls it with a pinned SHA so the commit that is tested is
+# the commit that gets tagged.
+name: Acceptance Tests
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        description: Commit SHA to test. Defaults to the triggering ref.
+        type: string
+        default: ''
+
 jobs:
   acceptance-test:
     name: acceptance-test
@@ -7,6 +20,8 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
 
       - name: Setup Go
         uses: actions/setup-go@v5

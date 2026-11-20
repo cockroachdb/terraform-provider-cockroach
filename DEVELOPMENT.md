@@ -118,8 +118,12 @@ with the Terraform acceptance testing framework. The difference is that the inte
 library, while the acceptance tests are live and create real resources. The integration test wrapper needs to set
 expected mock calls before calling that common method.
 
-Integration and unit tests are run on every commit, while acceptance tests are only automatically run during the release
-process. Unit tests are great, but rare since TF provider methods don't usually contain complex business logic.
+Integration and unit tests are run on every commit. Acceptance tests are not — they run as part of the release
+process, and can be run against a branch any time by dispatching the Acceptance Tests workflow. Unit tests are great,
+but rare since TF provider methods don't usually contain complex business logic.
+
+The shell scripts under `scripts/release/` have their own tests, one `*_test.sh` beside each script. Run them with
+`make test-scripts`. They also run on every pull request.
 
 **It's generally a good idea to run acceptance tests affected by your change manually before submitting a PR.** If
 you're using GoLand, you can run them individually, setting `TF_ACC=1` and setting `COCKROACH_SERVER` and

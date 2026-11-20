@@ -24,7 +24,8 @@ with a mocked API client in `mock` used by integration tests.
   `Description`/`MarkdownDescription` fields in the resource schemas and run
   `make generate`.
 - Changes should be accompanied by an entry under `[Unreleased]` in
-  `CHANGELOG.md`.
+  `CHANGELOG.md`. Don't add a `## [x.y.z]` version header — the release
+  workflow writes that. See [RELEASE.md](RELEASE.md).
 - Each resource and data source needs both integration tests (mocked API) and
   acceptance tests (live API). See the Testing section of
   [DEVELOPMENT.md](DEVELOPMENT.md) for details.

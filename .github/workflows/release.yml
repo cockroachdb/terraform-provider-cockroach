@@ -1,45 +1,170 @@
-# This GitHub action can publish assets for release when a tag is created.
-# Currently its setup to be triggered manually via the GitHUB UI. We should
-# only run this on a tag that matches the pattern "v*" (ie. v0.1.0) *after*
-# validating that the release can be signed off (e.g. by triaging the
-# pre-release-ci workflow).
+# Cuts a release: test, stamp the changelog, tag, publish.
 #
-# This uses an action (hashicorp/ghaction-import-gpg) that assumes you set your 
-# private key in the `GPG_PRIVATE_KEY` secret and passphrase in the `PASSPHRASE`
-# secret. If you would rather own your own GPG handling, please fork this action
-# or use an alternative one for key handling.
+# Dispatch this from main with the version to release. The commit that passes
+# the acceptance tests is pinned, and everything afterwards is built on that
+# exact commit — if anything lands on main while the tests are running, the
+# changelog push is rejected as a non-fast-forward and no tag is created.
 #
-# You will need to pass the `--batch` flag to `gpg` in your signing step 
-# in `goreleaser` to indicate this is being used in a non-interactive mode.
-name: release (manually, after pre-release-ci)
-on: workflow_dispatch
+# The steps below are thin wrappers over scripts/release/, which is where the
+# logic lives and where it can be run against a local clone.
+#
+# GoReleaser signs with the GPG_PRIVATE_KEY and PASSPHRASE secrets. See
+# RELEASE.md for the runbook.
+name: Release
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release, without the "v" prefix (e.g. 1.27.0)'
+        required: true
+        type: string
+      skip_tests:
+        description: 'Skip the acceptance tests. Only for a known flake.'
+        required: false
+        type: boolean
+        default: false
+
+# Two releases at once would resolve main independently and race.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 permissions:
   contents: write
+
 jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    # Gates the whole run on a second person approving it. The gate is the
+    # environment's reviewer settings, not this line — see RELEASE.md.
+    environment: release
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+      tag: v${{ inputs.version }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve and validate the release commit
+        id: resolve
+        env:
+          VERSION: ${{ inputs.version }}
+        run: scripts/release/verify-release-commit.sh
+
+      # Stamps a throwaway checkout to catch an empty [Unreleased] section or a
+      # version that is already released, before spending an hour on tests. The
+      # real stamp happens after they pass.
+      - name: Check the changelog is releasable
+        env:
+          VERSION: ${{ inputs.version }}
+        run: scripts/release/stamp-changelog-version.sh
+
+  acceptance-test:
+    name: acceptance-test
+    needs: verify
+    if: ${{ !inputs.skip_tests }}
+    uses: ./.github/workflows/acceptance-tests.yml
+    with:
+      ref: ${{ needs.verify.outputs.sha }}
+    secrets: inherit
+
+  stamp:
+    name: stamp-changelog
+    needs: [verify, acceptance-test]
+    if: >-
+      ${{ always()
+        && needs.verify.result == 'success'
+        && needs.acceptance-test.result != 'failure'
+        && needs.acceptance-test.result != 'cancelled' }}
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.push.outputs.sha }}
+    steps:
+      # RELEASE_PUSH_TOKEN is only needed if main is protected against direct
+      # pushes. See RELEASE.md.
+      - name: Checkout the tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify.outputs.sha }}
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PUSH_TOKEN || github.token }}
+
+      - name: Stamp the version header
+        env:
+          VERSION: ${{ inputs.version }}
+        run: scripts/release/stamp-changelog-version.sh
+
+      - name: Commit and push to main
+        id: push
+        env:
+          VERSION: ${{ inputs.version }}
+          TESTED_SHA: ${{ needs.verify.outputs.sha }}
+        run: scripts/release/commit-changelog-stamp.sh
+
+  tag:
+    name: tag
+    needs: [verify, stamp]
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.autotag.outputs.tag }}
+    steps:
+      # Checked out with the default token on purpose: a tag pushed by
+      # GITHUB_TOKEN does not trigger other workflows, so pre-release-ci does
+      # not re-run the suite we just finished.
+      - name: Checkout the stamped commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.stamp.outputs.sha }}
+          fetch-depth: 0
+
+      - name: Check the stamped commit sits on the tested commit
+        env:
+          TESTED_SHA: ${{ needs.verify.outputs.sha }}
+        run: scripts/release/verify-stamped-commit.sh
+
+      # create-major-tag would force-push a floating "v1", which matches
+      # pre-release-ci's tag trigger and means nothing to the registry.
+      - name: Tag the release
+        id: autotag
+        uses: cockroachdb/actions/autotag-from-changelog@v0
+        with:
+          create-major-tag: false
+
+      - name: Check the tag was created
+        env:
+          TAG_CREATED: ${{ steps.autotag.outputs.tag_created }}
+          TAG: ${{ steps.autotag.outputs.tag }}
+          EXPECTED_TAG: ${{ needs.verify.outputs.tag }}
+        run: scripts/release/verify-tag.sh
+
   goreleaser:
+    name: goreleaser
+    needs: [verify, tag]
     runs-on: ubuntu-latest
     steps:
-      -
-        name: Checkout
+      - name: Checkout the tag
         uses: actions/checkout@v4
-      -
-        name: Unshallow
-        run: git fetch --prune --unshallow
-      -
-        name: Set up Go
+        with:
+          ref: ${{ needs.verify.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version-file: 'go.mod'
           cache: true
-      -
-        name: Import GPG key
+
+      - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@v5
         id: import_gpg
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-      -
-        name: Run GoReleaser
+
+      - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3.1.0
         with:
           version: '~> v1'

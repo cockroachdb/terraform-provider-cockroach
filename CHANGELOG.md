@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [1.26.1] - 2026-11-20
+
+### Fixed
 
 - A `cockroach_cluster` data source in a Cockroach Continuum organization now
   always reports the `plan` its `edition` came from, including when
